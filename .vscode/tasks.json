@@ -1,0 +1,111 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build .bin", // executable
+            "promptOnClose": false,
+            "type": "shell",
+            "command": "clang++",
+            "args": [
+                "-g",
+                // "-S",
+                "-Wall",
+                "-std=c++11",
+                "-m64",
+                // "-v",
+                // "-Xclang",
+                "-ISource",
+                "-ISource/Addon",
+                "Source/*.cpp",
+                "Source/Addon/Test.cpp",
+                "Test/EngineTest.cpp",
+                "-oBuild/QConsole.bin"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "never",
+                "clear": true
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Build exe", // executable
+            "type": "shell",
+            "command": "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/MSBuild/15.0/Bin/MSBuild.exe",
+            "args": [
+                "${cwd}/QConsole.sln",
+                "/m",
+                "/t:build",
+                "/p:configuration=Release",
+                "/p:Platform=x64"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                // Reveal the output only if unrecognized errors occur.
+                "reveal": "silent",
+                "clear": true
+            },
+            // Use the standard MS compiler pattern to detect errors, warnings and infos
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Build .so",
+            "promptOnClose": false,
+            "type": "shell",
+            "command": "clang++",
+            "args": [
+                "-shared",
+                "-stdlib=libc++",
+                "-Wall",
+                "-std=c++11",
+                "-m64",
+                "-fPIC",
+                // "-v",
+                "-ISource",
+                "-ISource/Addon",
+                "Source/*.cpp",
+                "-oBuild/QpieLibx64.so"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "never",
+                "clear": true
+            },
+            "problemMatcher": "$gcc"
+        },
+        // {
+        //     "label": "Build .dll",
+        //     "type": "shell",
+        //     "command": "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/MSBuild/15.0/Bin/MSBuild.exe",
+        //     "args": [
+        //         "${cwd}/QLibrary.sln",
+        //         "/m",
+        //         "/t:build",
+        //         "/p:configuration=Release",
+        //         "/p:Platform=x64"
+        //     ],
+        //     "group": {
+        //         "kind": "build",
+        //         "isDefault": true
+        //     },
+        //     "presentation": {
+        //         // Reveal the output only if unrecognized errors occur.
+        //         "reveal": "silent",
+        //         "clear": true
+        //     },
+        //     // Use the standard MS compiler pattern to detect errors, warnings and infos
+        //     "problemMatcher": "$msCompile"
+        // }
+    ]
+}
