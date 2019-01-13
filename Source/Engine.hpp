@@ -12,8 +12,8 @@
 #ifndef QENTEM_ENGINE_H
 #define QENTEM_ENGINE_H
 
-#include "Array.hpp"
 #include "String.hpp"
+#include "Array.hpp"
 
 using Qentem::Array;
 using Qentem::String;
@@ -63,8 +63,8 @@ struct Match {
     size_t Length  = 0;
     size_t OLength = 0; // Length of opening keyword
     size_t CLength = 0; // Length of closing keyword
-    size_t Options = 0; // 1: OverDrive, For matching beyand the length of a match.
-
+    size_t Status  = 0; // 1: OverDrive, For matching beyand the length of a match.
+                        // 2: Processed, inside Parse();
     Expression *Expr = nullptr;
 
     Array<Match> NestMatch; // To hold sub matches inside a match.

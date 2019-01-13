@@ -216,6 +216,10 @@ const float Qentem::String::ToNumber(const String &str) noexcept {
  * @return The requested string.
  */
 Qentem::String Qentem::String::Part(size_t offset, size_t limit) const noexcept {
+    if ((offset + limit) > this->Length) {
+        return L"";
+    }
+
     String bit;
     bit.SetSize(limit);
 

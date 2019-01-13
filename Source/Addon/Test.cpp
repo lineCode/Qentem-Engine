@@ -247,17 +247,17 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     y1->Keyword = L">";
     x1->Flag    = Flags::BUBBLE;
 
+    x1->NestExprs.Add(x1);
+    bit.Exprs.Add(x1);
+    bit.Exprslvl0.Add(x1).Add(y1);
+    bits.Add(bit);
+
     x1->ParseCB = ([](const String &block, const Match &match) noexcept->String {
         String nc = L"(";
         nc += block;
         nc += L")";
         return nc;
     });
-
-    x1->NestExprs.Add(x1);
-    bit.Exprs.Add(x1);
-    bit.Exprslvl0.Add(x1).Add(y1);
-    bits.Add(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -401,20 +401,20 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
-    bit.Content.Add(L"#    [ op1='one', op2='two' opx=']q       ]']second op is:/");
+    bit.Content.Add(L"#    [[ op1='one', op2='two' opx=']q       ]']second op is:/");
     bit.Expected.Add(L"#    second op is:two");
 
     x1          = new Expression();
     y1          = new Expression();
     x1->Tail    = y1;
     x1->Flag    = Flags::COMPLETE;
-    x1->Keyword = L"[ ";
+    x1->Keyword = L"[[ ";
     y1->Keyword = L"/";
 
     x2          = new Expression();
     y2          = new Expression();
     x2->Tail    = y2;
-    x2->Keyword = L"[";
+    x2->Keyword = L"[[";
     y2->Keyword = L"]";
 
     x3          = new Expression();
@@ -429,24 +429,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bit.Exprslvl0.Add(x1).Add(x2).Add(x3).Add(y1).Add(y2).Add(y3);
     bits.Add(bit);
 
-    x1->ParseCB = ([](const String &block, const Match &match) noexcept->String {
-        String nc = L"";
-
-        if (match.SubMatch.Size() != 0) {
-            Match *sm     = &(match.SubMatch[0]);
-            size_t offset = sm->Length;
-            size_t length = (match.Length - (offset + match.CLength));
-            nc            = block.Part(offset, length);
-
-            if (sm->NestMatch.Size() != 0) {
-                Match *nm = &(sm->NestMatch[1]);
-                nc +=
-                    block.Part(((nm->Offset + nm->OLength) - match.Offset), (nm->Length - (nm->CLength + nm->OLength)));
-            }
-        }
-
-        return nc;
-    });
+    x1->ParseCB = &(Qentem::Test::SubMatchNestMatch);
     ///////////////////////////////////////////
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -479,24 +462,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bit.Exprslvl0.Add(x1).Add(x2).Add(x3).Add(y1).Add(y2).Add(y3);
     bits.Add(bit);
 
-    x1->ParseCB = ([](const String &block, const Match &match) noexcept->String {
-        String nc = L"";
-
-        if (match.SubMatch.Size() != 0) {
-            Match *sm     = &(match.SubMatch[0]);
-            size_t offset = sm->Length;
-            size_t length = (match.Length - (offset + match.CLength));
-            nc            = block.Part(offset, length);
-
-            if (sm->NestMatch.Size() != 0) {
-                Match *nm = &(sm->NestMatch[1]);
-                nc +=
-                    block.Part(((nm->Offset + nm->OLength) - match.Offset), (nm->Length - (nm->CLength + nm->OLength)));
-            }
-        }
-
-        return nc;
-    });
+    x1->ParseCB = &(Qentem::Test::SubMatchNestMatch);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -527,22 +493,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bit.Exprslvl0.Add(x1).Add(x2).Add(x3).Add(y1).Add(y2).Add(y3);
     bits.Add(bit);
 
-    x1->ParseCB = ([](const String &block, const Match &match) noexcept->String {
-        String nc = L"";
-        if (match.SubMatch.Size() != 0) {
-            Match *sm     = &(match.SubMatch[0]);
-            size_t offset = (sm->Length - match.OLength);
-            size_t length = ((match.Length - offset) - (match.OLength + match.CLength));
-            nc            = block.Part(offset, length);
-
-            if (sm->NestMatch.Size() != 0) {
-                Match *nm = &(sm->NestMatch[1]);
-                nc += block.Part(((nm->Offset + nm->OLength) - (match.Offset + match.OLength)), 3);
-            }
-        }
-
-        return nc;
-    });
+    x1->ParseCB = &(Qentem::Test::SubMatchNestMatch);
     /////////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -573,42 +524,64 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bit.Exprslvl0.Add(x1).Add(x2).Add(x3).Add(y1).Add(y2).Add(y3);
     bits.Add(bit);
 
-    x1->ParseCB = ([](const String &block, const Match &match) noexcept->String {
-        String nc = L"";
-        if (match.SubMatch.Size() != 0) {
-            Match *sm     = &(match.SubMatch[0]);
-            size_t offset = (sm->Length - match.OLength);
-            size_t length = ((match.Length - offset) - (match.OLength + match.CLength));
-            nc            = block.Part(offset, length);
-
-            if (sm->NestMatch.Size() != 0) {
-                Match *nm = &(sm->NestMatch[1]);
-                nc += block.Part(((nm->Offset + nm->OLength) - (match.Offset + match.OLength)), 3);
-            }
-        }
-
-        return nc;
-    });
+    x1->ParseCB = &(Qentem::Test::SubMatchNestMatch);
     /////////////////////////////////////////////
     return bits;
 }
 
-String Qentem::Test::SubMatchZero(const String &block, const Match &match) noexcept {
+String Qentem::Test::SubMatchNestMatch(const String &block, const Match &match) noexcept {
     String nc = L"";
-
     if (match.SubMatch.Size() != 0) {
         Match *sm     = &(match.SubMatch[0]);
-        size_t offset = (sm->Offset - match.Offset);
-
-        if (sm->OLength > match.OLength) {
-            offset += (sm->OLength - match.OLength);
-        } else if (sm->OLength < match.OLength) {
-            offset -= (match.OLength - sm->OLength);
-        }
-
-        size_t length = (sm->Length - (sm->OLength + sm->CLength));
+        size_t offset = sm->Offset + sm->Length;
+        size_t length = (match.Length - (sm->Length + match.CLength));
         nc            = block.Part(offset, length);
+
+        if (sm->NestMatch.Size() != 0) {
+            Match *nm = &(sm->NestMatch[1]);
+            nc += block.Part((nm->Offset + nm->OLength), (nm->Length - (nm->CLength + nm->OLength)));
+        }
     }
 
+    // When bubbling;
+    // if (match.SubMatch.Size() != 0) {
+    //     Match *sm     = &(match.SubMatch[0]);
+    //     size_t offset = sm->Length;
+    //     size_t length = (match.Length - (offset + match.CLength));
+    //     nc            = block.Part(offset, length);
+
+    //     if (sm->NestMatch.Size() != 0) {
+    //         Match *nm = &(sm->NestMatch[1]);
+    //         nc +=
+    //             block.Part(((nm->Offset + nm->OLength) - match.Offset), (nm->Length - (nm->CLength +
+    //             nm->OLength)));
+    //     }
+    // }
+
     return nc;
+}
+
+String Qentem::Test::SubMatchZero(const String &block, const Match &match) noexcept {
+
+    Match *sm = &(match.SubMatch[0]);
+    return block.Part((sm->Offset + sm->OLength), (sm->Length - (sm->CLength + sm->OLength)));
+
+    // if BUBBLing
+    // String nc = L"";
+    // if (match.SubMatch.Size() != 0) {
+    //     Match *sm     = &(match.SubMatch[0]);
+    //     size_t offset = (sm->Offset - match.Offset);
+
+    //     if (sm->OLength > match.OLength) {
+    //         offset += (sm->OLength - match.OLength);
+    //     } else if (sm->OLength < match.OLength) {
+    //         offset -= (match.OLength - sm->OLength);
+    //     }
+
+    //     size_t length = (sm->Length - (sm->OLength + sm->CLength));
+
+    //     nc = block.Part(offset, length);
+    // }
+
+    // return nc;
 }

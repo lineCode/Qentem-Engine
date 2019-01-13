@@ -66,9 +66,9 @@ Array<Qentem::Engine::Match> Qentem::Engine::Search(const String &content, const
         if (counter != 0) {
             // If there is a match, reset counter to prevent a float match.
             counter = 0;
-            if (item.Options != 0) {
+            if (item.Status != 0) {
                 // If the match is on "OverDrive", then break.
-                item.Options = 0;
+                item.Status = 0;
                 // Seting the length of the matched text.
                 length = t_offset;
             } else if (!LOCKED) {
@@ -99,8 +99,8 @@ Array<Qentem::Engine::Match> Qentem::Engine::Search(const String &content, const
                         if (max > length) {
                             // This is important to have the seearch look ahead of the limited length
                             // in order to find the entire currect match.
-                            length       = max;
-                            item.Options = 1; // 1: OverDrive
+                            length      = max;
+                            item.Status = 1; // 1: OverDrive
                         }
 
                         // Seek to avoid having the same closing/ending keywork.
@@ -154,8 +154,8 @@ Array<Qentem::Engine::Match> Qentem::Engine::Search(const String &content, const
             } else if (max > length) {
                 // This is important to have the seearch look ahead of the limited length
                 // in order to find the entire currect match.
-                length       = max;
-                item.Options = 1; // 1: OverDrive
+                length      = max;
+                item.Status = 1; // 1: OverDrive
                 continue;
             }
 
@@ -180,8 +180,8 @@ Array<Qentem::Engine::Match> Qentem::Engine::Search(const String &content, const
             }
 
             // House cleaning...
-            item.Options = 0;
-            LOCKED       = false;
+            item.Status = 0;
+            LOCKED      = false;
         }
     } while (true);
 
@@ -232,10 +232,15 @@ String Qentem::Engine::Parse(const String &content, const Array<Match> &items, s
                 limit = item->Length;
             }
 
-            if ((item->NestMatch.Size() != 0) && ((Flags::BUBBLE & item->Expr->Flag) != 0)) {
-                block = Engine::Parse(content, item->NestMatch, from, (from + limit));
+            if ((Flags::BUBBLE & item->Expr->Flag) != 0) {
+                if (item->NestMatch.Size() != 0) {
+                    rendered +=
+                        item->Expr->ParseCB(Engine::Parse(content, item->NestMatch, from, (from + limit)), *item);
+                } else {
+                    rendered += item->Expr->ParseCB(content.Part(from, limit), *item);
+                }
             } else {
-                block = content.Part(from, limit);
+                rendered += item->Expr->ParseCB(content, *item);
             }
 
             rendered += item->Expr->ParseCB(block, *item);
@@ -302,11 +307,11 @@ String Qentem::Engine::DumbExpressions(const Expressions &expres, const String o
         }
 
         if ((expres[i]->Flag & Flags::BUBBLE) != 0) {
-            tree += l_offset + L" BUBBLE";
+            tree += L" BUBBLE";
         }
 
         if ((expres[i]->Flag & Flags::OVERLOOK) != 0) {
-            tree += l_offset + L" OVERLOOK";
+            tree += L" OVERLOOK";
         }
         tree += L"\n";
 
