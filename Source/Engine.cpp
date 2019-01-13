@@ -207,7 +207,6 @@ String Qentem::Engine::Parse(const String &content, const Array<Match> &items, s
     }
 
     String rendered = L""; // Final content
-    String block    = L""; // temp content
     size_t id       = 0;
 
     Match *item;
@@ -242,9 +241,6 @@ String Qentem::Engine::Parse(const String &content, const Array<Match> &items, s
             } else {
                 rendered += item->Expr->ParseCB(content, *item);
             }
-
-            rendered += item->Expr->ParseCB(block, *item);
-
         } else {
             // Defaults to replace: it might be an empty string
             rendered += item->Expr->Replace;
@@ -270,7 +266,7 @@ String Qentem::Engine::Parse(const String &content, const Array<Match> &items, s
  * @brief Extract all matches form a given content into an array of strings.
  *
  * @param content a text to copy pmatch of.
- * @param items The match items of the content.
+ * @param items The matched items of the content.
  * @return All matched items.
  */
 Array<String> Qentem::Engine::Extract(const String &content, const Array<Match> &items) noexcept {
