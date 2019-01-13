@@ -28,11 +28,11 @@ String q_format_number(float num, size_t min) noexcept {
 }
 
 void qentem_test_engine() {
-    const size_t times = 1; // 10000
-    // size_t       start_at = 17;
-    // size_t       child_at = 0;
+    // size_t start_at = 11;
+    // size_t child_at = 2;
     const size_t   start_at = 0;
     const size_t   child_at = 0;
+    const size_t   times    = 1; // 10000
     size_t         search_ticks;
     size_t         parse_ticks;
     size_t         child  = 0;
@@ -74,14 +74,14 @@ void qentem_test_engine() {
             if (!pass) {
                 errors += 1;
                 std::wcout << L" -----------" << L" Start debug " << count << L"-" << child << L" -----" << L"\n"
-                           << L"  Line: " << bits[i].Line << L"\n"
-                           << L"  Content: \"" << bits[i].Content[t].Str << L"\"\n"
+                           << L"  Line:      " << bits[i].Line << L"\n"
+                           << L"  Content:  \"" << bits[i].Content[t].Str << L"\"\n"
                            << L"  Rendered: \"" << rendered.Str << L"\"\n"
                            << L"  Expected: \"" << bits[i].Expected[t].Str << L"\"\n"
                            << L"  Matches:\n"
                            << Qentem::Engine::DumbMatches(bits[i].Content[t], matches, L"    ").Str
                            << L"  Expressions:\n"
-                           //    << Qentem::Engine::DumbExpressions(bits[i].Exprs, L"    ").Str
+                           << Qentem::Engine::DumbExpressions(bits[i].Exprs, L"    ").Str
                            << L"\n  ---------- End debug " << count << L"-" << child << L" -------" << L"\n";
 
                 if (break_on_err) {

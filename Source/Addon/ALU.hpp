@@ -13,8 +13,8 @@
 #define QENTEM_ALU_H
 
 #include "Engine.hpp"
-#include "Global.hpp"
 
+using Qentem::Engine::Expression;
 using Qentem::Engine::Expressions;
 using Qentem::Engine::Match;
 
@@ -23,15 +23,17 @@ namespace Qentem {
 struct ALU {
     enum Operation { None = 0, Mul, Div, Add, Sub, Equ, NEq, Big, Les, BEq, LEq };
 
-    static bool        _initialized;
-    static Expressions Ops;
+    Expressions Parens;
+    Expression  ParenExpr = Expression();
+    Expression  ParenTail = Expression();
 
-    static void            Init() noexcept;
+    explicit ALU() noexcept;
+    float Evaluate(String &content) noexcept;
+
     static String          ParenthesisCallback(const String &block, const Match &match) noexcept;
     static const Operation GetNextOp(const String &content, size_t &i) noexcept;
-    static const float     Evaluate(String &content) noexcept;
-    static const float     Calculate(const float left, const float right, const Operation operation) noexcept;
-    static const float     Execute(String &content) noexcept;
+    static float           Calculate(const float left, const float right, const Operation operation) noexcept;
+    static float           Execute(String &content) noexcept;
 };
 } // namespace Qentem
 

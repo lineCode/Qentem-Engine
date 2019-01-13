@@ -20,6 +20,10 @@
                 "-ISource/Addon",
                 "Source/*.cpp",
                 "Source/Addon/Test.cpp",
+                "Source/Addon/QArray.cpp",
+                "Source/Addon/ALU.cpp",
+                "Source/Addon/Template.cpp",
+                // "Test/TemplateTest.cpp",
                 "Test/EngineTest.cpp",
                 "-oBuild/QConsole.bin"
             ],
@@ -79,7 +83,7 @@
                 "isDefault": true
             },
             "presentation": {
-                "reveal": "never",
+                "reveal": "silent",
                 "clear": true
             },
             "problemMatcher": "$gcc"

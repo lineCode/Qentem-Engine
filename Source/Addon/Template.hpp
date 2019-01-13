@@ -13,6 +13,7 @@
 #define QENTEM_TEMPLATE_H
 
 #include "Engine.hpp"
+#include "ALU.hpp"
 #include "QArray.hpp"
 
 using Qentem::QArray;
@@ -25,20 +26,41 @@ namespace Qentem {
 struct Template {
     struct PocketT {
         QArray *    Data = nullptr;
+        Qentem::ALU _Alu = Qentem::ALU();
         Expressions Tags;
-        Expressions TagsQuote;
-        Expressions iFsHead;
-        Expressions loopsHead;
+        Expressions TagsQuotes;
+        Expressions TagsVars;
     } Pocket;
+
+    Expression TagVar;
+    Expression VarTail;
+
+    Expression TagIif;
+    Expression IifTail;
+
+    Expression TagQuote;
+    Expression QuoteTail;
+
+    Expression LoopsHead;
+    Expression LoopsHeadT;
+
+    Expression TagLoop;
+    Expression LoopTail;
+
+    Expression iFsHead;
+    Expression iFsHeadT;
+
+    Expression TagIf;
+    Expression IfTail;
 
     explicit Template() noexcept;
     String Render(const String &content, QArray *data = nullptr) noexcept;
 
-    static String ReplaceVar(const String &block, const Match &match) noexcept;
+    static String RenderVar(const String &block, const Match &match) noexcept;
     static String RenderIIF(const String &block, const Match &match) noexcept;
     static String RenderIF(const String &block, const Match &match) noexcept;
     static String RenderLoop(const String &block, const Match &match) noexcept;
-    static String DoLoop(const String &content, const String &name, const String &id, QArray *v_arr) noexcept;
+    static String DoLoop(const String &content, const String &name, const String &id, QArray *storage) noexcept;
 };
 } // namespace Qentem
 

@@ -34,6 +34,7 @@ struct TestBit {
 void           CleanBits(Array<TestBit> &bits) noexcept;
 Array<TestBit> GetBits() noexcept;
 String         SubMatchZero(const String &block, const Match &match) noexcept;
+String         SubMatchNestMatch(const String &block, const Match &match) noexcept;
 
 } // namespace Test
 } // namespace Qentem
