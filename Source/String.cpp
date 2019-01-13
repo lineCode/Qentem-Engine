@@ -131,49 +131,90 @@ const bool Qentem::String::operator!=(const String &src) const noexcept {
 
 void Qentem::String::SetSize(size_t _length) noexcept {
     wchar_t *_tmp = new wchar_t[(_length + 1)];
-    size_t   j    = 0;
+    size_t   i    = 0;
 
-    for (size_t i = 0; i < this->Length; i++) {
-        _tmp[i] = this->Str[j++];
+    if (_length > this->Length)
+        for (; i < this->Length; i++) {
+            _tmp[i] = this->Str[i];
+        }
+    else {
+        for (; i < _length; i++) {
+            _tmp[i] = this->Str[i];
+        }
     }
-    _tmp[j] = '\0'; // To mark the end of a string.
+    _tmp[i] = '\0'; // To mark the end of string.
 
     delete[] this->Str;
     this->Str    = _tmp;
-    this->_index = j;
+    this->_index = i;
     this->Length = _length;
 }
 
-Qentem::String Qentem::String::ToString(float number) noexcept {
-    if (number == 0) {
-        return L"0";
-    }
-
-    String result;
+Qentem::String Qentem::String::Revers(Qentem::String _string) noexcept {
     String tmp = L"";
-    size_t num;
+    tmp.SetSize(_string.Length);
 
-    if (number > 0) {
-        num    = (size_t)number;
-        result = L"";
-    } else {
-        number *= -1.0f;
-        num    = (size_t)number;
-        result = L"-";
+    for (size_t g = _string.Length; g > 0; --g) {
+        tmp += _string.Str[g - 1];
     }
 
-    while (num > 0) {
-        tmp += wchar_t((num % 10) + 48);
+    return tmp;
+}
+
+Qentem::String Qentem::String::ToString(float number, size_t min, size_t max) noexcept {
+    String sign = L"";
+    if (number < 0.0f) {
+        sign = L"-";
+        number *= -1.0f;
+    }
+
+    size_t num;
+    String tmp_g = L"";
+    if (max > 0) {
+        float nuw = 1;
+        for (size_t i = 0; i <= max; i++) {
+            nuw *= 10;
+        }
+
+        num = (size_t)(number * nuw);
+
+        size_t di = (num % 10);
+        num /= 10;
+
+        if (di >= 5) {
+            num += 1;
+        }
+
+        for (size_t g = 0; g < max; g++) {
+            di = (num % 10);
+            tmp_g += wchar_t(di + 48);
+            num /= 10;
+        }
+
+        tmp_g = String::Revers(tmp_g);
+    } else {
+        num = (size_t)(number);
+    }
+
+    String tmp_l = L"";
+    while (num > 0.0f) {
+        tmp_l += wchar_t(((num % 10) + 48));
         num /= 10;
     }
 
-    result.SetSize(tmp.Length);
+    tmp_l = String::Revers(tmp_l);
 
-    for (size_t g = tmp.Length; g > 0; --g) {
-        result += tmp.Str[g - 1];
+    String min_str = L"";
+    for (size_t i = tmp_l.Length; i < min; i++) {
+        min_str += L"0";
+    }
+    tmp_l = min_str + tmp_l;
+
+    if (tmp_g.Length != 0) {
+        tmp_l = tmp_l + L"." + tmp_g;
     }
 
-    return result;
+    return (sign + tmp_l);
 }
 
 const float Qentem::String::ToNumber(const String &str) noexcept {

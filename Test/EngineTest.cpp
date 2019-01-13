@@ -10,22 +10,10 @@
  */
 
 #include "Test.hpp"
-#include <iomanip>
 #include <iostream>
 #include <time.h>
 
 using Qentem::Test::TestBit;
-
-String q_format_number(float num, size_t min) noexcept {
-    const String str  = Qentem::String::ToString(num);
-    String       str2 = L"";
-
-    for (size_t i = str.Length; i < min; i++) {
-        str2 += L"0";
-    }
-
-    return (str2 + str);
-}
 
 void qentem_test_engine() {
     // size_t start_at = 11;
@@ -67,10 +55,11 @@ void qentem_test_engine() {
             child += 1;
             total += 1;
 
-            std::wcout << (pass ? L" " : L"\n") << q_format_number((float)count, 2).Str << L"-"
-                       << q_format_number((float)child, 2).Str << (pass ? L": Pass" : L": Fail") << L" (Search: "
-                       << std::setprecision(3) << (((float)search_ticks) / CLOCKS_PER_SEC) << L")" << L" (Parse: "
-                       << std::setprecision(3) << (((float)parse_ticks) / CLOCKS_PER_SEC) << L")\n";
+            std::wcout << (pass ? L" " : L"\n") << Qentem::String::ToString((float)count, 2).Str << L"-"
+                       << Qentem::String::ToString((float)child, 2).Str << (pass ? L": Pass" : L": Fail")
+                       << L" (Search: " << Qentem::String::ToString((((float)search_ticks) / CLOCKS_PER_SEC), 2, 3).Str
+                       << L")" << L" (Parse: "
+                       << Qentem::String::ToString((((float)parse_ticks) / CLOCKS_PER_SEC), 2, 3).Str << L")\n";
             if (!pass) {
                 errors += 1;
                 std::wcout << L" -----------" << L" Start debug " << count << L"-" << child << L" -----" << L"\n"
@@ -105,7 +94,7 @@ void qentem_test_engine() {
 }
 
 int main() {
-    // // mem leak, and some other things...
+    // // for checking mem leaks, and some other things...
     // for (size_t y = 0; y < 100000; y++) {
     //     qentem_test_engine();
     // }
