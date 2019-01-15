@@ -61,8 +61,8 @@ String Qentem::Test::DumbExpressions(const Expressions &expres, const String off
             tree += L" BUBBLE";
         }
 
-        if ((expres[i]->Flag & Flags::OVERLOOK) != 0) {
-            tree += L" OVERLOOK";
+        if ((expres[i]->Flag & Flags::IGNORE) != 0) {
+            tree += L" IGNORE";
         }
 
         if ((expres[i]->Flag & Flags::SPLIT) != 0) {
@@ -152,11 +152,63 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bit.Expected.Add(L"_").Add(L"_").Add(L" __ ").Add(L"_ _ _ _");
 
     x1          = new Expression();
+    x1->Flag    = Flags::COMPLETE;
     x1->Keyword = L"-";
     x1->Replace = L"_";
 
     bit.Exprs.Add(x1);
     bit.Exprslvl0.Add(x1);
+    bits.Add(bit);
+    ///////////////////////////////////////////
+    bit      = TestBit();
+    bit.Line = __LINE__;
+
+    bit.Content.Add(L"(<1>)<2>");
+    bit.Expected.Add(L"(<1>)m");
+
+    x1          = new Expression();
+    y1          = new Expression();
+    x1->Flag    = Flags::IGNORE;
+    x1->Tail    = y1;
+    x1->Keyword = L"(";
+    y1->Keyword = L")";
+
+    x2          = new Expression();
+    y2          = new Expression();
+    x2->Flag    = Flags::COMPLETE;
+    x2->Tail    = y2;
+    x2->Keyword = L"<";
+    y2->Keyword = L">";
+    x2->Replace = L"m";
+
+    bit.Exprs.Add(x1);
+    bit.Exprs.Add(x2);
+    bit.Exprslvl0.Add(x1).Add(x2).Add(y1).Add(y2);
+    bits.Add(bit);
+    ///////////////////////////////////////////
+    bit      = TestBit();
+    bit.Line = __LINE__;
+
+    bit.Content.Add(L"(<1>)<2>");
+    bit.Expected.Add(L"(<1>)<n>");
+
+    x1          = new Expression();
+    y1          = new Expression();
+    x1->Flag    = Flags::IGNORE;
+    x1->Tail    = y1;
+    x1->Keyword = L"(";
+    y1->Keyword = L")";
+
+    x2          = new Expression();
+    y2          = new Expression();
+    x2->Tail    = y2;
+    x2->Keyword = L"<";
+    y2->Keyword = L">";
+    x2->Replace = L"n";
+
+    bit.Exprs.Add(x1);
+    bit.Exprs.Add(x2);
+    bit.Exprslvl0.Add(x1).Add(x2).Add(y1).Add(y2);
     bits.Add(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -169,6 +221,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
     x1          = new Expression();
     y1          = new Expression();
+    x1->Flag    = Flags::COMPLETE;
     x1->Tail    = y1;
     x1->Keyword = L"<";
     y1->Keyword = L">";
@@ -188,6 +241,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
     x1          = new Expression();
     y1          = new Expression();
+    x1->Flag    = Flags::COMPLETE;
     x1->Tail    = y1;
     x1->Keyword = L"<<";
     y1->Keyword = L">";
@@ -207,6 +261,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
     x1          = new Expression();
     y1          = new Expression();
+    x1->Flag    = Flags::COMPLETE;
     x1->Tail    = y1;
     x1->Keyword = L"<";
     y1->Keyword = L">>";
@@ -226,6 +281,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
     x1          = new Expression();
     y1          = new Expression();
+    x1->Flag    = Flags::COMPLETE;
     x1->Tail    = y1;
     x1->Keyword = L"<<";
     y1->Keyword = L">>";
@@ -243,6 +299,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
     x1          = new Expression();
     y1          = new Expression();
+    x1->Flag    = Flags::COMPLETE;
     x1->Tail    = y1;
     x1->Keyword = L"<";
     y1->Keyword = L">";
@@ -262,6 +319,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
     x1          = new Expression();
     y1          = new Expression();
+    x1->Flag    = Flags::COMPLETE;
     x1->Tail    = y1;
     x1->Keyword = L"<";
     y1->Keyword = L">";
@@ -283,6 +341,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
     x1          = new Expression();
     y1          = new Expression();
+    x1->Flag    = Flags::COMPLETE;
     x1->Tail    = y1;
     x1->Keyword = L"<<";
     y1->Keyword = L">";
@@ -304,6 +363,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
     x1          = new Expression();
     y1          = new Expression();
+    x1->Flag    = Flags::COMPLETE;
     x1->Tail    = y1;
     x1->Keyword = L"<";
     y1->Keyword = L">>";
@@ -328,6 +388,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
     x1          = new Expression();
     y1          = new Expression();
+    x1->Flag    = Flags::COMPLETE;
     x1->Tail    = y1;
     x1->Keyword = L"<<";
     y1->Keyword = L">>";
@@ -348,10 +409,10 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
     x1          = new Expression();
     y1          = new Expression();
+    x1->Flag    = Flags::BUBBLE | Flags::COMPLETE;
     x1->Tail    = y1;
     x1->Keyword = L"<";
     y1->Keyword = L">";
-    x1->Flag    = Flags::BUBBLE;
 
     x1->NestExprs.Add(x1);
     bit.Exprs.Add(x1);
@@ -360,31 +421,32 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
     x1->ParseCB = ([](const String &block, const Match &match) noexcept->String {
         String nc = L"(";
-        nc += block;
+        nc += block.Part(match.OLength, block.Length - (match.OLength + match.CLength));
         nc += L")";
         return nc;
     });
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
+
     bit.Content.Add(L"(6<1-B>9)").Add(L"(6<1-B>9)(6<1-B>9)").Add(L"(6<1-<2-<3-U>>>9)");
-    bit.Expected.Add(L"=6A+9=").Add(L"=6A+9==6A+9=").Add(L"=6A+9=");
+    bit.Expected.Add(L"=(6A+9)=").Add(L"=(6A+9)==(6A+9)=").Add(L"=(6A+9)=");
     bit.Content.Add(L"(6<1-<2-<3-U>>>9)(6<1-<2-<3-U>>>9)");
-    bit.Expected.Add(L"=6A+9==6A+9=");
+    bit.Expected.Add(L"=(6A+9)==(6A+9)=");
 
     x1          = new Expression();
     y1          = new Expression();
+    x1->Flag    = Flags::BUBBLE | Flags::COMPLETE;
     x1->Tail    = y1;
     x1->Keyword = L"(";
     y1->Keyword = L")";
-    x1->Flag    = Flags::BUBBLE;
 
     x2          = new Expression();
     y2          = new Expression();
+    x2->Flag    = Flags::BUBBLE | Flags::COMPLETE;
     x2->Tail    = y2;
     x2->Keyword = L"<";
     y2->Keyword = L">";
-    x2->Flag    = Flags::BUBBLE;
 
     x2->NestExprs.Add(x2); // Nest itself
     x1->NestExprs.Add(x2);
@@ -400,11 +462,11 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     });
 
     x2->ParseCB = ([](const String &block, const Match &match) noexcept->String {
-        if (block == L"3-U") {
+        if (block == L"<3-U>") {
             return L"A";
-        } else if (block == L"2-A") {
+        } else if (block == L"<2-A>") {
             return L"B";
-        } else if (block == L"1-B") {
+        } else if (block == L"<1-B>") {
             return L"A+";
         }
 
@@ -413,8 +475,9 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
+
     bit.Content.Add(L"[([x]),([y])--]==").Add(L"e[(]xx)] ").Add(L" [(x])] ");
-    bit.Expected.Add(L"==").Add(L"e ").Add(L"  ");
+    bit.Expected.Add(L"[]==").Add(L"e[] ").Add(L" [] ");
 
     x1          = new Expression();
     y1          = new Expression();
@@ -436,7 +499,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bit      = TestBit();
     bit.Line = __LINE__;
     bit.Content.Add(L"[[[[((((x]]]])))),((((y))))--]]]]--");
-    bit.Expected.Add(L"--");
+    bit.Expected.Add(L"[[[[]]]]--");
 
     x1          = new Expression();
     y1          = new Expression();
@@ -457,11 +520,13 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
+
     bit.Content.Add(L"[xY]/").Add(L"    [     x     Y    ]     /  ").Add(L"[xY-yyyyyy]/");
     bit.Expected.Add(L"Y").Add(L"         Y      ").Add(L"Y-yyyyyy");
 
     x1          = new Expression();
     y1          = new Expression();
+    x1->Flag    = Flags::COMPLETE;
     x1->Tail    = y1;
     x1->Keyword = L"[";
     y1->Keyword = L"/";
@@ -481,6 +546,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
+
     bit.Content.Add(L"[[xxxxxY]]]]]]]]]]///")
         .Add(L"    [[     xxxxx     Y    ]]]]]]]]]]     ///  ")
         .Add(L"[[xxxxxY-yyyyyy]]]]]]]]]]///");
@@ -488,6 +554,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
     x1          = new Expression();
     y1          = new Expression();
+    x1->Flag    = Flags::COMPLETE;
     x1->Tail    = y1;
     x1->Keyword = L"[[";
     y1->Keyword = L"///";
@@ -507,13 +574,14 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
+
     bit.Content.Add(L"#    [[ op1='one', op2='two' opx=']q       ]']second op is:/");
     bit.Expected.Add(L"#    second op is:two");
 
     x1          = new Expression();
     y1          = new Expression();
-    x1->Tail    = y1;
     x1->Flag    = Flags::COMPLETE;
+    x1->Tail    = y1;
     x1->Keyword = L"[[ ";
     y1->Keyword = L"/";
 
@@ -539,13 +607,14 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
+
     bit.Content.Add(L"#    [[ op1=;'one';, op2=;'two'; opx=;'}}}q       }}}';}}}second op is:{//}");
     bit.Expected.Add(L"#    second op is:two");
 
     x1          = new Expression();
     y1          = new Expression();
-    x1->Tail    = y1;
     x1->Flag    = Flags::COMPLETE;
+    x1->Tail    = y1;
     x1->Keyword = L"[[ ";
     y1->Keyword = L"{//}";
 
@@ -571,11 +640,13 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
+
     bit.Content.Add(L"#    [ op1='one', op2='two' opx=']q       ]']second op is:/");
     bit.Expected.Add(L"#    second op is:two");
 
     x1          = new Expression();
     y1          = new Expression();
+    x1->Flag    = Flags::COMPLETE;
     x1->Tail    = y1;
     x1->Keyword = L"[ ";
     y1->Keyword = L"/";
@@ -602,11 +673,13 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     /////////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
+
     bit.Content.Add(L"#    [[ op1=;'one';, op2=;'two'; opx=;'}}}q       }}}';}}}second op is:{//}");
     bit.Expected.Add(L"#    second op is:two");
 
     x1          = new Expression();
     y1          = new Expression();
+    x1->Flag    = Flags::COMPLETE;
     x1->Tail    = y1;
     x1->Keyword = L"[[ ";
     y1->Keyword = L"{//}";
@@ -640,8 +713,8 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bit.Expected.Add(L"233").Add(L"133").Add(L"0").Add(L"1111").Add(L"3566");
 
     x1          = new Expression();
+    x1->Flag    = Flags::SPLIT | Flags::COMPLETE;
     x1->Keyword = L"+";
-    x1->Flag    = Flags::SPLIT;
 
     bit.Exprs.Add(x1);
     bit.Exprslvl0.Add(x1);
@@ -686,8 +759,8 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bit.Expected.Add(L"233").Add(L"133").Add(L"0").Add(L"1111").Add(L"3566");
 
     x1          = new Expression();
+    x1->Flag    = Flags::SPLIT | Flags::COMPLETE;
     x1->Keyword = L"++";
-    x1->Flag    = Flags::SPLIT;
 
     bit.Exprs.Add(x1);
     bit.Exprslvl0.Add(x1);
@@ -727,16 +800,24 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bit.Expected.Add(L"120").Add(L"148601");
 
     x1          = new Expression();
+    x1->Flag    = Flags::SPLIT | Flags::COMPLETE;
     x1->Keyword = L"+";
-    x1->Flag    = Flags::SPLIT;
 
     x2          = new Expression();
+    x2->Flag    = Flags::COMPLETE;
     x2->Keyword = L"x";
-    x2->ParseCB = ([](const String &block, const Match &match) noexcept->String { return L"3"; });
+    x2->ParseCB = ([](const String &block, const Match &match) noexcept->String {
+        //
+        return L"3";
+    });
 
     x3          = new Expression();
+    x3->Flag    = Flags::COMPLETE;
     x3->Keyword = L"y";
-    x3->ParseCB = ([](const String &block, const Match &match) noexcept->String { return L"7"; });
+    x3->ParseCB = ([](const String &block, const Match &match) noexcept->String {
+        //
+        return L"7";
+    });
 
     bit.Exprs.Add(x1).Add(x2).Add(x3);
     bit.Exprslvl0.Add(x1).Add(x2).Add(x3);

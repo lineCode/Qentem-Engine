@@ -17,11 +17,11 @@
 using Qentem::Test::TestBit;
 
 void qentem_test_engine() {
-    size_t start_at = 0;
-    size_t child_at = 0;
-    // const size_t   start_at = 0;
-    // const size_t   child_at = 0;
-    const size_t   times = 50000; // 200000
+    // size_t start_at = 0;
+    // size_t child_at = 0;
+    const size_t   start_at = 0;
+    const size_t   child_at = 0;
+    const size_t   times    = 5000; // To slow it down!!!
     size_t         search_ticks;
     size_t         parse_ticks;
     size_t         child  = 0;
@@ -69,10 +69,9 @@ void qentem_test_engine() {
                            << L"  Rendered: \"" << rendered.Str << L"\"\n"
                            << L"  Expected: \"" << bits[i].Expected[t].Str << L"\"\n"
                            << L"  Matches:\n"
-                           << Qentem::Test::DumbMatches(bits[i].Content[t], matches, L"    ").Str
-                           << L"  Expressions:\n"
-                           //    << Qentem::Test::DumbExpressions(bits[i].Exprs, L"    ").Str
-                           << L"\n  ---------- End debug " << count << L"-" << child << L" -------" << L"\n";
+                           << Qentem::Test::DumbMatches(bits[i].Content[t], matches, L"    ").Str << L"  Expressions:\n"
+                           << Qentem::Test::DumbExpressions(bits[i].Exprs, L"    ").Str << L"\n  ---------- End debug "
+                           << count << L"-" << child << L" -------" << L"\n";
 
                 if (break_on_err) {
                     break;
@@ -95,7 +94,7 @@ void qentem_test_engine() {
 }
 
 int main() {
-    // // for checking mem leaks, and some other things...
+    // // for checking mem leaks, and other things...
     // for (size_t y = 0; y < 100000; y++) {
     //     qentem_test_engine();
     // }

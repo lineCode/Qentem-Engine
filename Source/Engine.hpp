@@ -35,10 +35,10 @@ typedef String (*_PARSECB)(const String &block, const Match &match);
 struct Flags {
     static const unsigned short NOTHING  = 0;  // ... What it says.
     static const unsigned short COMPLETE = 1;  // Processing the complete length of the match (Parser only).
-    static const unsigned short OVERLOOK = 2;  // Match a Keyword but don't take it into account.
+    static const unsigned short IGNORE   = 2;  // Match a Keyword but don't process it inside Parse().
     static const unsigned short BUBBLE   = 4;  // Parse nested matches.
     static const unsigned short SPLIT    = 8;  // Split a match at a point.
-    static const unsigned short POP      = 16; // Search again with NestMatch if the match fails (See ALU.cpp).
+    static const unsigned short POP      = 16; // Search again with NestExprs if the match fails (See ALU.cpp).
 };
 /////////////////////////////////
 struct Expression {
@@ -55,7 +55,7 @@ struct Expression {
     _SEARCHCB SearchCB = nullptr; // A callback function for custom lookup.
     _PARSECB  ParseCB  = nullptr; // A callback function for custom rendering.
 
-    // Pocket pointer is a var that can be linked to a register to be used in callback functions insted of relining on
+    // Pocket pointer is a var that can be linked to an object to be used in callback functions insted of relining on
     // static data members, which is not good for multi-threading operations. (See Template.cpp)
     void *Pocket = nullptr;
 };
@@ -73,7 +73,7 @@ struct Match {
 
     Array<Match> NestMatch; // To hold sub matches inside a match.
 
-    // SubMatch: To hold matches inside a match; for evaluation before nest matches get processed.
+    // SubMatch: To hold matches inside a match; for checking before evaluation nest matches.
     // Its content does not get parse; it would be faster to do a sub search insead of calling back Search() from
     // an outside function
     Array<Match> SubMatch;

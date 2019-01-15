@@ -101,8 +101,8 @@ Array<Qentem::Engine::Match> Qentem::Engine::Search(const String &content, const
                         if (max > to) {
                             // This is important to have the seearch look ahead of the limited length
                             // in order to find the entire currect match.
-                            to          = max;
-                            item.Status = 1; // 1: OverDrive
+                            to          = max; // TO THE LIMIT
+                            item.Status = 1;   // 1: OverDrive
                         }
 
                         // Seek to avoid having the same closing/ending keywork.
@@ -228,21 +228,25 @@ String Qentem::Engine::Parse(const String &content, const Array<Match> &items, s
         // Current match
         item = &(items[id]);
 
+        if ((Flags::IGNORE & item->Expr->Flag) != 0) {
+            continue;
+        }
+
+        if ((Flags::COMPLETE & item->Expr->Flag) == 0) {
+            // Just the content inside the match. Default!
+            from  = (item->Offset + item->OLength);
+            limit = (item->Length - (item->OLength + item->CLength));
+        } else {
+            from  = item->Offset;
+            limit = item->Length;
+        }
+
         // Adding any content that comes before...
-        if ((offset < item->Offset)) {
-            rendered += content.Part(offset, (item->Offset - offset));
+        if ((offset < from)) {
+            rendered += content.Part(offset, (from - offset));
         }
 
         if (item->Expr->ParseCB != nullptr) {
-            if ((Flags::COMPLETE & item->Expr->Flag) == 0) {
-                // Just the content inside the match. Default!
-                from  = (item->Offset + item->OLength);
-                limit = (item->Length - (item->OLength + item->CLength));
-            } else {
-                from  = item->Offset;
-                limit = item->Length;
-            }
-
             if ((Flags::BUBBLE & item->Expr->Flag) != 0) {
                 if (item->NestMatch.Size != 0) {
                     rendered +=
@@ -258,7 +262,7 @@ String Qentem::Engine::Parse(const String &content, const Array<Match> &items, s
             rendered += item->Expr->Replace;
         }
 
-        offset = item->Offset + item->Length;
+        offset = from + limit;
     } while (++id < items.Size);
 
     if (offset != 0) {
