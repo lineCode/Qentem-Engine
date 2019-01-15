@@ -9,18 +9,19 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include "Test.hpp"
-#include <iostream>
 #include <time.h>
+#include <iostream>
+#include "Addon/Test.hpp"
+#include "Addon/ALU.hpp"
 
 using Qentem::Test::TestBit;
 
 void qentem_test_engine() {
-    // size_t start_at = 11;
-    // size_t child_at = 2;
-    const size_t   start_at = 0;
-    const size_t   child_at = 0;
-    const size_t   times    = 1; // 10000
+    size_t start_at = 0;
+    size_t child_at = 0;
+    // const size_t   start_at = 0;
+    // const size_t   child_at = 0;
+    const size_t   times = 50000; // 200000
     size_t         search_ticks;
     size_t         parse_ticks;
     size_t         child  = 0;
@@ -32,11 +33,11 @@ void qentem_test_engine() {
     bool       pass         = false;
     const bool break_on_err = true;
     std::wcout << L"\n#Engine::Search&Parse():\n";
-    for (size_t i = start_at; i < bits.Size(); i++) {
+    for (size_t i = start_at; i < bits.Size; i++) {
         child = child_at;
         count += 1;
 
-        for (size_t t = child_at; t < bits[i].Content.Size(); t++) {
+        for (size_t t = child_at; t < bits[i].Content.Size; t++) {
             Array<Qentem::Engine::Match> matches;
             search_ticks = clock();
             for (size_t x = 0; x < times; x++) {
@@ -68,9 +69,9 @@ void qentem_test_engine() {
                            << L"  Rendered: \"" << rendered.Str << L"\"\n"
                            << L"  Expected: \"" << bits[i].Expected[t].Str << L"\"\n"
                            << L"  Matches:\n"
-                           << Qentem::Engine::DumbMatches(bits[i].Content[t], matches, L"    ").Str
+                           << Qentem::Test::DumbMatches(bits[i].Content[t], matches, L"    ").Str
                            << L"  Expressions:\n"
-                           << Qentem::Engine::DumbExpressions(bits[i].Exprs, L"    ").Str
+                           //    << Qentem::Test::DumbExpressions(bits[i].Exprs, L"    ").Str
                            << L"\n  ---------- End debug " << count << L"-" << child << L" -------" << L"\n";
 
                 if (break_on_err) {
@@ -100,6 +101,10 @@ int main() {
     // }
     // std::getwchar();
 
+    // float nnn = 0;
+    // Qentem::String::ToNumber(L"  98.24   ", nnn);
+    // auto content = L"";
+    // float  aa      = Qentem::ALU::Execute(content);
     qentem_test_engine();
 
     return 1;

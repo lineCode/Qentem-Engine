@@ -9,11 +9,11 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include "QArray.hpp"
+#include "Addon/QArray.hpp"
 
 void Qentem::QArray::Add(const String &key, const String &_data) noexcept {
     Keys.Add(key);
-    RealID.Add(Strings.Size());
+    RealID.Add(Strings.Size);
     Types.Add(VType::StringT);
 
     Strings.Add(_data);
@@ -21,7 +21,7 @@ void Qentem::QArray::Add(const String &key, const String &_data) noexcept {
 
 void Qentem::QArray::Add(const String &key, const Array<String> &_data) noexcept {
     Keys.Add(key);
-    RealID.Add(Arrays.Size());
+    RealID.Add(Arrays.Size);
     Types.Add(VType::ArrayT);
 
     Arrays.Add(_data);
@@ -29,7 +29,7 @@ void Qentem::QArray::Add(const String &key, const Array<String> &_data) noexcept
 
 void Qentem::QArray::Add(const String &key, const QArray &_data) noexcept {
     Keys.Add(key);
-    RealID.Add(VArray.Size());
+    RealID.Add(VArray.Size);
     Types.Add(VType::QArrayT);
 
     VArray.Add(_data);
@@ -37,7 +37,7 @@ void Qentem::QArray::Add(const String &key, const QArray &_data) noexcept {
 
 bool Qentem::QArray::GetIndex(const String &key, size_t &index) const noexcept {
     // TODO: Use hashing!
-    for (size_t id = 0; id <= Keys.Size(); id++) {
+    for (size_t id = 0; id <= Keys.Size; id++) {
         if (key == Keys[id]) {
             index = id;
             return true;
@@ -47,7 +47,7 @@ bool Qentem::QArray::GetIndex(const String &key, size_t &index) const noexcept {
     return false;
 }
 
-// Key form can be: name, name[id1], name[id1][id2], name[id1][id2][idx]...
+// Key from can be: name, name[id1], name[id1][id2], name[id1][id2][idx]...
 String *Qentem::QArray::GetValue(const String &key) noexcept {
     String L_key    = key;
     String id       = L"";
@@ -66,8 +66,8 @@ String *Qentem::QArray::GetValue(const String &key) noexcept {
 
             if (id.Length != 0) {
                 if (type == VType::ArrayT) {
-                    size_t nid = (size_t)(String::ToNumber(id));
-                    if (nid < Arrays[index].Size()) {
+                    float nid = 0.0f;
+                    if ((String::ToNumber(id, nid)) && ((size_t)nid < Arrays[index].Size)) {
                         return &(Arrays[index][nid]);
                     }
                 } else if (type == VType::QArrayT) {

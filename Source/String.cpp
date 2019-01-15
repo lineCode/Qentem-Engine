@@ -217,40 +217,57 @@ Qentem::String Qentem::String::ToString(float number, size_t min, size_t max) no
     return (sign + tmp_l);
 }
 
-const float Qentem::String::ToNumber(const String &str) noexcept {
+const bool Qentem::String::ToNumber(const String &str, float &number) noexcept {
     if (str.Length == 0) {
-        return 0;
+        return false;
     }
 
-    float   num = 0;
-    float   m   = 1;
-    wchar_t c   = 0;
+    wchar_t c;
 
-    size_t len = str.Length; // It has to have a at least one letter before [
+    number       = 0.0f;
+    size_t m     = 1;
+    size_t start = 0;
+    size_t len   = str.Length;
+    while (str.Str[--len] == L' ') {
+    }
+    len += 1;
+
+    while (str.Str[start++] == L' ') {
+    }
+    start -= 1;
+
     do {
         c = str.Str[--len];
 
         if ((c < 47) || (c > 58)) {
-            if ((len == 0) && (str.Str[0] == '-')) {
-                num *= -1;
+            if (c == L'-') {
+                number *= -1.0f;
+                break;
+            } else if (c == L'.') {
+                number /= m;
+                // number += 0.00001f;
+                m = 1;
+                continue;
+            } else {
+                number = 0.0f;
+                return false;
             }
-            break;
         }
 
-        num += ((c - 48) * m);
+        number += ((c - 48) * m);
 
-        if (len == 0) {
+        if (len == start) {
             break;
         }
 
         m *= 10;
-    } while (len != 0);
+    } while (true);
 
-    return num;
+    return number;
 }
 
 /**
- * @brief Get a part of text.
+ * @brief Get a part of the text.
  *
  * @param offset An index to start from.
  * @param limit The number of characters to copy.
