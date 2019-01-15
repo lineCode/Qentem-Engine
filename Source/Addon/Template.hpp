@@ -13,8 +13,8 @@
 #define QENTEM_TEMPLATE_H
 
 #include "Engine.hpp"
-#include "ALU.hpp"
-#include "QArray.hpp"
+#include "Addon/ALU.hpp"
+#include "Addon/QArray.hpp"
 
 using Qentem::QArray;
 using Qentem::Engine::Expression;

@@ -9,30 +9,17 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include "Test.hpp"
-#include <iomanip>
-#include <iostream>
 #include <time.h>
+#include <iostream>
+#include "Addon/Test.hpp"
+#include "Addon/ALU.hpp"
 
 using Qentem::Test::TestBit;
 
-String q_format_number(float num, size_t min) noexcept {
-    const String str  = Qentem::String::ToString(num);
-    String       str2 = L"";
-
-    for (size_t i = str.Length; i < min; i++) {
-        str2 += L"0";
-    }
-
-    return (str2 + str);
-}
-
 void qentem_test_engine() {
-    // size_t start_at = 11;
-    // size_t child_at = 2;
     const size_t   start_at = 0;
     const size_t   child_at = 0;
-    const size_t   times    = 1; // 10000
+    const size_t   times    = 1; // To slow it down!!!
     size_t         search_ticks;
     size_t         parse_ticks;
     size_t         child  = 0;
@@ -44,11 +31,11 @@ void qentem_test_engine() {
     bool       pass         = false;
     const bool break_on_err = true;
     std::wcout << L"\n#Engine::Search&Parse():\n";
-    for (size_t i = start_at; i < bits.Size(); i++) {
+    for (size_t i = start_at; i < bits.Size; i++) {
         child = child_at;
         count += 1;
 
-        for (size_t t = child_at; t < bits[i].Content.Size(); t++) {
+        for (size_t t = child_at; t < bits[i].Content.Size; t++) {
             Array<Qentem::Engine::Match> matches;
             search_ticks = clock();
             for (size_t x = 0; x < times; x++) {
@@ -67,10 +54,11 @@ void qentem_test_engine() {
             child += 1;
             total += 1;
 
-            std::wcout << (pass ? L" " : L"\n") << q_format_number((float)count, 2).Str << L"-"
-                       << q_format_number((float)child, 2).Str << (pass ? L": Pass" : L": Fail") << L" (Search: "
-                       << std::setprecision(3) << (((float)search_ticks) / CLOCKS_PER_SEC) << L")" << L" (Parse: "
-                       << std::setprecision(3) << (((float)parse_ticks) / CLOCKS_PER_SEC) << L")\n";
+            std::wcout << (pass ? L" " : L"\n") << Qentem::String::ToString((float)count, 2).Str << L"-"
+                       << Qentem::String::ToString((float)child, 2).Str << (pass ? L": Pass" : L": Fail")
+                       << L" (Search: " << Qentem::String::ToString((((float)search_ticks) / CLOCKS_PER_SEC), 2, 3).Str
+                       << L")" << L" (Parse: "
+                       << Qentem::String::ToString((((float)parse_ticks) / CLOCKS_PER_SEC), 2, 3).Str << L")\n";
             if (!pass) {
                 errors += 1;
                 std::wcout << L" -----------" << L" Start debug " << count << L"-" << child << L" -----" << L"\n"
@@ -79,10 +67,9 @@ void qentem_test_engine() {
                            << L"  Rendered: \"" << rendered.Str << L"\"\n"
                            << L"  Expected: \"" << bits[i].Expected[t].Str << L"\"\n"
                            << L"  Matches:\n"
-                           << Qentem::Engine::DumbMatches(bits[i].Content[t], matches, L"    ").Str
-                           << L"  Expressions:\n"
-                           << Qentem::Engine::DumbExpressions(bits[i].Exprs, L"    ").Str
-                           << L"\n  ---------- End debug " << count << L"-" << child << L" -------" << L"\n";
+                           << Qentem::Test::DumbMatches(bits[i].Content[t], matches, L"    ").Str << L"  Expressions:\n"
+                           << Qentem::Test::DumbExpressions(bits[i].Exprs, L"    ").Str << L"\n  ---------- End debug "
+                           << count << L"-" << child << L" -------" << L"\n";
 
                 if (break_on_err) {
                     break;
@@ -105,8 +92,8 @@ void qentem_test_engine() {
 }
 
 int main() {
-    // // mem leak, and some other things...
-    // for (size_t y = 0; y < 100000; y++) {
+    // for checking mem leaks, and other things...
+    // for (size_t y = 0; y < 1000; y++) {
     //     qentem_test_engine();
     // }
     // std::getwchar();

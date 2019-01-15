@@ -31,7 +31,12 @@ struct TestBit {
     size_t        Line;
 };
 
-void           CleanBits(Array<TestBit> &bits) noexcept;
+void          CleanBits(Array<TestBit> &bits) noexcept;
+Array<String> Extract(const String &content, const Array<Match> &items) noexcept;
+
+String DumbExpressions(const Expressions &expres, const String offset, size_t index = 0,
+                       Expression *expr = nullptr) noexcept;
+String DumbMatches(const String &content, const Array<Match> &items, const String offset, size_t index = 0) noexcept;
 Array<TestBit> GetBits() noexcept;
 String         SubMatchZero(const String &block, const Match &match) noexcept;
 String         SubMatchNestMatch(const String &block, const Match &match) noexcept;

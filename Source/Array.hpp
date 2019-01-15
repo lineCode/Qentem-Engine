@@ -18,42 +18,37 @@
 
 namespace Qentem {
 
-// There is no .cpp file because of the use of template <type T>
+// There is no .cpp file because of the use of template <typename T>
 template <typename T>
 class Array {
   private:
-    size_t _index    = 0;
     size_t _capacity = 0;
 
-    static void _copy(const Array<T> *from, Array<T> *to) noexcept {
-        if (to->Storage != nullptr) {
-            // TODO:: I don't think this is necessary...
-            delete[] to->Storage;
-            to->Storage = nullptr;
-        }
+    static void _init(const Array<T> *from, Array<T> *to) noexcept {
+        if (from->Size != 0) {
+            to->Storage = new T[from->Size];
 
-        if (from->_index != 0) {
-            to->Storage = new T[from->_index];
-
-            for (size_t n = 0; n < from->_index; n++) {
+            for (size_t n = 0; n < from->Size; n++) {
                 to->Storage[n] = from->Storage[n];
             }
         }
 
-        to->_capacity = from->_index;
-        to->_index    = from->_index;
+        to->_capacity = from->Size;
+        to->Size      = from->Size;
     }
 
   public:
-    T *Storage       = nullptr;
+    size_t Size      = 0;
+    T *    Storage   = nullptr;
     explicit Array() = default;
 
     Array(const Array<T> &src) noexcept {
         if ((this != &src) && (src._capacity != 0)) {
-            Array::_copy(&src, this);
+            Array::_init(&src, this);
         }
     }
 
+    // Uncomment to use, C style
     // static Array<T> Group(T items, ...) noexcept {
     //     T *item = &items;
 
@@ -71,6 +66,7 @@ class Array {
     //     return arr;
     // }
 
+    // Uncomment to use, C++ style
     // Array(const std::initializer_list<T> &items) noexcept {
     //     if (items.size() != 0) {
     //         this->_capacity = items.size();
@@ -95,12 +91,12 @@ class Array {
     }
 
     Array<T> &Add(const Array<T> &src) noexcept {
-        if (src.Size() != 0) {
-            if ((this->_index + src._index) > this->_capacity) {
-                this->_capacity += src._index;
+        if (src.Size != 0) {
+            if ((this->Size + src.Size) > this->_capacity) {
+                this->_capacity += src.Size;
 
                 T *tmp = new T[this->_capacity];
-                for (size_t n = 0; n < this->_index; n++) {
+                for (size_t n = 0; n < this->Size; n++) {
                     tmp[n] = this->Storage[n];
                 }
 
@@ -108,8 +104,8 @@ class Array {
                 this->Storage = tmp;
             }
 
-            for (size_t i = 0; i < src._index; i++) {
-                this->Storage[this->_index++] = src.Storage[i];
+            for (size_t i = 0; i < src.Size; i++) {
+                this->Storage[this->Size++] = src.Storage[i];
             }
         }
 
@@ -117,7 +113,7 @@ class Array {
     }
 
     Array<T> &Add(const T &item) noexcept {
-        if (this->_index == this->_capacity) {
+        if (this->Size == this->_capacity) {
             if (this->_capacity == 0) {
                 this->_capacity = 1;
             } else {
@@ -125,7 +121,7 @@ class Array {
             }
 
             T *tmp = new T[this->_capacity];
-            for (size_t n = 0; n < this->_index; n++) {
+            for (size_t n = 0; n < this->Size; n++) {
                 tmp[n] = this->Storage[n];
             }
 
@@ -133,18 +129,14 @@ class Array {
             this->Storage = tmp;
         }
 
-        *(this->Storage + this->_index++) = item;
+        *(this->Storage + this->Size++) = item;
 
         return *this;
     }
 
-    inline constexpr size_t Size() const noexcept {
-        return this->_index;
-    }
-
     Array<T> &operator=(const Array<T> &src) noexcept {
         if ((this != &src) && (src._capacity != 0)) {
-            Array::_copy(&src, this);
+            Array::_init(&src, this);
         }
         return *this;
     }
@@ -155,17 +147,17 @@ class Array {
             delete[] this->Storage;
             this->Storage   = src.Storage;
             this->_capacity = src._capacity;
-            this->_index    = src._index;
+            this->Size      = src.Size;
 
             src._capacity = 0;
-            src._index    = 0;
+            src.Size      = 0;
             src.Storage   = nullptr;
         }
         return *this;
     }
 
     inline constexpr T &operator[](const size_t id) const noexcept {
-        // if (id >= this->_index) {
+        // if (id >= this->Size) {
         //     throw("index out of range!");
         // }
 

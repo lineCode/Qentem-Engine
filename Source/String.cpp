@@ -131,85 +131,159 @@ const bool Qentem::String::operator!=(const String &src) const noexcept {
 
 void Qentem::String::SetSize(size_t _length) noexcept {
     wchar_t *_tmp = new wchar_t[(_length + 1)];
-    size_t   j    = 0;
+    size_t   i    = 0;
 
-    for (size_t i = 0; i < this->Length; i++) {
-        _tmp[i] = this->Str[j++];
+    if (_length > this->Length)
+        for (; i < this->Length; i++) {
+            _tmp[i] = this->Str[i];
+        }
+    else {
+        for (; i < _length; i++) {
+            _tmp[i] = this->Str[i];
+        }
     }
-    _tmp[j] = '\0'; // To mark the end of a string.
+    _tmp[i] = '\0'; // To mark the end of string.
 
     delete[] this->Str;
     this->Str    = _tmp;
-    this->_index = j;
+    this->_index = i;
     this->Length = _length;
 }
 
-Qentem::String Qentem::String::ToString(float number) noexcept {
-    if (number == 0) {
-        return L"0";
-    }
+Qentem::String Qentem::String::Trim(const String &str) noexcept {
+    size_t start = 0;
+    size_t len   = str.Length;
 
-    String result;
+    while (str.Str[start++] == L' ') {
+    }
+    start -= 1;
+
+    while (str.Str[--len] == L' ') {
+    }
+    len += 1;
+
+    String tmp = str.Part(start, len - start);
+    return tmp;
+}
+
+Qentem::String Qentem::String::Revers(const String &str) noexcept {
     String tmp = L"";
-    size_t num;
+    tmp.SetSize(str.Length);
 
-    if (number > 0) {
-        num    = (size_t)number;
-        result = L"";
-    } else {
-        number *= -1.0f;
-        num    = (size_t)number;
-        result = L"-";
+    for (size_t g = str.Length; g > 0; --g) {
+        tmp += str.Str[g - 1];
     }
 
-    while (num > 0) {
-        tmp += wchar_t((num % 10) + 48);
+    return tmp;
+}
+
+Qentem::String Qentem::String::ToString(float number, size_t min, size_t max) noexcept {
+    String sign = L"";
+    if (number < 0.0f) {
+        sign = L"-";
+        number *= -1.0f;
+    }
+
+    size_t num;
+    String tmp_g = L"";
+    if (max > 0) {
+        float nuw = 1;
+        for (size_t i = 0; i <= max; i++) {
+            nuw *= 10;
+        }
+
+        num = (size_t)(number * nuw);
+
+        size_t di = (num % 10);
+        num /= 10;
+
+        if (di >= 5) {
+            num += 1;
+        }
+
+        for (size_t g = 0; g < max; g++) {
+            di = (num % 10);
+            tmp_g += wchar_t(di + 48);
+            num /= 10;
+        }
+
+        tmp_g = String::Revers(tmp_g);
+    } else {
+        num = (size_t)(number);
+    }
+
+    String tmp_l = L"";
+    while (num > 0.0f) {
+        tmp_l += wchar_t(((num % 10) + 48));
         num /= 10;
     }
 
-    result.SetSize(tmp.Length);
+    tmp_l = String::Revers(tmp_l);
 
-    for (size_t g = tmp.Length; g > 0; --g) {
-        result += tmp.Str[g - 1];
+    String min_str = L"";
+    for (size_t i = tmp_l.Length; i < min; i++) {
+        min_str += L"0";
+    }
+    tmp_l = min_str + tmp_l;
+
+    if (tmp_g.Length != 0) {
+        tmp_l = tmp_l + L"." + tmp_g;
     }
 
-    return result;
+    return (sign + tmp_l);
 }
 
-const float Qentem::String::ToNumber(const String &str) noexcept {
+const bool Qentem::String::ToNumber(const String &str, float &number) noexcept {
     if (str.Length == 0) {
-        return 0;
+        return false;
     }
 
-    float   num = 0;
-    float   m   = 1;
-    wchar_t c   = 0;
+    wchar_t c;
+    number       = 0.0f;
+    size_t m     = 1;
+    size_t start = 0;
+    size_t len   = str.Length;
 
-    size_t len = str.Length; // It has to have a at least one letter before [
+    while (str.Str[--len] == L' ') {
+    }
+    len += 1;
+
+    while (str.Str[start++] == L' ') {
+    }
+    start -= 1;
+
     do {
         c = str.Str[--len];
 
         if ((c < 47) || (c > 58)) {
-            if ((len == 0) && (str.Str[0] == '-')) {
-                num *= -1;
+            if (c == L'-') {
+                number *= -1.0f;
+                break;
+            } else if (c == L'.') {
+                number /= m;
+                // number += 0.00001f;
+                m = 1;
+                continue;
+            } else {
+                number = 0.0f;
+                return false;
             }
-            break;
         }
 
-        num += ((c - 48) * m);
+        number += ((c - 48) * m);
 
-        if (len == 0) {
+        if (len == start) {
             break;
         }
 
         m *= 10;
-    } while (len != 0);
+    } while (true);
 
-    return num;
+    return true;
 }
 
 /**
- * @brief Get a part of text.
+ * @brief Get a part of the text.
  *
  * @param offset An index to start from.
  * @param limit The number of characters to copy.

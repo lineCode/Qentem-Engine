@@ -9,7 +9,7 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include "Template.hpp"
+#include "Addon/Template.hpp"
 
 Qentem::Template::Template() noexcept {
     // Variables evaluation.
@@ -54,7 +54,7 @@ Qentem::Template::Template() noexcept {
     /////////////////////////////////
 
     // If evaluation.
-    TagIf.ParseCB = &Template::RenderIF;
+    TagIf.ParseCB = &(Template::RenderIF);
     TagIf.Pocket  = &(this->Pocket);
     // <qt:if case="{case}">html code</qt:if>
     TagIf.Keyword  = L"<qt:if";
@@ -73,7 +73,7 @@ Qentem::Template::Template() noexcept {
     /////////////////////////////////
 
     // Loop evaluation.
-    TagLoop.ParseCB = &Template::RenderLoop;
+    TagLoop.ParseCB = &(Template::RenderLoop);
     TagLoop.Pocket  = &(this->Pocket);
     // <qt:loop set="abc2" var="loopId">
     //     <span>loopId): -{qt:abc2[loopId]}</span>
@@ -97,13 +97,14 @@ String Qentem::Template::Render(const String &content, QArray *data) noexcept {
 // e.g. {qt-var_name[id]}
 // Nest: {qt-var_{qt-var2_{qt-var3_id}}}
 String Qentem::Template::RenderVar(const String &block, const Match &match) noexcept {
-    if (block.Length != 0) {
-        String *val = ((Template::PocketT *)match.Expr->Pocket)->Data->GetValue(block);
+    String id = block.Part(match.OLength, (block.Length - (match.OLength + match.CLength)));
+    if (id.Length != 0) {
+        String *val = ((Template::PocketT *)match.Expr->Pocket)->Data->GetValue(id);
         if (val != nullptr) {
             return *val;
         }
     }
-    return block;
+    return id;
 }
 
 // {qt:iif case="3 == 3" true="Yes" false="No"}
@@ -112,7 +113,7 @@ String Qentem::Template::RenderVar(const String &block, const Match &match) noex
 // {qt:iif case="3 == 3" true="Yes" false="No"}
 String Qentem::Template::RenderIIF(const String &block, const Match &match) noexcept {
     const Array<Match> items = Engine::Search(block, ((PocketT *)(match.Expr->Pocket))->TagsQuotes);
-    if (items.Size() == 0) {
+    if (items.Size == 0) {
         return L"";
     }
 
@@ -122,7 +123,7 @@ String Qentem::Template::RenderIIF(const String &block, const Match &match) noex
     String iif_true  = L"";
 
     // case="[statement]" true="[Yes]" false="[No]"
-    for (size_t i = 0; i < items.Size(); i++) {
+    for (size_t i = 0; i < items.Size; i++) {
         // With this method, order is not necessary of case=, true=, false=
         m = &(items[i]);
         if (m->Offset > 3) {
@@ -153,11 +154,11 @@ String Qentem::Template::RenderIIF(const String &block, const Match &match) noex
 // <qt:if case="{case1}">html code1 <qt:elseif case={case2}> html code2</qt:if>
 // <qt:if case="{case}">html code <qt:if case="{case2}">additional html code</qt:if></qt:if>
 String Qentem::Template::RenderIF(const String &block, const Match &match) noexcept {
-    // Nothing is processed inside the match before checking if "if-else" is TRUE.
-    if (match.SubMatch.Size() != 0) {
+    // Nothing is processed inside the match before checking if the condition is TRUE.
+    if (match.SubMatch.Size != 0) {
         Match *sm = &(match.SubMatch[0]);
 
-        if (sm->NestMatch.Size() != 0) {
+        if (sm->NestMatch.Size != 0) {
             PocketT *pocket = (PocketT *)(match.Expr->Pocket);
 
             Match *nm      = &(sm->NestMatch[0]);
@@ -183,7 +184,7 @@ String Qentem::Template::RenderIF(const String &block, const Match &match) noexc
 // </qt:loop>
 String Qentem::Template::RenderLoop(const String &block, const Match &match) noexcept {
     // To match: <qt:loop (set="abc2" var="loopId")>
-    if ((match.SubMatch.Size() != 0) && (match.SubMatch[0].SubMatch.Size() != 0)) {
+    if ((match.SubMatch.Size != 0) && (match.SubMatch[0].SubMatch.Size != 0)) {
         Match *      m;
         String       name   = L"";
         String       var_id = L"";
@@ -195,7 +196,7 @@ String Qentem::Template::RenderLoop(const String &block, const Match &match) noe
         // adj_offset = (m->Offset + m->OLength);
 
         // set="(array_name)" var="(var_id)"
-        for (size_t i = 0; i < sm->SubMatch.Size(); i++) {
+        for (size_t i = 0; i < sm->SubMatch.Size; i++) {
             m = &(sm->SubMatch[i]);
             if (m->Offset > 1) {
                 switch (block.Str[(m->Offset - 2)]) {
@@ -262,13 +263,13 @@ String Qentem::Template::DoLoop(const String &content, const String &name, const
     // Feature: Use StringStream!!!
     if (type == VType::ArrayT) {
         const Array<String> *st = &(storage->Arrays[storage->RealID[index]]);
-        for (size_t i = 0; i < st->Size(); i++) {
+        for (size_t i = 0; i < st->Size; i++) {
             ser[0]->Replace = String::ToString((float)i);
             rendered += Engine::Parse(content, items);
         }
     } else if (type == VType::QArrayT) {
         const Array<String> *va = &(storage->VArray[storage->RealID[index]].Keys);
-        for (size_t i = 0; i < va->Size(); i++) {
+        for (size_t i = 0; i < va->Size; i++) {
             ser[0]->Replace = (*va)[i];
             rendered += Engine::Parse(content, items);
         }
