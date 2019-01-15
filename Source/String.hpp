@@ -34,7 +34,8 @@ class String {
     virtual ~String() noexcept;
     void SetSize(size_t _length) noexcept;
 
-    static String     Revers(Qentem::String _string) noexcept;
+    static String     Trim(const String &str) noexcept;
+    static String     Revers(const String &str) noexcept;
     static const bool ToNumber(const String &str, float &number) noexcept;
     static String     ToString(float number, size_t min = 1, size_t max = 0) noexcept;
 

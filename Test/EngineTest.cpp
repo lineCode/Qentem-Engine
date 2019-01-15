@@ -17,11 +17,9 @@
 using Qentem::Test::TestBit;
 
 void qentem_test_engine() {
-    // size_t start_at = 0;
-    // size_t child_at = 0;
     const size_t   start_at = 0;
     const size_t   child_at = 0;
-    const size_t   times    = 5000; // To slow it down!!!
+    const size_t   times    = 1; // To slow it down!!!
     size_t         search_ticks;
     size_t         parse_ticks;
     size_t         child  = 0;
@@ -94,16 +92,12 @@ void qentem_test_engine() {
 }
 
 int main() {
-    // // for checking mem leaks, and other things...
-    // for (size_t y = 0; y < 100000; y++) {
+    // for checking mem leaks, and other things...
+    // for (size_t y = 0; y < 1000; y++) {
     //     qentem_test_engine();
     // }
     // std::getwchar();
 
-    // float nnn = 0;
-    // Qentem::String::ToNumber(L"  98.24   ", nnn);
-    // auto content = L"";
-    // float  aa      = Qentem::ALU::Execute(content);
     qentem_test_engine();
 
     return 1;

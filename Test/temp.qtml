@@ -25,26 +25,26 @@
 <!--- Simple If condition -->
 <div>
     <qt:if case="{qt-var5} = 5">
-        variable "var5" equals 5
+        variable "var5" is 5
     </qt:if>
 </div>
 
 <!--- Simple else If conditions -->
 <div>
-    <qt:if case="1">
-        variable "engine" equals {qt-engine}}<br>
+    <qt:if case="  This is Qentem  =    This is Qentem  ">
+        variable "engine" is {qt-engine}}<br>
 
         <qt-elseif case="{qt-var_string} = image" />
-        variable "var_string" equals "image"<br>
+        variable "var_string" is "image"<br>
 
         <qt-else />
-        variable "var_string" equals {qt-var_string}<br>
+        variable "var_string" is {qt-var_string}<br>
     </qt:if>
 </div>
 
 <!--- Nested If conditions -->
 <div>
-    1<qt:if case="1 = 1">
+    1<qt:if case="{qt-var_string} = image">
         {qt-var_string}
         2<qt:if case="1!=0">
             {qt-var_string}

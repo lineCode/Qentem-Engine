@@ -21,19 +21,22 @@ using Qentem::Engine::Match;
 namespace Qentem {
 
 struct ALU {
-    enum Operation { None = 0, Mul, Div, Add, Sub, Equ, NEq, Big, Les, BEq, LEq };
-
-    Expressions Parens;
+    Expressions ParenExprs;
+    Expressions MathExprs;
     Expression  ParenExpr = Expression();
     Expression  ParenTail = Expression();
+
+    Expression MathEqu = Expression();
+    Expression MathAdd = Expression();
+    Expression MathMul = Expression();
 
     explicit ALU() noexcept;
     float Evaluate(String &content) noexcept;
 
-    static String          ParenthesisCallback(const String &block, const Match &match) noexcept;
-    static const Operation GetNextOp(const String &content, size_t &i) noexcept;
-    static float           Calculate(const float left, const float right, const Operation operation) noexcept;
-    static float           Execute(String &content) noexcept;
+    static String ParenthesisCallback(const String &block, const Match &match) noexcept;
+    static String EqualCallback(const String &block, const Match &match) noexcept;
+    static String MultiplicationCallback(const String &block, const Match &match) noexcept;
+    static String AdditionCallback(const String &block, const Match &match) noexcept;
 };
 } // namespace Qentem
 

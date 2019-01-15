@@ -54,7 +54,7 @@ Qentem::Template::Template() noexcept {
     /////////////////////////////////
 
     // If evaluation.
-    TagIf.ParseCB = &Template::RenderIF;
+    TagIf.ParseCB = &(Template::RenderIF);
     TagIf.Pocket  = &(this->Pocket);
     // <qt:if case="{case}">html code</qt:if>
     TagIf.Keyword  = L"<qt:if";
@@ -73,7 +73,7 @@ Qentem::Template::Template() noexcept {
     /////////////////////////////////
 
     // Loop evaluation.
-    TagLoop.ParseCB = &Template::RenderLoop;
+    TagLoop.ParseCB = &(Template::RenderLoop);
     TagLoop.Pocket  = &(this->Pocket);
     // <qt:loop set="abc2" var="loopId">
     //     <span>loopId): -{qt:abc2[loopId]}</span>
@@ -97,13 +97,14 @@ String Qentem::Template::Render(const String &content, QArray *data) noexcept {
 // e.g. {qt-var_name[id]}
 // Nest: {qt-var_{qt-var2_{qt-var3_id}}}
 String Qentem::Template::RenderVar(const String &block, const Match &match) noexcept {
-    if (block.Length != 0) {
-        String *val = ((Template::PocketT *)match.Expr->Pocket)->Data->GetValue(block);
+    String id = block.Part(match.OLength, (block.Length - (match.OLength + match.CLength)));
+    if (id.Length != 0) {
+        String *val = ((Template::PocketT *)match.Expr->Pocket)->Data->GetValue(id);
         if (val != nullptr) {
             return *val;
         }
     }
-    return block;
+    return id;
 }
 
 // {qt:iif case="3 == 3" true="Yes" false="No"}
@@ -153,7 +154,7 @@ String Qentem::Template::RenderIIF(const String &block, const Match &match) noex
 // <qt:if case="{case1}">html code1 <qt:elseif case={case2}> html code2</qt:if>
 // <qt:if case="{case}">html code <qt:if case="{case2}">additional html code</qt:if></qt:if>
 String Qentem::Template::RenderIF(const String &block, const Match &match) noexcept {
-    // Nothing is processed inside the match before checking if "if-else" is TRUE.
+    // Nothing is processed inside the match before checking if the condition is TRUE.
     if (match.SubMatch.Size != 0) {
         Match *sm = &(match.SubMatch[0]);
 

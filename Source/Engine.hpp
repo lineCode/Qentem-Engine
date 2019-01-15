@@ -33,12 +33,12 @@ typedef String (*_PARSECB)(const String &block, const Match &match);
 /////////////////////////////////
 // Expressions flags
 struct Flags {
-    static const unsigned short NOTHING  = 0;  // ... What it says.
-    static const unsigned short COMPLETE = 1;  // Processing the complete length of the match (Parser only).
-    static const unsigned short IGNORE   = 2;  // Match a Keyword but don't process it inside Parse().
-    static const unsigned short BUBBLE   = 4;  // Parse nested matches.
-    static const unsigned short SPLIT    = 8;  // Split a match at a point.
-    static const unsigned short POP      = 16; // Search again with NestExprs if the match fails (See ALU.cpp).
+    static const unsigned short NOTHING = 0;  // ... What it says.
+    static const unsigned short COMPACT = 1;  // Processing the content without Keyword(s).
+    static const unsigned short IGNORE  = 2;  // Match a Keyword but don't process it inside Parse().
+    static const unsigned short BUBBLE  = 4;  // Parse nested matches.
+    static const unsigned short SPLIT   = 8;  // Split a match at a point.
+    static const unsigned short POP     = 16; // Search again with NestExprs if the match fails (See ALU.cpp).
 };
 /////////////////////////////////
 struct Expression {
@@ -82,7 +82,7 @@ struct Match {
 Array<Match> Search(const String &content, const Expressions &exprs, size_t from = 0, size_t to = 0,
                     size_t max = 0) noexcept;
 String       Parse(const String &content, const Array<Match> &items, size_t offset = 0, size_t length = 0) noexcept;
-void         Split(size_t from, size_t to, Match &item, Array<Match> &items);
+void         Split(const String &content, Match &item, Array<Match> &items, size_t from, size_t to) noexcept;
 /////////////////////////////////
 } // namespace Engine
 } // namespace Qentem

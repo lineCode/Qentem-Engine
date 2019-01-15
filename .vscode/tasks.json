@@ -22,8 +22,8 @@
                 "Source/Addon/QArray.cpp",
                 "Source/Addon/ALU.cpp",
                 "Source/Addon/Template.cpp",
-                // "Test/TemplateTest.cpp",
-                "Test/EngineTest.cpp",
+                "Test/TemplateTest.cpp",
+                // "Test/EngineTest.cpp",
                 "-oBuild/QConsole.bin"
             ],
             "group": {

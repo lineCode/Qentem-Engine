@@ -150,12 +150,28 @@ void Qentem::String::SetSize(size_t _length) noexcept {
     this->Length = _length;
 }
 
-Qentem::String Qentem::String::Revers(Qentem::String _string) noexcept {
-    String tmp = L"";
-    tmp.SetSize(_string.Length);
+Qentem::String Qentem::String::Trim(const String &str) noexcept {
+    size_t start = 0;
+    size_t len   = str.Length;
 
-    for (size_t g = _string.Length; g > 0; --g) {
-        tmp += _string.Str[g - 1];
+    while (str.Str[start++] == L' ') {
+    }
+    start -= 1;
+
+    while (str.Str[--len] == L' ') {
+    }
+    len += 1;
+
+    String tmp = str.Part(start, len - start);
+    return tmp;
+}
+
+Qentem::String Qentem::String::Revers(const String &str) noexcept {
+    String tmp = L"";
+    tmp.SetSize(str.Length);
+
+    for (size_t g = str.Length; g > 0; --g) {
+        tmp += str.Str[g - 1];
     }
 
     return tmp;
@@ -223,11 +239,11 @@ const bool Qentem::String::ToNumber(const String &str, float &number) noexcept {
     }
 
     wchar_t c;
-
     number       = 0.0f;
     size_t m     = 1;
     size_t start = 0;
     size_t len   = str.Length;
+
     while (str.Str[--len] == L' ') {
     }
     len += 1;
@@ -263,7 +279,7 @@ const bool Qentem::String::ToNumber(const String &str, float &number) noexcept {
         m *= 10;
     } while (true);
 
-    return number;
+    return true;
 }
 
 /**

@@ -122,11 +122,11 @@ Array<Qentem::Engine::Match> Qentem::Engine::Search(const String &content, const
 
                 if (item.Expr->SubExprs.Size != 0) {
                     item.SubMatch =
-                        Engine::Search(content, item.Expr->SubExprs, item.Offset, item.Offset + item.Length);
+                        Engine::Search(content, item.Expr->SubExprs, item.Offset, (item.Offset + item.Length));
                 }
 
                 if ((Flags::SPLIT & item.Expr->Flag) != 0) {
-                    Engine::Split(started, 0, item, items);
+                    Engine::Split(content, item, items, started, 0);
                     SPLITTED = true;
                 } else {
                     items.Add(item);
@@ -140,7 +140,8 @@ Array<Qentem::Engine::Match> Qentem::Engine::Search(const String &content, const
 
         if (!LOCKED) {
             // Switching to the next charrcter if all keywords have been tested.
-            // Note: I could have  && (exprs.Size > 1) but will case it to match tails; if iit one expr.
+            // Note: Could add  if ((id == exprs.Size) && (exprs.Size > 1)) but will case it to match tails; if it's one
+            // expr.
             if (id == exprs.Size) {
                 id = 0;
                 ++from;
@@ -152,7 +153,7 @@ Array<Qentem::Engine::Match> Qentem::Engine::Search(const String &content, const
             ++from;
         }
 
-        // If it has gone too far (closing keyword is missing).
+        // If it has gone too far (linked keyword is missing).
         if (from >= to) {
             if (!LOCKED) {
                 break;
@@ -194,7 +195,11 @@ Array<Qentem::Engine::Match> Qentem::Engine::Search(const String &content, const
         Match *vis  = &(items[0]);
         vis->Offset = started;
         vis->Length = to - vis->Offset;
-        Engine::Split(started, to, *vis, items);
+        Engine::Split(content, *vis, items, started, to);
+    }
+
+    if ((items.Size == 0) && ((Flags::POP & ce->Flag) != 0)) { //&& (ce->NestExprs.Size != 0)
+        return Engine::Search(content, ce->NestExprs, started, to);
     }
 
     return items;
@@ -232,13 +237,12 @@ String Qentem::Engine::Parse(const String &content, const Array<Match> &items, s
             continue;
         }
 
-        if ((Flags::COMPLETE & item->Expr->Flag) == 0) {
-            // Just the content inside the match. Default!
-            from  = (item->Offset + item->OLength);
-            limit = (item->Length - (item->OLength + item->CLength));
-        } else {
+        if ((Flags::COMPACT & item->Expr->Flag) == 0) {
             from  = item->Offset;
             limit = item->Length;
+        } else {
+            from  = (item->Offset + item->OLength);
+            limit = (item->Length - (item->OLength + item->CLength));
         }
 
         // Adding any content that comes before...
@@ -278,15 +282,15 @@ String Qentem::Engine::Parse(const String &content, const Array<Match> &items, s
     return content;
 }
 
-void Qentem::Engine::Split(size_t from, size_t to, Match &item, Array<Match> &items) {
-    Match tmp_item = Match();
-    // tmp_item.Expr  = item.Expr;
+void Qentem::Engine::Split(const String &content, Match &item, Array<Match> &items, size_t from, size_t to) noexcept {
+    Match tmp = Match();
+    // tmp.Expr  = item.Expr;
     bool root = false;
 
     if (items.Size != 0) {
         for (size_t id = 0; id < items.Size; id++) {
             if ((Flags::SPLIT & items[id].Expr->Flag) == 0) {
-                tmp_item.NestMatch.Add(items[id]);
+                tmp.NestMatch.Add(items[id]);
             }
         }
 
@@ -299,9 +303,15 @@ void Qentem::Engine::Split(size_t from, size_t to, Match &item, Array<Match> &it
     }
 
     if (!root) {
-        tmp_item.Offset = from;
-        tmp_item.Length = (item.Offset - tmp_item.Offset);
-        item.NestMatch.Add(tmp_item);
+        tmp.Offset = from;
+        tmp.Length = (item.Offset - tmp.Offset);
+
+        if (item.Expr->NestExprs.Size != 0) {
+            // Start a nest search inside the current one.
+            tmp.NestMatch = Engine::Search(content, item.Expr->NestExprs, tmp.Offset, (tmp.Offset + tmp.Length));
+        }
+
+        item.NestMatch.Add(tmp);
 
         items.Add(item);
     } else {
@@ -312,8 +322,13 @@ void Qentem::Engine::Split(size_t from, size_t to, Match &item, Array<Match> &it
         Match *ins = &(items[0].NestMatch[(items[0].NestMatch.Size - 1)]);
 
         // Adding a new item
-        tmp_item.Offset = ins->Offset + ins->Length + items[0].OLength + items[0].CLength;
-        tmp_item.Length = (to - tmp_item.Offset);
-        items[0].NestMatch.Add(tmp_item);
+        tmp.Offset = ins->Offset + ins->Length + items[0].OLength + items[0].CLength;
+        tmp.Length = (to - tmp.Offset);
+
+        if (item.Expr->NestExprs.Size != 0) {
+            tmp.NestMatch = Engine::Search(content, item.Expr->NestExprs, tmp.Offset, (tmp.Offset + tmp.Length));
+        }
+
+        items[0].NestMatch.Add(tmp);
     }
 }
