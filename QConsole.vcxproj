@@ -71,23 +71,25 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-          <TargetName>QConsole</TargetName>
-        <OutDir>$(SolutionDir)Build\</OutDir>
+    <TargetName>QConsole</TargetName>
+    <OutDir>$(SolutionDir)Build\</OutDir>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-        <TargetName>QConsole</TargetName>
-        <OutDir>$(SolutionDir)Build\</OutDir>
+    <TargetName>QConsole</TargetName>
+    <OutDir>$(SolutionDir)Build\</OutDir>
     <LinkIncremental>true</LinkIncremental>
+    <!-- <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet> -->
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-        <TargetName>QConsole</TargetName>
-        <OutDir>$(SolutionDir)Build\</OutDir>
+    <TargetName>QConsole</TargetName>
+    <OutDir>$(SolutionDir)Build\</OutDir>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-          <TargetName>QConsole</TargetName>
-        <OutDir>$(SolutionDir)Build\</OutDir>
+    <TargetName>QConsole</TargetName>
+    <OutDir>$(SolutionDir)Build\</OutDir>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -97,7 +99,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>Source;Source\Addon;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -111,7 +113,10 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>Source;Source\Addon;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ShowIncludes>false</ShowIncludes>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <EnablePREfast>true</EnablePREfast>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -127,7 +132,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>Source;Source\Addon;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -145,7 +150,9 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>Source;Source\Addon;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ShowIncludes>false</ShowIncludes>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -160,19 +167,17 @@
     <ClInclude Include="Source\Array.hpp" />
     <ClInclude Include="Source\Engine.hpp" />
     <ClInclude Include="Source\Addon\Test.hpp" />
-    <!-- <ClInclude Include="Source\Addon\C_Interface.hpp" /> -->
-    <!-- <ClInclude Include="Source\Addon\QArray.hpp" /> -->
-    <!-- <ClInclude Include="Source\Addon\ALU.hpp" /> -->
-    <!-- <ClInclude Include="Source\Addon\Template.hpp" /> -->
+    <ClInclude Include="Source\Addon\QArray.hpp" />
+    <ClInclude Include="Source\Addon\ALU.hpp" />
+    <ClInclude Include="Source\Addon\Template.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\String.cpp" />
     <ClCompile Include="Source\Engine.cpp" />
     <ClCompile Include="Source\Addon\Test.cpp" />
-    <!-- <ClCompile Include="Source\Addon\C_Interface.cpp" /> -->
-    <!-- <ClCompile Include="Source\Addon\QArray.cpp" /> -->
-    <!-- <ClCompile Include="Source\Addon\ALU.cpp" /> -->
-    <!-- <ClCompile Include="Source\Addon\Template.cpp" /> -->
+    <ClCompile Include="Source\Addon\QArray.cpp" />
+    <ClCompile Include="Source\Addon\ALU.cpp" />
+    <ClCompile Include="Source\Addon\Template.cpp" />
     <ClCompile Include="Test\EngineTest.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

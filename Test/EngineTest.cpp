@@ -1,6 +1,6 @@
 
 /**
- * Qentem Engine
+ * Qentem Engine Test
  *
  * @brief     For testing Qentem Engine.
  *
@@ -9,24 +9,26 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include <time.h>
-#include <iostream>
-#include "Addon/Test.hpp"
 #include "Addon/ALU.hpp"
+#include "Addon/Test.hpp"
+#include <ctime>
+#include <iostream>
 
+using Qentem::Array;
+using Qentem::String;
 using Qentem::Test::TestBit;
 
 void qentem_test_engine() {
+    const size_t   times    = 1000; // To slow it down!!!
     const size_t   start_at = 0;
     const size_t   child_at = 0;
-    const size_t   times    = 1; // To slow it down!!!
-    size_t         search_ticks;
+    size_t         child    = 0;
+    size_t         errors   = 0;
+    size_t         total    = 0;
     size_t         parse_ticks;
-    size_t         child  = 0;
-    size_t         errors = 0;
-    size_t         total  = 0;
-    size_t         count  = start_at;
-    Array<TestBit> bits   = Qentem::Test::GetBits();
+    size_t         search_ticks;
+    size_t         count = start_at;
+    Array<TestBit> bits  = Qentem::Test::GetBits();
 
     bool       pass         = false;
     const bool break_on_err = true;
@@ -54,11 +56,27 @@ void qentem_test_engine() {
             child += 1;
             total += 1;
 
-            std::wcout << (pass ? L" " : L"\n") << Qentem::String::ToString((float)count, 2).Str << L"-"
-                       << Qentem::String::ToString((float)child, 2).Str << (pass ? L": Pass" : L": Fail")
-                       << L" (Search: " << Qentem::String::ToString((((float)search_ticks) / CLOCKS_PER_SEC), 2, 3).Str
+            if (pass) {
+                std::wcout << L" ";
+            } else {
+                std::wcout << L"\n";
+            }
+
+            std::wcout << Qentem::String::ToString(static_cast<double>(count), 2).Str << L"-"
+                       << Qentem::String::ToString(static_cast<double>(child), 2).Str;
+
+            if (pass) {
+                std::wcout << L": Pass";
+            } else {
+                std::wcout << L": Fail";
+            }
+
+            std::wcout << L" (Search: "
+                       << Qentem::String::ToString(((static_cast<double>(search_ticks)) / CLOCKS_PER_SEC), 2, 3).Str
                        << L")" << L" (Parse: "
-                       << Qentem::String::ToString((((float)parse_ticks) / CLOCKS_PER_SEC), 2, 3).Str << L")\n";
+                       << Qentem::String::ToString(((static_cast<double>(parse_ticks)) / CLOCKS_PER_SEC), 2, 3).Str
+                       << L")\n";
+
             if (!pass) {
                 errors += 1;
                 std::wcout << L" -----------" << L" Start debug " << count << L"-" << child << L" -----" << L"\n"
@@ -97,6 +115,10 @@ int main() {
     //     qentem_test_engine();
     // }
     // std::getwchar();
+
+    // auto   alu = Qentem::ALU();
+    // String qua = L"8!=9";
+    // std::wcout << alu.Evaluate(qua) << L"\n";
 
     qentem_test_engine();
 

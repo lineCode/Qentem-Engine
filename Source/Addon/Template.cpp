@@ -11,6 +11,9 @@
 
 #include "Addon/Template.hpp"
 
+using Qentem::String;
+using Qentem::Engine::Flags;
+
 Qentem::Template::Template() noexcept {
     // Variables evaluation.
     TagVar.ParseCB = &(Template::RenderVar);
@@ -99,7 +102,7 @@ String Qentem::Template::Render(const String &content, QArray *data) noexcept {
 String Qentem::Template::RenderVar(const String &block, const Match &match) noexcept {
     String id = block.Part(match.OLength, (block.Length - (match.OLength + match.CLength)));
     if (id.Length != 0) {
-        String *val = ((Template::PocketT *)match.Expr->Pocket)->Data->GetValue(id);
+        String *val = (static_cast<Template::PocketT *>(match.Expr->Pocket))->Data->GetValue(id);
         if (val != nullptr) {
             return *val;
         }
@@ -112,7 +115,7 @@ String Qentem::Template::RenderVar(const String &block, const Match &match) noex
 // {qt:iif case="{qt-var_five} == 5" true="{qt-var_five} is equal to 5" false="no"}
 // {qt:iif case="3 == 3" true="Yes" false="No"}
 String Qentem::Template::RenderIIF(const String &block, const Match &match) noexcept {
-    const Array<Match> items = Engine::Search(block, ((PocketT *)(match.Expr->Pocket))->TagsQuotes);
+    const Array<Match> items = Engine::Search(block, (static_cast<PocketT *>(match.Expr->Pocket))->TagsQuotes);
     if (items.Size == 0) {
         return L"";
     }
@@ -142,11 +145,11 @@ String Qentem::Template::RenderIIF(const String &block, const Match &match) noex
     }
 
     if ((iif_case.Length != 0) && (iif_true.Length != 0) &&
-        (((PocketT *)(match.Expr->Pocket))->_Alu.Evaluate(iif_case) != 0.0f)) {
+        ((static_cast<PocketT *>(match.Expr->Pocket))->_Alu.Evaluate(iif_case) != 0.0)) {
         return iif_true;
-    } else {
-        return (iif_false.Length != 0) ? iif_false : L"";
     }
+
+    return (iif_false.Length != 0) ? iif_false : L"";
 }
 
 // <qt:if case="{case}">html code</qt:if>
@@ -159,7 +162,7 @@ String Qentem::Template::RenderIF(const String &block, const Match &match) noexc
         Match *sm = &(match.SubMatch[0]);
 
         if (sm->NestMatch.Size != 0) {
-            PocketT *pocket = (PocketT *)(match.Expr->Pocket);
+            auto pocket = static_cast<PocketT *>(match.Expr->Pocket);
 
             Match *nm      = &(sm->NestMatch[0]);
             String if_case = block.Part((nm->Offset + nm->OLength), (nm->Length - (nm->OLength + nm->CLength)));
@@ -211,7 +214,7 @@ String Qentem::Template::RenderLoop(const String &block, const Match &match) noe
         }
 
         if ((name.Length != 0) && (var_id.Length != 0)) {
-            const PocketT *pocket  = (PocketT *)(match.Expr->Pocket);
+            const PocketT *pocket  = static_cast<PocketT *>(match.Expr->Pocket);
             size_t         offset  = sm->Offset + sm->Length;
             size_t         length  = (match.Length - (sm->Length + match.CLength));
             String         content = Template::DoLoop(block.Part(offset, length), name, var_id, pocket->Data);
@@ -241,7 +244,7 @@ String Qentem::Template::DoLoop(const String &content, const String &name, const
     String key = name;
 
     while (true) {
-        if (!(storage->DecodeKey(key, id, reminder)) || !(storage->GetIndex(key, index)) ||
+        if (!(Qentem::QArray::DecodeKey(key, id, reminder)) || !(storage->GetIndex(key, index)) ||
             ((type = storage->Types[index]) == VType::NullT)) {
             return rendered;
         }
@@ -252,7 +255,7 @@ String Qentem::Template::DoLoop(const String &content, const String &name, const
 
         key = id + reminder;
 
-        storage = &(storage->VArray[storage->RealID[index]]);
+        storage = &(storage->VArray[storage->ExactID[index]]);
     }
 
     Expression  ex  = Expression();
@@ -262,13 +265,13 @@ String Qentem::Template::DoLoop(const String &content, const String &name, const
     const Array<Match> items = Engine::Search(content, ser);
     // Feature: Use StringStream!!!
     if (type == VType::ArrayT) {
-        const Array<String> *st = &(storage->Arrays[storage->RealID[index]]);
+        const Array<String> *st = &(storage->Arrays[storage->ExactID[index]]);
         for (size_t i = 0; i < st->Size; i++) {
-            ser[0]->Replace = String::ToString((float)i);
+            ser[0]->Replace = String::ToString(static_cast<double>(i));
             rendered += Engine::Parse(content, items);
         }
     } else if (type == VType::QArrayT) {
-        const Array<String> *va = &(storage->VArray[storage->RealID[index]].Keys);
+        const Array<String> *va = &(storage->VArray[storage->ExactID[index]].Keys);
         for (size_t i = 0; i < va->Size; i++) {
             ser[0]->Replace = (*va)[i];
             rendered += Engine::Parse(content, items);

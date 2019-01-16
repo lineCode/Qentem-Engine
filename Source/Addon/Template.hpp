@@ -16,13 +16,8 @@
 #include "Addon/ALU.hpp"
 #include "Addon/QArray.hpp"
 
-using Qentem::QArray;
-using Qentem::Engine::Expression;
-using Qentem::Engine::Expressions;
-using Qentem::Engine::Flags;
-using Qentem::Engine::Match;
-
 namespace Qentem {
+
 struct Template {
     struct PocketT {
         QArray *    Data = nullptr;
@@ -30,7 +25,9 @@ struct Template {
         Expressions Tags;
         Expressions TagsQuotes;
         Expressions TagsVars;
-    } Pocket;
+    };
+
+    PocketT Pocket;
 
     Expression TagVar;
     Expression VarTail;
@@ -54,13 +51,13 @@ struct Template {
     Expression IfTail;
 
     explicit Template() noexcept;
-    String Render(const String &content, QArray *data = nullptr) noexcept;
+    String Render(const String &, QArray *data = nullptr) noexcept;
 
-    static String RenderVar(const String &block, const Match &match) noexcept;
-    static String RenderIIF(const String &block, const Match &match) noexcept;
-    static String RenderIF(const String &block, const Match &match) noexcept;
-    static String RenderLoop(const String &block, const Match &match) noexcept;
-    static String DoLoop(const String &content, const String &name, const String &id, QArray *storage) noexcept;
+    static String RenderVar(const String &, const Match &) noexcept;
+    static String RenderIIF(const String &, const Match &) noexcept;
+    static String RenderIF(const String &, const Match &) noexcept;
+    static String RenderLoop(const String &, const Match &) noexcept;
+    static String DoLoop(const String &, const String &, const String &, QArray *) noexcept;
 };
 } // namespace Qentem
 

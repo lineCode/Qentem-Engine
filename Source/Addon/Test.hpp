@@ -1,6 +1,6 @@
 
 /**
- * Qentem Engine
+ * Qentem Test
  *
  * @brief     For testing Qentem Engine
  *
@@ -15,31 +15,29 @@
 
 #include "Engine.hpp"
 
-using Qentem::Engine::Expression;
-using Qentem::Engine::Expressions;
-using Qentem::Engine::Flags;
-using Qentem::Engine::Match;
-
 namespace Qentem {
 namespace Test {
+
+using Qentem::Engine::Expression;
+using Qentem::Engine::Expressions;
+using Qentem::Engine::Match;
 
 struct TestBit {
     Expressions   Exprs;
     Expressions   Exprslvl0;
     Array<String> Content;
     Array<String> Expected;
-    size_t        Line;
+    size_t        Line = 0;
 };
 
-void          CleanBits(Array<TestBit> &bits) noexcept;
-Array<String> Extract(const String &content, const Array<Match> &items) noexcept;
+void          CleanBits(Array<TestBit> &) noexcept;
+Array<String> Extract(const String &, const Array<Match> &) noexcept;
 
-String DumbExpressions(const Expressions &expres, const String offset, size_t index = 0,
-                       Expression *expr = nullptr) noexcept;
-String DumbMatches(const String &content, const Array<Match> &items, const String offset, size_t index = 0) noexcept;
+String DumbExpressions(const Expressions &, const String &, size_t index = 0, Expression *expr = nullptr) noexcept;
+String DumbMatches(const String &, const Array<Match> &, const String &, size_t index = 0) noexcept;
 Array<TestBit> GetBits() noexcept;
-String         SubMatchZero(const String &block, const Match &match) noexcept;
-String         SubMatchNestMatch(const String &block, const Match &match) noexcept;
+String         SubMatchZero(const String &, const Match &) noexcept;
+String         SubMatchNestMatch(const String &, const Match &) noexcept;
 
 } // namespace Test
 } // namespace Qentem

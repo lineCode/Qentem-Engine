@@ -10,9 +10,10 @@
             "command": "clang++",
             "args": [
                 "-g",
+                // "-fmodules",
                 // "-S",
                 // "-Wall",
-                "-std=c++11",
+                "-std=c++17",
                 "-m64",
                 // "-v",
                 // "-Xclang",
@@ -22,8 +23,8 @@
                 "Source/Addon/QArray.cpp",
                 "Source/Addon/ALU.cpp",
                 "Source/Addon/Template.cpp",
-                "Test/TemplateTest.cpp",
-                // "Test/EngineTest.cpp",
+                // "Test/TemplateTest.cpp",
+                "Test/EngineTest.cpp",
                 "-oBuild/QConsole.bin"
             ],
             "group": {
@@ -35,6 +36,49 @@
                 "clear": true
             },
             "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Check",
+            "type": "shell",
+            "command": "clang-tidy",
+            "args": [
+                "Source/String.cpp",
+                "Source/Array.hpp",
+                "Source/Engine.cpp",
+                "Source/Addon/QArray.cpp",
+                "Source/Addon/ALU.cpp",
+                "Source/Addon/Test.cpp",
+                "Source/Addon/Template.cpp",
+                "Test/TemplateTest.cpp",
+                "Test/EngineTest.cpp",
+                "-checks=*,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-llvm-header-guard,-fuchsia*",
+                "--",
+                "c++17",
+                "-ISource"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "clear": true
+            },
+            "problemMatcher": "$gcc"
+            // "problemMatcher": {
+            //     "owner": "cpp",
+            //     "fileLocation": [
+            //         "absolute",
+            //     ],
+            //     "pattern": {
+            //         "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+            //         "file": 1,
+            //         "line": 2,
+            //         "column": 3,
+            //         "severity": 4,
+            //         "message": 5
+            //     }
+            // }
         },
         {
             "label": "Build .exe", // executable
@@ -68,7 +112,7 @@
                 "-shared",
                 "-stdlib=libc++",
                 "-Wall",
-                "-std=c++11",
+                "-std=c++17",
                 "-m64",
                 "-fPIC",
                 // "-v",

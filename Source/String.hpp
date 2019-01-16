@@ -1,6 +1,6 @@
 
 /**
- * Qentem Engine
+ * Qentem String
  *
  * @brief     String class for Qentem Engine.
  *
@@ -19,41 +19,40 @@ namespace Qentem {
 // NULL terminated wchar_t
 class String {
   private:
-    static void _reset(String *str) noexcept;
-    static void _add(const wchar_t *str_p, String *to, size_t start_at, size_t ln) noexcept;
-    size_t      _index = 0;
+    size_t _index = 0;
 
   public:
     wchar_t *Str    = nullptr;
     size_t   Length = 0;
 
     explicit String() = default;
-    String(const wchar_t _str[]) noexcept; // Copy
-    String(String &&src) noexcept;         // Move
-    String(const String &src) noexcept;    // Copy
+    String(const wchar_t[]) noexcept; // Copy
+    String(const wchar_t) noexcept;   // Copy
+    String(String &&) noexcept;       // Move
+    String(const String &) noexcept;  // Copy
     virtual ~String() noexcept;
-    void SetSize(size_t _length) noexcept;
+    void SetSize(size_t) noexcept;
 
-    static String     Trim(const String &str) noexcept;
-    static String     Revers(const String &str) noexcept;
-    static const bool ToNumber(const String &str, float &number) noexcept;
-    static String     ToString(float number, size_t min = 1, size_t max = 0) noexcept;
+    static String Trim(const String &) noexcept;
+    static String Revers(const String &) noexcept;
+    static bool   ToNumber(const String &, double &) noexcept;
+    static String ToString(double, size_t min = 1, size_t max = 0) noexcept;
+    static void   Add(const wchar_t *, String *, size_t, size_t) noexcept;
+    static void   Reset(String *) noexcept;
 
-    String Part(size_t offset, size_t limit) const noexcept;
+    String Part(size_t, size_t) const;
 
-    String &operator=(const wchar_t _str[]) noexcept; // Copy
-    String &operator=(String &&src) noexcept;         // Move
-    String &operator=(const String &src) noexcept;    // Copy
+    String &operator=(String &&) noexcept;      // Move
+    String &operator=(const String &) noexcept; // Copy
 
-    String &operator+=(const wchar_t _str[]) noexcept; // Add +=
-    String &operator+=(const wchar_t _str) noexcept;   // Add += One wchar_t
-    String &operator+=(const String &src) noexcept;    // Add +=
+    String &operator+=(String &&) noexcept;      // Move
+    String &operator+=(const String &) noexcept; // Add +=
 
-    const String operator+(const wchar_t _str[]) const noexcept;
-    const String operator+(const String &src) const noexcept;
+    const String operator+(String &&) const noexcept;
+    const String operator+(const String &) const noexcept;
 
-    const bool operator==(const String &src) const noexcept; // ==
-    const bool operator!=(const String &src) const noexcept; // ==
+    const bool operator==(const String &) const noexcept; // ==
+    const bool operator!=(const String &) const noexcept; // ==
 };
 } // namespace Qentem
 
