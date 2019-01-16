@@ -1,6 +1,6 @@
 
 /**
- * Qentem Engine
+ * Qentem Template Test
  *
  * @brief     For testing Qentem Template.
  *
@@ -9,10 +9,13 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include <iostream>
-#include <fstream>
 #include "Addon/Template.hpp"
+#include <fstream>
+#include <iostream>
 
+using Qentem::Array;
+using Qentem::QArray;
+using Qentem::String;
 using Qentem::Template;
 
 QArray get_data() noexcept;
@@ -39,7 +42,7 @@ String get_template() noexcept {
         file.seekg(0, std::ios::beg);
 
         temp.SetSize(size);
-        char *_tmp = new char[size];
+        auto *_tmp = new char[size];
 
         file.read(_tmp, size);
 

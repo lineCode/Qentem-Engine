@@ -1,6 +1,6 @@
 
 /**
- * Qentem Engine
+ * Qentem Test
  *
  * @brief     For testing Qentem Engine
  *
@@ -11,6 +11,11 @@
 
 #include "Addon/Test.hpp"
 
+using Qentem::Array;
+using Qentem::String;
+using Qentem::Engine::Expression;
+using Qentem::Engine::Expressions;
+using Qentem::Engine::Flags;
 using Qentem::Test::TestBit;
 
 void Qentem::Test::CleanBits(Array<TestBit> &bits) noexcept {
@@ -30,28 +35,28 @@ Array<String> Qentem::Test::Extract(const String &content, const Array<Match> &i
     return matches;
 }
 
-String Qentem::Test::DumbExpressions(const Expressions &expres, const String offset, size_t index,
+String Qentem::Test::DumbExpressions(const Expressions &expres, const String &offset, size_t index,
                                      Qentem::Engine::Expression *expr) noexcept {
     if (expres.Size == 0) {
         return offset + L"No expressions!\n";
     }
 
-    String tree      = offset + L"(" + String::ToString((float)expres.Size) + L") => [\n";
+    String tree      = offset + L"(" + String::ToString(static_cast<double>(expres.Size)) + L") => [\n";
     String innoffset = L"    ";
     String l_offset  = offset + innoffset + innoffset;
 
     for (size_t i = index; i < expres.Size; i++) {
 
         if (expres[i] == expr) {
-            tree += offset + innoffset + L"[" + String::ToString((float)i) + L"]: " + L"This.\n";
+            tree += offset + innoffset + L"[" + String::ToString(static_cast<double>(i)) + L"]: " + L"This.\n";
             continue;
         }
 
-        tree += offset + innoffset + L"[" + String::ToString((float)i) + L"]: => {\n";
+        tree += offset + innoffset + L"[" + String::ToString(static_cast<double>(i)) + L"]: => {\n";
 
         tree += l_offset + L"Keyword: \"" + expres[i]->Keyword + L"\"\n";
 
-        tree += l_offset + L"Flags: (" + String::ToString((float)(expres[i]->Flag)) + L")";
+        tree += l_offset + L"Flags: (" + String::ToString(static_cast<double>(expres[i]->Flag)) + L")";
 
         if ((expres[i]->Flag & Flags::COMPACT) != 0) {
             tree += L" COMPACT";
@@ -75,11 +80,21 @@ String Qentem::Test::DumbExpressions(const Expressions &expres, const String off
         tree += L"\n";
 
         tree += l_offset + L"Replace: \"" + expres[i]->Replace + L"\"\n";
-        tree += l_offset + L"SearchCB: " +
-                ((expres[i]->SearchCB != nullptr) ? String::ToString((float)((size_t)(expres[i]->SearchCB))) : L"N/A");
+
+        if (expres[i]->SearchCB != nullptr) {
+            tree += l_offset + L"SearchCB: Yes";
+
+        } else {
+            tree += l_offset + L"SearchCB: No";
+        }
         tree += L"\n";
-        tree += l_offset + L"ParseCB: " +
-                ((expres[i]->ParseCB != nullptr) ? String::ToString((float)((size_t)(expres[i]->ParseCB))) : L"N/A");
+
+        if (expres[i]->ParseCB != nullptr) {
+            tree += l_offset + L"ParseCB: Yes";
+
+        } else {
+            tree += l_offset + L"ParseCB: No";
+        }
         tree += L"\n";
 
         if (expres[i]->Tail != nullptr) {
@@ -103,7 +118,7 @@ String Qentem::Test::DumbExpressions(const Expressions &expres, const String off
     return tree + offset + L"]\n";
 }
 
-String Qentem::Test::DumbMatches(const String &content, const Array<Match> &matches, const String offset,
+String Qentem::Test::DumbMatches(const String &content, const Array<Match> &matches, const String &offset,
                                  size_t index) noexcept {
     if (matches.Size == 0) {
         return offset + L"No matches!\n";
@@ -112,10 +127,10 @@ String Qentem::Test::DumbMatches(const String &content, const Array<Match> &matc
     Array<String> items = Test::Extract(content, matches);
 
     String innoffset = L"    ";
-    String tree      = offset + L"(" + String::ToString((float)(matches.Size)) + L") => [\n";
+    String tree      = offset + L"(" + String::ToString(static_cast<double>(matches.Size)) + L") => [\n";
 
     for (size_t i = index; i < items.Size; i++) {
-        tree += innoffset + offset + L"[" + String::ToString((float)i) + L"]: \"" + items[i] + L"\"\n";
+        tree += innoffset + offset + L"[" + String::ToString(static_cast<double>(i)) + L"]: \"" + items[i] + L"\"\n";
 
         if (matches[i].NestMatch.Size != 0) {
             tree += innoffset + offset + L"-NestMatch:\n";
@@ -458,9 +473,13 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     x2->ParseCB = ([](const String &block, const Match &match) noexcept->String {
         if (block == L"<3-U>") {
             return L"A";
-        } else if (block == L"<2-A>") {
+        }
+
+        if (block == L"<2-A>") {
             return L"B";
-        } else if (block == L"<1-B>") {
+        }
+
+        if (block == L"<1-B>") {
             return L"A+";
         }
 
@@ -711,11 +730,11 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bits.Add(bit);
 
     x1->ParseCB = ([](const String &block, const Match &match) noexcept->String {
-        float number = 0.0f;
+        double number = 0.0;
 
         if (match.NestMatch.Size > 0) {
             String r      = L"";
-            float  temnum = 0.0f;
+            double temnum = 0.0;
             size_t i      = 0;
 
             if (match.NestMatch[i].Length == 0) {
@@ -734,9 +753,10 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
                 number += temnum;
             }
+            return String::ToString(number);
         }
 
-        return String::ToString(number);
+        return L"0";
     });
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -759,11 +779,11 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bits.Add(bit);
 
     x1->ParseCB = ([](const String &block, const Match &match) noexcept->String {
-        float number = 0.0f;
+        double number = 0.0;
 
         if (match.NestMatch.Size > 0) {
             String r      = L"";
-            float  temnum = 0.0f;
+            double temnum = 0.0;
 
             Match *nm;
             for (size_t i = 0; i < match.NestMatch.Size; i++) {
@@ -781,17 +801,18 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
                 number += temnum;
             }
+            return String::ToString(number);
         }
 
-        return String::ToString(number);
+        return L"0";
     });
 
     x2->ParseCB = ([](const String &block, const Match &match) noexcept->String {
-        float number = 1.0f;
+        double number = 1.0;
 
         if (match.NestMatch.Size > 0) {
             String r      = L"";
-            float  temnum = 1.0f;
+            double temnum = 1.0;
 
             Match *nm;
             for (size_t i = 0; i < match.NestMatch.Size; i++) {
@@ -804,9 +825,10 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
                 number *= temnum;
             }
+            return String::ToString(number);
         }
 
-        return String::ToString(number);
+        return L"0";
     });
     /////////////////////////////////////////////
     bit      = TestBit();
@@ -826,11 +848,11 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bits.Add(bit);
 
     x1->ParseCB = ([](const String &block, const Match &match) noexcept->String {
-        float number = 0.0f;
+        double number = 0.0;
 
         if (match.NestMatch.Size > 0) {
             String r      = L"";
-            float  temnum = 0.0f;
+            double temnum = 0.0;
 
             Match *nm;
             for (size_t i = 0; i < match.NestMatch.Size; i++) {
@@ -843,9 +865,10 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
                 number += temnum;
             }
+            return String::ToString(number);
         }
 
-        return String::ToString(number);
+        return L"0";
     });
     /////////////////////////////////////////////
     bit      = TestBit();
@@ -880,11 +903,11 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bits.Add(bit);
 
     x1->ParseCB = ([](const String &block, const Match &match) noexcept->String {
-        float number = 0.0f;
+        double number = 0.0;
 
         if (match.NestMatch.Size > 0) {
             String r      = L"";
-            float  temnum = 0.0f;
+            double temnum = 0.0;
 
             Match *nm;
             for (size_t i = 0; i < match.NestMatch.Size; i++) {
@@ -902,9 +925,10 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
                 number += temnum;
             }
+            return String::ToString(number);
         }
 
-        return String::ToString(number);
+        return L"0";
     });
     ///////////////////////////////////////////
     bit      = TestBit();

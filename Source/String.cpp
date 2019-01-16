@@ -1,6 +1,6 @@
 
 /**
- * Qentem Engine
+ * Qentem String
  *
  * @brief     String class for Qentem Engine.
  *
@@ -13,7 +13,7 @@
 
 Qentem::String::String(const String &src) noexcept {
     if (this != &src) {
-        _add(src.Str, this, 0, src.Length);
+        Add(src.Str, this, 0, src.Length);
     }
 }
 
@@ -32,23 +32,21 @@ Qentem::String::String(String &&src) noexcept {
 }
 
 Qentem::String::String(const wchar_t _str[]) noexcept {
-    _add(&_str[0], this, 0, 0);
+    Add(&_str[0], this, 0, 0);
+}
+
+Qentem::String::String(const wchar_t _str) noexcept {
+    Add(&_str, this, this->_index, 1); // one char
 }
 
 Qentem::String::~String() noexcept {
     delete[] this->Str;
 }
 
-Qentem::String &Qentem::String::operator=(const wchar_t _str[]) noexcept {
-    _reset(this);
-    _add(_str, this, 0, 0);
-    return *this;
-}
-
 Qentem::String &Qentem::String::operator=(const String &src) noexcept { // Copy
     if (this != &src) {
-        _reset(this);
-        _add(src.Str, this, 0, src.Length);
+        Reset(this);
+        Add(src.Str, this, 0, src.Length);
     }
 
     return *this;
@@ -70,27 +68,40 @@ Qentem::String &Qentem::String::operator=(String &&src) noexcept { // Move
     return *this;
 }
 
-Qentem::String &Qentem::String::operator+=(const wchar_t _str[]) noexcept {
-    _add(_str, this, this->_index, 0);
-    return *this;
-}
+Qentem::String &Qentem::String::operator+=(String &&src) noexcept { // Move
+    if ((this != &src) && (src.Length != 0)) {
+        Add(src.Str, this, this->_index, src.Length);
 
-Qentem::String &Qentem::String::operator+=(const wchar_t _str) noexcept {
-    _add(&_str, this, this->_index, 1);
-    return *this;
-}
-
-Qentem::String &Qentem::String::operator+=(const String &src) noexcept {
-    if (src.Length != 0) {
-        _add(src.Str, this, this->_index, src.Length);
+        src.Length = 0;
+        src._index = 0;
+        src.Str    = nullptr;
     }
 
     return *this;
 }
 
-const Qentem::String Qentem::String::operator+(const wchar_t _str[]) const noexcept {
+Qentem::String &Qentem::String::operator+=(const String &src) noexcept {
+    if ((this != &src) && (src.Length != 0)) {
+        Add(src.Str, this, this->_index, src.Length);
+    }
+
+    return *this;
+}
+
+const Qentem::String Qentem::String::operator+(String &&src) const noexcept {
     String ns = *this;
-    _add(_str, &ns, ns._index, 0);
+
+    if (this != &src) {
+
+        if (src.Length != 0) {
+            Add(src.Str, &ns, ns._index, src.Length);
+        }
+
+        src.Length = 0;
+        src._index = 0;
+        src.Str    = nullptr;
+    }
+
     return ns;
 }
 
@@ -98,7 +109,7 @@ const Qentem::String Qentem::String::operator+(const String &src) const noexcept
     String ns = *this;
 
     if (src.Length != 0) {
-        _add(src.Str, &ns, ns._index, src.Length);
+        Add(src.Str, &ns, ns._index, src.Length);
     }
 
     return ns;
@@ -118,11 +129,7 @@ const bool Qentem::String::operator==(const String &src) const noexcept {
         // Nothing is needed here.
     }
 
-    if (i == this->Length) {
-        return true;
-    }
-
-    return false;
+    return (i == this->Length);
 }
 
 const bool Qentem::String::operator!=(const String &src) const noexcept {
@@ -130,14 +137,15 @@ const bool Qentem::String::operator!=(const String &src) const noexcept {
 }
 
 void Qentem::String::SetSize(size_t _length) noexcept {
-    wchar_t *_tmp = new wchar_t[(_length + 1)];
-    size_t   i    = 0;
+    auto _tmp = new wchar_t[(_length + 1)];
 
-    if (_length > this->Length)
+    size_t i = 0;
+
+    if (_length > this->Length) {
         for (; i < this->Length; i++) {
             _tmp[i] = this->Str[i];
         }
-    else {
+    } else {
         for (; i < _length; i++) {
             _tmp[i] = this->Str[i];
         }
@@ -177,22 +185,22 @@ Qentem::String Qentem::String::Revers(const String &str) noexcept {
     return tmp;
 }
 
-Qentem::String Qentem::String::ToString(float number, size_t min, size_t max) noexcept {
+Qentem::String Qentem::String::ToString(double number, size_t min, size_t max) noexcept {
     String sign = L"";
-    if (number < 0.0f) {
+    if (number < 0.0) {
         sign = L"-";
-        number *= -1.0f;
+        number *= -1.0;
     }
 
     size_t num;
     String tmp_g = L"";
     if (max > 0) {
-        float nuw = 1;
+        double nuw = 1;
         for (size_t i = 0; i <= max; i++) {
             nuw *= 10;
         }
 
-        num = (size_t)(number * nuw);
+        num = static_cast<size_t>(number * nuw);
 
         size_t di = (num % 10);
         num /= 10;
@@ -209,11 +217,11 @@ Qentem::String Qentem::String::ToString(float number, size_t min, size_t max) no
 
         tmp_g = String::Revers(tmp_g);
     } else {
-        num = (size_t)(number);
+        num = static_cast<size_t>(number);
     }
 
     String tmp_l = L"";
-    while (num > 0.0f) {
+    while (num > 0.0) {
         tmp_l += wchar_t(((num % 10) + 48));
         num /= 10;
     }
@@ -233,13 +241,13 @@ Qentem::String Qentem::String::ToString(float number, size_t min, size_t max) no
     return (sign + tmp_l);
 }
 
-const bool Qentem::String::ToNumber(const String &str, float &number) noexcept {
+bool Qentem::String::ToNumber(const String &str, double &number) noexcept {
     if (str.Length == 0) {
         return false;
     }
 
     wchar_t c;
-    number       = 0.0f;
+    number       = 0.0;
     size_t m     = 1;
     size_t start = 0;
     size_t len   = str.Length;
@@ -255,19 +263,25 @@ const bool Qentem::String::ToNumber(const String &str, float &number) noexcept {
     do {
         c = str.Str[--len];
 
-        if ((c < 47) || (c > 58)) {
+        if ((c <= 47) || (c >= 58)) {
             if (c == L'-') {
-                number *= -1.0f;
+                number *= -1.0;
+                if (len > start) {
+                    number = 0.0;
+                    return false;
+                }
                 break;
-            } else if (c == L'.') {
+            }
+
+            if (c == L'.') {
                 number /= m;
                 // number += 0.00001f;
                 m = 1;
                 continue;
-            } else {
-                number = 0.0f;
-                return false;
             }
+
+            number = 0.0;
+            return false;
         }
 
         number += ((c - 48) * m);
@@ -289,9 +303,9 @@ const bool Qentem::String::ToNumber(const String &str, float &number) noexcept {
  * @param limit The number of characters to copy.
  * @return The requested string.
  */
-Qentem::String Qentem::String::Part(size_t offset, size_t limit) const noexcept {
+Qentem::String Qentem::String::Part(size_t offset, size_t limit) const {
     if ((offset + limit) > this->Length) {
-        return L"";
+        throw;
     }
 
     String bit;
@@ -308,7 +322,7 @@ Qentem::String Qentem::String::Part(size_t offset, size_t limit) const noexcept 
     return bit;
 }
 
-void Qentem::String::_reset(String *str) noexcept {
+void Qentem::String::Reset(String *str) noexcept {
     delete[] str->Str;
     str->Str = nullptr;
 
@@ -316,7 +330,7 @@ void Qentem::String::_reset(String *str) noexcept {
     str->_index = 0;
 }
 
-void Qentem::String::_add(const wchar_t *str_p, String *to, size_t start_at, size_t ln) noexcept {
+void Qentem::String::Add(const wchar_t *str_p, String *to, size_t start_at, size_t ln) noexcept {
     if ((ln == 0) && (str_p != nullptr)) {
         while (str_p[ln++] != '\0') {
             // Counting (getting the length).
@@ -327,13 +341,17 @@ void Qentem::String::_add(const wchar_t *str_p, String *to, size_t start_at, siz
 
     size_t j = 0;
     if ((to->Length == 0) || (ln > (to->Length - to->_index))) {
-        wchar_t *_tmp = new wchar_t[(ln + to->_index + 1)];
+        auto *_tmp = new wchar_t[(ln + to->_index + 1)];
 
         if (to->Str != nullptr) {
-            size_t i = 0;
-            while ((_tmp[i++] = to->Str[j++]) != '\0') {
-                // fast way of copying a string.
-            };
+            // size_t i = 0;
+            // while ((_tmp[i++] = to->Str[j++]) != '\0') {
+            //     // fast way of copying a string.
+            // };
+
+            for (size_t i = 0; i < to->_index; i++) {
+                _tmp[i] = to->Str[j++];
+            }
             delete[] to->Str;
         }
 

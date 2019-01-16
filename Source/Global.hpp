@@ -1,6 +1,6 @@
 
 /**
- * Qentem Engine
+ * Qentem
  *
  * @brief     For including "standard header (core)".
  *

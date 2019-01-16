@@ -1,8 +1,8 @@
 
 /**
- * Qentem Engine
+ * Qentem Array
  *
- * @brief     Array class for Qentem Engine
+ * @brief     Unordered Array
  *
  * @author    Hani Ammar <hani.code@outlook.com>
  * @copyright 2019 Hani Ammar
@@ -13,12 +13,9 @@
 #define QENTEM_ARRAY_H
 
 #include "Global.hpp"
-// #include <initializer_list>
-// #include <stdarg.h>
 
 namespace Qentem {
 
-// There is no .cpp file because of the use of template <typename T>
 template <typename T>
 class Array {
   private:
@@ -48,41 +45,22 @@ class Array {
         }
     }
 
-    // Uncomment to use, C style
-    // static Array<T> Group(T items, ...) noexcept {
-    //     T *item = &items;
-
-    //     va_list ptr;
-    //     va_start(ptr, items);
-
-    //     Array<T> arr = Array<T>(3);
-    //     do {
-    //         arr.Add(*item);
-    //         item = va_arg(ptr, T *);
-    //     } while (item != nullptr);
-
-    //     va_end(ptr);
-
-    //     return arr;
-    // }
-
-    // Uncomment to use, C++ style
-    // Array(const std::initializer_list<T> &items) noexcept {
-    //     if (items.size() != 0) {
-    //         this->_capacity = items.size();
-    //         this->Storage  = new T[this->_capacity];
-
-    //         const T *item = items.begin();
-    //         while ((item != items.end())) {
-    //             this->Add(*(item++));
-    //         }
-    //     }
-    // }
-
     explicit Array(const size_t size) noexcept {
         if (size != 0) {
             this->_capacity = size;
             this->Storage   = new T[size];
+        }
+    }
+
+    Array(Array<T> &&src) noexcept {
+        if (src.Size != 0) {
+            this->Storage   = src.Storage;
+            this->_capacity = src._capacity;
+            this->Size      = src.Size;
+
+            src._capacity = 0;
+            src.Size      = 0;
+            src.Storage   = nullptr;
         }
     }
 
@@ -95,7 +73,7 @@ class Array {
             if ((this->Size + src.Size) > this->_capacity) {
                 this->_capacity += src.Size;
 
-                T *tmp = new T[this->_capacity];
+                auto *tmp = new T[this->_capacity];
                 for (size_t n = 0; n < this->Size; n++) {
                     tmp[n] = this->Storage[n];
                 }
@@ -112,7 +90,7 @@ class Array {
         return *this;
     }
 
-    Array<T> &Add(const T &item) noexcept {
+    Array<T> &Add(const T &item) noexcept { // Do not add move, it will break CPU::prefetch
         if (this->Size == this->_capacity) {
             if (this->_capacity == 0) {
                 this->_capacity = 1;
@@ -120,7 +98,7 @@ class Array {
                 this->_capacity *= 2;
             }
 
-            T *tmp = new T[this->_capacity];
+            auto *tmp = new T[this->_capacity];
             for (size_t n = 0; n < this->Size; n++) {
                 tmp[n] = this->Storage[n];
             }
@@ -156,14 +134,14 @@ class Array {
         return *this;
     }
 
-    inline constexpr T &operator[](const size_t id) const noexcept {
-        // if (id >= this->Size) {
-        //     throw("index out of range!");
-        // }
+    inline T &operator[](const size_t id) const {
+        if (id >= this->Size) {
+            throw;
+        }
 
         return *(this->Storage + id);
     }
-}; // namespace Qentem
+};
 } // namespace Qentem
 
 #endif

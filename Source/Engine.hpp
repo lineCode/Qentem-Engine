@@ -15,21 +15,21 @@
 #include "String.hpp"
 #include "Array.hpp"
 
-using Qentem::Array;
-using Qentem::String;
-
 namespace Qentem {
 namespace Engine {
+
+using Qentem::Array;
+using Qentem::String;
 /////////////////////////////////
 struct Match;
 struct Expression;
 /////////////////////////////////
 // Expressions def
-typedef Array<Expression *> Expressions;
+using Expressions = Array<Expression *>;
 // Search Callback
-typedef size_t (*_SEARCHCB)(const String &content, size_t &offset, size_t &limit);
+using _SEARCHCB = size_t(const String &, const Expression &, size_t &, size_t &);
 // Parse Callback
-typedef String (*_PARSECB)(const String &block, const Match &match);
+using _PARSECB = String(const String &, const Match &);
 /////////////////////////////////
 // Expressions flags
 struct Flags {
@@ -42,7 +42,7 @@ struct Flags {
 };
 /////////////////////////////////
 struct Expression {
-    String Keyword = L"";
+    String Keyword = L""; // What to search for.
     String Replace = L""; // A text to replace the match.
     size_t Flag    = 0;
 
@@ -52,8 +52,8 @@ struct Expression {
     Expressions SubExprs;  // Matches other parts of the match, but do not nest.
     // Expressions SplitExprs; // to split a match like if if-else; if-if-else-else.
 
-    _SEARCHCB SearchCB = nullptr; // A callback function for custom lookup.
-    _PARSECB  ParseCB  = nullptr; // A callback function for custom rendering.
+    _SEARCHCB *SearchCB = nullptr; // A callback function for custom lookup.
+    _PARSECB * ParseCB  = nullptr; // A callback function for custom rendering.
 
     // Pocket pointer is a var that can be linked to an object to be used in callback functions insted of relining on
     // static data members, which is not good for multi-threading operations. (See Template.cpp)
@@ -66,23 +66,21 @@ struct Match {
     size_t OLength = 0; // Length of opening keyword
     size_t CLength = 0; // Length of closing keyword
 
-    size_t Status = 0; // 1: OverDrive, For matching beyand the length of a match.
-    size_t Tag    = 0;
-
-    Expression *Expr = nullptr;
+    size_t      Status = 0; // 1: OverDrive, For matching beyand the length of a match.
+    size_t      Tag    = 0; // To Mark a match when using callback search (for later sorting, See ALU.cpp)
+    Expression *Expr   = nullptr;
 
     Array<Match> NestMatch; // To hold sub matches inside a match.
 
     // SubMatch: To hold matches inside a match; for checking before evaluation nest matches.
     // Its content does not get parse; it would be faster to do a sub search insead of calling back Search() from
-    // an outside function
+    // an outside function, when the CPU cache already holds the text.
     Array<Match> SubMatch;
 };
 /////////////////////////////////
-Array<Match> Search(const String &content, const Expressions &exprs, size_t from = 0, size_t to = 0,
-                    size_t max = 0) noexcept;
-String       Parse(const String &content, const Array<Match> &items, size_t offset = 0, size_t length = 0) noexcept;
-void         Split(const String &content, Match &item, Array<Match> &items, size_t from, size_t to) noexcept;
+Array<Match> Search(const String &, const Expressions &, size_t from = 0, size_t to = 0, size_t max = 0) noexcept;
+String       Parse(const String &, const Array<Match> &, size_t offset = 0, size_t length = 0) noexcept;
+void         Split(const String &, Match *, Array<Match> *, size_t, size_t) noexcept;
 /////////////////////////////////
 } // namespace Engine
 } // namespace Qentem
