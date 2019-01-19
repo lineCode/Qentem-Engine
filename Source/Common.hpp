@@ -1,16 +1,16 @@
 
 /**
- * Qentem
+ * Qentem Common
  *
- * @brief     For including "standard header (core)".
+ * @brief     Common file for Qentem.
  *
  * @author    Hani Ammar <hani.code@outlook.com>
  * @copyright 2019 Hani Ammar
  * @license   https://opensource.org/licenses/MIT
  */
 
-#ifndef QENTEM_Global_H
-#define QENTEM_Global_H
+#ifndef QENTEM_COMMON_H
+#define QENTEM_COMMON_H
 
 #include <stddef.h>
 

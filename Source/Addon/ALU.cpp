@@ -9,10 +9,12 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
+#include "Addon/Extend.hpp"
 #include "Addon/ALU.hpp"
 
 using Qentem::String;
 using Qentem::Engine::Flags;
+using Qentem::Extend::RegexOR;
 
 Qentem::ALU::ALU() noexcept {
     ParensExpr.Keyword = L"(";
@@ -28,114 +30,67 @@ Qentem::ALU::ALU() noexcept {
     MathMul.Keyword  = L"*|/";
     MathMul.Flag     = Flags::SPLIT;
     MathMul.ParseCB  = &(ALU::MultiplicationCallback);
-    MathMul.SearchCB = &(ALU::SearchCallback);
+    MathMul.SearchCB = &(Extend::RegexOR);
 
     MathAdd.Keyword = L"+|-";
     MathAdd.Flag    = Flags::SPLIT | Flags::POP;
     MathAdd.NestExprs.Add(&MathMul);
     MathAdd.ParseCB  = &(ALU::AdditionCallback);
-    MathAdd.SearchCB = &(ALU::SearchCallback);
+    MathAdd.SearchCB = &(Extend::RegexOR);
 
     MathEqu.Keyword = L"==|=|!=";
     MathEqu.Flag    = Flags::SPLIT | Flags::POP;
     MathEqu.NestExprs.Add(&MathAdd);
     MathEqu.ParseCB  = &(ALU::EqualCallback);
-    MathEqu.SearchCB = &(ALU::SearchCallback);
+    MathEqu.SearchCB = &(Extend::RegexOR);
 
     this->MathExprs.Add(&MathEqu);
-
-    // start with = < > !
-    // pop to * /
-    // (/d+[*\/]/d+)
-    /// Pop to + -
 }
 
 // e.g. ( 4 + 3 ), ( 2 + ( 4 + ( 1 + 2 ) + 1 ) * 5 - 3 - 2 )
-String Qentem::ALU::ParenthesisCallback(const String &block, const Match &match) noexcept {
-    String result = block.Part(match.OLength, (block.Length - (match.OLength + match.CLength)));
-    return Engine::Parse(result, Engine::Search(result, *(static_cast<Expressions *>(match.Expr->Pocket))));
+String Qentem::ALU::ParenthesisCallback(const String &block, const Match &item) noexcept {
+    String result = String::Part(block, item.OLength, (block.Length - (item.OLength + item.CLength)));
+    return Engine::Parse(result, Engine::Search(result, *(static_cast<Expressions *>(item.Expr->Pocket))));
 }
 
-size_t Qentem::ALU::SearchCallback(const String &content, const Expression &expr, size_t &started,
-                                   size_t &ended) noexcept {
-    size_t counter = 0;
-    size_t tag     = 1;
-
-    for (; counter < expr.Keyword.Length; counter++) {
-        if (content.Str[started] == expr.Keyword.Str[counter]) {
-            // Maintaining a copy of the original offset.
-            ended = started;
-
-            while ((++counter < expr.Keyword.Length) && (expr.Keyword.Str[counter] != L'|')) {
-                if (content.Str[++ended] != expr.Keyword.Str[counter]) {
-                    // Mismatch.
-                    counter = 0;
-                    break;
-                }
-            }
-
-            if (counter != 0) {
-                return tag;
-            }
-        }
-
-        while (counter < expr.Keyword.Length) {
-            if (expr.Keyword.Str[++counter] == L'|') {
-                tag += 1;
-                break;
-            }
-        }
-    }
-
-    return 0;
-}
-
-bool Qentem::ALU::NestNumber(const String &block, const Match &match, double &number) noexcept {
+bool Qentem::ALU::NestNumber(const String &block, const Match &item, double &number) noexcept {
     String r = L"";
 
-    if (match.NestMatch.Size != 0) {
-        r = Engine::Parse(block, match.NestMatch, match.Offset, match.Offset + match.Length);
+    if (item.NestMatch.Size != 0) {
+        r = Engine::Parse(block, item.NestMatch, item.Offset, item.Offset + item.Length);
     } else {
-        r = block.Part(match.Offset, match.Length);
+        r = String::Part(block, item.Offset, item.Length);
     }
 
-    if ((r.Length == 0) || !String::ToNumber(r, number)) {
-        return false;
-    }
-
-    return true;
+    return ((r.Length != 0) && String::ToNumber(r, number));
 }
 
-String Qentem::ALU::EqualCallback(const String &block, const Match &match) noexcept {
-    bool   result = false;
-    bool   is_str = false;
-    size_t op;
+String Qentem::ALU::EqualCallback(const String &block, const Match &item) noexcept {
+    bool result = false;
 
-    if (match.NestMatch.Size > 0) {
-        Match *nm      = &(match.NestMatch[0]);
-        op             = nm->Tag;
-        String r       = block.Part(nm->Offset, nm->Length);
+    if (item.NestMatch.Size != 0) {
+        bool   is_str  = false;
         double temnum1 = 0.0;
         double temnum2 = 0.0;
-        String temstr1 = L"";
+        String str     = L"";
+        Match *nm      = &(item.NestMatch[0]);
+        size_t op      = nm->Tag;
 
-        if (r.Length == 0) {
+        if ((nm->Length - nm->Offset) == 0) {
             return L"0";
         }
 
-        if (!String::ToNumber(r, temnum1)) {
-            is_str  = true;
-            temstr1 = r;
+        if (!ALU::NestNumber(block, *nm, temnum1)) {
+            is_str = true;
+            str    = String::Part(block, nm->Offset, nm->Length);
         }
 
-        for (size_t i = 1; i < match.NestMatch.Size; i++) {
-            nm = &(match.NestMatch[i]);
-            r  = block.Part(nm->Offset, nm->Length);
-
+        for (size_t i = 1; i < item.NestMatch.Size; i++) {
+            nm = &(item.NestMatch[i]);
             if (is_str) {
-                result = (String::Trim(temstr1) == String::Trim(r));
+                result = (String::Trim(str) == String::Trim(String::Part(block, nm->Offset, nm->Length)));
             } else {
-                if (!String::ToNumber(r, temnum2)) {
+                if (!ALU::NestNumber(block, *nm, temnum2)) {
                     break;
                 }
 
@@ -161,18 +116,18 @@ String Qentem::ALU::EqualCallback(const String &block, const Match &match) noexc
     return L"0";
 }
 
-String Qentem::ALU::MultiplicationCallback(const String &block, const Match &match) noexcept {
-    double number = 0.0;
+String Qentem::ALU::MultiplicationCallback(const String &block, const Match &item) noexcept {
     size_t op;
-    if (!ALU::NestNumber(block, match.NestMatch[0], number)) {
+    double number = 0.0;
+    if (!ALU::NestNumber(block, item.NestMatch[0], number)) {
         return L"0";
     }
 
     double temnum = 0.0;
-    Match *nm     = &(match.NestMatch[0]);
+    Match *nm     = &(item.NestMatch[0]);
     op            = nm->Tag;
-    for (size_t i = 1; i < match.NestMatch.Size; i++) {
-        nm = &(match.NestMatch[i]);
+    for (size_t i = 1; i < item.NestMatch.Size; i++) {
+        nm = &(item.NestMatch[i]);
 
         if (!ALU::NestNumber(block, *nm, temnum)) {
             return L"0";
@@ -193,24 +148,24 @@ String Qentem::ALU::MultiplicationCallback(const String &block, const Match &mat
     return String::ToString(number);
 }
 
-String Qentem::ALU::AdditionCallback(const String &block, const Match &match) noexcept {
+String Qentem::ALU::AdditionCallback(const String &block, const Match &item) noexcept {
     double number = 0.0;
-    size_t op;
-    if (!ALU::NestNumber(block, match.NestMatch[0], number)) {
-        return L"0";
-    }
+    ALU::NestNumber(block, item.NestMatch[0], number);
 
     double temnum = 0.0;
-    Match *nm     = &(match.NestMatch[0]);
-    op            = nm->Tag;
-    for (size_t i = 1; i < match.NestMatch.Size; i++) {
-        nm = &(match.NestMatch[i]);
+    bool   neg    = false;
+    Match *nm     = &(item.NestMatch[0]);
+    size_t op     = nm->Tag;
 
-        if (!ALU::NestNumber(block, *nm, temnum)) {
-            return L"0";
+    for (size_t i = 1; i < item.NestMatch.Size; i++) {
+        nm = &(item.NestMatch[i]);
+
+        if (!ALU::NestNumber(block, *nm, temnum) && (op == 2) && (nm->Length == 1)) {
+            neg = true; // x (- -1) or something like that.
+            continue;
         }
 
-        if (op == 1) {
+        if ((op == 1) || neg) {
             number += temnum;
         } else {
             number -= temnum;
@@ -222,12 +177,12 @@ String Qentem::ALU::AdditionCallback(const String &block, const Match &match) no
     return String::ToString(number);
 }
 
-double Qentem::ALU::Evaluate(String &content) noexcept {
+double Qentem::ALU::Evaluate(String &content) const noexcept {
     /**
      *
      * e.g. ((2* (1 * 3)) + 1 - 4) + ((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1) - (1) - (-1) +
      * 2 = 14 e.g. (6 + 1 - 4) + (5 - 6 + 4) * (8 / 4 + 1) - (1) - (-1) + 2 = 14 e.g. 3 + 3 * 3 - 1 +
-     * 1 + 2 = 14 e.g. 3 + 9 - 1 + 1 + 2 = 14 e.g. 14 = 14 e.g. 1; means true.
+     * 1 + 2 = 14 e.g. 3 + 9 - 1 - -1 + 2 = 14 e.g. 14 = 14 e.g. 1; means true.
      *
      * Steps:
      * First: Look for parenthesis ( operation or number )

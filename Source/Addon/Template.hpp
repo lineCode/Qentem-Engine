@@ -50,12 +50,17 @@ struct Template {
     Expression TagIf;
     Expression IfTail;
 
+    Expression TagELseIf;
+    Expression ELseIfTail;
+
     explicit Template() noexcept;
     String Render(const String &, QArray *data = nullptr) noexcept;
 
     static String RenderVar(const String &, const Match &) noexcept;
-    static String RenderIIF(const String &, const Match &) noexcept;
+    static bool   EvaluateIF(const String &, const Match &) noexcept;
     static String RenderIF(const String &, const Match &) noexcept;
+
+    static String RenderIIF(const String &, const Match &) noexcept;
     static String RenderLoop(const String &, const Match &) noexcept;
     static String DoLoop(const String &, const String &, const String &, QArray *) noexcept;
 };

@@ -2,7 +2,7 @@
 /**
  * Qentem String
  *
- * @brief     String class for Qentem Engine.
+ * @brief     String object for Qentem Engine.
  *
  * @author    Hani Ammar <hani.code@outlook.com>
  * @copyright 2019 Hani Ammar
@@ -12,7 +12,7 @@
 #ifndef QENTEM_STRING_H
 #define QENTEM_STRING_H
 
-#include "Global.hpp"
+#include "Common.hpp"
 
 namespace Qentem {
 
@@ -25,7 +25,9 @@ class String {
     wchar_t *Str    = nullptr;
     size_t   Length = 0;
 
-    explicit String() = default;
+    explicit String() noexcept {
+    }
+
     String(const wchar_t[]) noexcept; // Copy
     String(const wchar_t) noexcept;   // Copy
     String(String &&) noexcept;       // Move
@@ -33,14 +35,13 @@ class String {
     virtual ~String() noexcept;
     void SetSize(size_t) noexcept;
 
+    static String Part(const String &, size_t, size_t);
     static String Trim(const String &) noexcept;
     static String Revers(const String &) noexcept;
-    static bool   ToNumber(const String &, double &) noexcept;
     static String ToString(double, size_t min = 1, size_t max = 0) noexcept;
+    static bool   ToNumber(const String &, double &) noexcept;
     static void   Add(const wchar_t *, String *, size_t, size_t) noexcept;
     static void   Reset(String *) noexcept;
-
-    String Part(size_t, size_t) const;
 
     String &operator=(String &&) noexcept;      // Move
     String &operator=(const String &) noexcept; // Copy

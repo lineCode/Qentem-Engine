@@ -33,12 +33,14 @@ using _PARSECB = String(const String &, const Match &);
 /////////////////////////////////
 // Expressions flags
 struct Flags {
-    static const unsigned short NOTHING = 0;  // ... What it says.
-    static const unsigned short COMPACT = 1;  // Processing the content without Keyword(s).
-    static const unsigned short IGNORE  = 2;  // Match a Keyword but don't process it inside Parse().
-    static const unsigned short BUBBLE  = 4;  // Parse nested matches.
-    static const unsigned short SPLIT   = 8;  // Split a match at a point.
-    static const unsigned short POP     = 16; // Search again with NestExprs if the match fails (See ALU.cpp).
+    static const unsigned short NOTHING   = 0;  // ... What it says.
+    static const unsigned short COMPACT   = 1;  // Processing the content without Keyword(s).
+    static const unsigned short IGNORE    = 2;  // Match a Keyword but don't process it inside Parse().
+    static const unsigned short BUBBLE    = 4;  // Parse nested matches.
+    static const unsigned short SPLIT     = 8;  // Split a match at a keyword.
+    static const unsigned short NESTSPLIT = 16; // Split a Nested match.
+    static const unsigned short POP       = 32; // Search again with NestExprs if the match fails (See ALU.cpp).
+    static const unsigned short ONCE      = 64; // Will stop searching after matching.
 };
 /////////////////////////////////
 struct Expression {
@@ -78,9 +80,9 @@ struct Match {
     Array<Match> SubMatch;
 };
 /////////////////////////////////
-Array<Match> Search(const String &, const Expressions &, size_t from = 0, size_t to = 0, size_t max = 0) noexcept;
-String       Parse(const String &, const Array<Match> &, size_t offset = 0, size_t length = 0) noexcept;
-void         Split(const String &, Match *, Array<Match> *, size_t, size_t) noexcept;
+Array<Match> Search(const String &, const Expressions &, size_t = 0, size_t = 0, size_t = 0, size_t = 0) noexcept;
+void         Split(const String &, Expression *, Array<Match> &, size_t, size_t) noexcept;
+String       Parse(const String &, const Array<Match> &, size_t = 0, size_t = 0) noexcept;
 /////////////////////////////////
 } // namespace Engine
 } // namespace Qentem

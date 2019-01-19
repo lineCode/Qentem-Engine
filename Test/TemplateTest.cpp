@@ -42,13 +42,13 @@ String get_template() noexcept {
         file.seekg(0, std::ios::beg);
 
         temp.SetSize(size);
-        auto *_tmp = new char[size];
+        auto *_tmp = new char[(int(size) + 1)];
 
         file.read(_tmp, size);
 
         size_t ln = 0;
-        while (_tmp[ln++] != '\0') {
-            temp += _tmp[ln];
+        while (_tmp[ln] != '\0') {
+            temp += _tmp[ln++];
         }
 
         delete[] _tmp;
@@ -65,11 +65,11 @@ QArray get_data() noexcept {
     QArray data = QArray();
     // Feature: Build json parser.
     data.Add(L"var1", L"1");
-    data.Add(L"num34", Array<String>().Add(L"3").Add(L"4"));
-    data.Add(L"var2", L"3");
-    data.Add(L"var3", L"1");
+    data.Add(L"var2", L"2");
+    data.Add(L"var3", L"3");
     data.Add(L"var4", L"4");
     data.Add(L"var5", L"5");
+    data.Add(L"num34", Array<String>().Add(L"3").Add(L"4"));
     data.Add(L"var_string", L"image");
     data.Add(L"engine", L"Qentem");
     data.Add(L"abc1", Array<String>().Add(L"B").Add(L"C").Add(L"D").Add(L"A"));

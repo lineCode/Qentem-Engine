@@ -9,7 +9,6 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include "Addon/ALU.hpp"
 #include "Addon/Test.hpp"
 #include <ctime>
 #include <iostream>
@@ -18,8 +17,8 @@ using Qentem::Array;
 using Qentem::String;
 using Qentem::Test::TestBit;
 
-void qentem_test_engine() {
-    const size_t   times    = 1000; // To slow it down!!!
+void qentem_test_engine(bool dumb_express, bool break_on_err) {
+    const size_t   times    = 1; // 100000 To slow it down!!!
     const size_t   start_at = 0;
     const size_t   child_at = 0;
     size_t         child    = 0;
@@ -30,9 +29,8 @@ void qentem_test_engine() {
     size_t         count = start_at;
     Array<TestBit> bits  = Qentem::Test::GetBits();
 
-    bool       pass         = false;
-    const bool break_on_err = true;
-    std::wcout << L"\n#Engine::Search&Parse():\n";
+    bool pass = false;
+    std::wcout << L"\n #Engine::Search&Parse():\n";
     for (size_t i = start_at; i < bits.Size; i++) {
         child = child_at;
         count += 1;
@@ -85,9 +83,13 @@ void qentem_test_engine() {
                            << L"  Rendered: \"" << rendered.Str << L"\"\n"
                            << L"  Expected: \"" << bits[i].Expected[t].Str << L"\"\n"
                            << L"  Matches:\n"
-                           << Qentem::Test::DumbMatches(bits[i].Content[t], matches, L"    ").Str << L"  Expressions:\n"
-                           << Qentem::Test::DumbExpressions(bits[i].Exprs, L"    ").Str << L"\n  ---------- End debug "
-                           << count << L"-" << child << L" -------" << L"\n";
+                           << Qentem::Test::DumbMatches(bits[i].Content[t], matches, L"    ").Str;
+
+                if (dumb_express) {
+                    std::wcout << L"  Expressions:\n" << Qentem::Test::DumbExpressions(bits[i].Exprs, L"    ").Str;
+                }
+
+                std::wcout << L"\n  ---------- End debug " << count << L"-" << child << L" -------" << L"\n";
 
                 if (break_on_err) {
                     break;
@@ -103,24 +105,20 @@ void qentem_test_engine() {
     Qentem::Test::CleanBits(bits);
 
     if (errors == 0) {
-        std::wcout << L"\nAll good! (" << total << L" Tests)\n";
+        std::wcout << L"\n Operational (Total tests: " << total << L")\n";
     } else {
-        std::wcout << L"\nFAILED: " << errors << L" out of " << total << L"\n";
+        std::wcout << L"\n Broken: " << errors << L" out of " << total << L"\n";
     }
 }
 
 int main() {
-    // for checking mem leaks, and other things...
-    // for (size_t y = 0; y < 1000; y++) {
-    //     qentem_test_engine();
+    // for (size_t y = 0; y < 10000; y++) {
+    //     qentem_test_engine(false, false);
     // }
+
+    qentem_test_engine(false, false);
+
     // std::getwchar();
-
-    // auto   alu = Qentem::ALU();
-    // String qua = L"8!=9";
-    // std::wcout << alu.Evaluate(qua) << L"\n";
-
-    qentem_test_engine();
 
     return 1;
 }
