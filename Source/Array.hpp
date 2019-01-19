@@ -12,7 +12,7 @@
 #ifndef QENTEM_ARRAY_H
 #define QENTEM_ARRAY_H
 
-#include "Global.hpp"
+#include "Common.hpp"
 
 namespace Qentem {
 
@@ -35,9 +35,23 @@ class Array {
     }
 
   public:
-    size_t Size      = 0;
-    T *    Storage   = nullptr;
-    explicit Array() = default;
+    size_t Size    = 0;
+    T *    Storage = nullptr;
+
+    explicit Array() noexcept {
+    }
+
+    Array(Array<T> &&src) noexcept {
+        if (this != &src) {
+            // Move
+            this->Storage   = src.Storage;
+            this->_capacity = src._capacity;
+            this->Size      = src.Size;
+            src._capacity   = 0;
+            src.Size        = 0;
+            src.Storage     = nullptr;
+        }
+    }
 
     Array(const Array<T> &src) noexcept {
         if ((this != &src) && (src._capacity != 0)) {
@@ -45,22 +59,18 @@ class Array {
         }
     }
 
+    Array(T &&item) noexcept {
+        this->Add(item);
+    }
+
+    Array(const T &item) noexcept {
+        this->Add(item);
+    }
+
     explicit Array(const size_t size) noexcept {
         if (size != 0) {
             this->_capacity = size;
-            this->Storage   = new T[size];
-        }
-    }
-
-    Array(Array<T> &&src) noexcept {
-        if (src.Size != 0) {
-            this->Storage   = src.Storage;
-            this->_capacity = src._capacity;
-            this->Size      = src.Size;
-
-            src._capacity = 0;
-            src.Size      = 0;
-            src.Storage   = nullptr;
+            this->Storage   = new T[this->_capacity];
         }
     }
 
@@ -112,13 +122,6 @@ class Array {
         return *this;
     }
 
-    Array<T> &operator=(const Array<T> &src) noexcept {
-        if ((this != &src) && (src._capacity != 0)) {
-            Array::_init(&src, this);
-        }
-        return *this;
-    }
-
     Array<T> &operator=(Array<T> &&src) noexcept {
         if (this != &src) {
             // Move
@@ -130,6 +133,14 @@ class Array {
             src._capacity = 0;
             src.Size      = 0;
             src.Storage   = nullptr;
+        }
+        return *this;
+    }
+
+    Array<T> &operator=(const Array<T> &src) noexcept {
+        if ((this != &src) && (src._capacity != 0)) {
+            delete[] this->Storage;
+            Array::_init(&src, this);
         }
         return *this;
     }

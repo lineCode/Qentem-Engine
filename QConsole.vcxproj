@@ -161,11 +161,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClInclude Include="Source\Global.hpp" />
+    <ItemGroup>
+    <ClInclude Include="Source\Common.hpp" />
     <ClInclude Include="Source\String.hpp" />
     <ClInclude Include="Source\Array.hpp" />
     <ClInclude Include="Source\Engine.hpp" />
+    <ClInclude Include="Source\Addon\Extend.hpp" />
     <ClInclude Include="Source\Addon\Test.hpp" />
     <ClInclude Include="Source\Addon\QArray.hpp" />
     <ClInclude Include="Source\Addon\ALU.hpp" />
@@ -174,6 +175,7 @@
   <ItemGroup>
     <ClCompile Include="Source\String.cpp" />
     <ClCompile Include="Source\Engine.cpp" />
+    <ClCompile Include="Source\Addon\Extend.cpp" />
     <ClCompile Include="Source\Addon\Test.cpp" />
     <ClCompile Include="Source\Addon\QArray.cpp" />
     <ClCompile Include="Source\Addon\ALU.cpp" />

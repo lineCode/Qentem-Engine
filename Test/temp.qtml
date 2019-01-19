@@ -1,60 +1,53 @@
 <!--- Variables -->
-<div>{qt-var2}</div>
-<div>{qt-abc[A-Z]}</div>
-<div>{qt-abc1[3]}</div>
-<div>{qt-abc[A]}</div>
-<div>Nested variables: {qt-multi[arr1][E][0]}{qt-multi[arr1][E][1]}</div>
-<div>Dose not exist: {qt-abc1[1234567890]}</div>
-<div>Empty var: {qt-empty}</div>
+<div>{qtv-var2}</div>
+<div>{qtv-abc[A-Z]}</div>
+<div>{qtv-abc1[3]}</div>
+<div>{qtv-abc[A]}</div>
+<div>Nested variables: {qtv-multi[arr1][E][0]}{qtv-multi[arr1][E][1]}</div>
+<div>Dose not exist: {qtv-abc1[1234567890]}</div>
+<div>Empty var: {qtv-empty}</div>
 
 <!--- Simple inline condition -->
-<div>{qt:iif case="{qt-var2} = 3" true="Yes" false="No"}</div>
+<div>{qt-iif case="{qtv-var2} = 2" true="2 == 2" false="2 != 1"}</div>
 
 <!--- Inline condition with one value -->
-<div>{qt:iif case="{qt-var2} = 3" true="true only"}</div>
+<div>{qt-iif case="{qtv-var4} = 4" true="4 == 4"}</div>
 
 <!--- Inline condition with incremental value to a variable in an array -->
-<div>{qt:iif case="({qt-numbers[2]} + 3) = 5" true="{qt-numbers[2]}" false="err"}</div>
+<div>{qt-iif case="({qtv-numbers[2]} + 3) = 5" true="eq 5" false="({qtv-numbers[2]} + 3) != 5"}</div>
 
 <!--- Inline condition with math operations -->
-<div>{qt:iif case="{qt-math} = 14" true="14" false="Not 14"}</div>
+<div>{qt-iif case="{qtv-math} = 14" true="eq 14" false="{qtv-math} != 14"}</div>
 
 <!--- Nested variable inside inline condition with logic operations -->
-<div>{qt:iif case="{qt-abc{qt-var1}[0]}=B" true="B" false="Not B"}</div>
+<div>{qt-iif case="{qtv-abc{qtv-var1}[0]}=B" true="B" false="Not B"}</div>
 
-<!--- Simple If condition -->
+<!--- If conditions -->
 <div>
-    <qt:if case="{qt-var5} = 5">
-        variable "var5" is 5
-    </qt:if>
-</div>
+    <qt-if case="{qtv-var2} = 2">
+        <span>{qtv-var2}</span>
+    </qt-if>
 
-<!--- Simple else If conditions -->
-<div>
-    <qt:if case="  This is Qentem  =    This is Qentem  ">
-        variable "engine" is {qt-engine}}<br>
+    <qt-if case="{qtv-var1} = 1">
+        <span>{qtv-var1}</span>
+        <qt-if case="{qtv-var2} = 2">
+            <span>{qtv-var2}</span>
+        </qt-if>
+    </qt-if>
 
-        <qt-elseif case="{qt-var_string} = image" />
-        variable "var_string" is "image"<br>
+    <qt-if case="{qtv-var1} = 11">
+        <span>{qtv-var1}</span>
+    <qt-elseif case="{qtv-var2} = 22" />
+        <span>{qtv-var2}</span>
+    <qt-elseif case="{qtv-var3} = 3" />
+        <span>{qtv-var3}</span>
+    </qt-if>
 
-        <qt-else />
-        variable "var_string" is {qt-var_string}<br>
-    </qt:if>
-</div>
-
-<!--- Nested If conditions -->
-<div>
-    1<qt:if case="{qt-var_string} = image">
-        {qt-var_string}
-        2<qt:if case="1!=0">
-            {qt-var_string}
-            3<qt:if case="   3  !=  9   ">
-                4<qt:if case="{qt-engine}=Qentem">
-                    {qt-engine}
-                </qt:if>-4
-            </qt:if>-3
-        </qt:if>-2
-    </qt:if>-1
+    <qt-if case="{qtv-var1} = 11">
+        <span>{qtv-var1}</span>
+    <qt-else />
+        <span>{qtv-var4}</span>
+    </qt-if>
 </div>
 
 <!--- Single loops
@@ -62,37 +55,37 @@
     "var": is for every item in "set" and it's value.
 -->
 <div>
-    <qt:loop set="abc1" var="loop-1">
-        <div>loop-1): {qt-abc1[loop-1]}</div>
-    </qt:loop>
+    <qt-loop set="abc1" var="loop-1">
+        <div>loop-1): {qtv-abc1[loop-1]}</div>
+    </qt-loop>
 
-    <qt:loop set="abc2" var="loop-2">
-        <div>loop-2): {qt-abc2[loop-2]}</div>
-    </qt:loop>
+    <qt-loop set="abc2" var="loop-2">
+        <div>loop-2): {qtv-abc2[loop-2]}</div>
+    </qt-loop>
 </div>
 
 <!--- Nested loops -->
 <div>
-    <qt:loop set="multi[arr1][E]" var="wxw">
-        <span>loop-wxw): {qt-multi[arr1][E][wxw]}</span>
+    <qt-loop set="multi[arr1][E]" var="wxw">
+        <span>loop-wxw): {qtv-multi[arr1][E][wxw]}</span>
 
-        <qt:loop set="multi[arr1][E]" var="exe">
-            <span>loop-exe): {qt-multi[arr1][E][exe]}</span>
-        </qt:loop>
+        <qt-loop set="multi[arr1][E]" var="exe">
+            <span>loop-exe): {qtv-multi[arr1][E][exe]}</span>
+        </qt-loop>
 
-        <qt:loop set="multi[arr1][E]" var="rxr">
-            <span>loop-rxr): {qt-multi[arr1][E][rxr]}</span>
+        <qt-loop set="multi[arr1][E]" var="rxr">
+            <span>loop-rxr): {qtv-multi[arr1][E][rxr]}</span>
 
-            <qt:loop set="multi[arr1][E]" var="txt">
-                <span>loop-txt): {qt-multi[arr1][E][txt]}</span>
+            <qt-loop set="multi[arr1][E]" var="txt">
+                <span>loop-txt): {qtv-multi[arr1][E][txt]}</span>
 
-                <qt:loop set="multi[arr1][E]" var="yxy">
-                    <span>loop-yxy): {qt-multi[arr1][E][yxy]}</span>
-                </qt:loop>
+                <qt-loop set="multi[arr1][E]" var="yxy">
+                    <span>loop-yxy): {qtv-multi[arr1][E][yxy]}</span>
+                </qt-loop>
 
-            </qt:loop>
+            </qt-loop>
 
-        </qt:loop>
+        </qt-loop>
 
-    </qt:loop>
+    </qt-loop>
 </div>

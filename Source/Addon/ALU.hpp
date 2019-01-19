@@ -32,10 +32,9 @@ struct ALU {
     Expression MathMul = Expression();
 
     explicit ALU() noexcept;
-    double Evaluate(String &content) noexcept;
+    double Evaluate(String &content) const noexcept;
 
     static String ParenthesisCallback(const String &, const Match &) noexcept;
-    static size_t SearchCallback(const String &, const Expression &, size_t &, size_t &) noexcept;
     static bool   NestNumber(const String &, const Match &, double &) noexcept;
     static String EqualCallback(const String &, const Match &) noexcept;
     static String MultiplicationCallback(const String &, const Match &) noexcept;

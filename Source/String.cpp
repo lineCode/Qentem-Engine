@@ -2,7 +2,7 @@
 /**
  * Qentem String
  *
- * @brief     String class for Qentem Engine.
+ * @brief     String object for Qentem Engine.
  *
  * @author    Hani Ammar <hani.code@outlook.com>
  * @copyright 2019 Hani Ammar
@@ -74,7 +74,8 @@ Qentem::String &Qentem::String::operator+=(String &&src) noexcept { // Move
 
         src.Length = 0;
         src._index = 0;
-        src.Str    = nullptr;
+        delete[] src.Str;
+        src.Str = nullptr;
     }
 
     return *this;
@@ -90,7 +91,6 @@ Qentem::String &Qentem::String::operator+=(const String &src) noexcept {
 
 const Qentem::String Qentem::String::operator+(String &&src) const noexcept {
     String ns = *this;
-
     if (this != &src) {
 
         if (src.Length != 0) {
@@ -99,7 +99,8 @@ const Qentem::String Qentem::String::operator+(String &&src) const noexcept {
 
         src.Length = 0;
         src._index = 0;
-        src.Str    = nullptr;
+        delete[] src.Str;
+        src.Str = nullptr;
     }
 
     return ns;
@@ -170,7 +171,7 @@ Qentem::String Qentem::String::Trim(const String &str) noexcept {
     }
     len += 1;
 
-    String tmp = str.Part(start, len - start);
+    String tmp = String::Part(str, start, len - start);
     return tmp;
 }
 
@@ -194,7 +195,7 @@ Qentem::String Qentem::String::ToString(double number, size_t min, size_t max) n
 
     size_t num;
     String tmp_g = L"";
-    if (max > 0) {
+    if (max != 0) {
         double nuw = 1;
         for (size_t i = 0; i <= max; i++) {
             nuw *= 10;
@@ -275,7 +276,7 @@ bool Qentem::String::ToNumber(const String &str, double &number) noexcept {
 
             if (c == L'.') {
                 number /= m;
-                // number += 0.00001f;
+                // number += 0.00001f; // TODO:(Use ASM to fix 1.000015)
                 m = 1;
                 continue;
             }
@@ -297,14 +298,14 @@ bool Qentem::String::ToNumber(const String &str, double &number) noexcept {
 }
 
 /**
- * @brief Get a part of the text.
+ * @brief Get a part of a text.
  *
  * @param offset An index to start from.
  * @param limit The number of characters to copy.
  * @return The requested string.
  */
-Qentem::String Qentem::String::Part(size_t offset, size_t limit) const {
-    if ((offset + limit) > this->Length) {
+Qentem::String Qentem::String::Part(const String &src, size_t offset, size_t limit) {
+    if ((limit > src.Length) || (offset + limit) > src.Length) {
         throw;
     }
 
@@ -313,7 +314,7 @@ Qentem::String Qentem::String::Part(size_t offset, size_t limit) const {
 
     size_t i = 0;
     while (i < limit) {
-        bit.Str[i++] = this->Str[offset++];
+        bit.Str[i++] = src.Str[offset++];
     }
 
     bit.Str[i] = '\0'; // To mark the end of a string.
@@ -344,14 +345,10 @@ void Qentem::String::Add(const wchar_t *str_p, String *to, size_t start_at, size
         auto *_tmp = new wchar_t[(ln + to->_index + 1)];
 
         if (to->Str != nullptr) {
-            // size_t i = 0;
-            // while ((_tmp[i++] = to->Str[j++]) != '\0') {
-            //     // fast way of copying a string.
-            // };
-
             for (size_t i = 0; i < to->_index; i++) {
                 _tmp[i] = to->Str[j++];
             }
+
             delete[] to->Str;
         }
 
@@ -362,7 +359,7 @@ void Qentem::String::Add(const wchar_t *str_p, String *to, size_t start_at, size
         to->Str[start_at++] = str_p[j++];
     }
 
-    to->Str[start_at] = '\0'; // To mark the end of a string.
+    to->Str[start_at] = '\0'; // Null ending.
 
     to->Length = ln + to->_index;
     to->_index = to->Length;

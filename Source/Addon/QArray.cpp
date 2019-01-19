@@ -108,7 +108,7 @@ bool Qentem::QArray::DecodeKey(String &key, String &id, String &reminder) noexce
             return false;
         }
 
-        l_key = key.Part(0, index);
+        l_key = String::Part(key, 0, index);
 
         while ((index < key.Length) && (key.Str[++index] != ']')) {
         };
@@ -119,11 +119,11 @@ bool Qentem::QArray::DecodeKey(String &key, String &id, String &reminder) noexce
             return false;
         }
 
-        id = key.Part((l_key.Length + 1), len);
+        id = String::Part(key, (l_key.Length + 1), len);
 
         ++index;
         if (index != key.Length) {
-            reminder = key.Part(index, key.Length - index);
+            reminder = String::Part(key, index, key.Length - index);
             if (reminder.Length < 3) {
                 // It's just an empty []
                 return false;
