@@ -14,13 +14,13 @@
 
 #include "Engine.hpp"
 #include "Addon/ALU.hpp"
-#include "Addon/QArray.hpp"
+#include "Addon/Tree.hpp"
 
 namespace Qentem {
 
 struct Template {
     struct PocketT {
-        QArray *    Data = nullptr;
+        Tree *      Data = nullptr;
         Qentem::ALU _Alu = Qentem::ALU();
         Expressions Tags;
         Expressions TagsQuotes;
@@ -30,31 +30,31 @@ struct Template {
     PocketT Pocket;
 
     Expression TagVar;
-    Expression VarTail;
+    Expression VarNext;
 
     Expression TagIif;
-    Expression IifTail;
+    Expression IifNext;
 
     Expression TagQuote;
-    Expression QuoteTail;
+    Expression QuoteNext;
 
     Expression LoopsHead;
-    Expression LoopsHeadT;
+    Expression LoopsHead_T;
 
     Expression TagLoop;
-    Expression LoopTail;
+    Expression LoopNext;
 
     Expression iFsHead;
-    Expression iFsHeadT;
+    Expression iFsHead_T;
 
     Expression TagIf;
-    Expression IfTail;
+    Expression IfNext;
 
     Expression TagELseIf;
-    Expression ELseIfTail;
+    Expression ELseIfNext;
 
     explicit Template() noexcept;
-    String Render(const String &, QArray *data = nullptr) noexcept;
+    String Render(const String &, Tree *data = nullptr) noexcept;
 
     static String RenderVar(const String &, const Match &) noexcept;
     static bool   EvaluateIF(const String &, const Match &) noexcept;
@@ -62,7 +62,7 @@ struct Template {
 
     static String RenderIIF(const String &, const Match &) noexcept;
     static String RenderLoop(const String &, const Match &) noexcept;
-    static String DoLoop(const String &, const String &, const String &, QArray *) noexcept;
+    static String DoLoop(const String &, const String &, const String &, Tree *) noexcept;
 };
 } // namespace Qentem
 

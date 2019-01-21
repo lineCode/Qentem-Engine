@@ -27,14 +27,14 @@ struct TestBit {
     Expressions   Exprslvl0;
     Array<String> Content;
     Array<String> Expected;
-    size_t        Line = 0;
+    UNumber       Line = 0;
 };
 
 void          CleanBits(Array<TestBit> &) noexcept;
 Array<String> Extract(const String &, const Array<Match> &) noexcept;
 
-String         DumbExpressions(const Expressions &, const String &, size_t = 0, Expression * = nullptr) noexcept;
-String         DumbMatches(const String &, const Array<Match> &, const String &, size_t = 0) noexcept;
+String         DumbExpressions(const Expressions &, const String &, UNumber = 0, Expression * = nullptr) noexcept;
+String         DumbMatches(const String &, const Array<Match> &, const String &, UNumber = 0) noexcept;
 Array<TestBit> GetBits() noexcept;
 String         SubMatchZero(const String &, const Match &) noexcept;
 String         SubMatchNestMatch(const String &, const Match &) noexcept;

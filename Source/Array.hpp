@@ -19,13 +19,13 @@ namespace Qentem {
 template <typename T>
 class Array {
   private:
-    size_t _capacity = 0;
+    UNumber _capacity = 0;
 
     static void _init(const Array<T> *from, Array<T> *to) noexcept {
         if (from->Size != 0) {
             to->Storage = new T[from->Size];
 
-            for (size_t n = 0; n < from->Size; n++) {
+            for (UNumber n = 0; n < from->Size; n++) {
                 to->Storage[n] = from->Storage[n];
             }
         }
@@ -35,11 +35,10 @@ class Array {
     }
 
   public:
-    size_t Size    = 0;
-    T *    Storage = nullptr;
+    UNumber Size    = 0;
+    T *     Storage = nullptr;
 
-    explicit Array() noexcept {
-    }
+    explicit Array() noexcept = default;
 
     Array(Array<T> &&src) noexcept {
         if (this != &src) {
@@ -67,7 +66,7 @@ class Array {
         this->Add(item);
     }
 
-    explicit Array(const size_t size) noexcept {
+    explicit Array(const UNumber size) noexcept {
         if (size != 0) {
             this->_capacity = size;
             this->Storage   = new T[this->_capacity];
@@ -78,13 +77,20 @@ class Array {
         delete[] this->Storage;
     }
 
+    inline void Clear() noexcept {
+        delete[] this->Storage;
+        this->Storage   = nullptr;
+        this->_capacity = 0;
+        this->Size      = 0;
+    }
+
     Array<T> &Add(const Array<T> &src) noexcept {
         if (src.Size != 0) {
             if ((this->Size + src.Size) > this->_capacity) {
                 this->_capacity += src.Size;
 
                 auto *tmp = new T[this->_capacity];
-                for (size_t n = 0; n < this->Size; n++) {
+                for (UNumber n = 0; n < this->Size; n++) {
                     tmp[n] = this->Storage[n];
                 }
 
@@ -92,7 +98,7 @@ class Array {
                 this->Storage = tmp;
             }
 
-            for (size_t i = 0; i < src.Size; i++) {
+            for (UNumber i = 0; i < src.Size; i++) {
                 this->Storage[this->Size++] = src.Storage[i];
             }
         }
@@ -109,7 +115,7 @@ class Array {
             }
 
             auto *tmp = new T[this->_capacity];
-            for (size_t n = 0; n < this->Size; n++) {
+            for (UNumber n = 0; n < this->Size; n++) {
                 tmp[n] = this->Storage[n];
             }
 
@@ -145,7 +151,7 @@ class Array {
         return *this;
     }
 
-    inline T &operator[](const size_t id) const {
+    inline T &operator[](const UNumber id) const {
         if (id >= this->Size) {
             throw;
         }

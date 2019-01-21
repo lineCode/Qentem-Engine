@@ -166,18 +166,18 @@
     <ClInclude Include="Source\String.hpp" />
     <ClInclude Include="Source\Array.hpp" />
     <ClInclude Include="Source\Engine.hpp" />
-    <ClInclude Include="Source\Addon\Extend.hpp" />
+    <ClInclude Include="Source\Addon\QRegex.hpp" />
     <ClInclude Include="Source\Addon\Test.hpp" />
-    <ClInclude Include="Source\Addon\QArray.hpp" />
+    <ClInclude Include="Source\Addon\Tree.hpp" />
     <ClInclude Include="Source\Addon\ALU.hpp" />
     <ClInclude Include="Source\Addon\Template.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\String.cpp" />
     <ClCompile Include="Source\Engine.cpp" />
-    <ClCompile Include="Source\Addon\Extend.cpp" />
+    <ClCompile Include="Source\Addon\QRegex.cpp" />
     <ClCompile Include="Source\Addon\Test.cpp" />
-    <ClCompile Include="Source\Addon\QArray.cpp" />
+    <ClCompile Include="Source\Addon\Tree.cpp" />
     <ClCompile Include="Source\Addon\ALU.cpp" />
     <ClCompile Include="Source\Addon\Template.cpp" />
     <ClCompile Include="Test\EngineTest.cpp" />

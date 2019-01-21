@@ -1,6 +1,6 @@
 
 /**
- * Qentem QArray
+ * Qentem Tree
  *
  * @brief     Unordered Array
  *
@@ -9,11 +9,11 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include "Addon/QArray.hpp"
+#include "Addon/Tree.hpp"
 
 using Qentem::String;
 
-void Qentem::QArray::Add(const String &key, const String &_data) noexcept {
+void Qentem::Tree::Add(const String &key, const String &_data) noexcept {
     Keys.Add(key);
     ExactID.Add(Strings.Size);
     Types.Add(VType::StringT);
@@ -21,7 +21,7 @@ void Qentem::QArray::Add(const String &key, const String &_data) noexcept {
     Strings.Add(_data);
 }
 
-void Qentem::QArray::Add(const String &key, const Array<String> &_data) noexcept {
+void Qentem::Tree::Add(const String &key, const Array<String> &_data) noexcept {
     Keys.Add(key);
     ExactID.Add(Arrays.Size);
     Types.Add(VType::ArrayT);
@@ -29,17 +29,17 @@ void Qentem::QArray::Add(const String &key, const Array<String> &_data) noexcept
     Arrays.Add(_data);
 }
 
-void Qentem::QArray::Add(const String &key, const QArray &_data) noexcept {
+void Qentem::Tree::Add(const String &key, const Tree &_data) noexcept {
     Keys.Add(key);
     ExactID.Add(VArray.Size);
-    Types.Add(VType::QArrayT);
+    Types.Add(VType::TreeT);
 
     VArray.Add(_data);
 }
 
-bool Qentem::QArray::GetIndex(const String &key, size_t &index) const noexcept {
+bool Qentem::Tree::GetIndex(const String &key, UNumber &index) const noexcept {
     // TODO(Hani): Use hashing!
-    for (size_t id = 0; id <= Keys.Size; id++) {
+    for (UNumber id = 0; id <= Keys.Size; id++) {
         if (key == Keys[id]) {
             index = id;
             return true;
@@ -50,14 +50,14 @@ bool Qentem::QArray::GetIndex(const String &key, size_t &index) const noexcept {
 }
 
 // Key from can be: name, name[id1], name[id1][id2], name[id1][id2][idx]...
-String *Qentem::QArray::GetValue(const String &key) noexcept {
+String *Qentem::Tree::GetValue(const String &key) noexcept {
     String L_key    = key;
     String id       = L"";
     String reminder = L"";
 
-    if (QArray::DecodeKey(L_key, id, reminder)) {
-        size_t index = 0;
-        if (QArray::GetIndex(L_key, index)) {
+    if (Tree::DecodeKey(L_key, id, reminder)) {
+        UNumber index = 0;
+        if (Tree::GetIndex(L_key, index)) {
             const VType type = Types[index];
             index            = ExactID[index];
             if (type == VType::StringT) {
@@ -71,10 +71,10 @@ String *Qentem::QArray::GetValue(const String &key) noexcept {
             if (id.Length != 0) {
                 if (type == VType::ArrayT) {
                     double nid = 0.0;
-                    if ((String::ToNumber(id, nid)) && (static_cast<size_t>(nid) < Arrays[index].Size)) {
-                        return &(Arrays[index][static_cast<size_t>(nid)]);
+                    if ((String::ToNumber(id, nid)) && (static_cast<UNumber>(nid) < Arrays[index].Size)) {
+                        return &(Arrays[index][static_cast<UNumber>(nid)]);
                     }
-                } else if (type == VType::QArrayT) {
+                } else if (type == VType::TreeT) {
                     if (reminder.Length != 0) {
                         id += reminder;
                     }
@@ -87,7 +87,7 @@ String *Qentem::QArray::GetValue(const String &key) noexcept {
     return nullptr;
 }
 
-bool Qentem::QArray::DecodeKey(String &key, String &id, String &reminder) noexcept {
+bool Qentem::Tree::DecodeKey(String &key, String &id, String &reminder) noexcept {
     // key = L"glob[rrr][ccc]"; // For testing only!
     id       = L"";
     id       = L"";
@@ -100,9 +100,9 @@ bool Qentem::QArray::DecodeKey(String &key, String &id, String &reminder) noexce
 
         String l_key = L"";
         // It has to have at least one letter before [
-        size_t index = 0;
+        UNumber index = 0;
         while ((index < key.Length) && (key.Str[++index] != '[')) { // There is \0 at the end of wchar_t[]
-        };                                                          // TODO(Hani): index might be out of order
+        };
 
         if (index == key.Length) {
             return false;
@@ -113,7 +113,7 @@ bool Qentem::QArray::DecodeKey(String &key, String &id, String &reminder) noexce
         while ((index < key.Length) && (key.Str[++index] != ']')) {
         };
 
-        size_t len = (index - (l_key.Length + 1));
+        UNumber len = (index - (l_key.Length + 1));
 
         if (len == 0) {
             return false;

@@ -19,11 +19,11 @@ namespace Qentem {
 // NULL terminated wchar_t
 class String {
   private:
-    size_t _index = 0;
+    UNumber _index = 0;
 
   public:
     wchar_t *Str    = nullptr;
-    size_t   Length = 0;
+    UNumber  Length = 0;
 
     explicit String() noexcept {
     }
@@ -33,15 +33,15 @@ class String {
     String(String &&) noexcept;       // Move
     String(const String &) noexcept;  // Copy
     virtual ~String() noexcept;
-    void SetSize(size_t) noexcept;
 
-    static String Part(const String &, size_t, size_t);
+    static String Part(const String &, UNumber, UNumber);
     static String Trim(const String &) noexcept;
     static String Revers(const String &) noexcept;
-    static String ToString(double, size_t min = 1, size_t max = 0) noexcept;
+    static String FromNumber(double, UNumber min = 1, UNumber max = 0) noexcept;
     static bool   ToNumber(const String &, double &) noexcept;
-    static void   Add(const wchar_t *, String *, size_t, size_t) noexcept;
-    static void   Reset(String *) noexcept;
+    static void   Add(const wchar_t *, String *, UNumber, UNumber) noexcept;
+    static void   Clear(String *) noexcept;
+    static void   SetSize(String *, UNumber) noexcept;
 
     String &operator=(String &&) noexcept;      // Move
     String &operator=(const String &) noexcept; // Copy

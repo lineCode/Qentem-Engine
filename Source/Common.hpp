@@ -12,7 +12,10 @@
 #ifndef QENTEM_COMMON_H
 #define QENTEM_COMMON_H
 
-#include <stddef.h>
+// #include <stddef.h>
+// using UNumber = size_t;
+
+using UNumber = unsigned long long;
 
 namespace Qentem {} // namespace Qentem
 

@@ -1,6 +1,6 @@
 
 /**
- * Qentem Engine Extended functions
+ * Qentem Engine Regex extintion
  *
  * @brief     For implenting other patent.
  *
@@ -9,19 +9,19 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#ifndef QENTEM_EXTEND_H
-#define QENTEM_EXTEND_H
+#ifndef QENTEM_QRegex_H
+#define QENTEM_QRegex_H
 
 #include "Engine.hpp"
 
 namespace Qentem {
-namespace Extend {
+namespace QRegex {
 
 using Qentem::Engine::Expression;
 
-size_t RegexOR(const String &, const Expression &, size_t &, size_t &) noexcept;
+UNumber OR(const String &, const Expression &, UNumber &, UNumber &) noexcept;
 
-} // namespace Extend
+} // namespace QRegex
 } // namespace Qentem
 
 #endif

@@ -1,91 +1,91 @@
 <!--- Variables -->
-<div>{qtv-var2}</div>
-<div>{qtv-abc[A-Z]}</div>
-<div>{qtv-abc1[3]}</div>
-<div>{qtv-abc[A]}</div>
-<div>Nested variables: {qtv-multi[arr1][E][0]}{qtv-multi[arr1][E][1]}</div>
-<div>Dose not exist: {qtv-abc1[1234567890]}</div>
-<div>Empty var: {qtv-empty}</div>
+<div>{v-var2}</div>
+<div>{v-abc[A-Z]}</div>
+<div>{v-abc1[3]}</div>
+<div>{v-abc[A]}</div>
+<div>Nested variables: {v-multi[arr1][E][0]}{v-multi[arr1][E][1]}</div>
+<div>Dose not exist: {v-abc1[1234567890]}</div>
+<div>Empty var: {v-empty}</div>
 
 <!--- Simple inline condition -->
-<div>{qt-iif case="{qtv-var2} = 2" true="2 == 2" false="2 != 1"}</div>
+<div>{iif case="{v-var2} = 2" true="2 == 2" false="2 != 1"}</div>
 
 <!--- Inline condition with one value -->
-<div>{qt-iif case="{qtv-var4} = 4" true="4 == 4"}</div>
+<div>{iif case="{v-var4} = 4" true="4 == 4"}</div>
 
-<!--- Inline condition with incremental value to a variable in an array -->
-<div>{qt-iif case="({qtv-numbers[2]} + 3) = 5" true="eq 5" false="({qtv-numbers[2]} + 3) != 5"}</div>
+<!--- Inline condition with incremental value to a variable in an Array -->
+<div>{iif case="({v-numbers[2]} + 3) = 5" true="eq 5" false="({v-numbers[2]} + 3) != 5"}</div>
 
 <!--- Inline condition with math operations -->
-<div>{qt-iif case="{qtv-math} = 14" true="eq 14" false="{qtv-math} != 14"}</div>
+<div>{iif case="{v-math} = 14" true="eq 14" false="{v-math} != 14"}</div>
 
 <!--- Nested variable inside inline condition with logic operations -->
-<div>{qt-iif case="{qtv-abc{qtv-var1}[0]}=B" true="B" false="Not B"}</div>
+<div>{iif case="{v-abc{v-var1}[0]}=B" true="B" false="Not B"}</div>
 
 <!--- If conditions -->
 <div>
-    <qt-if case="{qtv-var2} = 2">
-        <span>{qtv-var2}</span>
-    </qt-if>
+    <if case="{v-var2} = 2">
+        <span>{v-var2}</span>
+    </if>
 
-    <qt-if case="{qtv-var1} = 1">
-        <span>{qtv-var1}</span>
-        <qt-if case="{qtv-var2} = 2">
-            <span>{qtv-var2}</span>
-        </qt-if>
-    </qt-if>
+    <if case="{v-var1} = 1">
+        <span>{v-var1}</span>
+        <if case="{v-var2} = 2">
+            <span>{v-var2}</span>
+        </if>
+    </if>
 
-    <qt-if case="{qtv-var1} = 11">
-        <span>{qtv-var1}</span>
-    <qt-elseif case="{qtv-var2} = 22" />
-        <span>{qtv-var2}</span>
-    <qt-elseif case="{qtv-var3} = 3" />
-        <span>{qtv-var3}</span>
-    </qt-if>
+    <if case="{v-var1} = 11">
+        <span>{v-var1}</span>
+    <elseif case="{v-var2} = 22" />
+        <span>{v-var2}</span>
+    <elseif case=" {v-engine} = Qentem " />
+        <span>{v-engine}</span>
+    </if>
 
-    <qt-if case="{qtv-var1} = 11">
-        <span>{qtv-var1}</span>
-    <qt-else />
-        <span>{qtv-var4}</span>
-    </qt-if>
+    <if case="{v-var1} = 11">
+        <span>{v-var1}</span>
+    <else />
+        <span>{v-var4}</span>
+    </if>
 </div>
 
 <!--- Single loops
-    "set": is the name  of the array (collocation).
+    "set": is the name  of the Array (collocation).
     "var": is for every item in "set" and it's value.
 -->
 <div>
-    <qt-loop set="abc1" var="loop-1">
-        <div>loop-1): {qtv-abc1[loop-1]}</div>
-    </qt-loop>
+    <loop set="abc1" var="loop-1">
+        <div>loop-1): {v-abc1[loop-1]}</div>
+    </loop>
 
-    <qt-loop set="abc2" var="loop-2">
-        <div>loop-2): {qtv-abc2[loop-2]}</div>
-    </qt-loop>
+    <loop set="abc2" var="loop-2">
+        <div>loop-2): {v-abc2[loop-2]}</div>
+    </loop>
 </div>
 
 <!--- Nested loops -->
 <div>
-    <qt-loop set="multi[arr1][E]" var="wxw">
-        <span>loop-wxw): {qtv-multi[arr1][E][wxw]}</span>
+    <loop set="multi[arr1][E]" var="wxw">
+        <span>loop-wxw): {v-multi[arr1][E][wxw]}</span>
 
-        <qt-loop set="multi[arr1][E]" var="exe">
-            <span>loop-exe): {qtv-multi[arr1][E][exe]}</span>
-        </qt-loop>
+        <loop set="multi[arr1][E]" var="exe">
+            <span>loop-exe): {v-multi[arr1][E][exe]}</span>
+        </loop>
 
-        <qt-loop set="multi[arr1][E]" var="rxr">
-            <span>loop-rxr): {qtv-multi[arr1][E][rxr]}</span>
+        <loop set="multi[arr1][E]" var="rxr">
+            <span>loop-rxr): {v-multi[arr1][E][rxr]}</span>
 
-            <qt-loop set="multi[arr1][E]" var="txt">
-                <span>loop-txt): {qtv-multi[arr1][E][txt]}</span>
+            <loop set="multi[arr1][E]" var="txt">
+                <span>loop-txt): {v-multi[arr1][E][txt]}</span>
 
-                <qt-loop set="multi[arr1][E]" var="yxy">
-                    <span>loop-yxy): {qtv-multi[arr1][E][yxy]}</span>
-                </qt-loop>
+                <loop set="multi[arr1][E]" var="yxy">
+                    <span>loop-yxy): {v-multi[arr1][E][yxy]}</span>
+                </loop>
 
-            </qt-loop>
+            </loop>
 
-        </qt-loop>
+        </loop>
 
-    </qt-loop>
+    </loop>
 </div>
