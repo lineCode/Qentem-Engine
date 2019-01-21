@@ -19,8 +19,8 @@
                 "-ISource",
                 "Source/*.cpp",
                 "Source/Addon/*.cpp",
-                "Test/TemplateTest.cpp",
-                // "Test/EngineTest.cpp",
+                // "Test/TemplateTest.cpp",
+                "Test/EngineTest.cpp",
                 "-oBuild/QConsole.bin"
             ],
             "group": {
@@ -41,8 +41,8 @@
                 "Source/String.cpp",
                 "Source/Array.hpp",
                 "Source/Engine.cpp",
-                "Source/Addon/QArray.cpp",
-                "Source/Addon/Extend.cpp",
+                "Source/Addon/Tree.cpp",
+                "Source/Addon/QRegex.cpp",
                 "Source/Addon/ALU.cpp",
                 "Source/Addon/Test.cpp",
                 "Source/Addon/Template.cpp",
@@ -62,20 +62,6 @@
                 "clear": true
             },
             "problemMatcher": "$gcc"
-            // "problemMatcher": {
-            //     "owner": "cpp",
-            //     "fileLocation": [
-            //         "absolute",
-            //     ],
-            //     "pattern": {
-            //         "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-            //         "file": 1,
-            //         "line": 2,
-            //         "column": 3,
-            //         "severity": 4,
-            //         "message": 5
-            //     }
-            // }
         },
         {
             "label": "Build .exe", // executable
@@ -100,33 +86,33 @@
             // Use the standard MS compiler pattern to detect errors, warnings and infos
             "problemMatcher": "$msCompile"
         },
-        // {
-        //     "label": "Build .so",
-        //     "promptOnClose": false,
-        //     "type": "shell",
-        //     "command": "clang++",
-        //     "args": [
-        //         "-shared",
-        //         "-stdlib=libc++",
-        //         "-Wall",
-        //         "-std=c++17",
-        //         "-m64",
-        //         "-fPIC",
-        //         // "-v",
-        //         "-ISource",
-        //         "Source/*.cpp",
-        //         "-oBuild/QpieLibx64.so"
-        //     ],
-        //     "group": {
-        //         "kind": "build",
-        //         "isDefault": true
-        //     },
-        //     "presentation": {
-        //         "reveal": "silent",
-        //         "clear": true
-        //     },
-        //     "problemMatcher": "$gcc"
-        // },
+        {
+            "label": "Build .so",
+            "promptOnClose": false,
+            "type": "shell",
+            "command": "clang++",
+            "args": [
+                "-shared",
+                "-stdlib=libc++",
+                "-Wall",
+                "-std=c++17",
+                "-m64",
+                "-fPIC",
+                // "-v",
+                "-ISource",
+                "Source/*.cpp",
+                "-oBuild/QpieLibx64.so"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "silent",
+                "clear": true
+            },
+            "problemMatcher": "$gcc"
+        },
         // {
         //     "label": "Build .dll",
         //     "type": "shell",

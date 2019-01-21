@@ -18,94 +18,94 @@ using Qentem::Engine::Flags;
 Qentem::Template::Template() noexcept {
 
     // Variables evaluation.
-    TagVar.ParseCB = &(Template::RenderVar);
-    TagVar.Pocket  = &(this->Pocket);
-    // {qtv-var_name}
-    TagVar.Keyword  = L"{qtv-";
-    VarTail.Keyword = L"}";
-    TagVar.Tail     = &VarTail;
-    TagVar.Flag     = Flags::BUBBLE;
-    // {qtv-var_{qtv-var2_{qtv-var3_id}}}
-    TagVar.NestExprs.Add(&TagVar); // nest itself
+    VarNext.ParseCB = &(Template::RenderVar);
+    VarNext.Pocket  = &(this->Pocket);
+    // {v-var_name}
+    TagVar.Keyword  = L"{v-";
+    VarNext.Keyword = L"}";
+    TagVar.Next     = &VarNext;
+    VarNext.Flag    = Flags::BUBBLE;
+    // {v-var_{v-var2_{v-var3_id}}}
+    VarNext.NestExprs.Add(&TagVar); // Nest itself
     Pocket.Tags.Add(&TagVar);
     Pocket.TagsVars.Add(&TagVar);
     /////////////////////////////////
 
     // Inline if evaluation.
-    TagIif.ParseCB = &(Template::RenderIIF);
-    TagIif.Pocket  = &(this->Pocket);
-    //{qt-iif case="3 == 3" true="Yes" false="No"}
-    TagIif.Keyword  = L"{qt-iif";
-    IifTail.Keyword = L"}";
-    TagIif.Tail     = &IifTail;
-    TagIif.Flag     = Flags::BUBBLE;
-    TagIif.NestExprs.Add(&TagVar); // nested by TagVars'
+    IifNext.ParseCB = &(Template::RenderIIF);
+    IifNext.Pocket  = &(this->Pocket);
+    //{iif case="3 == 3" true="Yes" false="No"}
+    TagIif.Keyword  = L"{iif";
+    IifNext.Keyword = L"}";
+    TagIif.Next     = &IifNext;
+    IifNext.Flag    = Flags::BUBBLE;
+    IifNext.NestExprs.Add(&TagVar); // nested by TagVars'
     Pocket.Tags.Add(&TagIif);
     /////////////////////////////////
 
     // TagsQuotes.
     TagQuote.Keyword  = L"\"";
-    QuoteTail.Keyword = L"\"";
-    TagQuote.Tail     = &QuoteTail;
-    TagQuote.Pocket   = &(this->Pocket);
+    QuoteNext.Keyword = L"\"";
+    TagQuote.Next     = &QuoteNext;
+    QuoteNext.Pocket  = &(this->Pocket);
     Pocket.TagsQuotes.Add(&TagQuote);
     /////////////////////////////////
 
     // If spliter.
-    // <qt-else />
-    TagELseIf.Keyword  = L"<qt-else";
-    ELseIfTail.Keyword = L"/>";
-    TagELseIf.Flag     = Flags::SPLIT;
-    TagELseIf.Tail     = &ELseIfTail;
-    TagELseIf.SubExprs.Add(&TagQuote);
+    // <else />
+    TagELseIf.Keyword  = L"<else";
+    ELseIfNext.Keyword = L"/>";
+    ELseIfNext.Flag    = Flags::SPLIT;
+    TagELseIf.Next     = &ELseIfNext;
+    ELseIfNext.SubExprs.Add(&TagQuote);
     /////////////////////////////////
 
     // If's head.
-    iFsHead.Keyword  = L"<qt-if";
-    iFsHeadT.Keyword = L">";
-    iFsHead.Flag     = Flags::ONCE;
-    iFsHead.Tail     = &iFsHeadT;
+    iFsHead.Keyword   = L"<if";
+    iFsHead_T.Keyword = L">";
+    iFsHead_T.Flag    = Flags::ONCE;
+    iFsHead.Next      = &iFsHead_T;
     // Nest to prevent matching ">" bigger sign inside if statement.
-    iFsHead.NestExprs.Add(&TagQuote);
+    iFsHead_T.NestExprs.Add(&TagQuote);
     /////////////////////////////////
 
     // If evaluation.
-    TagIf.ParseCB = &(Template::RenderIF);
-    TagIf.Pocket  = &(this->Pocket);
-    // <qt-if case="{case}">html code</qt-if>
-    TagIf.Keyword  = L"<qt-if";
-    IfTail.Keyword = L"</qt-if>";
-    TagIf.Flag     = Flags::NESTSPLIT;
-    TagIf.Tail     = &IfTail;
-    TagIf.SubExprs.Add(&iFsHead);
-    TagIf.NestExprs.Add(&TagIf).Add(&TagELseIf);
+    IfNext.ParseCB = &(Template::RenderIF);
+    IfNext.Pocket  = &(this->Pocket);
+    // <if case="{case}">html code</if>
+    TagIf.Keyword  = L"<if";
+    IfNext.Keyword = L"</if>";
+    TagIf.Next     = &IfNext;
+    IfNext.Flag    = Flags::SPLITNEST;
+    IfNext.SubExprs.Add(&iFsHead);
+    IfNext.NestExprs.Add(&TagIf).Add(&TagELseIf);
     Pocket.Tags.Add(&TagIf);
     /////////////////////////////////
 
     // Loop's head.
-    LoopsHead.Keyword  = L"<qt-loop";
-    LoopsHeadT.Keyword = L">";
-    LoopsHead.Flag     = Flags::ONCE;
-    LoopsHead.Tail     = &LoopsHeadT;
-    LoopsHead.SubExprs.Add(&TagQuote);
+    LoopsHead.Keyword   = L"<loop";
+    LoopsHead_T.Keyword = L">";
+    LoopsHead.Next      = &LoopsHead_T;
+    LoopsHead_T.Flag    = Flags::ONCE;
+    LoopsHead_T.SubExprs.Add(&TagQuote);
     /////////////////////////////////
 
     // Loop evaluation.
-    TagLoop.ParseCB = &(Template::RenderLoop);
-    TagLoop.Pocket  = &(this->Pocket);
-    // <qt-loop set="abc2" var="loopId">
-    //     <span>loopId): -{qtv-abc2[loopId]}</span>
-    // </qt-loop>
-    TagLoop.Keyword  = L"<qt-loop";
-    LoopTail.Keyword = L"</qt-loop>";
-    TagLoop.Tail     = &LoopTail;
-    TagLoop.SubExprs.Add(&LoopsHead);
-    TagLoop.NestExprs.Add(&TagLoop); // nested by itself
+    LoopNext.ParseCB = &(Template::RenderLoop);
+    LoopNext.Pocket  = &(this->Pocket);
+    // <loop set="abc2" var="loopId">
+    //     <span>loopId): -{v-abc2[loopId]}</span>
+    // </loop>
+    TagLoop.Keyword  = L"<loop";
+    LoopNext.Keyword = L"</loop>";
+    TagLoop.Next     = &LoopNext;
+    LoopNext.SubExprs.Add(&LoopsHead);
+    LoopNext.NestExprs.Add(&TagLoop); // nested by itself
     Pocket.Tags.Add(&TagLoop);
     /////////////////////////////////
 }
 
-String Qentem::Template::Render(const String &content, QArray *data) noexcept {
+String Qentem::Template::Render(const String &content, Tree *data) noexcept {
     if (data != nullptr) {
         this->Pocket.Data = data;
     }
@@ -113,14 +113,28 @@ String Qentem::Template::Render(const String &content, QArray *data) noexcept {
     return Engine::Parse(content, Engine::Search(content, this->Pocket.Tags));
 }
 
-// <qt-if case="{case}">html code</qt-if>
-// <qt-if case="{case}">html code1 <qt-else /> html code2</qt-if>
-// <qt-if case="{case1}">html code1 <qt-elseif case={case2} /> html code2</qt-if>
-// <qt-if case="{case}">html code <qt-if case="{case2}" />additional html code</qt-if></qt-if>
+// e.g. {v-var_name}
+// e.g. {v-var_name[id]}
+// Nest: {v-var_{v-var2_{v-var3_id}}}
+String Qentem::Template::RenderVar(const String &block, const Match &item) noexcept {
+    String id = String::Part(block, item.OLength, (block.Length - (item.OLength + item.CLength)));
+    if (id.Length != 0) {
+        String *val = (static_cast<Template::PocketT *>(item.Expr->Pocket))->Data->GetValue(id);
+        if (val != nullptr) {
+            return *val;
+        }
+    }
+    return id;
+}
+
+// <if case="{case}">html code</if>
+// <if case="{case}">html code1 <else /> html code2</if>
+// <if case="{case1}">html code1 <elseif case={case2} /> html code2</if>
+// <if case="{case}">html code <if case="{case2}" />additional html code</if></if>
 bool Qentem::Template::EvaluateIF(const String &block, const Match &if_case) noexcept {
-    size_t offset = (if_case.Offset + if_case.OLength);
-    size_t length = (if_case.Length - (if_case.OLength + if_case.CLength));
-    auto   pocket = static_cast<PocketT *>(if_case.Expr->Pocket);
+    UNumber offset = (if_case.Offset + if_case.OLength);
+    UNumber length = (if_case.Length - (if_case.OLength + if_case.CLength));
+    auto    pocket = static_cast<PocketT *>(if_case.Expr->Pocket);
 
     String statement = Engine::Parse(block, Engine::Search(block, pocket->TagsVars, offset, (offset + length)), offset,
                                      (offset + length));
@@ -140,14 +154,14 @@ String Qentem::Template::RenderIF(const String &block, const Match &item) noexce
             _true     = Template::EvaluateIF(block, *nm);
 
             // inner content of if
-            size_t offset = (sm->Offset + sm->Length);
-            size_t length = (item.Length - (sm->Length + item.CLength));
+            UNumber offset = (sm->Offset + sm->Length);
+            UNumber length = (item.Length - (sm->Length + item.CLength));
 
             if (item.NestMatch.Size != 0) {
                 nm = &(item.NestMatch[0]);
                 if (nm->NestMatch.Size > 0) {
                     // if_else (splitted content)
-                    for (size_t i = 0; i < nm->NestMatch.Size; i++) {
+                    for (UNumber i = 0; i < nm->NestMatch.Size; i++) {
                         if ((nm->NestMatch[i].SubMatch.Size == 0) ||
                             Template::EvaluateIF(block, nm->NestMatch[i].SubMatch[0])) {
                             // inner content of the next part.
@@ -173,24 +187,10 @@ String Qentem::Template::RenderIF(const String &block, const Match &item) noexce
     return L"";
 }
 
-// e.g. {qtv-var_name}
-// e.g. {qtv-var_name[id]}
-// Nest: {qtv-var_{qtv-var2_{qtv-var3_id}}}
-String Qentem::Template::RenderVar(const String &block, const Match &item) noexcept {
-    String id = String::Part(block, item.OLength, (block.Length - (item.OLength + item.CLength)));
-    if (id.Length != 0) {
-        String *val = (static_cast<Template::PocketT *>(item.Expr->Pocket))->Data->GetValue(id);
-        if (val != nullptr) {
-            return *val;
-        }
-    }
-    return id;
-}
-
-// {qt-iif case="3 == 3" true="Yes" false="No"}
-// {qt-iif case="{qtv-var_five} == 5" true="5" false="no"}
-// {qt-iif case="{qtv-var_five} == 5" true="{qtv-var_five} is equal to 5" false="no"}
-// {qt-iif case="3 == 3" true="Yes" false="No"}
+// {iif case="3 == 3" true="Yes" false="No"}
+// {iif case="{v-var_five} == 5" true="5" false="no"}
+// {iif case="{v-var_five} == 5" true="{v-var_five} is equal to 5" false="no"}
+// {iif case="3 == 3" true="Yes" false="No"}
 String Qentem::Template::RenderIIF(const String &block, const Match &item) noexcept {
     const Array<Match> items = Engine::Search(block, (static_cast<PocketT *>(item.Expr->Pocket))->TagsQuotes);
     if (items.Size == 0) {
@@ -203,7 +203,7 @@ String Qentem::Template::RenderIIF(const String &block, const Match &item) noexc
     String iif_true  = L"";
 
     // case="[statement]" true="[Yes]" false="[No]"
-    for (size_t i = 0; i < items.Size; i++) {
+    for (UNumber i = 0; i < items.Size; i++) {
         // With this method, order is not necessary of case=, true=, false=
         m = &(items[i]);
         if (m->Offset > 3) {
@@ -229,11 +229,11 @@ String Qentem::Template::RenderIIF(const String &block, const Match &item) noexc
     return (iif_false.Length != 0) ? iif_false : L"";
 }
 
-// <qt-loop set="abc2" var="loopId">
-//     <span>loopId): -{qtv-abc2[loopId]}</span>
-// </qt-loop>
+// <loop set="abc2" var="loopId">
+//     <span>loopId): -{v-abc2[loopId]}</span>
+// </loop>
 String Qentem::Template::RenderLoop(const String &block, const Match &item) noexcept {
-    // To match: <qt-loop (set="abc2" var="loopId")>
+    // To match: <loop (set="abc2" var="loopId")>
     if ((item.SubMatch.Size != 0) && (item.SubMatch[0].SubMatch.Size != 0)) {
         Match *      m;
         String       name   = L"";
@@ -245,8 +245,8 @@ String Qentem::Template::RenderLoop(const String &block, const Match &item) noex
         // When not
         // adj_offset = (m->Offset + m->OLength);
 
-        // set="(array_name)" var="(var_id)"
-        for (size_t i = 0; i < sm->SubMatch.Size; i++) {
+        // set="(Array_name)" var="(var_id)"
+        for (UNumber i = 0; i < sm->SubMatch.Size; i++) {
             m = &(sm->SubMatch[i]);
             if (m->Offset > 1) {
                 switch (block.Str[(m->Offset - 2)]) {
@@ -262,13 +262,13 @@ String Qentem::Template::RenderLoop(const String &block, const Match &item) noex
 
         if ((name.Length != 0) && (var_id.Length != 0)) {
             const PocketT *pocket  = static_cast<PocketT *>(item.Expr->Pocket);
-            size_t         offset  = sm->Offset + sm->Length;
-            size_t         length  = (item.Length - (sm->Length + item.CLength));
+            UNumber        offset  = sm->Offset + sm->Length;
+            UNumber        length  = (item.Length - (sm->Length + item.CLength));
             String         content = Template::DoLoop(String::Part(block, offset, length), name, var_id, pocket->Data);
 
             // When bubbling
-            // const size_t   offset  = (sm->Length - item.OLength);
-            // const size_t   length  = ((item.Length - offset) - (item.OLength + item.CLength));
+            // const UNumber   offset  = (sm->Length - item.OLength);
+            // const UNumber   length  = ((item.Length - offset) - (item.OLength + item.CLength));
             // const String   content = Template::DoLoop(String::Part(block,offset, length), name, var_id,
             // pocket->Data);
 
@@ -282,22 +282,22 @@ String Qentem::Template::RenderLoop(const String &block, const Match &item) noex
 }
 
 String Qentem::Template::DoLoop(const String &content, const String &name, const String &var_name,
-                                QArray *storage) noexcept {
+                                Tree *storage) noexcept {
     String rendered = L"";
     String reminder = L"";
     String id       = L"";
 
-    size_t index = 0;
-    VType  type;
-    String key = name;
+    UNumber index = 0;
+    VType   type;
+    String  key = name;
 
     while (true) {
-        if (!(Qentem::QArray::DecodeKey(key, id, reminder)) || !(storage->GetIndex(key, index)) ||
+        if (!(Qentem::Tree::DecodeKey(key, id, reminder)) || !(storage->GetIndex(key, index)) ||
             ((type = storage->Types[index]) == VType::NullT)) {
             return rendered;
         }
 
-        if ((id.Length == 0) || (type != VType::QArrayT)) {
+        if ((id.Length == 0) || (type != VType::TreeT)) {
             break;
         }
 
@@ -315,13 +315,13 @@ String Qentem::Template::DoLoop(const String &content, const String &name, const
     // Feature: Use StringStream!!!
     if (type == VType::ArrayT) {
         const Array<String> *st = &(storage->Arrays[storage->ExactID[index]]);
-        for (size_t i = 0; i < st->Size; i++) {
-            ser[0]->Replace = String::ToString(static_cast<double>(i));
+        for (UNumber i = 0; i < st->Size; i++) {
+            ser[0]->Replace = String::FromNumber(static_cast<double>(i));
             rendered += Engine::Parse(content, items);
         }
-    } else if (type == VType::QArrayT) {
+    } else if (type == VType::TreeT) {
         const Array<String> *va = &(storage->VArray[storage->ExactID[index]].Keys);
-        for (size_t i = 0; i < va->Size; i++) {
+        for (UNumber i = 0; i < va->Size; i++) {
             ser[0]->Replace = (*va)[i];
             rendered += Engine::Parse(content, items);
         }

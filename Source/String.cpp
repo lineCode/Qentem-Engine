@@ -45,7 +45,7 @@ Qentem::String::~String() noexcept {
 
 Qentem::String &Qentem::String::operator=(const String &src) noexcept { // Copy
     if (this != &src) {
-        Reset(this);
+        Clear(this);
         Add(src.Str, this, 0, src.Length);
     }
 
@@ -125,7 +125,7 @@ const bool Qentem::String::operator==(const String &src) const noexcept {
         return true;
     }
 
-    size_t i = 0;
+    UNumber i = 0;
     while ((this->Str[i] == src.Str[i]) && (++i < this->Length)) {
         // Nothing is needed here.
     }
@@ -137,31 +137,31 @@ const bool Qentem::String::operator!=(const String &src) const noexcept {
     return (!(*this == src));
 }
 
-void Qentem::String::SetSize(size_t _length) noexcept {
+void Qentem::String::SetSize(String *src, UNumber _length) noexcept {
     auto _tmp = new wchar_t[(_length + 1)];
 
-    size_t i = 0;
+    UNumber i = 0;
 
-    if (_length > this->Length) {
-        for (; i < this->Length; i++) {
-            _tmp[i] = this->Str[i];
+    if (_length > src->Length) {
+        for (; i < src->Length; i++) {
+            _tmp[i] = src->Str[i];
         }
     } else {
         for (; i < _length; i++) {
-            _tmp[i] = this->Str[i];
+            _tmp[i] = src->Str[i];
         }
     }
     _tmp[i] = '\0'; // To mark the end of string.
 
-    delete[] this->Str;
-    this->Str    = _tmp;
-    this->_index = i;
-    this->Length = _length;
+    delete[] src->Str;
+    src->Str    = _tmp;
+    src->_index = i;
+    src->Length = _length;
 }
 
 Qentem::String Qentem::String::Trim(const String &str) noexcept {
-    size_t start = 0;
-    size_t len   = str.Length;
+    UNumber start = 0;
+    UNumber len   = str.Length;
 
     while (str.Str[start++] == L' ') {
     }
@@ -177,40 +177,40 @@ Qentem::String Qentem::String::Trim(const String &str) noexcept {
 
 Qentem::String Qentem::String::Revers(const String &str) noexcept {
     String tmp = L"";
-    tmp.SetSize(str.Length);
+    String::SetSize(&tmp, str.Length);
 
-    for (size_t g = str.Length; g > 0; --g) {
+    for (UNumber g = str.Length; g > 0; --g) {
         tmp += str.Str[g - 1];
     }
 
     return tmp;
 }
 
-Qentem::String Qentem::String::ToString(double number, size_t min, size_t max) noexcept {
+Qentem::String Qentem::String::FromNumber(double number, UNumber min, UNumber max) noexcept {
     String sign = L"";
     if (number < 0.0) {
         sign = L"-";
         number *= -1.0;
     }
 
-    size_t num;
-    String tmp_g = L"";
+    UNumber num;
+    String  tmp_g = L"";
     if (max != 0) {
         double nuw = 1;
-        for (size_t i = 0; i <= max; i++) {
+        for (UNumber i = 0; i <= max; i++) {
             nuw *= 10;
         }
 
-        num = static_cast<size_t>(number * nuw);
+        num = static_cast<UNumber>(number * nuw);
 
-        size_t di = (num % 10);
+        UNumber di = (num % 10);
         num /= 10;
 
         if (di >= 5) {
             num += 1;
         }
 
-        for (size_t g = 0; g < max; g++) {
+        for (UNumber g = 0; g < max; g++) {
             di = (num % 10);
             tmp_g += wchar_t(di + 48);
             num /= 10;
@@ -218,7 +218,7 @@ Qentem::String Qentem::String::ToString(double number, size_t min, size_t max) n
 
         tmp_g = String::Revers(tmp_g);
     } else {
-        num = static_cast<size_t>(number);
+        num = static_cast<UNumber>(number);
     }
 
     String tmp_l = L"";
@@ -230,7 +230,7 @@ Qentem::String Qentem::String::ToString(double number, size_t min, size_t max) n
     tmp_l = String::Revers(tmp_l);
 
     String min_str = L"";
-    for (size_t i = tmp_l.Length; i < min; i++) {
+    for (UNumber i = tmp_l.Length; i < min; i++) {
         min_str += L"0";
     }
     tmp_l = min_str + tmp_l;
@@ -248,10 +248,10 @@ bool Qentem::String::ToNumber(const String &str, double &number) noexcept {
     }
 
     wchar_t c;
-    number       = 0.0;
-    size_t m     = 1;
-    size_t start = 0;
-    size_t len   = str.Length;
+    number        = 0.0;
+    UNumber m     = 1;
+    UNumber start = 0;
+    UNumber len   = str.Length;
 
     while (str.Str[--len] == L' ') {
     }
@@ -276,7 +276,6 @@ bool Qentem::String::ToNumber(const String &str, double &number) noexcept {
 
             if (c == L'.') {
                 number /= m;
-                // number += 0.00001f; // TODO:(Use ASM to fix 1.000015)
                 m = 1;
                 continue;
             }
@@ -304,15 +303,15 @@ bool Qentem::String::ToNumber(const String &str, double &number) noexcept {
  * @param limit The number of characters to copy.
  * @return The requested string.
  */
-Qentem::String Qentem::String::Part(const String &src, size_t offset, size_t limit) {
+Qentem::String Qentem::String::Part(const String &src, UNumber offset, UNumber limit) {
     if ((limit > src.Length) || (offset + limit) > src.Length) {
         throw;
     }
 
     String bit;
-    bit.SetSize(limit);
+    String::SetSize(&bit, limit);
 
-    size_t i = 0;
+    UNumber i = 0;
     while (i < limit) {
         bit.Str[i++] = src.Str[offset++];
     }
@@ -323,15 +322,14 @@ Qentem::String Qentem::String::Part(const String &src, size_t offset, size_t lim
     return bit;
 }
 
-void Qentem::String::Reset(String *str) noexcept {
+void Qentem::String::Clear(String *str) noexcept {
     delete[] str->Str;
-    str->Str = nullptr;
-
+    str->Str    = nullptr;
     str->Length = 0;
     str->_index = 0;
 }
 
-void Qentem::String::Add(const wchar_t *str_p, String *to, size_t start_at, size_t ln) noexcept {
+void Qentem::String::Add(const wchar_t *str_p, String *to, UNumber start_at, UNumber ln) noexcept {
     if ((ln == 0) && (str_p != nullptr)) {
         while (str_p[ln++] != '\0') {
             // Counting (getting the length).
@@ -340,12 +338,12 @@ void Qentem::String::Add(const wchar_t *str_p, String *to, size_t start_at, size
         --ln;
     }
 
-    size_t j = 0;
+    UNumber j = 0;
     if ((to->Length == 0) || (ln > (to->Length - to->_index))) {
         auto *_tmp = new wchar_t[(ln + to->_index + 1)];
 
         if (to->Str != nullptr) {
-            for (size_t i = 0; i < to->_index; i++) {
+            for (UNumber i = 0; i < to->_index; i++) {
                 _tmp[i] = to->Str[j++];
             }
 

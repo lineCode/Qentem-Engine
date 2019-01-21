@@ -14,16 +14,16 @@
 #include <iostream>
 
 using Qentem::Array;
-using Qentem::QArray;
 using Qentem::String;
 using Qentem::Template;
+using Qentem::Tree;
 
-QArray get_data() noexcept;
+Tree   get_data() noexcept;
 String get_template() noexcept;
 
 int main() {
     String content = get_template();
-    QArray data    = get_data();
+    Tree   data    = get_data();
 
     Template _template = Template();
 
@@ -41,12 +41,12 @@ String get_template() noexcept {
         std::streampos size = file.tellg();
         file.seekg(0, std::ios::beg);
 
-        temp.SetSize(size);
+        String::SetSize(&temp, size);
         auto *_tmp = new char[(int(size) + 1)];
 
         file.read(_tmp, size);
 
-        size_t ln = 0;
+        UNumber ln = 0;
         while (_tmp[ln] != '\0') {
             temp += _tmp[ln++];
         }
@@ -61,8 +61,8 @@ String get_template() noexcept {
     return temp;
 }
 
-QArray get_data() noexcept {
-    QArray data = QArray();
+Tree get_data() noexcept {
+    Tree data = Tree();
     // Feature: Build json parser.
     data.Add(L"var1", L"1");
     data.Add(L"var2", L"2");
@@ -77,11 +77,10 @@ QArray get_data() noexcept {
     //  data.Add(L"numbers", {"0", L"1", L"2", L"3", L"4"}); when initializer_list is enabled
     data.Add(L"numbers", Array<String>().Add(L"0").Add(L"1").Add(L"2").Add(L"3").Add(L"4"));
     data.Add(L"empty", L"");
-    data.Add(L"math",
-             L"((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) - (-1) + 2");
+    data.Add(L"math", L"((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) - (-1) + 2");
 
     // The equivlent of; abc=>{"B"=>"b", L"A"=>"a", ...}
-    QArray group1 = QArray();
+    Tree group1 = Tree();
     group1.Add(L"B", L"b");
     group1.Add(L"A", L"a");
     group1.Add(L"C", L"c");
@@ -91,7 +90,7 @@ QArray get_data() noexcept {
 
     data.Add(L"abc", group1);
 
-    QArray group2 = QArray();
+    Tree group2 = Tree();
     group2.Add(L"arr1", group1);
     group2.Add(L"arr2", Array<String>().Add(L"B").Add(L"C").Add(L"D").Add(L"A"));
     group2.Add(L"C", L"cool");

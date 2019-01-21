@@ -2,9 +2,6 @@
 Notes/
 Build/
 x64/
-x86/
-Win32/
-ARM*
 .vs/
 .vscode/settings.json
 Safe/

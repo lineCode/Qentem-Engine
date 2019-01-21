@@ -9,40 +9,40 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include "Addon/Extend.hpp"
+#include "Addon/QRegex.hpp"
 #include "Addon/ALU.hpp"
 
 using Qentem::String;
 using Qentem::Engine::Flags;
-using Qentem::Extend::RegexOR;
+using Qentem::QRegex::OR;
 
 Qentem::ALU::ALU() noexcept {
     ParensExpr.Keyword = L"(";
-    ParensTail.Keyword = L")";
-    ParensExpr.Tail    = &ParensTail;
-    ParensExpr.Flag    = Flags::BUBBLE;
-    ParensExpr.NestExprs.Add(&ParensExpr);
-    ParensExpr.ParseCB = &(ALU::ParenthesisCallback);
-    ParensExpr.Pocket  = &(this->MathExprs);
+    ParensNext.Keyword = L")";
+    ParensExpr.Next    = &ParensNext;
+    ParensNext.Flag    = Flags::BUBBLE;
+    ParensNext.NestExprs.Add(&ParensExpr);
+    ParensNext.ParseCB = &(ALU::ParenthesisCallback);
+    ParensNext.Pocket  = &(this->MathExprs);
 
     this->ParensExprs.Add(&ParensExpr);
 
     MathMul.Keyword  = L"*|/";
-    MathMul.Flag     = Flags::SPLIT;
+    MathMul.Flag     = Flags::SPLIT | Flags::GROUPSPLIT;
     MathMul.ParseCB  = &(ALU::MultiplicationCallback);
-    MathMul.SearchCB = &(Extend::RegexOR);
+    MathMul.SearchCB = &(QRegex::OR);
 
     MathAdd.Keyword = L"+|-";
-    MathAdd.Flag    = Flags::SPLIT | Flags::POP;
+    MathAdd.Flag    = Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP;
     MathAdd.NestExprs.Add(&MathMul);
     MathAdd.ParseCB  = &(ALU::AdditionCallback);
-    MathAdd.SearchCB = &(Extend::RegexOR);
+    MathAdd.SearchCB = &(QRegex::OR);
 
     MathEqu.Keyword = L"==|=|!=";
-    MathEqu.Flag    = Flags::SPLIT | Flags::POP;
+    MathEqu.Flag    = Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP;
     MathEqu.NestExprs.Add(&MathAdd);
     MathEqu.ParseCB  = &(ALU::EqualCallback);
-    MathEqu.SearchCB = &(Extend::RegexOR);
+    MathEqu.SearchCB = &(QRegex::OR);
 
     this->MathExprs.Add(&MathEqu);
 }
@@ -69,12 +69,12 @@ String Qentem::ALU::EqualCallback(const String &block, const Match &item) noexce
     bool result = false;
 
     if (item.NestMatch.Size != 0) {
-        bool   is_str  = false;
-        double temnum1 = 0.0;
-        double temnum2 = 0.0;
-        String str     = L"";
-        Match *nm      = &(item.NestMatch[0]);
-        size_t op      = nm->Tag;
+        bool    is_str  = false;
+        double  temnum1 = 0.0;
+        double  temnum2 = 0.0;
+        String  str     = L"";
+        Match * nm      = &(item.NestMatch[0]);
+        UNumber op      = nm->Tag;
 
         if ((nm->Length - nm->Offset) == 0) {
             return L"0";
@@ -85,7 +85,7 @@ String Qentem::ALU::EqualCallback(const String &block, const Match &item) noexce
             str    = String::Part(block, nm->Offset, nm->Length);
         }
 
-        for (size_t i = 1; i < item.NestMatch.Size; i++) {
+        for (UNumber i = 1; i < item.NestMatch.Size; i++) {
             nm = &(item.NestMatch[i]);
             if (is_str) {
                 result = (String::Trim(str) == String::Trim(String::Part(block, nm->Offset, nm->Length)));
@@ -117,8 +117,8 @@ String Qentem::ALU::EqualCallback(const String &block, const Match &item) noexce
 }
 
 String Qentem::ALU::MultiplicationCallback(const String &block, const Match &item) noexcept {
-    size_t op;
-    double number = 0.0;
+    UNumber op;
+    double  number = 0.0;
     if (!ALU::NestNumber(block, item.NestMatch[0], number)) {
         return L"0";
     }
@@ -126,7 +126,7 @@ String Qentem::ALU::MultiplicationCallback(const String &block, const Match &ite
     double temnum = 0.0;
     Match *nm     = &(item.NestMatch[0]);
     op            = nm->Tag;
-    for (size_t i = 1; i < item.NestMatch.Size; i++) {
+    for (UNumber i = 1; i < item.NestMatch.Size; i++) {
         nm = &(item.NestMatch[i]);
 
         if (!ALU::NestNumber(block, *nm, temnum)) {
@@ -145,19 +145,19 @@ String Qentem::ALU::MultiplicationCallback(const String &block, const Match &ite
         op = nm->Tag;
     }
 
-    return String::ToString(number);
+    return String::FromNumber(number);
 }
 
 String Qentem::ALU::AdditionCallback(const String &block, const Match &item) noexcept {
     double number = 0.0;
     ALU::NestNumber(block, item.NestMatch[0], number);
 
-    double temnum = 0.0;
-    bool   neg    = false;
-    Match *nm     = &(item.NestMatch[0]);
-    size_t op     = nm->Tag;
+    double  temnum = 0.0;
+    bool    neg    = false;
+    Match * nm     = &(item.NestMatch[0]);
+    UNumber op     = nm->Tag;
 
-    for (size_t i = 1; i < item.NestMatch.Size; i++) {
+    for (UNumber i = 1; i < item.NestMatch.Size; i++) {
         nm = &(item.NestMatch[i]);
 
         if (!ALU::NestNumber(block, *nm, temnum) && (op == 2) && (nm->Length == 1)) {
@@ -174,7 +174,7 @@ String Qentem::ALU::AdditionCallback(const String &block, const Match &item) noe
         op = nm->Tag;
     }
 
-    return String::ToString(number);
+    return String::FromNumber(number);
 }
 
 double Qentem::ALU::Evaluate(String &content) const noexcept {

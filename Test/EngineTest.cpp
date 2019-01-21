@@ -18,34 +18,34 @@ using Qentem::String;
 using Qentem::Test::TestBit;
 
 void qentem_test_engine(bool dumb_express, bool break_on_err) {
-    const size_t   times    = 1; // 100000 To slow it down!!!
-    const size_t   start_at = 0;
-    const size_t   child_at = 0;
-    size_t         child    = 0;
-    size_t         errors   = 0;
-    size_t         total    = 0;
-    size_t         parse_ticks;
-    size_t         search_ticks;
-    size_t         count = start_at;
-    Array<TestBit> bits  = Qentem::Test::GetBits();
+    Array<TestBit> bits     = Qentem::Test::GetBits();
+    const UNumber  times    = 1; // 100000 To slow it down!
+    const UNumber  start_at = 0;
+    const UNumber  child_at = 0;
+    UNumber        child    = 0;
+    UNumber        errors   = 0;
+    UNumber        total    = 0;
+    UNumber        parse_ticks;
+    UNumber        search_ticks;
 
-    bool pass = false;
+    UNumber count = start_at;
+    bool    pass  = false;
     std::wcout << L"\n #Engine::Search&Parse():\n";
-    for (size_t i = start_at; i < bits.Size; i++) {
+    for (UNumber i = start_at; i < bits.Size; i++) {
         child = child_at;
         count += 1;
 
-        for (size_t t = child_at; t < bits[i].Content.Size; t++) {
+        for (UNumber t = child_at; t < bits[i].Content.Size; t++) {
             Array<Qentem::Engine::Match> matches;
             search_ticks = clock();
-            for (size_t x = 0; x < times; x++) {
+            for (UNumber x = 0; x < times; x++) {
                 matches = Qentem::Engine::Search(bits[i].Content[t], bits[i].Exprs);
             }
             search_ticks = (clock() - search_ticks);
 
             String rendered = L"";
             parse_ticks     = clock();
-            for (size_t y = 0; y < times; y++) {
+            for (UNumber y = 0; y < times; y++) {
                 rendered = Qentem::Engine::Parse(bits[i].Content[t], matches);
             }
             parse_ticks = (clock() - parse_ticks);
@@ -60,8 +60,8 @@ void qentem_test_engine(bool dumb_express, bool break_on_err) {
                 std::wcout << L"\n";
             }
 
-            std::wcout << Qentem::String::ToString(static_cast<double>(count), 2).Str << L"-"
-                       << Qentem::String::ToString(static_cast<double>(child), 2).Str;
+            std::wcout << Qentem::String::FromNumber(static_cast<double>(count), 2).Str << L"-"
+                       << Qentem::String::FromNumber(static_cast<double>(child), 2).Str;
 
             if (pass) {
                 std::wcout << L": Pass";
@@ -70,9 +70,9 @@ void qentem_test_engine(bool dumb_express, bool break_on_err) {
             }
 
             std::wcout << L" (Search: "
-                       << Qentem::String::ToString(((static_cast<double>(search_ticks)) / CLOCKS_PER_SEC), 2, 3).Str
+                       << Qentem::String::FromNumber(((static_cast<double>(search_ticks)) / CLOCKS_PER_SEC), 2, 3).Str
                        << L")" << L" (Parse: "
-                       << Qentem::String::ToString(((static_cast<double>(parse_ticks)) / CLOCKS_PER_SEC), 2, 3).Str
+                       << Qentem::String::FromNumber(((static_cast<double>(parse_ticks)) / CLOCKS_PER_SEC), 2, 3).Str
                        << L")\n";
 
             if (!pass) {
@@ -112,11 +112,11 @@ void qentem_test_engine(bool dumb_express, bool break_on_err) {
 }
 
 int main() {
-    // for (size_t y = 0; y < 10000; y++) {
+    // for (UNumber y = 0; y < 10000; y++) {
     //     qentem_test_engine(false, false);
     // }
 
-    qentem_test_engine(false, false);
+    qentem_test_engine(false, true);
 
     // std::getwchar();
 

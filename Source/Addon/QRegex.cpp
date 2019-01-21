@@ -1,6 +1,6 @@
 
 /**
- * Qentem Engine Extended functions
+ * Qentem Engine Regex extintion
  *
  * @brief     For implenting other patent.
  *
@@ -9,11 +9,11 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include "Addon/Extend.hpp"
+#include "Addon/QRegex.hpp"
 
-size_t Qentem::Extend::RegexOR(const String &content, const Expression &expr, size_t &started, size_t &ended) noexcept {
-    size_t counter = 0;
-    size_t tag     = 1;
+UNumber Qentem::QRegex::OR(const String &content, const Expression &expr, UNumber &started, UNumber &ended) noexcept {
+    UNumber counter = 0;
+    UNumber tag     = 1;
 
     for (; counter < expr.Keyword.Length; counter++) {
         if (content.Str[started] == expr.Keyword.Str[counter]) {

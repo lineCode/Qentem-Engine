@@ -25,7 +25,7 @@ struct ALU {
     Expressions ParensExprs;
     Expressions MathExprs;
     Expression  ParensExpr = Expression();
-    Expression  ParensTail = Expression();
+    Expression  ParensNext = Expression();
 
     Expression MathEqu = Expression();
     Expression MathAdd = Expression();
