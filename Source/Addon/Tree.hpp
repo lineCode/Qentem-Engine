@@ -24,19 +24,18 @@ enum VType { NullT = 0, NumberT, StringT, ArrayT, TreeT };
 struct Hash {
     UNumber     HashValue = 0;
     UNumber     ExactID   = 0;
-    UNumber     level     = 1;
     String      Key;
     VType       Type;
     Array<Hash> Table;
 
-    Hash &get(UNumber _hash_value, UNumber base) {
+    Hash &get(UNumber _hash_value, UNumber base, UNumber level) {
         if ((this->HashValue != _hash_value) && (this->Table.Size != 0)) {
-            return this->Table[((this->HashValue + level) % base)].get(_hash_value, base);
+            return this->Table[((this->HashValue + level) % base)].get(_hash_value, base, (level + 3));
         }
         return *this;
     }
 
-    void set(Hash &_hash, UNumber base = 19) {
+    void set(Hash &_hash, UNumber base, UNumber level) {
         if (HashValue == 0) {
             this->HashValue = _hash.HashValue;
             this->ExactID   = _hash.ExactID;
@@ -50,8 +49,7 @@ struct Hash {
             this->Table.Size = base;
         }
 
-        level++;
-        this->Table[((this->HashValue + level) % base)].set(_hash, base);
+        this->Table[((this->HashValue + level) % base)].set(_hash, base, (level + 3));
     }
 };
 
