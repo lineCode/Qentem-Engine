@@ -25,8 +25,7 @@ class String {
     wchar_t *Str    = nullptr;
     UNumber  Length = 0;
 
-    explicit String() noexcept {
-    }
+    explicit String() = default;
 
     String(const wchar_t[]) noexcept; // Copy
     String(const wchar_t) noexcept;   // Copy
@@ -34,14 +33,15 @@ class String {
     String(const String &) noexcept;  // Copy
     virtual ~String() noexcept;
 
-    static String Part(const String &, UNumber, UNumber);
-    static String Trim(const String &) noexcept;
-    static String Revers(const String &) noexcept;
-    static String FromNumber(double, UNumber min = 1, UNumber max = 0) noexcept;
-    static bool   ToNumber(const String &, double &) noexcept;
-    static void   Add(const wchar_t *, String *, UNumber, UNumber) noexcept;
-    static void   Clear(String *) noexcept;
-    static void   SetSize(String *, UNumber) noexcept;
+    static String  Part(const String &, UNumber, UNumber);
+    static UNumber Hash(const String &, UNumber, UNumber);
+    static String  Trim(const String &) noexcept;
+    static String  Revers(const String &) noexcept;
+    static String  FromNumber(double, UNumber min = 1, UNumber max = 0) noexcept;
+    static bool    ToNumber(const String &, double &) noexcept;
+    static void    Add(const wchar_t *, String *, UNumber, UNumber) noexcept;
+    static void    Clear(String *) noexcept;
+    static void    SetSize(String *, UNumber) noexcept;
 
     String &operator=(String &&) noexcept;      // Move
     String &operator=(const String &) noexcept; // Copy

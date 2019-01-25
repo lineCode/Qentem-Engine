@@ -27,21 +27,23 @@ struct Expression;
 // Expressions def
 using Expressions = Array<Expression *>;
 // Search Callback
-using _SEARCHCB = UNumber(const String &, const Expression &, UNumber &, UNumber &);
+using _SEARCHCB = UNumber(const String &, const Expression &, Match *, UNumber &, UNumber &, UNumber limit);
 // Parse Callback
 using _PARSECB = String(const String &, const Match &);
 /////////////////////////////////
 // Expressions flags
 struct Flags {
-    static const unsigned short NOTHING    = 0;   // ... What it says.
+    static const unsigned short NOTHING    = 0;   // ... NAN.
     static const unsigned short COMPACT    = 1;   // Processing the content without Keyword(s).
-    static const unsigned short IGNORE     = 2;   // Match a Keyword but don't process it inside Parse().
-    static const unsigned short BUBBLE     = 4;   // Parse nested matches.
-    static const unsigned short SPLIT      = 8;   // Split a match at a keyword.
-    static const unsigned short SPLITNEST  = 16;  // Split a Nested match.
-    static const unsigned short POP        = 32;  // Search again with NestExprs if the match fails (See ALU.cpp).
-    static const unsigned short ONCE       = 64;  // Will stop searching after matching.
-    static const unsigned short GROUPSPLIT = 128; // Puts split matches into NestMatch, for one callback execution.
+    static const unsigned short NOPARSE    = 2;   // Match a Keyword but don't process it inside Parse().
+    static const unsigned short IGNORE     = 4;   // Match a Keyword but don't process it inside Parse().
+    static const unsigned short BUBBLE     = 8;   // Parse nested matches.
+    static const unsigned short SPLIT      = 16;  // Split a match at a keyword.
+    static const unsigned short SPLITNEST  = 32;  // Split a Nested match.
+    static const unsigned short POP        = 64;  // Search again with NestExprs if the match fails (See ALU.cpp).
+    static const unsigned short ONCE       = 128; // Will stop searching after matching.
+    static const unsigned short GROUPSPLIT = 256; // Puts split matches into NestMatch, for one callback execution.
+    // static const unsigned short ROGUE      = 512;
 };
 /////////////////////////////////
 struct Expression {
@@ -49,7 +51,7 @@ struct Expression {
     String  Replace = L""; // A text to replace the match.
     UNumber Flag    = 0;
 
-    Expression *Next = nullptr; // The ending part of the match (the second keyword).
+    Expression *Connected = nullptr; // The next part of the match (the next keyword).
 
     Expressions NestExprs; // Expressions for nesting Search().
     Expressions SubExprs;  // Matches other parts of the match, but do not nest.
@@ -69,7 +71,8 @@ struct Match {
     UNumber OLength = 0; // Length of opening keyword
     UNumber CLength = 0; // Length of closing keyword
 
-    UNumber     Tag  = 0; // To Mark a match when using callback search (for later sorting, See ALU.cpp)
+    UNumber     Tag  = 0; // To Mark a match when using callback search (for later sorting, See ALU.cpp).
+    UNumber     Id   = 0; // for personal use.
     Expression *Expr = nullptr;
 
     Array<Match> NestMatch; // To hold sub matches inside a match.
