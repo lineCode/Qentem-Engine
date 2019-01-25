@@ -64,12 +64,12 @@ void Qentem::Tree::InsertHash(Hash &_hash) noexcept {
         this->Table.Size = _base;
     }
 
-    this->Table[(_hash.HashValue % _base)].set(_hash, _base);
+    this->Table[(_hash.HashValue % _base)].set(_hash, _base, 1);
 }
 
 Hash *Qentem::Tree::GetInfo(const String &key) const noexcept {
     UNumber hash = String::Hash(key, 0, key.Length);
-    return &(Table[(hash % _base)].get(hash, _base));
+    return &(Table[(hash % _base)].get(hash, _base, 1));
 }
 
 // Key form can be: name, name[id1], name[id1][id2], name[id1][id2][idx]...
