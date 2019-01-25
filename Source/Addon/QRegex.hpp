@@ -18,8 +18,9 @@ namespace Qentem {
 namespace QRegex {
 
 using Qentem::Engine::Expression;
+using Qentem::Engine::Match;
 
-UNumber OR(const String &, const Expression &, UNumber &, UNumber &) noexcept;
+UNumber OR(const String &, const Expression &, Match *, UNumber &, UNumber &, UNumber) noexcept;
 
 } // namespace QRegex
 } // namespace Qentem

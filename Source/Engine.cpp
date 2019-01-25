@@ -15,53 +15,43 @@ using Qentem::Array;
 using Qentem::String;
 using Qentem::Engine::Match;
 
-/**
- * @brief Search a content under specific Qentem expressions with limited range.
- *
- * @param content The text to match the give expressions in it.
- * @param exprs The Qentem expressions to be matched in the content.
- * @param index An index to start from.
- * @param limit The number of characters to search.
- * @param max The maximum index of to work with (to solve cutoff keywords).
- * @return An Array of matched items.
- */
 Array<Match> Qentem::Engine::Search(const String &content, const Expressions &exprs, UNumber index, UNumber limit,
                                     UNumber max, UNumber level) noexcept {
     if (limit == 0) {
-        limit = content.Length - index; // limit becomes the ending offset here.
+        limit = (content.Length - index); // limit becomes the ending offset here.
     }
 
     // Feature: Add reversed search; instead of ++, use (1|-1) in a var to be implemented as: next_index+
 
-    Array<Match> items = Array<Match>();
+    Array<Match> items;
     if ((exprs.Size == 0) || (index >= limit)) {
         // If something's wrong, return an empty Array of type match.
         return items;
     }
 
-    UNumber counter   = 0;     // Index for counting.
-    UNumber id        = 0;     // Expression's id.
-    bool    LOCKED    = false; // To keep matching the end of the current expression.
-    bool    SPLIT     = false; // To keep tracking a split match.
-    bool    OverDrive = false;
+    bool    LOCKED    = false;   // To keep matching the end of the current expression.
+    bool    SPLIT     = false;   // To keep tracking a split match.
+    bool    OVERDRIVE = false;   // For achieving Nesting.
+    UNumber counter   = 0;       // Index for counting.
     Match   item      = Match(); // To store a single match for adding it to "items".
 
     const UNumber started = index;
+    UNumber       id      = 0; // Expression's id.
     // Seting the value of the current expression.
     Expression *ce = exprs[id++];
 
-    UNumber ground_zero = 0; // Temp offset.
-    UNumber t_nest      = 0; // Temp variable for nesting matches.
+    UNumber end_offset  = 0; // Temp offset.
+    UNumber nest_offset = 0; // Temp variable for nested matches.
     do {
         if (ce->SearchCB != nullptr) {
-            item.Tag = counter = ce->SearchCB(content, *ce, index, ground_zero);
+            counter = ce->SearchCB(content, *ce, &item, index, end_offset, limit);
         } else if (content.Str[index] == ce->Keyword.Str[counter]) {
-            // Don't change index.
-            ground_zero = index;
+            // Maintain index's value.
+            end_offset = index;
 
             while (++counter < ce->Keyword.Length) {
                 // Loop through every character.
-                if (content.Str[++ground_zero] != ce->Keyword.Str[counter]) {
+                if (content.Str[++end_offset] != ce->Keyword.Str[counter]) {
                     // Mismatch.
                     counter = 0;
                     break;
@@ -71,77 +61,80 @@ Array<Match> Qentem::Engine::Search(const String &content, const Expressions &ex
 
         if (counter != 0) {
             counter = 0;
+            end_offset += 1;
 
-            if (OverDrive) {
-                // If the match is on "OverDrive", then break.
-                OverDrive = false;
-                // Seting the length of the nested match.
-                limit = ground_zero;
+            if (OVERDRIVE) {
+                // If the match is on "OVERDRIVE", then break.
+                OVERDRIVE = false;
+                // Ste the length of the nested match.
+                limit = (end_offset - 1);
             } else if (!LOCKED) {
-                // If the expression is not contented (single), then collect it's info; done matching.
-                if (ce->Next != nullptr) {
-                    item.OLength = ((ground_zero + 1) - index);
+                if (ce->Connected != nullptr) {
+                    item.OLength = (end_offset - index);
                 }
 
                 item.Offset = index;
-                index       = ground_zero;
-                t_nest      = (index + 1);
+
+                index       = (end_offset - 1);
+                nest_offset = end_offset;
             }
 
-            if (ce->Next != nullptr) {
+            if (ce->Connected != nullptr) {
                 if (LOCKED) {
                     item.OLength = 0;
                 }
-                ce     = ce->Next;
+                ce     = ce->Connected;
                 LOCKED = true;
             } else {
                 // If it's a nesting expression, search again but inside the current match.
-                if (ce->NestExprs.Size != 0) {
+                if ((ce->NestExprs.Size != 0) & (nest_offset != index)) {
                     // Start a new search inside the current one.
                     UNumber _size = item.NestMatch.Size;
-                    item.NestMatch.Add(
-                        Engine::Search(content, ce->NestExprs, t_nest, index, ((max != 0) ? max : limit), (level + 1)));
+                    item.NestMatch.Add(Engine::Search(content, ce->NestExprs, nest_offset, index,
+                                                      ((max != 0) ? max : limit), (level + 1)));
 
                     if (item.NestMatch.Size != _size) {
                         if (max > limit) {
                             // This is important to have the seearch look ahead of the limited length
                             // in order to find the entire currect match.
                             limit     = max; // TO THE MAX!
-                            OverDrive = true;
+                            OVERDRIVE = true;
                         }
 
                         // Seek to avoid having the same closing/ending keywork matched again.
-                        index = t_nest = item.NestMatch[(item.NestMatch.Size - 1)].Offset +
-                                         item.NestMatch[(item.NestMatch.Size - 1)].Length;
+                        index = nest_offset = item.NestMatch[(item.NestMatch.Size - 1)].Offset +
+                                              item.NestMatch[(item.NestMatch.Size - 1)].Length;
 
                         continue; // Not done matching. Move to the next char.
                     }
                 }
 
-                if (item.OLength != 0) {
-                    item.CLength = ((ground_zero + 1) - index);
-                }
+                if ((Flags::IGNORE & ce->Flag) == 0) {
+                    item.Length = (end_offset - item.Offset);
 
-                item.Length = ((ground_zero + 1) - item.Offset);
-                item.Expr   = ce;
+                    if (item.OLength != 0) {
+                        item.CLength = (end_offset - index);
+                    }
 
-                if (ce->SubExprs.Size != 0) {
-                    item.SubMatch = Engine::Search(content, ce->SubExprs, item.Offset, (item.Offset + item.Length));
-                }
+                    if ((Flags::SPLIT & ce->Flag) != 0) {
+                        SPLIT = true;
+                    }
 
-                if ((Flags::SPLIT & ce->Flag) != 0) {
-                    SPLIT = true;
-                }
+                    if (ce->SubExprs.Size != 0) {
+                        item.SubMatch = Engine::Search(content, ce->SubExprs, item.Offset, (item.Offset + item.Length));
+                    }
 
-                if ((level == 0) && ((Flags::SPLITNEST & ce->Flag) != 0)) {
-                    Engine::Split(content, item.NestMatch, (item.Offset + item.OLength),
-                                  ((item.Offset + item.Length) - (item.CLength)));
-                }
+                    item.Expr = ce;
+                    if ((level == 0) && ((Flags::SPLITNEST & ce->Flag) != 0)) {
+                        Engine::Split(content, item.NestMatch, (item.Offset + item.OLength),
+                                      ((item.Offset + item.Length) - (item.CLength)));
+                    }
 
-                items.Add(item);
+                    items.Add(item);
 
-                if ((Flags::ONCE & ce->Flag) != 0) {
-                    return items;
+                    if ((Flags::ONCE & ce->Flag) != 0) {
+                        return items;
+                    }
                 }
 
                 // Prepare for the next match.
@@ -152,7 +145,7 @@ Array<Match> Qentem::Engine::Search(const String &content, const Expressions &ex
         }
 
         if (!LOCKED) {
-            // Switching to the next charrcter if all keywords have been tested.
+            // Switching to the next charrcter if all keywords have been checked.
             if (id == exprs.Size) {
                 id = 0;
                 ++index;
@@ -175,7 +168,7 @@ Array<Match> Qentem::Engine::Search(const String &content, const Expressions &ex
                 // in order to find the entire currect match.
                 limit = max;
 
-                OverDrive = true;
+                OVERDRIVE = true;
                 continue;
             }
 
@@ -193,6 +186,8 @@ Array<Match> Qentem::Engine::Search(const String &content, const Expressions &ex
                 if (index == limit) {
                     break;
                 }
+
+                item.NestMatch.Clear();
             } else {
                 // If it is a missmatch, go back to where it started and continue with the next expression if
                 // possible.
@@ -200,8 +195,13 @@ Array<Match> Qentem::Engine::Search(const String &content, const Expressions &ex
             }
 
             // House cleaning...
-            OverDrive = false;
+            OVERDRIVE = false;
             LOCKED    = false;
+            if (id == exprs.Size) {
+                return items;
+            }
+
+            ce = exprs[id];
         }
     } while (true);
 
@@ -220,113 +220,109 @@ Array<Match> Qentem::Engine::Search(const String &content, const Expressions &ex
 }
 
 void Qentem::Engine::Split(const String &content, Array<Match> &items, UNumber index, UNumber to) noexcept {
-    if (items.Size > 0) {
-        if (items.Size == 1) {
-            if ((Flags::SPLITNEST & items[0].Expr->Flag) != 0) {
-                Engine::Split(content, items[0].NestMatch, (items[0].Offset + items[0].OLength),
-                              ((items[0].Offset + items[0].Length) - (items[0].CLength)));
-                return;
-            }
+    if (items.Size == 0) {
+        return;
+    }
 
-            if ((Flags::SPLIT & items[0].Expr->Flag) == 0) {
-                return;
-            }
+    if (items.Size == 1) {
+        if ((Flags::SPLITNEST & items[0].Expr->Flag) != 0) {
+            Engine::Split(content, items[0].NestMatch, (items[0].Offset + items[0].OLength),
+                          ((items[0].Offset + items[0].Length) - (items[0].CLength)));
+            return;
         }
 
-        Array<Match> new_set = Array<Match>((items.Size + 1));
-        Array<Match> nesties;
-        Match        item   = Match();
-        UNumber      offset = index;
+        if ((Flags::SPLIT & items[0].Expr->Flag) == 0) {
+            return;
+        }
+    }
 
-        Match *tmp = nullptr;
-        for (UNumber i = 0; i < items.Size; i++) {
-            tmp       = &(items[i]);
-            item.Expr = tmp->Expr;
+    Array<Match> new_set;
+    new_set.SetSize(items.Size + 1);
+    Array<Match> nesties;
+    Match        item   = Match();
+    UNumber      offset = index;
+    Expression * master = nullptr;
+    Match *      tmp    = nullptr;
 
-            if ((Flags::SPLITNEST & tmp->Expr->Flag) != 0) {
-                Engine::Split(content, tmp->NestMatch, (tmp->Offset + tmp->OLength),
-                              ((tmp->Offset + tmp->Length) - (tmp->CLength)));
-            }
+    for (UNumber i = 0; i < items.Size; i++) {
+        tmp       = &(items[i]);
+        item.Expr = tmp->Expr;
 
-            if ((Flags::SPLIT & tmp->Expr->Flag) != 0) {
-                item.Offset   = offset;
-                item.Length   = (tmp->Offset - item.Offset);
-                item.SubMatch = tmp->SubMatch;
-                item.Tag      = tmp->Tag;
-
-                if (tmp->NestMatch.Size != 0) {
-                    item.NestMatch = tmp->NestMatch;
-                } else if (nesties.Size != 0) {
-                    item.NestMatch = nesties;
-                } else if (item.Expr->NestExprs.Size != 0) {
-                    item.NestMatch =
-                        Engine::Search(content, item.Expr->NestExprs, item.Offset, (item.Offset + item.Length));
-                }
-
-                new_set.Add(item);
-
-                item.NestMatch.Clear();
-                item.SubMatch.Clear();
-                nesties.Clear();
-
-                offset = (tmp->Offset + tmp->Length);
-            } else {
-                nesties.Add(*tmp);
-            }
+        if ((Flags::SPLITNEST & tmp->Expr->Flag) != 0) {
+            Engine::Split(content, tmp->NestMatch, (tmp->Offset + tmp->OLength),
+                          ((tmp->Offset + tmp->Length) - (tmp->CLength)));
         }
 
-        item.Offset = offset;
-        item.Length = (to - item.Offset);
+        if ((Flags::SPLIT & tmp->Expr->Flag) != 0) {
+            item.Offset = offset;
+            item.Length = (tmp->Offset - item.Offset);
+            item.Tag    = tmp->Tag;
+            master      = item.Expr;
 
-        if (item.Length != 0) {
-            if (nesties.Size != 0) {
-                item.NestMatch = nesties;
+            if (tmp->NestMatch.Size != 0) {
+                item.NestMatch.Move(tmp->NestMatch);
+            } else if (nesties.Size != 0) {
+                item.NestMatch.Move(nesties);
             } else if (item.Expr->NestExprs.Size != 0) {
                 item.NestMatch = Engine::Search(content, item.Expr->NestExprs, item.Offset, (item.Offset + item.Length));
             }
-        }
 
-        new_set.Add(item);
+            new_set.Add(item);
+            item.SubMatch.Move(tmp->SubMatch);
+            item.NestMatch.Clear();
 
-        if ((Flags::GROUPSPLIT & item.Expr->Flag) == 0) {
-            items = new_set;
+            offset = (tmp->Offset + tmp->Length);
         } else {
-            item.Offset    = index;
-            item.Length    = (to - item.Offset);
-            item.NestMatch = new_set;
-            items          = Array<Match>();
-            items.Add(item);
+            nesties.Add(*tmp);
         }
+    }
+
+    item.Offset = offset;
+    item.Length = (to - item.Offset);
+
+    if (item.Length != 0) {
+        if (nesties.Size != 0) {
+            item.NestMatch.Move(nesties);
+        } else if (item.Expr->NestExprs.Size != 0) {
+            item.NestMatch = Engine::Search(content, item.Expr->NestExprs, item.Offset, (item.Offset + item.Length));
+        }
+    }
+
+    new_set.Add(item);
+
+    if ((master != nullptr) && (Flags::GROUPSPLIT & master->Flag) == 0) {
+        items.Move(new_set);
+    } else {
+        item.SubMatch.Clear();
+
+        item.Expr   = master;
+        item.Offset = index;
+        item.Length = (to - item.Offset);
+        item.NestMatch.Move(new_set);
+
+        items.Clear();
+        items.Add(item);
     }
 }
 
-/**
- * @brief Parse matched content (Slice & Dice).
- *
- * @param content The text with the matches.
- * @param items The items that attended to be parsed.
- * @param offset An index to start index.
- * @param length The length of the content to work with.
- * @return The parsed (final) content.
- */
 String Qentem::Engine::Parse(const String &content, const Array<Match> &items, UNumber index, UNumber limit) noexcept {
     if (limit == 0) {
-        limit = index + content.Length;
+        limit = (content.Length - index);
         if (limit == 0) {
             return content;
         }
     }
 
-    String rendered = L""; // Final content
-
-    Match * item;
+    String  rendered = L""; // Final content
     UNumber offset;
     UNumber length;
+    Match * item;
+
     for (UNumber id = 0; id < items.Size; id++) {
         // Current match
         item = &(items[id]);
 
-        if ((Flags::IGNORE & item->Expr->Flag) != 0) {
+        if ((Flags::NOPARSE & item->Expr->Flag) != 0) {
             continue;
         }
 
@@ -338,7 +334,7 @@ String Qentem::Engine::Parse(const String &content, const Array<Match> &items, U
             length = (item->Length - (item->OLength + item->CLength));
         }
 
-        // Adding any content that comes before...
+        // Add any content that comes before...
         if ((index < offset)) {
             rendered += String::Part(content, index, (offset - index));
         }
@@ -355,7 +351,7 @@ String Qentem::Engine::Parse(const String &content, const Array<Match> &items, U
                 rendered += item->Expr->ParseCB(content, *item);
             }
         } else {
-            // Defaults to replace: it might be an empty string
+            // Defaults to replace: it might be an empty string.
             rendered += item->Expr->Replace;
         }
 

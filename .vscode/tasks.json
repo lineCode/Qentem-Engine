@@ -48,7 +48,7 @@
                 "Source/Addon/Template.cpp",
                 "Test/TemplateTest.cpp",
                 "Test/EngineTest.cpp",
-                "-checks=*,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-llvm-header-guard,-fuchsia*",
+                "-checks=*,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-llvm-header-guard,-hicpp*,-googl*,-fuchsia*",
                 "--",
                 "c++17",
                 "-ISource"
@@ -79,11 +79,9 @@
                 "isDefault": true
             },
             "presentation": {
-                // Reveal the output only if unrecognized errors occur.
                 "reveal": "silent",
                 "clear": true
             },
-            // Use the standard MS compiler pattern to detect errors, warnings and infos
             "problemMatcher": "$msCompile"
         },
         {
@@ -129,11 +127,9 @@
         //         "isDefault": true
         //     },
         //     "presentation": {
-        //         // Reveal the output only if unrecognized errors occur.
         //         "reveal": "silent",
         //         "clear": true
         //     },
-        //     // Use the standard MS compiler pattern to detect errors, warnings and infos
         //     "problemMatcher": "$msCompile"
         // }
     ]

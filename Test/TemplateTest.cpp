@@ -42,12 +42,12 @@ String get_template() noexcept {
         file.seekg(0, std::ios::beg);
 
         String::SetSize(&temp, size);
-        auto *_tmp = new char[(int(size) + 1)];
+        auto _tmp = new char[(int(size) + 1)];
 
         file.read(_tmp, size);
 
         UNumber ln = 0;
-        while (_tmp[ln] != '\0') {
+        while (_tmp[ln] != L'\0') {
             temp += _tmp[ln++];
         }
 

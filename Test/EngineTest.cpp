@@ -105,14 +105,14 @@ void qentem_test_engine(bool dumb_express, bool break_on_err) {
     Qentem::Test::CleanBits(bits);
 
     if (errors == 0) {
-        std::wcout << L"\n Operational (Total tests: " << total << L")\n";
+        std::wcout << L"\n Operational (Total Tests: " << total << L")\n";
     } else {
         std::wcout << L"\n Broken: " << errors << L" out of " << total << L"\n";
     }
 }
 
 int main() {
-    // for (UNumber y = 0; y < 10000; y++) {
+    // for (UNumber y = 0; y < 1000; y++) {
     //     qentem_test_engine(false, false);
     // }
 

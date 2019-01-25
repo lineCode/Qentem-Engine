@@ -66,10 +66,15 @@ class Array {
         this->Add(item);
     }
 
-    explicit Array(const UNumber size) noexcept {
+    void SetSize(UNumber size) noexcept {
+        delete[] this->Storage;
+        this->Storage = nullptr;
+
+        this->Size      = 0;
+        this->_capacity = size;
+
         if (size != 0) {
-            this->_capacity = size;
-            this->Storage   = new T[this->_capacity];
+            this->Storage = new T[size];
         }
     }
 
@@ -84,12 +89,26 @@ class Array {
         this->Size      = 0;
     }
 
+    void Move(Array<T> &src) noexcept {
+        if (this != &src) {
+            // Move
+            delete[] this->Storage;
+            this->Storage   = src.Storage;
+            this->_capacity = src._capacity;
+            this->Size      = src.Size;
+
+            src._capacity = 0;
+            src.Size      = 0;
+            src.Storage   = nullptr;
+        }
+    }
+
     Array<T> &Add(const Array<T> &src) noexcept {
         if (src.Size != 0) {
             if ((this->Size + src.Size) > this->_capacity) {
                 this->_capacity += src.Size;
 
-                auto *tmp = new T[this->_capacity];
+                auto tmp = new T[this->_capacity];
                 for (UNumber n = 0; n < this->Size; n++) {
                     tmp[n] = this->Storage[n];
                 }
@@ -106,7 +125,7 @@ class Array {
         return *this;
     }
 
-    Array<T> &Add(const T &item) noexcept { // Do not add move, it will break CPU::prefetch
+    Array<T> &Add(const T &item) noexcept {
         if (this->Size == this->_capacity) {
             if (this->_capacity == 0) {
                 this->_capacity = 1;
@@ -114,7 +133,29 @@ class Array {
                 this->_capacity *= 2;
             }
 
-            auto *tmp = new T[this->_capacity];
+            auto tmp = new T[this->_capacity];
+            for (UNumber n = 0; n < this->Size; n++) {
+                tmp[n] = this->Storage[n];
+            }
+
+            delete[] this->Storage;
+            this->Storage = tmp;
+        }
+
+        *(this->Storage + this->Size++) = item;
+
+        return *this;
+    }
+
+    Array<T> &Add(T &&item) noexcept {
+        if (this->Size == this->_capacity) {
+            if (this->_capacity == 0) {
+                this->_capacity = 1;
+            } else {
+                this->_capacity *= 2;
+            }
+
+            auto tmp = new T[this->_capacity];
             for (UNumber n = 0; n < this->Size; n++) {
                 tmp[n] = this->Storage[n];
             }

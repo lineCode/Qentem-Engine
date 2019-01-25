@@ -54,6 +54,7 @@ struct Template {
     Expression ELseIfNext;
 
     explicit Template() noexcept;
+
     String Render(const String &, Tree *data = nullptr) noexcept;
 
     static String RenderVar(const String &, const Match &) noexcept;

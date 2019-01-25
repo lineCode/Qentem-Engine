@@ -11,9 +11,10 @@
 
 #include "Addon/QRegex.hpp"
 
-UNumber Qentem::QRegex::OR(const String &content, const Expression &expr, UNumber &started, UNumber &ended) noexcept {
+UNumber Qentem::QRegex::OR(const String &content, const Expression &expr, Match *item, UNumber &started, UNumber &ended,
+                           UNumber limit) noexcept {
     UNumber counter = 0;
-    UNumber tag     = 1;
+    item->Tag       = 1;
 
     for (; counter < expr.Keyword.Length; counter++) {
         if (content.Str[started] == expr.Keyword.Str[counter]) {
@@ -29,13 +30,13 @@ UNumber Qentem::QRegex::OR(const String &content, const Expression &expr, UNumbe
             }
 
             if (counter != 0) {
-                return tag;
+                return item->Tag;
             }
         }
 
         while (counter < expr.Keyword.Length) {
             if (expr.Keyword.Str[++counter] == L'|') {
-                tag += 1;
+                item->Tag += 1;
                 break;
             }
         }

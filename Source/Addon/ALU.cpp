@@ -17,29 +17,29 @@ using Qentem::Engine::Flags;
 using Qentem::QRegex::OR;
 
 Qentem::ALU::ALU() noexcept {
-    ParensExpr.Keyword = L"(";
-    ParensNext.Keyword = L")";
-    ParensExpr.Next    = &ParensNext;
-    ParensNext.Flag    = Flags::BUBBLE;
+    ParensExpr.Keyword   = L"(";
+    ParensNext.Keyword   = L")";
+    ParensExpr.Connected = &ParensNext;
+    ParensNext.Flag      = Flags::BUBBLE;
     ParensNext.NestExprs.Add(&ParensExpr);
     ParensNext.ParseCB = &(ALU::ParenthesisCallback);
     ParensNext.Pocket  = &(this->MathExprs);
 
     this->ParensExprs.Add(&ParensExpr);
 
-    MathMul.Keyword  = L"*|/";
-    MathMul.Flag     = Flags::SPLIT | Flags::GROUPSPLIT;
+    MathMul.Keyword  = L"*|/|%"; //|^ Needs it's own callback
+    MathMul.Flag     = (Flags::SPLIT | Flags::GROUPSPLIT);
     MathMul.ParseCB  = &(ALU::MultiplicationCallback);
     MathMul.SearchCB = &(QRegex::OR);
 
     MathAdd.Keyword = L"+|-";
-    MathAdd.Flag    = Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP;
+    MathAdd.Flag    = (Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP);
     MathAdd.NestExprs.Add(&MathMul);
     MathAdd.ParseCB  = &(ALU::AdditionCallback);
     MathAdd.SearchCB = &(QRegex::OR);
 
-    MathEqu.Keyword = L"==|=|!=";
-    MathEqu.Flag    = Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP;
+    MathEqu.Keyword = L"==|=|!=|<|>|<=|>=";
+    MathEqu.Flag    = (Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP);
     MathEqu.NestExprs.Add(&MathAdd);
     MathEqu.ParseCB  = &(ALU::EqualCallback);
     MathEqu.SearchCB = &(QRegex::OR);
@@ -58,7 +58,7 @@ bool Qentem::ALU::NestNumber(const String &block, const Match &item, double &num
 
     if (item.NestMatch.Size != 0) {
         r = Engine::Parse(block, item.NestMatch, item.Offset, item.Offset + item.Length);
-    } else {
+    } else if (item.Length != 0) {
         r = String::Part(block, item.Offset, item.Length);
     }
 
@@ -89,15 +89,36 @@ String Qentem::ALU::EqualCallback(const String &block, const Match &item) noexce
             nm = &(item.NestMatch[i]);
             if (is_str) {
                 result = (String::Trim(str) == String::Trim(String::Part(block, nm->Offset, nm->Length)));
+                if (op > 3) {
+                    result = !result;
+                }
             } else {
                 if (!ALU::NestNumber(block, *nm, temnum2)) {
                     break;
                 }
 
-                if (op < 3) {
-                    result = (temnum1 == temnum2);
-                } else if (op == 3) {
-                    result = (temnum1 != temnum2);
+                switch (op) {
+                    case 1:
+                    case 2:
+                        result = (temnum1 == temnum2);
+                        break;
+                    case 3:
+                        result = (temnum1 != temnum2);
+                        break;
+                    case 4:
+                        result = (temnum1 < temnum2);
+                        break;
+                    case 5:
+                        result = (temnum1 > temnum2);
+                        break;
+                    case 6:
+                        result = (temnum1 <= temnum2);
+                        break;
+                    case 7:
+                        result = (temnum1 >= temnum2);
+                        break;
+                    default:
+                        break;
                 }
             }
 
@@ -133,13 +154,18 @@ String Qentem::ALU::MultiplicationCallback(const String &block, const Match &ite
             return L"0";
         }
 
-        if (op == 1) {
-            number *= temnum;
-        } else {
-            if (temnum == 0) {
-                return L"NULL";
-            }
-            number /= temnum;
+        switch (op) {
+            case 1:
+                number *= temnum;
+                break;
+            case 2:
+                number /= temnum;
+                break;
+            case 3:
+                number = static_cast<double>((static_cast<UNumber>(number) % static_cast<UNumber>(temnum)));
+                break;
+            default:
+                return L"0";
         }
 
         op = nm->Tag;
