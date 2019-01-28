@@ -11,6 +11,7 @@
 
 #include "Addon/Template.hpp"
 #include "Addon/Test.hpp"
+#include "StringStream.hpp"
 
 using Qentem::String;
 using Qentem::Engine::Flags;
@@ -24,9 +25,7 @@ Qentem::Template::Template() noexcept {
     TagVar.Keyword   = L"{v-";
     VarNext.Keyword  = L"}";
     TagVar.Connected = &VarNext;
-    VarNext.Flag     = Flags::BUBBLE;
-    // {v-var_{v-var2_{v-var3_id}}}
-    VarNext.NestExprs.Add(&TagVar); // Nest itself
+    VarNext.Flag     = Flags::TRIM;
     Pocket.Tags.Add(&TagVar);
     Pocket.TagsVars.Add(&TagVar);
     /////////////////////////////////
@@ -46,6 +45,7 @@ Qentem::Template::Template() noexcept {
     // TagsQuotes.
     TagQuote.Keyword   = L"\"";
     QuoteNext.Keyword  = L"\"";
+    QuoteNext.Flag     = Flags::TRIM;
     TagQuote.Connected = &QuoteNext;
     QuoteNext.Pocket   = &(this->Pocket);
     Pocket.TagsQuotes.Add(&TagQuote);
@@ -76,7 +76,7 @@ Qentem::Template::Template() noexcept {
     TagIf.Keyword   = L"<if";
     IfNext.Keyword  = L"</if>";
     TagIf.Connected = &IfNext;
-    IfNext.Flag     = Flags::SPLITNEST;
+    IfNext.Flag     = Flags::SPLITROOTONLY;
     IfNext.SubExprs.Add(&iFsHead);
     IfNext.NestExprs.Add(&TagIf).Add(&TagELseIf);
     Pocket.Tags.Add(&TagIf);
@@ -117,14 +117,16 @@ String Qentem::Template::Render(const String &content, Tree *data) noexcept {
 // e.g. {v-var_name[id]}
 // Nest: {v-var_{v-var2_{v-var3_id}}}
 String Qentem::Template::RenderVar(const String &block, const Match &item) noexcept {
-    String id = String::Part(block, item.OLength, (block.Length - (item.OLength + item.CLength)));
-    if (id.Length != 0) {
-        String *val = (static_cast<Template::PocketT *>(item.Expr->Pocket))->Data->GetValue(id);
-        if (val != nullptr) {
-            return *val;
-        }
+    auto   _pocket = static_cast<Template::PocketT *>(item.Expr->Pocket);
+    String value;
+
+    if (_pocket->Data->GetString(value, block, (item.Offset + item.OLength),
+                                 (item.Length - (item.CLength + item.OLength)))) {
+        return value;
     }
-    return id;
+
+    return String::Part(block, (item.Offset + item.OLength), (item.Length - (item.CLength + item.OLength)));
+    // return String::Part(block, item.OLength, (block.Length - (item.OLength + item.CLength))); // When Bubble
 }
 
 // <if case="{case}">html code</if>
@@ -201,9 +203,9 @@ String Qentem::Template::RenderIIF(const String &block, const Match &item) noexc
     }
 
     Match *m;
-    String iif_case  = L"";
-    String iif_false = L"";
-    String iif_true  = L"";
+    String iif_case;
+    String iif_false;
+    String iif_true;
 
     // case="[statement]" true="[Yes]" false="[No]"
     for (UNumber i = 0; i < items.Size; i++) {
@@ -239,9 +241,9 @@ String Qentem::Template::RenderLoop(const String &block, const Match &item) noex
     // To match: <loop (set="abc2" var="loopId")>
     if ((item.SubMatch.Size != 0) && (item.SubMatch[0].SubMatch.Size != 0)) {
         Match *      m;
-        String       name   = L"";
-        String       var_id = L"";
-        const Match *sm     = &(item.SubMatch[0]);
+        String       name;
+        String       var_id;
+        const Match *sm = &(item.SubMatch[0]);
 
         // When bubbling
         // adj_offset = ((m->Offset + m->OLength) - (item.Offset + item.OLength));
@@ -267,7 +269,7 @@ String Qentem::Template::RenderLoop(const String &block, const Match &item) noex
             const PocketT *pocket  = static_cast<PocketT *>(item.Expr->Pocket);
             UNumber        offset  = sm->Offset + sm->Length;
             UNumber        length  = (item.Length - (sm->Length + item.CLength));
-            String         content = Template::DoLoop(String::Part(block, offset, length), name, var_id, pocket->Data);
+            String         content = Template::Repeat(String::Part(block, offset, length), name, var_id, pocket->Data);
 
             // When bubbling
             // const UNumber   offset  = (sm->Length - item.OLength);
@@ -284,53 +286,41 @@ String Qentem::Template::RenderLoop(const String &block, const Match &item) noex
     return L"";
 }
 
-String Qentem::Template::DoLoop(const String &content, const String &name, const String &var_name,
+String Qentem::Template::Repeat(const String &content, const String &name, const String &var_name,
                                 Tree *storage) noexcept {
-    String rendered = L"";
-    String reminder = L"";
-    String id       = L"";
+    Hash *      hash;
+    const Tree *_storage = storage->GetInfo(&hash, name, 0, name.Length);
 
-    String key = name;
-    Hash * _hash;
-
-    while (true) {
-        if (!(Qentem::Tree::DecodeKey(key, id, reminder))) {
-            return rendered;
-        }
-
-        _hash = storage->GetInfo(key);
-        if ((_hash->HashValue == 0) || (_hash->Type == VType::NullT)) {
-            return rendered;
-        }
-
-        if ((id.Length == 0) || (_hash->Type != VType::TreeT)) {
-            break;
-        }
-
-        key     = id + reminder;
-        storage = &(storage->VArray[_hash->ExactID]);
+    if (_storage == nullptr) {
+        return L"";
     }
 
-    Expression ex   = Expression();
-    ex.Keyword      = var_name;
-    Expressions ser = Expressions();
+    StringStream rendered;
+    Expressions  ser;
+    Expression   ex;
     ser.Add(&ex);
 
+    ex.Keyword = var_name;
+
     const Array<Match> items = Engine::Search(content, ser);
-    // Feature: Use StringStream!!!
-    if (_hash->Type == VType::ArrayT) {
-        const Array<String> *st = &(storage->Arrays[_hash->ExactID]);
-        for (UNumber i = 0; i < st->Size; i++) {
-            ser[0]->Replace = String::FromNumber(static_cast<double>(i));
-            rendered += Engine::Parse(content, items);
+
+    if (hash->Type == VType::OStringsT) {
+        const Array<String> *st = &(_storage->OStrings[hash->ExactID]);
+        if (st != nullptr) {
+            for (UNumber i = 0; i < st->Size; i++) {
+                ser[0]->Replace = String::FromNumber(i);
+                rendered += Engine::Parse(content, items);
+            }
         }
-    } else if (_hash->Type == VType::TreeT) {
-        const Tree *va = &(storage->VArray[_hash->ExactID]);
-        for (UNumber i = 0; i < va->Table.Size; i++) {
-            ser[0]->Replace = va->Table[i].Key;
-            rendered += Engine::Parse(content, items);
+    } else if (hash->Type == VType::Child) {
+        const Tree *ci = &(_storage->Child[hash->ExactID]);
+        if (ci != nullptr) {
+            for (UNumber i = 0; i < ci->Table.Size; i++) {
+                ser[0]->Replace = ci->Table[i].Key;
+                rendered += Engine::Parse(content, items);
+            }
         }
     }
 
-    return rendered;
+    return rendered.Eject();
 }

@@ -2,7 +2,7 @@
 /**
  * Qentem Tree
  *
- * @brief     Dynamic Array for Array<String, String>; Map
+ * @brief     Ordered Array With Hasing capability.
  *
  * @author    Hani Ammar <hani.code@outlook.com>
  * @copyright 2019 Hani Ammar
@@ -17,9 +17,8 @@
 
 namespace Qentem {
 
-using Qentem::String;
-
-enum VType { NullT = 0, NumberT, StringT, ArrayT, TreeT };
+enum VType { NullT = 0, NumberT, StringT, OStringsT, Child };
+struct Tree;
 
 struct Hash {
     UNumber     HashValue = 0;
@@ -28,55 +27,44 @@ struct Hash {
     VType       Type;
     Array<Hash> Table;
 
-    Hash &get(UNumber _hash_value, UNumber base, UNumber level) {
-        if ((this->HashValue != _hash_value) && (this->Table.Size != 0)) {
-            return this->Table[((this->HashValue + level) % base)].get(_hash_value, base, (level + 3));
-        }
-        return *this;
-    }
-
-    void set(Hash &_hash, UNumber base, UNumber level) {
-        if (HashValue == 0) {
-            this->HashValue = _hash.HashValue;
-            this->ExactID   = _hash.ExactID;
-            this->Type      = _hash.Type;
-            this->Key       = _hash.Key;
-            return;
-        }
-
-        if (this->Table.Size == 0) {
-            this->Table.SetSize(base);
-            this->Table.Size = base;
-        }
-
-        this->Table[((this->HashValue + level) % base)].set(_hash, base, (level + 3));
-    }
+    // For deletion, set HashValue to 0
+    void  Set(Hash *, const UNumber, const UNumber) noexcept;
+    Hash *Get(const UNumber, const UNumber, const UNumber) noexcept;
 };
 
-class Tree {
-  private:
-    UNumber _base = 19;
+struct Field {
+    Hash  Info;
+    Tree *storage = nullptr;
+};
 
-  public:
+struct Tree {
+    UNumber              HashBase = 19; // OR 97. Choose prime numbers only!
     Array<UNumber>       Index;
     Array<Hash>          Table;
     Array<double>        Numbers;
     Array<String>        Strings;
-    Array<Array<String>> Arrays;
-    Array<Tree>          VArray;
+    Array<Array<String>> OStrings;
+    Array<Tree>          Child;
 
     explicit Tree() = default;
 
-    void Add(const String &, double) noexcept;
-    void Add(const String &, const String &) noexcept;
-    void Add(const String &, const Array<String> &) noexcept;
-    void Add(const String &, const Tree &) noexcept;
+    void Set(const String &, const double) noexcept;
+    void Set(const String &, const String &) noexcept;
+    void Set(const String &, const Array<String> &) noexcept;
+    void Set(const String &, const Tree &) noexcept;
 
-    void    InsertHash(Hash &) noexcept;
-    Hash *  GetInfo(const String &) const noexcept;
-    String *GetValue(const String &) const noexcept;
+    void InsertHash(Hash *) noexcept;
+    void Drop(const String &key, UNumber offset, UNumber limit) noexcept;
 
-    static bool DecodeKey(String &, String &, String &) noexcept;
+    static bool GetID(UNumber &id, const String &key, UNumber offset, UNumber limit) noexcept;
+
+    const Tree *         GetInfo(Hash **hash, const String &key, UNumber offset = 0, UNumber limit = 0) const noexcept;
+    const Tree *         GetChild(const String &key, UNumber offset = 0, UNumber limit = 0) const noexcept;
+    const Array<String> *GetOStrings(const String &key, UNumber offset = 0, UNumber limit = 0) const noexcept;
+
+    bool GetString(String &value, const String &key, UNumber offset = 0, UNumber limit = 0) const noexcept;
+    bool GetNumber(UNumber &value, const String &key, UNumber offset = 0, UNumber limit = 0) const noexcept;
+    bool GetDouble(double &value, const String &key, UNumber offset = 0, UNumber limit = 0) const noexcept;
 };
 } // namespace Qentem
 

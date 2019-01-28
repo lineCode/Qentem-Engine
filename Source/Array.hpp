@@ -40,16 +40,19 @@ class Array {
 
     explicit Array() noexcept = default;
 
+    void Move(Array<T> &src) noexcept {
+        delete[] this->Storage;
+        this->Storage   = src.Storage;
+        this->_capacity = src._capacity;
+        this->Size      = src.Size;
+
+        src._capacity = 0;
+        src.Size      = 0;
+        src.Storage   = nullptr;
+    }
+
     Array(Array<T> &&src) noexcept {
-        if (this != &src) {
-            // Move
-            this->Storage   = src.Storage;
-            this->_capacity = src._capacity;
-            this->Size      = src.Size;
-            src._capacity   = 0;
-            src.Size        = 0;
-            src.Storage     = nullptr;
-        }
+        Move(src);
     }
 
     Array(const Array<T> &src) noexcept {
@@ -58,49 +61,19 @@ class Array {
         }
     }
 
-    Array(T &&item) noexcept {
-        this->Add(item);
-    }
-
-    Array(const T &item) noexcept {
-        this->Add(item);
-    }
-
-    void SetSize(UNumber size) noexcept {
-        delete[] this->Storage;
-        this->Storage = nullptr;
-
-        this->Size      = 0;
-        this->_capacity = size;
-
-        if (size != 0) {
-            this->Storage = new T[size];
-        }
-    }
-
-    inline virtual ~Array() noexcept {
-        delete[] this->Storage;
-    }
-
-    inline void Clear() noexcept {
-        delete[] this->Storage;
-        this->Storage   = nullptr;
-        this->_capacity = 0;
-        this->Size      = 0;
-    }
-
-    void Move(Array<T> &src) noexcept {
+    Array<T> &operator=(Array<T> &&src) noexcept {
         if (this != &src) {
-            // Move
-            delete[] this->Storage;
-            this->Storage   = src.Storage;
-            this->_capacity = src._capacity;
-            this->Size      = src.Size;
-
-            src._capacity = 0;
-            src.Size      = 0;
-            src.Storage   = nullptr;
+            Move(src);
         }
+        return *this;
+    }
+
+    Array<T> &operator=(const Array<T> &src) noexcept {
+        if ((this != &src) && (src._capacity != 0)) {
+            delete[] this->Storage;
+            Array::_init(&src, this);
+        }
+        return *this;
     }
 
     Array<T> &Add(const Array<T> &src) noexcept {
@@ -148,48 +121,19 @@ class Array {
     }
 
     Array<T> &Add(T &&item) noexcept {
-        if (this->Size == this->_capacity) {
-            if (this->_capacity == 0) {
-                this->_capacity = 1;
-            } else {
-                this->_capacity *= 2;
-            }
-
-            auto tmp = new T[this->_capacity];
-            for (UNumber n = 0; n < this->Size; n++) {
-                tmp[n] = this->Storage[n];
-            }
-
-            delete[] this->Storage;
-            this->Storage = tmp;
-        }
-
-        *(this->Storage + this->Size++) = item;
-
-        return *this;
+        return Add(item);
     }
 
-    Array<T> &operator=(Array<T> &&src) noexcept {
-        if (this != &src) {
-            // Move
-            delete[] this->Storage;
-            this->Storage   = src.Storage;
-            this->_capacity = src._capacity;
-            this->Size      = src.Size;
+    void SetCapacity(const UNumber size) noexcept {
+        delete[] this->Storage;
+        this->Storage = nullptr;
 
-            src._capacity = 0;
-            src.Size      = 0;
-            src.Storage   = nullptr;
-        }
-        return *this;
-    }
+        this->Size      = 0;
+        this->_capacity = size;
 
-    Array<T> &operator=(const Array<T> &src) noexcept {
-        if ((this != &src) && (src._capacity != 0)) {
-            delete[] this->Storage;
-            Array::_init(&src, this);
+        if (size != 0) {
+            this->Storage = new T[size];
         }
-        return *this;
     }
 
     inline T &operator[](const UNumber id) const {
@@ -198,6 +142,20 @@ class Array {
         }
 
         return *(this->Storage + id);
+    }
+
+    inline virtual ~Array() noexcept {
+        // if (this->Storage != nullptr) {
+        delete[] this->Storage;
+        this->Storage = nullptr;
+        // }
+    }
+
+    inline void Clear() noexcept {
+        delete[] this->Storage;
+        this->Storage   = nullptr;
+        this->_capacity = 0;
+        this->Size      = 0;
     }
 };
 } // namespace Qentem

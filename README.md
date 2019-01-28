@@ -1,4 +1,4 @@
-# Qentem Engine (v0.2.5)
+# Qentem Engine (v0.3.0)
 General purpose syntax parser.
 
 ## The Goal

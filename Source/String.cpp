@@ -40,7 +40,10 @@ Qentem::String::String(const String &src) noexcept {
 }
 
 Qentem::String::~String() noexcept {
+    // if (this->Str != nullptr) {
     delete[] this->Str;
+    this->Str = nullptr;
+    // }
 }
 
 Qentem::String &Qentem::String::operator=(String &&src) noexcept { // Move
@@ -61,7 +64,7 @@ Qentem::String &Qentem::String::operator=(String &&src) noexcept { // Move
 
 Qentem::String &Qentem::String::operator=(const String &src) noexcept { // Copy
     if (this != &src) {
-        Clear(this);
+        this->Clear();
         Add(src.Str, this, 0, src.Length);
     }
 
@@ -137,7 +140,7 @@ const bool Qentem::String::operator!=(const String &src) const noexcept {
     return (!(*this == src));
 }
 
-void Qentem::String::SetSize(String *src, UNumber size) noexcept {
+void Qentem::String::SetSize(String *src, const UNumber size) noexcept {
     auto    _tmp = new wchar_t[(size + 1)];
     UNumber i    = 0;
 
@@ -159,24 +162,31 @@ void Qentem::String::SetSize(String *src, UNumber size) noexcept {
     src->Length = size;
 }
 
-Qentem::String Qentem::String::Trim(const String &str) noexcept {
-    UNumber start = 0;
-    UNumber len   = str.Length;
+void Qentem::String::SoftTrim(const String &str, UNumber &start, UNumber &end) noexcept {
+    if (start >= end) {
+        return;
+    }
+    end -= 1;
 
     while (str.Str[start] == L' ') {
-        start++;
+        start += 1;
     }
 
-    while (str.Str[--len] == L' ') {
+    while ((end > start) && (str.Str[end] == L' ')) {
+        end -= 1;
     }
-    len += 1;
+}
 
-    String tmp = String::Part(str, start, len - start);
-    return tmp;
+Qentem::String Qentem::String::Trim(const String &str) noexcept {
+    UNumber start = 0;
+    UNumber end   = (str.Length - start);
+    SoftTrim(str, start, end);
+
+    return String::Part(str, start, ((end + 1) - start));
 }
 
 Qentem::String Qentem::String::Revers(const String &str) noexcept {
-    String tmp = L"";
+    String tmp;
     String::SetSize(&tmp, str.Length);
 
     for (UNumber g = str.Length; g > 0; --g) {
@@ -186,15 +196,39 @@ Qentem::String Qentem::String::Revers(const String &str) noexcept {
     return tmp;
 }
 
+Qentem::String Qentem::String::FromNumber(UNumber number, UNumber min) noexcept {
+    String sign;
+    if (number < 0) {
+        sign = L"-";
+        number *= -1;
+    }
+
+    String tmp_l;
+    while (number > 0) {
+        tmp_l += wchar_t(((number % 10) + 48));
+        number /= 10;
+    }
+
+    tmp_l = String::Revers(tmp_l);
+
+    String min_str;
+    for (UNumber i = tmp_l.Length; i < min; i++) {
+        min_str += L"0";
+    }
+    tmp_l = min_str + tmp_l;
+
+    return (sign + tmp_l);
+}
+
 Qentem::String Qentem::String::FromNumber(double number, UNumber min, UNumber max) noexcept {
-    String sign = L"";
+    String sign;
     if (number < 0.0) {
         sign = L"-";
         number *= -1.0;
     }
 
     UNumber num;
-    String  tmp_g = L"";
+    String  tmp_g;
     if (max != 0) {
         double nuw = 1;
         for (UNumber i = 0; i <= max; i++) {
@@ -221,7 +255,7 @@ Qentem::String Qentem::String::FromNumber(double number, UNumber min, UNumber ma
         num = static_cast<UNumber>(number);
     }
 
-    String tmp_l = L"";
+    String tmp_l;
     while (num > 0.0) {
         tmp_l += wchar_t(((num % 10) + 48));
         num /= 10;
@@ -229,7 +263,7 @@ Qentem::String Qentem::String::FromNumber(double number, UNumber min, UNumber ma
 
     tmp_l = String::Revers(tmp_l);
 
-    String min_str = L"";
+    String min_str;
     for (UNumber i = tmp_l.Length; i < min; i++) {
         min_str += L"0";
     }
@@ -242,32 +276,70 @@ Qentem::String Qentem::String::FromNumber(double number, UNumber min, UNumber ma
     return (sign + tmp_l);
 }
 
-bool Qentem::String::ToNumber(const String &str, double &number) noexcept {
-    if (str.Length == 0) {
-        return false;
+bool Qentem::String::ToNumber(const String &str, UNumber &number, UNumber offset, UNumber limit) noexcept {
+    if (limit == 0) {
+        limit = str.Length - offset;
+    } else {
+        limit = limit + offset;
     }
 
     wchar_t c;
-    number        = 0.0;
-    UNumber m     = 1;
-    UNumber start = 0;
-    UNumber len   = str.Length;
-
-    while (str.Str[--len] == L' ') {
-    }
-    len += 1;
-
-    while (str.Str[start++] == L' ') {
-    }
-    start -= 1;
+    number    = 0;
+    UNumber m = 1;
 
     do {
-        c = str.Str[--len];
+        c = str.Str[--limit];
+
+        if ((c <= 47) || (c >= 58)) {
+            if (c == L'-') {
+                number *= -1;
+                if (limit > offset) {
+                    number = 0;
+                    return false;
+                }
+                break;
+            }
+
+            if (c == L'.') {
+                number = 0;
+                m      = 1;
+                continue;
+            }
+
+            number = 0;
+            return false;
+        }
+
+        number += ((c - 48) * m);
+
+        if (limit == offset) {
+            break;
+        }
+
+        m *= 10;
+    } while (true);
+
+    return true;
+}
+
+bool Qentem::String::ToNumber(const String &str, double &number, UNumber offset, UNumber limit) noexcept {
+    if (limit == 0) {
+        limit = str.Length - offset;
+    } else {
+        limit = limit + offset;
+    }
+
+    wchar_t c;
+    number    = 0.0;
+    UNumber m = 1;
+
+    do {
+        c = str.Str[--limit];
 
         if ((c <= 47) || (c >= 58)) {
             if (c == L'-') {
                 number *= -1.0;
-                if (len > start) {
+                if (limit > offset) {
                     number = 0.0;
                     return false;
                 }
@@ -286,7 +358,7 @@ bool Qentem::String::ToNumber(const String &str, double &number) noexcept {
 
         number += ((c - 48) * m);
 
-        if (len == start) {
+        if (limit == offset) {
             break;
         }
 
@@ -296,7 +368,7 @@ bool Qentem::String::ToNumber(const String &str, double &number) noexcept {
     return true;
 }
 
-Qentem::String Qentem::String::Part(const String &src, UNumber offset, UNumber limit) {
+Qentem::String Qentem::String::Part(const String &src, UNumber offset, const UNumber limit) {
     if ((limit > src.Length) || ((offset + limit) > src.Length)) {
         throw;
     }
@@ -319,17 +391,13 @@ Qentem::String Qentem::String::Part(const String &src, UNumber offset, UNumber l
     return bit;
 }
 
-UNumber Qentem::String::Hash(const String &src, UNumber offset, UNumber limit) {
-    if ((limit > src.Length) || ((offset + limit) > src.Length)) {
-        return 0;
-    }
-
+UNumber Qentem::String::Hash(const String &src, UNumber start, const UNumber end_offset) {
     bool    fl   = false;
     UNumber i    = 0;
     UNumber j    = 1;
     UNumber hash = 0;
 
-    while (i < limit) {
+    while (start < end_offset) {
         if (fl) {
             j  = j * (i + 1);
             fl = false;
@@ -338,18 +406,19 @@ UNumber Qentem::String::Hash(const String &src, UNumber offset, UNumber limit) {
             fl = true;
         }
 
-        hash += (((static_cast<UNumber>(src.Str[i]))) * j);
+        hash += (((static_cast<UNumber>(src.Str[start]))) * j);
         i++;
+        start++;
     }
 
     return hash;
 }
 
-void Qentem::String::Clear(String *str) noexcept {
-    delete[] str->Str;
-    str->Str    = nullptr;
-    str->Length = 0;
-    str->_index = 0;
+void Qentem::String::Clear() noexcept {
+    delete[] this->Str;
+    this->Str    = nullptr;
+    this->Length = 0;
+    this->_index = 0;
 }
 
 void Qentem::String::Add(const wchar_t *str_p, String *to, UNumber start_at, UNumber ln) noexcept {

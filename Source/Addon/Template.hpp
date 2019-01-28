@@ -63,7 +63,7 @@ struct Template {
 
     static String RenderIIF(const String &, const Match &) noexcept;
     static String RenderLoop(const String &, const Match &) noexcept;
-    static String DoLoop(const String &, const String &, const String &, Tree *) noexcept;
+    static String Repeat(const String &, const String &, const String &, Tree *) noexcept;
 };
 } // namespace Qentem
 

@@ -33,23 +33,25 @@ using _PARSECB = String(const String &, const Match &);
 /////////////////////////////////
 // Expressions flags
 struct Flags {
-    static const unsigned short NOTHING    = 0;   // ... NAN.
-    static const unsigned short COMPACT    = 1;   // Processing the content without Keyword(s).
-    static const unsigned short NOPARSE    = 2;   // Match a Keyword but don't process it inside Parse().
-    static const unsigned short IGNORE     = 4;   // Match a Keyword but don't process it inside Parse().
-    static const unsigned short BUBBLE     = 8;   // Parse nested matches.
-    static const unsigned short SPLIT      = 16;  // Split a match at a keyword.
-    static const unsigned short SPLITNEST  = 32;  // Split a Nested match.
-    static const unsigned short POP        = 64;  // Search again with NestExprs if the match fails (See ALU.cpp).
-    static const unsigned short ONCE       = 128; // Will stop searching after matching.
-    static const unsigned short GROUPSPLIT = 256; // Puts split matches into NestMatch, for one callback execution.
-    // static const unsigned short ROGUE      = 512;
+    static const unsigned short NOTHING       = 0;    // ... NAN.
+    static const unsigned short COMPACT       = 1;    // Processing only the content inside Keywords Parse().
+    static const unsigned short NOPARSE       = 2;    // Match a Keyword but don't process it inside Parse().
+    static const unsigned short IGNORE        = 4;    // Match a Keyword but don't process it inside Parse().
+    static const unsigned short TRIM          = 8;    // Trim the match before adding it.
+    static const unsigned short ONCE          = 16;   // Will stop searching after matching.
+    static const unsigned short POP           = 32;   // Search again with NestExprs if the match fails (See ALU.cpp).
+    static const unsigned short BUBBLE        = 64;   // Parse nested matches.
+    static const unsigned short SPLIT         = 128;  // Split a match at a keyword.
+    static const unsigned short SPLITNEST     = 256;  // Split a Nested match.
+    static const unsigned short GROUPSPLIT    = 512;  // Puts split matches into NestMatch, for one callback execution.
+    static const unsigned short SPLITROOTONLY = 1024; // e.g. IF-ELSE (Template.cpp)
+    static const unsigned short DROPEMPTY     = 2048; // Trim the match before adding it.
 };
 /////////////////////////////////
 struct Expression {
     String  Keyword = L""; // What to search for.
-    String  Replace = L""; // A text to replace the match.
-    UNumber Flag    = 0;
+    String  Replace;       // A text to replace the match.
+    UNumber Flag = 0;
 
     Expression *Connected = nullptr; // The next part of the match (the next keyword).
 
@@ -83,7 +85,8 @@ struct Match {
     Array<Match> SubMatch;
 };
 /////////////////////////////////
-Array<Match> Search(const String &, const Expressions &, UNumber = 0, UNumber = 0, UNumber = 0, UNumber = 0) noexcept;
+Array<Match> Search(const String &, const Expressions &, UNumber = 0, UNumber = 0, const UNumber = 0,
+                    const UNumber = 0) noexcept;
 void         Split(const String &, Array<Match> &, UNumber, UNumber) noexcept;
 String       Parse(const String &, const Array<Match> &, UNumber = 0, UNumber = 0) noexcept;
 /////////////////////////////////

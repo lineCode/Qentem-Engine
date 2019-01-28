@@ -33,16 +33,19 @@ class String {
     String(const String &) noexcept;  // Copy
     virtual ~String() noexcept;
 
-    static String  Part(const String &, UNumber, UNumber);
-    static UNumber Hash(const String &, UNumber, UNumber);
+    static String  Part(const String &, UNumber, const UNumber);
+    static UNumber Hash(const String &, UNumber, const UNumber);
+    static void    SoftTrim(const String &, UNumber &, UNumber &) noexcept;
     static String  Trim(const String &) noexcept;
     static String  Revers(const String &) noexcept;
     static String  FromNumber(double, UNumber min = 1, UNumber max = 0) noexcept;
-    static bool    ToNumber(const String &, double &) noexcept;
+    static String  FromNumber(UNumber, UNumber min = 1) noexcept;
+    static bool    ToNumber(const String &, UNumber &, UNumber offset = 0, UNumber limit = 0) noexcept;
+    static bool    ToNumber(const String &, double &, UNumber offset = 0, UNumber limit = 0) noexcept;
     static void    Add(const wchar_t *, String *, UNumber, UNumber) noexcept;
-    static void    Clear(String *) noexcept;
     static void    SetSize(String *, UNumber) noexcept;
 
+    void    Clear() noexcept;
     String &operator=(String &&) noexcept;      // Move
     String &operator=(const String &) noexcept; // Copy
 

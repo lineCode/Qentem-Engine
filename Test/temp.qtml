@@ -3,7 +3,7 @@
 <div>{v-abc[A-Z]}</div>
 <div>{v-abc1[3]}</div>
 <div>{v-abc[A]}</div>
-<div>Nested variables: {v-multi[arr1][E][0]}{v-multi[arr1][E][1]}</div>
+<div>{v-multi[arr1][E][0]}{v-multi[arr1][E][1]}</div>
 <div>Dose not exist: {v-abc1[1234567890]}</div>
 <div>Empty var: {v-empty}</div>
 
@@ -18,9 +18,6 @@
 
 <!--- Inline condition with math operations -->
 <div>{iif case="{v-math} = 14" true="eq 14" false="{v-math} != 14"}</div>
-
-<!--- Nested variable inside inline condition with logic operations -->
-<div>{iif case="{v-abc{v-var1}[0]}=B" true="B" false="Not B"}</div>
 
 <!--- If conditions -->
 <div>

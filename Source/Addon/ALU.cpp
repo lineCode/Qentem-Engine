@@ -20,26 +20,26 @@ Qentem::ALU::ALU() noexcept {
     ParensExpr.Keyword   = L"(";
     ParensNext.Keyword   = L")";
     ParensExpr.Connected = &ParensNext;
-    ParensNext.Flag      = Flags::BUBBLE;
+    ParensNext.Flag      = Flags::BUBBLE | Flags::TRIM;
     ParensNext.NestExprs.Add(&ParensExpr);
     ParensNext.ParseCB = &(ALU::ParenthesisCallback);
     ParensNext.Pocket  = &(this->MathExprs);
 
     this->ParensExprs.Add(&ParensExpr);
 
-    MathMul.Keyword  = L"*|/|%"; //|^ Needs it's own callback
-    MathMul.Flag     = (Flags::SPLIT | Flags::GROUPSPLIT);
+    MathMul.Keyword  = L"*|/|%"; // ^ Needs it's own callback
+    MathMul.Flag     = Flags::SPLIT | Flags::GROUPSPLIT | Flags::TRIM;
     MathMul.ParseCB  = &(ALU::MultiplicationCallback);
     MathMul.SearchCB = &(QRegex::OR);
 
     MathAdd.Keyword = L"+|-";
-    MathAdd.Flag    = (Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP);
+    MathAdd.Flag    = Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP | Flags::TRIM;
     MathAdd.NestExprs.Add(&MathMul);
     MathAdd.ParseCB  = &(ALU::AdditionCallback);
     MathAdd.SearchCB = &(QRegex::OR);
 
     MathEqu.Keyword = L"==|=|!=|<|>|<=|>=";
-    MathEqu.Flag    = (Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP);
+    MathEqu.Flag    = Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP | Flags::TRIM;
     MathEqu.NestExprs.Add(&MathAdd);
     MathEqu.ParseCB  = &(ALU::EqualCallback);
     MathEqu.SearchCB = &(QRegex::OR);
@@ -54,15 +54,16 @@ String Qentem::ALU::ParenthesisCallback(const String &block, const Match &item) 
 }
 
 bool Qentem::ALU::NestNumber(const String &block, const Match &item, double &number) noexcept {
-    String r = L"";
-
     if (item.NestMatch.Size != 0) {
-        r = Engine::Parse(block, item.NestMatch, item.Offset, item.Offset + item.Length);
-    } else if (item.Length != 0) {
-        r = String::Part(block, item.Offset, item.Length);
+        String r = Engine::Parse(block, item.NestMatch, item.Offset, item.Offset + item.Length);
+        return ((r.Length != 0) && String::ToNumber(r, number));
     }
 
-    return ((r.Length != 0) && String::ToNumber(r, number));
+    if (item.Length != 0) {
+        return String::ToNumber(block, number, item.Offset, item.Length);
+    }
+
+    return false;
 }
 
 String Qentem::ALU::EqualCallback(const String &block, const Match &item) noexcept {
@@ -72,9 +73,9 @@ String Qentem::ALU::EqualCallback(const String &block, const Match &item) noexce
         bool    is_str  = false;
         double  temnum1 = 0.0;
         double  temnum2 = 0.0;
-        String  str     = L"";
-        Match * nm      = &(item.NestMatch[0]);
-        UNumber op      = nm->Tag;
+        String  str;
+        Match * nm = &(item.NestMatch[0]);
+        UNumber op = nm->Tag;
 
         if ((nm->Length - nm->Offset) == 0) {
             return L"0";
@@ -88,7 +89,7 @@ String Qentem::ALU::EqualCallback(const String &block, const Match &item) noexce
         for (UNumber i = 1; i < item.NestMatch.Size; i++) {
             nm = &(item.NestMatch[i]);
             if (is_str) {
-                result = (String::Trim(str) == String::Trim(String::Part(block, nm->Offset, nm->Length)));
+                result = (str == String::Part(block, nm->Offset, nm->Length)); // TODO: compare without copying block
                 if (op > 3) {
                     result = !result;
                 }
@@ -186,7 +187,7 @@ String Qentem::ALU::AdditionCallback(const String &block, const Match &item) noe
     for (UNumber i = 1; i < item.NestMatch.Size; i++) {
         nm = &(item.NestMatch[i]);
 
-        if (!ALU::NestNumber(block, *nm, temnum) && (op == 2) && (nm->Length == 1)) {
+        if (!ALU::NestNumber(block, *nm, temnum) && (op == 2) && (nm->Length == 0)) {
             neg = true; // x (- -1) or something like that.
             continue;
         }
@@ -217,7 +218,6 @@ double Qentem::ALU::Evaluate(String &content) const noexcept {
      * Forth: Process logic ( = != > < )
      * Fifth: Return final value or 0;
      */
-
     content = Engine::Parse(content, Engine::Search(content, this->ParensExprs));
 
     if ((content.Length == 0) || (content == L"0")) {
@@ -227,7 +227,7 @@ double Qentem::ALU::Evaluate(String &content) const noexcept {
     content = Engine::Parse(content, Engine::Search(content, this->MathExprs));
 
     double num = 0;
-    if ((content.Length == 0) || (content == L"0") || !String::ToNumber(content, num)) {
+    if ((content.Length == 0) || (content == L"0") || !String::ToNumber(content, num, 0, 0)) {
         return 0;
     }
 

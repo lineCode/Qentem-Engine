@@ -39,6 +39,7 @@
             "command": "clang-tidy",
             "args": [
                 "Source/String.cpp",
+                "Source/StringStream.cpp",
                 "Source/Array.hpp",
                 "Source/Engine.cpp",
                 "Source/Addon/Tree.cpp",

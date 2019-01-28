@@ -164,6 +164,7 @@
     <ItemGroup>
     <ClInclude Include="Source\Common.hpp" />
     <ClInclude Include="Source\String.hpp" />
+    <ClInclude Include="Source\StringStream.hpp" />
     <ClInclude Include="Source\Array.hpp" />
     <ClInclude Include="Source\Engine.hpp" />
     <ClInclude Include="Source\Addon\QRegex.hpp" />
@@ -174,6 +175,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\String.cpp" />
+    <ClCompile Include="Source\StringStream.cpp" />
     <ClCompile Include="Source\Engine.cpp" />
     <ClCompile Include="Source\Addon\QRegex.cpp" />
     <ClCompile Include="Source\Addon\Test.cpp" />
