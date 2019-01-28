@@ -2,7 +2,7 @@
 /**
  * Qentem Tree
  *
- * @brief     Ordered Array With Hasing capability.
+ * @brief     Ordered Array With Hasing capability And JSON build-in
  *
  * @author    Hani Ammar <hani.code@outlook.com>
  * @copyright 2019 Hani Ammar
@@ -17,17 +17,16 @@
 
 namespace Qentem {
 
-enum VType { NullT = 0, NumberT, StringT, OStringsT, Child };
+enum VType { NullT = 0, NumberT, ONumbersT, StringT, OStringsT, Child };
 struct Tree;
 
 struct Hash {
     UNumber     HashValue = 0;
-    UNumber     ExactID   = 0;
-    String      Key;
+    UNumber     ExactID;
     VType       Type;
+    String      Key = L"";
     Array<Hash> Table;
 
-    // For deletion, set HashValue to 0
     void  Set(Hash *, const UNumber, const UNumber) noexcept;
     Hash *Get(const UNumber, const UNumber, const UNumber) noexcept;
 };
@@ -41,7 +40,9 @@ struct Tree {
     UNumber              HashBase = 19; // OR 97. Choose prime numbers only!
     Array<UNumber>       Index;
     Array<Hash>          Table;
+    Array<UNumber>       Hashes;
     Array<double>        Numbers;
+    Array<Array<double>> ONumbers;
     Array<String>        Strings;
     Array<Array<String>> OStrings;
     Array<Tree>          Child;
@@ -49,6 +50,7 @@ struct Tree {
     explicit Tree() = default;
 
     void Set(const String &, const double) noexcept;
+    void Set(const String &, const Array<double> &) noexcept;
     void Set(const String &, const String &) noexcept;
     void Set(const String &, const Array<String> &) noexcept;
     void Set(const String &, const Tree &) noexcept;
@@ -65,6 +67,10 @@ struct Tree {
     bool GetString(String &value, const String &key, UNumber offset = 0, UNumber limit = 0) const noexcept;
     bool GetNumber(UNumber &value, const String &key, UNumber offset = 0, UNumber limit = 0) const noexcept;
     bool GetDouble(double &value, const String &key, UNumber offset = 0, UNumber limit = 0) const noexcept;
+
+    String ToJSON() const noexcept;
+
+    static Tree FromJSON(String &content) noexcept;
 };
 } // namespace Qentem
 

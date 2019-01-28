@@ -19,8 +19,8 @@
                 "-ISource",
                 "Source/*.cpp",
                 "Source/Addon/*.cpp",
-                // "Test/TemplateTest.cpp",
-                "Test/EngineTest.cpp",
+                "Test/TemplateTest.cpp",
+                // "Test/EngineTest.cpp",
                 "-oBuild/QConsole.bin"
             ],
             "group": {
