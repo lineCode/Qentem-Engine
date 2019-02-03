@@ -11,8 +11,13 @@
 
 #include "Addon/QRegex.hpp"
 
-UNumber Qentem::QRegex::OR(const String &content, const Expression &expr, Match *item, UNumber &started, UNumber &ended,
-                           UNumber limit) noexcept {
+using Qentem::Engine::Expression;
+using Qentem::Engine::Expressions;
+using Qentem::Engine::Flags;
+using Qentem::Engine::String;
+
+const UNumber Qentem::QRegex::OR(const String &content, const Expression &expr, Match *item, UNumber &started,
+                                 UNumber &ended, UNumber limit) noexcept {
     UNumber counter = 0;
     item->Tag       = 1;
 
@@ -43,4 +48,26 @@ UNumber Qentem::QRegex::OR(const String &content, const Expression &expr, Match 
     }
 
     return 0;
+}
+
+// Short hand replace
+String Qentem::QRegex::Replace(const String &content, const String &find, const String &replace) noexcept {
+    Expression find_key;
+    find_key.Keyword  = find;
+    find_key.SearchCB = &(QRegex::OR);
+    find_key.Replace  = replace;
+
+    return Engine::Parse(content, Engine::Search(content, Expressions().Add(&find_key)));
+}
+
+// Short hand replace
+String Qentem::QRegex::Replace(const String &content, const String &find, const Array<String> &replace) noexcept {
+    Expression findexpr;
+    findexpr.Keyword  = find;
+    findexpr.SearchCB = &(QRegex::OR);
+    findexpr.Replace  = replace[0]; // TODO:: Needs more work...
+
+    // findexpr.ParseCB = &;
+
+    return Engine::Parse(content, Engine::Search(content, Expressions().Add(&findexpr)));
 }

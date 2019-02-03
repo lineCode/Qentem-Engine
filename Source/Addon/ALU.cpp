@@ -17,8 +17,8 @@ using Qentem::Engine::Flags;
 using Qentem::QRegex::OR;
 
 Qentem::ALU::ALU() noexcept {
-    ParensExpr.Keyword   = L"(";
-    ParensNext.Keyword   = L")";
+    ParensExpr.Keyword   = L'(';
+    ParensNext.Keyword   = L')';
     ParensExpr.Connected = &ParensNext;
     ParensNext.Flag      = Flags::BUBBLE | Flags::TRIM;
     ParensNext.NestExprs.Add(&ParensExpr);
@@ -48,12 +48,12 @@ Qentem::ALU::ALU() noexcept {
 }
 
 // e.g. ( 4 + 3 ), ( 2 + ( 4 + ( 1 + 2 ) + 1 ) * 5 - 3 - 2 )
-String Qentem::ALU::ParenthesisCallback(const String &block, const Match &item) noexcept {
+const String Qentem::ALU::ParenthesisCallback(const String &block, const Match &item) noexcept {
     String result = String::Part(block, item.OLength, (block.Length - (item.OLength + item.CLength)));
     return Engine::Parse(result, Engine::Search(result, *(static_cast<Expressions *>(item.Expr->Pocket))));
 }
 
-bool Qentem::ALU::NestNumber(const String &block, const Match &item, double &number) noexcept {
+const bool Qentem::ALU::NestNumber(const String &block, const Match &item, double &number) noexcept {
     if (item.NestMatch.Size != 0) {
         String r = Engine::Parse(block, item.NestMatch, item.Offset, item.Offset + item.Length);
         return ((r.Length != 0) && String::ToNumber(r, number));
@@ -66,7 +66,7 @@ bool Qentem::ALU::NestNumber(const String &block, const Match &item, double &num
     return false;
 }
 
-String Qentem::ALU::EqualCallback(const String &block, const Match &item) noexcept {
+const String Qentem::ALU::EqualCallback(const String &block, const Match &item) noexcept {
     bool result = false;
 
     if (item.NestMatch.Size != 0) {
@@ -138,7 +138,7 @@ String Qentem::ALU::EqualCallback(const String &block, const Match &item) noexce
     return L"0";
 }
 
-String Qentem::ALU::MultiplicationCallback(const String &block, const Match &item) noexcept {
+const String Qentem::ALU::MultiplicationCallback(const String &block, const Match &item) noexcept {
     UNumber op;
     double  number = 0.0;
     if (!ALU::NestNumber(block, item.NestMatch[0], number)) {
@@ -175,7 +175,7 @@ String Qentem::ALU::MultiplicationCallback(const String &block, const Match &ite
     return String::FromNumber(number);
 }
 
-String Qentem::ALU::AdditionCallback(const String &block, const Match &item) noexcept {
+const String Qentem::ALU::AdditionCallback(const String &block, const Match &item) noexcept {
     double number = 0.0;
     ALU::NestNumber(block, item.NestMatch[0], number);
 

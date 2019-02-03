@@ -17,7 +17,7 @@ using Qentem::Array;
 using Qentem::String;
 using Qentem::Test::TestBit;
 
-void qentem_test_engine(bool dumb_express, bool break_on_err) {
+void qentem_test_engine(bool dumb_express, bool break_on_err) noexcept {
     Array<TestBit> bits         = Qentem::Test::GetBits();
     const UNumber  times        = 1; // 100000 To slow it down!
     const UNumber  start_at     = 0;

@@ -81,47 +81,23 @@ class Array {
             if ((this->Size + src.Size) > this->_capacity) {
                 this->_capacity += src.Size;
 
-                auto tmp = new T[this->_capacity];
+                T *tmp        = this->Storage;
+                this->Storage = new T[this->_capacity];
+
                 for (UNumber n = 0; n < this->Size; n++) {
-                    tmp[n] = this->Storage[n];
+                    this->Storage[n] = tmp[n];
                 }
 
-                delete[] this->Storage;
-                this->Storage = tmp;
+                delete[] tmp;
             }
 
             for (UNumber i = 0; i < src.Size; i++) {
-                this->Storage[this->Size++] = src.Storage[i];
+                this->Storage[this->Size] = src.Storage[i];
+                this->Size++;
             }
         }
 
         return *this;
-    }
-
-    Array<T> &Add(const T &item) noexcept {
-        if (this->Size == this->_capacity) {
-            if (this->_capacity == 0) {
-                this->_capacity = 1;
-            } else {
-                this->_capacity *= 2;
-            }
-
-            auto tmp = new T[this->_capacity];
-            for (UNumber n = 0; n < this->Size; n++) {
-                tmp[n] = this->Storage[n];
-            }
-
-            delete[] this->Storage;
-            this->Storage = tmp;
-        }
-
-        *(this->Storage + this->Size++) = item;
-
-        return *this;
-    }
-
-    Array<T> &Add(T &&item) noexcept {
-        return Add(item);
     }
 
     void SetCapacity(const UNumber size) noexcept {
@@ -136,19 +112,58 @@ class Array {
         }
     }
 
+    void Expand() noexcept {
+        if (this->_capacity == 0) {
+            this->_capacity = 1;
+        } else {
+            this->_capacity *= 3;
+        }
+
+        T *tmp        = this->Storage;
+        this->Storage = new T[this->_capacity];
+
+        for (UNumber n = 0; n < this->Size; n++) {
+            this->Storage[n] = tmp[n];
+        }
+
+        delete[] tmp;
+    }
+
+    Array<T> &Add(const T &item) noexcept {
+        if (this->Size == this->_capacity) {
+            Expand();
+        }
+
+        this->Storage[this->Size] = item;
+        this->Size++;
+
+        return *this;
+    }
+
+    Array<T> &Add(T &&item) noexcept {
+        if (this->Size == this->_capacity) {
+            Expand();
+        }
+
+        this->Storage[this->Size] = item;
+        this->Size++;
+
+        return *this;
+    }
+
     inline T &operator[](const UNumber id) const {
-        if (id >= this->Size) {
+        if (id >= this->_capacity) {
             throw;
         }
 
-        return *(this->Storage + id);
+        return this->Storage[id];
     }
 
     inline virtual ~Array() noexcept {
-        // if (this->Storage != nullptr) {
-        delete[] this->Storage;
-        this->Storage = nullptr;
-        // }
+        if (this->Storage != nullptr) {
+            delete[] this->Storage;
+            this->Storage = nullptr;
+        }
     }
 
     inline void Clear() noexcept {

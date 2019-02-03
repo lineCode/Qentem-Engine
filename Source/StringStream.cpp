@@ -12,22 +12,22 @@
 #include "StringStream.hpp"
 
 void Qentem::StringStream::operator+=(String &&src) noexcept { // Move
+    this->Length += src.Length;
     this->_strings.Add(src);
 }
 
 void Qentem::StringStream::operator+=(const String &src) noexcept { // Copy
+    this->Length += src.Length;
     this->_strings.Add(src);
 }
 
 Qentem::String Qentem::StringStream::Eject() noexcept {
-    UNumber length = 0;
-
-    for (UNumber i = 0; i < this->_strings.Size; i++) {
-        length += this->_strings[i].Length;
+    if (this->Length == 0) {
+        return L"";
     }
 
     String str;
-    String::SetSize(&str, length);
+    String::SetSize(&str, this->Length);
 
     for (UNumber i = 0; i < this->_strings.Size; i++) {
         str += this->_strings[i];

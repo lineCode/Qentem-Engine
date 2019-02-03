@@ -27,36 +27,38 @@ class String {
 
     explicit String() = default;
 
-    String(const wchar_t[]) noexcept; // Copy
-    String(const wchar_t) noexcept;   // Copy
-    String(String &&) noexcept;       // Move
-    String(const String &) noexcept;  // Copy
+    String(const wchar_t str[]) noexcept;
+    String(wchar_t str) noexcept;
+
+    String(String &&) noexcept;
+    String(const String &) noexcept;
     virtual ~String() noexcept;
 
-    static String  Part(const String &, UNumber, const UNumber);
-    static UNumber Hash(const String &, UNumber, const UNumber);
-    static void    SoftTrim(const String &, UNumber &, UNumber &) noexcept;
-    static String  Trim(const String &) noexcept;
-    static String  Revers(const String &) noexcept;
-    static String  FromNumber(double, UNumber min = 1, UNumber max = 0) noexcept;
-    static String  FromNumber(UNumber, UNumber min = 1) noexcept;
-    static bool    ToNumber(const String &, UNumber &, UNumber offset = 0, UNumber limit = 0) noexcept;
-    static bool    ToNumber(const String &, double &, UNumber offset = 0, UNumber limit = 0) noexcept;
-    static void    Add(const wchar_t *, String *, UNumber, UNumber) noexcept;
-    static void    SetSize(String *, UNumber) noexcept;
+    static String     Part(const String &, UNumber, const UNumber);
+    static UNumber    Hash(const String &, UNumber, const UNumber);
+    static void       SoftTrim(const String &, UNumber &, UNumber &) noexcept;
+    static String     Trim(const String &) noexcept;
+    static String     Revers(const String &) noexcept;
+    static String     FromNumber(double, UNumber min = 1, UNumber max = 0) noexcept;
+    static String     FromNumber(UNumber, UNumber min = 1) noexcept;
+    static const bool ToNumber(const String &, UNumber &, UNumber offset = 0, UNumber limit = 0) noexcept;
+    static const bool ToNumber(const String &, double &, UNumber offset = 0, UNumber limit = 0) noexcept;
+    static void       Add(const wchar_t *, String *, UNumber, UNumber) noexcept;
+    static void       SetSize(String *, UNumber) noexcept;
 
-    void    Clear() noexcept;
-    String &operator=(String &&) noexcept;      // Move
-    String &operator=(const String &) noexcept; // Copy
+    void Clear() noexcept;
 
-    String &operator+=(String &&) noexcept;      // Move
-    String &operator+=(const String &) noexcept; // Add +=
+    String &operator=(String &&src) noexcept;
+    String &operator=(const String &src) noexcept;
 
-    const String operator+(String &&) const noexcept;
-    const String operator+(const String &) const noexcept;
+    String &operator+=(String &&src) noexcept;
+    String &operator+=(const String &src) noexcept;
 
-    const bool operator==(const String &) const noexcept; // ==
-    const bool operator!=(const String &) const noexcept; // ==
+    const String operator+(String &&src) const noexcept;
+    const String operator+(const String &src) const noexcept;
+
+    const bool operator==(const String &src) const noexcept;
+    const bool operator!=(const String &src) const noexcept;
 };
 } // namespace Qentem
 

@@ -11,12 +11,12 @@
 
 #include "String.hpp"
 
-Qentem::String::String(const wchar_t _str[]) noexcept {
-    Add(&_str[0], this, 0, 0);
+Qentem::String::String(const wchar_t str[]) noexcept {
+    Add(&str[0], this, 0, 0);
 }
 
-Qentem::String::String(const wchar_t _str) noexcept {
-    Add(&_str, this, this->_index, 1); // one char
+Qentem::String::String(wchar_t str) noexcept {
+    Add(&str, this, 0, 1);
 }
 
 Qentem::String::String(String &&src) noexcept {
@@ -40,10 +40,10 @@ Qentem::String::String(const String &src) noexcept {
 }
 
 Qentem::String::~String() noexcept {
-    // if (this->Str != nullptr) {
-    delete[] this->Str;
-    this->Str = nullptr;
-    // }
+    if (this->Str != nullptr) {
+        delete[] this->Str;
+        this->Str = nullptr;
+    }
 }
 
 Qentem::String &Qentem::String::operator=(String &&src) noexcept { // Move
@@ -141,8 +141,8 @@ const bool Qentem::String::operator!=(const String &src) const noexcept {
 }
 
 void Qentem::String::SetSize(String *src, const UNumber size) noexcept {
-    auto    _tmp = new wchar_t[(size + 1)];
-    UNumber i    = 0;
+    wchar_t *_tmp = new wchar_t[(size + 1)];
+    UNumber  i    = 0;
 
     if (size > src->_index) {
         for (; i < src->_index; i++) {
@@ -231,6 +231,7 @@ Qentem::String Qentem::String::FromNumber(double number, UNumber min, UNumber ma
     String  tmp_g;
     if (max != 0) {
         double nuw = 1;
+
         for (UNumber i = 0; i <= max; i++) {
             nuw *= 10;
         }
@@ -276,7 +277,7 @@ Qentem::String Qentem::String::FromNumber(double number, UNumber min, UNumber ma
     return (sign + tmp_l);
 }
 
-bool Qentem::String::ToNumber(const String &str, UNumber &number, UNumber offset, UNumber limit) noexcept {
+const bool Qentem::String::ToNumber(const String &str, UNumber &number, UNumber offset, UNumber limit) noexcept {
     if (limit == 0) {
         limit = str.Length - offset;
     } else {
@@ -322,7 +323,7 @@ bool Qentem::String::ToNumber(const String &str, UNumber &number, UNumber offset
     return true;
 }
 
-bool Qentem::String::ToNumber(const String &str, double &number, UNumber offset, UNumber limit) noexcept {
+const bool Qentem::String::ToNumber(const String &str, double &number, UNumber offset, UNumber limit) noexcept {
     if (limit == 0) {
         limit = str.Length - offset;
     } else {
@@ -356,7 +357,7 @@ bool Qentem::String::ToNumber(const String &str, double &number, UNumber offset,
             return false;
         }
 
-        number += ((c - 48) * m);
+        number += static_cast<double>((c - 48) * m);
 
         if (limit == offset) {
             break;
@@ -432,17 +433,16 @@ void Qentem::String::Add(const wchar_t *str_p, String *to, UNumber start_at, UNu
 
     UNumber j = 0;
     if ((to->Length == 0) || (ln > (to->Length - to->_index))) {
-        auto _tmp = new wchar_t[(ln + to->_index + 1)];
+        wchar_t *_tmp = to->Str;
+        to->Str       = new wchar_t[(ln + to->_index + 1)];
 
-        if (to->Str != nullptr) {
+        if (_tmp != nullptr) {
             for (UNumber i = 0; i < to->_index; i++) {
-                _tmp[i] = to->Str[j++];
+                to->Str[i] = _tmp[j++];
             }
-
-            delete[] to->Str;
         }
 
-        to->Str = _tmp;
+        delete[] _tmp;
     }
 
     for (j = 0; j < ln;) {

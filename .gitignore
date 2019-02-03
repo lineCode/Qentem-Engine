@@ -1,7 +1,5 @@
-*.stackdump
 Notes/
 Build/
 x64/
-.vs/
 .vscode/settings.json
-Safe/
+Test/bigjson.json

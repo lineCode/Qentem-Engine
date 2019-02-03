@@ -158,7 +158,8 @@ String Qentem::Test::DumbMatches(const String &content, const Array<Match> &matc
 
     for (UNumber i = index; i < items.Size;
          i++) { // It should be matches.size not items, but they should be the same size!
-        Array += innoffset + offset + L"[" + String::FromNumber(static_cast<double>(i)) + L"]: " + items[i] + L"\n";
+        Array += innoffset + offset + L"[" + String::FromNumber(static_cast<double>(i)) + L"]: " +
+                 QRegex::Replace(items[i], L"\n", L"\\n") + L"\n";
 
         if (matches[i].NestMatch.Size != 0) {
             Array += innoffset + offset + L"-NestMatch:\n";
@@ -217,7 +218,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     x2          = new Expression();
     x2->Keyword = L"--";
 
-    x1->ParseCB = ([](const String &block, const Match &item) noexcept->String { return L"*"; });
+    x1->ParseCB = ([](const String &block, const Match &item) noexcept->const String { return L"*"; });
 
     bit.Exprs.Add(x1).Add(x2);
     bit.Collect.Add(x1).Add(x2);
@@ -241,7 +242,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     y3->Keyword   = L"}}";
     x3->Connected = y3;
 
-    x1->ParseCB = x2->ParseCB = y3->ParseCB = ([](const String &block, const Match &item) noexcept->String {
+    x1->ParseCB = x2->ParseCB = y3->ParseCB = ([](const String &block, const Match &item) noexcept->const String {
         String nc = String::FromNumber(item.OLength) + L"-";
         nc += String::FromNumber(item.CLength);
         return nc;
@@ -526,7 +527,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bit.Collect.Add(x1).Add(y1);
     bits.Add(bit);
 
-    y1->ParseCB = ([](const String &block, const Match &item) noexcept->String {
+    y1->ParseCB = ([](const String &block, const Match &item) noexcept->const String {
         String nc = L"(";
         nc += String::Part(block, item.OLength, block.Length - (item.OLength + item.CLength));
         nc += L")";
@@ -562,14 +563,14 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bit.Collect.Add(x1).Add(x2).Add(y1).Add(y2);
     bits.Add(bit);
 
-    y1->ParseCB = ([](const String &block, const Match &item) noexcept->String {
+    y1->ParseCB = ([](const String &block, const Match &item) noexcept->const String {
         String nc = L"=";
         nc += block;
         nc += L"=";
         return nc;
     });
 
-    y2->ParseCB = ([](const String &block, const Match &item) noexcept->String {
+    y2->ParseCB = ([](const String &block, const Match &item) noexcept->const String {
         if (block == L"<3-U>") {
             return L"A";
         }
@@ -606,7 +607,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
     y1->SubExprs.Add(x2);
 
-    y1->ParseCB = ([](const String &block, const Match &item) noexcept->String {
+    y1->ParseCB = ([](const String &block, const Match &item) noexcept->const String {
         String nc = L"";
 
         if (item.SubMatch.Size != 0) {
@@ -882,7 +883,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bit.Collect.Add(x1).Add(y1).Add(y2);
     bits.Add(bit);
 
-    y2->ParseCB = ([](const String &block, const Match &item) noexcept->String {
+    y2->ParseCB = ([](const String &block, const Match &item) noexcept->const String {
         double number = 0.0;
 
         if (item.NestMatch.Size != 0) {
@@ -930,7 +931,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bit.Collect.Add(x1).Add(x2);
     bits.Add(bit);
 
-    x1->ParseCB = ([](const String &block, const Match &item) noexcept->String {
+    x1->ParseCB = ([](const String &block, const Match &item) noexcept->const String {
         double number = 0.0;
         double temnum = 0.0;
         String r      = L"";
@@ -954,7 +955,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
         return String::FromNumber(number);
     });
 
-    x2->ParseCB = ([](const String &block, const Match &item) noexcept->String {
+    x2->ParseCB = ([](const String &block, const Match &item) noexcept->const String {
         double number = 1.0;
         double temnum = 1.0;
         String r      = L"";
@@ -995,7 +996,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bit.Collect.Add(x1).Add(y1).Add(y2);
     bits.Add(bit);
 
-    y2->ParseCB = ([](const String &block, const Match &item) noexcept->String {
+    y2->ParseCB = ([](const String &block, const Match &item) noexcept->const String {
         double number = 0.0;
         double temnum = 0.0;
         String r      = L"";
@@ -1027,14 +1028,14 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
     x2          = new Expression();
     x2->Keyword = L"x";
-    x2->ParseCB = ([](const String &block, const Match &item) noexcept->String {
+    x2->ParseCB = ([](const String &block, const Match &item) noexcept->const String {
         //
         return L"3";
     });
 
     x3          = new Expression();
     x3->Keyword = L"y";
-    x3->ParseCB = ([](const String &block, const Match &item) noexcept->String {
+    x3->ParseCB = ([](const String &block, const Match &item) noexcept->const String {
         //
         return L"7";
     });
@@ -1043,7 +1044,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bit.Collect.Add(x1).Add(x2).Add(x3);
     bits.Add(bit);
 
-    x1->ParseCB = ([](const String &block, const Match &item) noexcept->String {
+    x1->ParseCB = ([](const String &block, const Match &item) noexcept->const String {
         double number = 0.0;
         double temnum = 0.0;
         String r      = L"";
@@ -1080,7 +1081,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     x1->Connected = y1;
     x1->Flag      = Flags::POP;
     y1->Flag      = Flags::BUBBLE;
-    y1->ParseCB   = ([](const String &block, const Match &item) noexcept->String {
+    y1->ParseCB   = ([](const String &block, const Match &item) noexcept->const String {
         //
         return block;
     });
@@ -1092,7 +1093,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     x2->Flag      = Flags::POP;
     y2->Flag      = Flags::BUBBLE;
     x2->Connected = y2;
-    y2->ParseCB   = ([](const String &block, const Match &item) noexcept->String {
+    y2->ParseCB   = ([](const String &block, const Match &item) noexcept->const String {
         //
         return block;
     });
@@ -1138,7 +1139,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bit.Collect.Add(x1).Add(x2).Add(y1).Add(y2);
     bits.Add(bit);
 
-    y1->ParseCB = ([](const String &block, const Match &item) noexcept->String {
+    y1->ParseCB = ([](const String &block, const Match &item) noexcept->const String {
         String nc = L"";
 
         for (UNumber i = 0; i < item.NestMatch.Size; i++) {
@@ -1163,7 +1164,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bit.Collect.Add(x1);
     bits.Add(bit);
 
-    x1->ParseCB = ([](const String &block, const Match &item) noexcept->String {
+    x1->ParseCB = ([](const String &block, const Match &item) noexcept->const String {
         //
         return String::FromNumber(item.Tag);
     });
@@ -1194,7 +1195,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     y2->Flag = Flags::SPLITNEST;
     y2->NestExprs.Add(y1);
 
-    y2->ParseCB = ([](const String &block, const Match &item) noexcept->String {
+    y2->ParseCB = ([](const String &block, const Match &item) noexcept->const String {
         String s = L"";
 
         for (UNumber i = 0; i < item.NestMatch.Size; i++) {
@@ -1324,7 +1325,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bit.Collect.Add(x1).Add(x2).Add(y1);
     bits.Add(bit);
 
-    y1->ParseCB = ([](const String &block, const Match &item) noexcept->String {
+    y1->ParseCB = ([](const String &block, const Match &item) noexcept->const String {
         if (block.Length > (item.OLength + item.CLength)) {
             return String::Part(block, item.OLength, block.Length - (item.OLength + item.CLength));
         }
@@ -1332,7 +1333,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
         return L"0";
     });
 
-    x2->ParseCB = ([](const String &block, const Match &item) noexcept->String {
+    x2->ParseCB = ([](const String &block, const Match &item) noexcept->const String {
         String nc = L"";
 
         for (UNumber i = 0; i < item.NestMatch.Size; i++) {
@@ -1363,7 +1364,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bit.Collect.Add(x1).Add(y1);
     bits.Add(bit);
 
-    y1->ParseCB = ([](const String &block, const Match &item) noexcept->String {
+    y1->ParseCB = ([](const String &block, const Match &item) noexcept->const String {
         String nc = L"(";
         nc += String::Part(block, item.OLength, block.Length - (item.OLength + item.CLength));
         nc += L")";
@@ -1411,7 +1412,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bit.Collect.Add(x1).Add(y1);
     bits.Add(bit);
 
-    y1->ParseCB = ([](const String &block, const Match &item) noexcept->String {
+    y1->ParseCB = ([](const String &block, const Match &item) noexcept->const String {
         String nc = L"(";
         nc += String::Part(block, item.OLength, block.Length - (item.OLength + item.CLength));
         nc += L")";
@@ -1419,7 +1420,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     });
 
     x1->SearchCB = ([](const String &content, const Expression &expr, Match *item, UNumber &index, UNumber &ends,
-                       UNumber limit) noexcept->UNumber {
+                       UNumber limit) noexcept->const UNumber {
         UNumber original_index = index;
         while ((index < limit) && content.Str[index] != L'<') {
             index++;
@@ -1442,19 +1443,19 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
             return 0;
         }
 
-        item->Id = item->Tag;
-        while ((item->Id < ends) && (content.Str[item->Id] != L' ')) {
-            if (content.Str[item->Id] == L'>') {
+        item->ID = item->Tag;
+        while ((item->ID < ends) && (content.Str[item->ID] != L' ')) {
+            if (content.Str[item->ID] == L'>') {
                 break;
             }
-            item->Id++;
+            item->ID++;
         }
 
         return 1;
     });
 
     y1->SearchCB = ([](const String &content, const Expression &expr, Match *item, UNumber &index, UNumber &ends,
-                       UNumber limit) noexcept->UNumber {
+                       UNumber limit) noexcept->const UNumber {
         UNumber original_index = index;
         UNumber tmp_index      = index;
         bool    slash          = false;
@@ -1483,7 +1484,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
         }
 
         UNumber o_offset = item->Tag;
-        while (o_offset < item->Id) {
+        while (o_offset < item->ID) {
             if (content.Str[o_offset++] != content.Str[tmp_index++]) {
                 index = original_index;
                 return 0;
@@ -1502,7 +1503,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     return bits;
 }
 
-String Qentem::Test::FlipSplit(const String &block, const Match &item) noexcept {
+const String Qentem::Test::FlipSplit(const String &block, const Match &item) noexcept {
     String nc = L"";
 
     if (item.NestMatch.Size != 0) {
@@ -1520,7 +1521,7 @@ String Qentem::Test::FlipSplit(const String &block, const Match &item) noexcept 
     return nc;
 }
 
-String Qentem::Test::SubMatchNestMatch(const String &block, const Match &item) noexcept {
+const String Qentem::Test::SubMatchNestMatch(const String &block, const Match &item) noexcept {
     String nc = L"";
     if (item.SubMatch.Size != 0) {
         Match * sm     = &(item.SubMatch[0]);
@@ -1552,7 +1553,7 @@ String Qentem::Test::SubMatchNestMatch(const String &block, const Match &item) n
     return nc;
 }
 
-String Qentem::Test::SubMatchZero(const String &block, const Match &item) noexcept {
+const String Qentem::Test::SubMatchZero(const String &block, const Match &item) noexcept {
     Match *sm = &(item.SubMatch[0]);
     return String::Part(block, (sm->Offset + sm->OLength), (sm->Length - (sm->CLength + sm->OLength)));
 

@@ -27,16 +27,16 @@ struct Expression;
 // Expressions def
 using Expressions = Array<Expression *>;
 // Search Callback
-using _SEARCHCB = UNumber(const String &, const Expression &, Match *, UNumber &, UNumber &, UNumber limit);
+using _SEARCHCB = const UNumber(const String &, const Expression &, Match *, UNumber &, UNumber &, UNumber limit);
 // Parse Callback
-using _PARSECB = String(const String &, const Match &);
+using _PARSECB = const String(const String &, const Match &);
 /////////////////////////////////
 // Expressions flags
 struct Flags {
     static const unsigned short NOTHING       = 0;    // ... NAN.
     static const unsigned short COMPACT       = 1;    // Processing only the content inside Keywords Parse().
     static const unsigned short NOPARSE       = 2;    // Match a Keyword but don't process it inside Parse().
-    static const unsigned short IGNORE        = 4;    // Match a Keyword but don't process it inside Parse().
+    static const unsigned short IGNORE        = 4;    // Match a Keyword but don't add it.
     static const unsigned short TRIM          = 8;    // Trim the match before adding it.
     static const unsigned short ONCE          = 16;   // Will stop searching after matching.
     static const unsigned short POP           = 32;   // Search again with NestExprs if the match fails (See ALU.cpp).
@@ -74,7 +74,7 @@ struct Match {
     UNumber CLength = 0; // Length of closing keyword
 
     UNumber     Tag  = 0; // To Mark a match when using callback search (for later sorting, See ALU.cpp).
-    UNumber     Id   = 0; // for personal use.
+    UNumber     ID   = 0; // for personal use.
     Expression *Expr = nullptr;
 
     Array<Match> NestMatch; // To hold sub matches inside a match.
@@ -85,10 +85,14 @@ struct Match {
     Array<Match> SubMatch;
 };
 /////////////////////////////////
-Array<Match> Search(const String &, const Expressions &, UNumber = 0, UNumber = 0, const UNumber = 0,
-                    const UNumber = 0) noexcept;
-void         Split(const String &, Array<Match> &, UNumber, UNumber) noexcept;
-String       Parse(const String &, const Array<Match> &, UNumber = 0, UNumber = 0) noexcept;
+Array<Match> Search(const String &content, const Expressions &exprs, UNumber index = 0, UNumber limit = 0,
+                    UNumber max = 0) noexcept;
+
+void _search(Array<Match> &items, const String &content, const Expressions &exprs, UNumber index = 0, UNumber limit = 0,
+             UNumber max = 0, UNumber level = 0) noexcept;
+
+void   Split(const String &, Array<Match> &, UNumber, UNumber) noexcept;
+String Parse(const String &, const Array<Match> &, UNumber = 0, UNumber = 0) noexcept;
 /////////////////////////////////
 } // namespace Engine
 } // namespace Qentem

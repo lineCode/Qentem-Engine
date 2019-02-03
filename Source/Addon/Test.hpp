@@ -36,9 +36,9 @@ Array<String> Extract(const String &, const Array<Match> &) noexcept;
 String         DumbExpressions(const Expressions &, const String &, UNumber = 0, Expression * = nullptr) noexcept;
 String         DumbMatches(const String &, const Array<Match> &, const String &, UNumber = 0) noexcept;
 Array<TestBit> GetBits() noexcept;
-String         SubMatchZero(const String &, const Match &) noexcept;
-String         SubMatchNestMatch(const String &, const Match &) noexcept;
-String         FlipSplit(const String &, const Match &) noexcept;
+const String   SubMatchZero(const String &, const Match &) noexcept;
+const String   SubMatchNestMatch(const String &, const Match &) noexcept;
+const String   FlipSplit(const String &, const Match &) noexcept;
 
 } // namespace Test
 } // namespace Qentem

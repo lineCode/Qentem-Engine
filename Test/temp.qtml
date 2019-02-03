@@ -73,15 +73,6 @@
         <loop set="multi[arr1][E]" var="rxr">
             <span>loop-rxr): {v-multi[arr1][E][rxr]}</span>
 
-            <loop set="multi[arr1][E]" var="txt">
-                <span>loop-txt): {v-multi[arr1][E][txt]}</span>
-
-                <loop set="multi[arr1][E]" var="yxy">
-                    <span>loop-yxy): {v-multi[arr1][E][yxy]}</span>
-                </loop>
-
-            </loop>
-
         </loop>
 
     </loop>

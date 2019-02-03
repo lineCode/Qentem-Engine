@@ -7,20 +7,18 @@
             "label": "Build .bin", // executable
             "promptOnClose": false,
             "type": "shell",
-            "command": "clang++",
+            "command": "clang-8",
             "args": [
                 "-g",
-                // "-fmodules",
-                // "-S",
-                // "-Wall",
-                "-std=c++17",
+                "-lstdc++",
+                "-Wall",
+                "-std=c++11",
                 "-m64",
-                // "-v",
                 "-ISource",
                 "Source/*.cpp",
                 "Source/Addon/*.cpp",
-                "Test/TemplateTest.cpp",
-                // "Test/EngineTest.cpp",
+                // "Test/TemplateTest.cpp",
+                "Test/EngineTest.cpp",
                 "-oBuild/QConsole.bin"
             ],
             "group": {
@@ -36,20 +34,20 @@
         {
             "label": "Check",
             "type": "shell",
-            "command": "clang-tidy",
+            "command": "clang-tidy-8",
             "args": [
                 "Source/String.cpp",
                 "Source/StringStream.cpp",
                 "Source/Array.hpp",
                 "Source/Engine.cpp",
-                "Source/Addon/Tree.cpp",
-                "Source/Addon/QRegex.cpp",
-                "Source/Addon/ALU.cpp",
                 "Source/Addon/Test.cpp",
+                "Source/Addon/QRegex.cpp",
+                "Source/Addon/Tree.cpp",
+                "Source/Addon/ALU.cpp",
                 "Source/Addon/Template.cpp",
                 "Test/TemplateTest.cpp",
                 "Test/EngineTest.cpp",
-                "-checks=*,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-llvm-header-guard,-hicpp*,-googl*,-fuchsia*",
+                "-checks=*,-cppcoreguidelines-owning-memory,-modernize-use-auto,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-llvm-header-guard,-hicpp*,-googl*,-fuchsia*",
                 "--",
                 "c++17",
                 "-ISource"
@@ -62,7 +60,20 @@
                 "reveal": "always",
                 "clear": true
             },
-            "problemMatcher": "$gcc"
+            "problemMatcher": {
+                "owner": "cpp",
+                "fileLocation": [
+                    "relative"
+                ],
+                "pattern": {
+                    "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
+                }
+            }
         },
         {
             "label": "Build .exe", // executable
@@ -72,7 +83,7 @@
                 "${cwd}/QConsole.sln",
                 "/m",
                 "/t:build",
-                "/p:configuration=Debug",
+                "/p:configuration=Release",
                 "/p:Platform=x64"
             ],
             "group": {
@@ -89,17 +100,21 @@
             "label": "Build .so",
             "promptOnClose": false,
             "type": "shell",
-            "command": "clang++",
+            "command": "clang-8",
             "args": [
-                "-shared",
-                "-stdlib=libc++",
+                "-lstdc++",
                 "-Wall",
-                "-std=c++17",
+                "-std=c++11",
                 "-m64",
+                "-shared",
                 "-fPIC",
-                // "-v",
+                "-fmodules",
                 "-ISource",
                 "Source/*.cpp",
+                "Source/Addon/QRegex.cpp",
+                "Source/Addon/Tree.cpp",
+                // "Source/Addon/ALU.cpp",
+                // "Source/Addon/Template.cpp",
                 "-oBuild/QpieLibx64.so"
             ],
             "group": {
@@ -111,27 +126,6 @@
                 "clear": true
             },
             "problemMatcher": "$gcc"
-        },
-        // {
-        //     "label": "Build .dll",
-        //     "type": "shell",
-        //     "command": "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/MSBuild/15.0/Bin/MSBuild.exe",
-        //     "args": [
-        //         "${cwd}/QLibrary.sln",
-        //         "/m",
-        //         "/t:build",
-        //         "/p:configuration=Release",
-        //         "/p:Platform=x64"
-        //     ],
-        //     "group": {
-        //         "kind": "build",
-        //         "isDefault": true
-        //     },
-        //     "presentation": {
-        //         "reveal": "silent",
-        //         "clear": true
-        //     },
-        //     "problemMatcher": "$msCompile"
-        // }
+        }
     ]
 }

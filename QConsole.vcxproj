@@ -182,6 +182,7 @@
     <ClCompile Include="Source\Addon\Tree.cpp" />
     <ClCompile Include="Source\Addon\ALU.cpp" />
     <ClCompile Include="Source\Addon\Template.cpp" />
+    <!-- <ClCompile Include="Test\TemplateTest.cpp" /> -->
     <ClCompile Include="Test\EngineTest.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

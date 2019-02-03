@@ -47,7 +47,7 @@
       }
     },
     {
-      "name": "Test (win.Py)",
+      "name": "Test (win.py)",
       "type": "python",
       "request": "launch",
       "cwd": "${workspaceFolder}",

@@ -116,9 +116,9 @@ String Qentem::Template::Render(const String &content, Tree *data) noexcept {
 // e.g. {v-var_name}
 // e.g. {v-var_name[id]}
 // Nest: {v-var_{v-var2_{v-var3_id}}}
-String Qentem::Template::RenderVar(const String &block, const Match &item) noexcept {
-    auto   _pocket = static_cast<Template::PocketT *>(item.Expr->Pocket);
-    String value;
+const String Qentem::Template::RenderVar(const String &block, const Match &item) noexcept {
+    PocketT *_pocket = static_cast<PocketT *>(item.Expr->Pocket);
+    String   value;
 
     if (_pocket->Data->GetString(value, block, (item.Offset + item.OLength),
                                  (item.Length - (item.CLength + item.OLength)))) {
@@ -133,10 +133,10 @@ String Qentem::Template::RenderVar(const String &block, const Match &item) noexc
 // <if case="{case}">html code1 <else /> html code2</if>
 // <if case="{case1}">html code1 <elseif case={case2} /> html code2</if>
 // <if case="{case}">html code <if case="{case2}" />additional html code</if></if>
-bool Qentem::Template::EvaluateIF(const String &block, const Match &if_case) noexcept {
-    UNumber offset = (if_case.Offset + if_case.OLength);
-    UNumber length = (if_case.Length - (if_case.OLength + if_case.CLength));
-    auto    pocket = static_cast<PocketT *>(if_case.Expr->Pocket);
+const bool Qentem::Template::EvaluateIF(const String &block, const Match &if_case) noexcept {
+    UNumber  offset = (if_case.Offset + if_case.OLength);
+    UNumber  length = (if_case.Length - (if_case.OLength + if_case.CLength));
+    PocketT *pocket = static_cast<PocketT *>(if_case.Expr->Pocket);
 
     String statement = Engine::Parse(block, Engine::Search(block, pocket->TagsVars, offset, (offset + length)), offset,
                                      (offset + length));
@@ -144,7 +144,7 @@ bool Qentem::Template::EvaluateIF(const String &block, const Match &if_case) noe
     return (pocket->_Alu.Evaluate(statement) != 0.0);
 }
 
-String Qentem::Template::RenderIF(const String &block, const Match &item) noexcept {
+const String Qentem::Template::RenderIF(const String &block, const Match &item) noexcept {
     // Nothing is processed inside the match before checking if the condition is TRUE.
     bool _true = false;
 
@@ -196,7 +196,7 @@ String Qentem::Template::RenderIF(const String &block, const Match &item) noexce
 // {iif case="{v-var_five} == 5" true="5" false="no"}
 // {iif case="{v-var_five} == 5" true="{v-var_five} is equal to 5" false="no"}
 // {iif case="3 == 3" true="Yes" false="No"}
-String Qentem::Template::RenderIIF(const String &block, const Match &item) noexcept {
+const String Qentem::Template::RenderIIF(const String &block, const Match &item) noexcept {
     const Array<Match> items = Engine::Search(block, (static_cast<PocketT *>(item.Expr->Pocket))->TagsQuotes);
     if (items.Size == 0) {
         return L"";
@@ -237,7 +237,7 @@ String Qentem::Template::RenderIIF(const String &block, const Match &item) noexc
 // <loop set="abc2" var="loopId">
 //     <span>loopId): -{v-abc2[loopId]}</span>
 // </loop>
-String Qentem::Template::RenderLoop(const String &block, const Match &item) noexcept {
+const String Qentem::Template::RenderLoop(const String &block, const Match &item) noexcept {
     // To match: <loop (set="abc2" var="loopId")>
     if ((item.SubMatch.Size != 0) && (item.SubMatch[0].SubMatch.Size != 0)) {
         Match *      m;
@@ -286,8 +286,8 @@ String Qentem::Template::RenderLoop(const String &block, const Match &item) noex
     return L"";
 }
 
-String Qentem::Template::Repeat(const String &content, const String &name, const String &var_name,
-                                Tree *storage) noexcept {
+const String Qentem::Template::Repeat(const String &content, const String &name, const String &var_name,
+                                      Tree *storage) noexcept {
     Hash *      hash;
     const Tree *_storage = storage->GetInfo(&hash, name, 0, name.Length);
 
@@ -304,7 +304,7 @@ String Qentem::Template::Repeat(const String &content, const String &name, const
 
     const Array<Match> items = Engine::Search(content, ser);
 
-    if (hash->Type == VType::OStringsT) {
+    if ((hash->Type == VType::OStringsT) || (hash->Type == VType::ONumbersT)) {
         const Array<String> *st = &(_storage->OStrings[hash->ExactID]);
         if (st != nullptr) {
             for (UNumber i = 0; i < st->Size; i++) {
@@ -312,7 +312,7 @@ String Qentem::Template::Repeat(const String &content, const String &name, const
                 rendered += Engine::Parse(content, items);
             }
         }
-    } else if (hash->Type == VType::Child) {
+    } else if (hash->Type == VType::ChildT) {
         const Tree *ci = &(_storage->Child[hash->ExactID]);
         if (ci != nullptr) {
             for (UNumber i = 0; i < ci->Table.Size; i++) {
