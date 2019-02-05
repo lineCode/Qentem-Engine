@@ -27,9 +27,9 @@ struct Expression;
 // Expressions def
 using Expressions = Array<Expression *>;
 // Search Callback
-using _SEARCHCB = const UNumber(const String &, const Expression &, Match *, UNumber &, UNumber &, UNumber limit);
+using _SEARCHCB = UNumber(const String &, const Expression &, Match *, UNumber &, UNumber &, UNumber limit);
 // Parse Callback
-using _PARSECB = const String(const String &, const Match &);
+using _PARSECB = String(const String &, const Match &);
 /////////////////////////////////
 // Expressions flags
 struct Flags {
@@ -45,26 +45,39 @@ struct Flags {
     static const unsigned short SPLITNEST     = 256;  // Split a Nested match.
     static const unsigned short GROUPSPLIT    = 512;  // Puts split matches into NestMatch, for one callback execution.
     static const unsigned short SPLITROOTONLY = 1024; // e.g. IF-ELSE (Template.cpp)
-    static const unsigned short DROPEMPTY     = 2048; // Trim the match before adding it.
+    static const unsigned short DROPEMPTY     = 2048; // Trim the match before adding it (spaces and newlines).
 };
 /////////////////////////////////
 struct Expression {
     String  Keyword = L""; // What to search for.
-    String  Replace;       // A text to replace the match.
-    UNumber Flag = 0;
+    String  Replace = L""; // A text to replace the match.
+    UNumber Flag    = 0;
 
     Expression *Connected = nullptr; // The next part of the match (the next keyword).
-
-    Expressions NestExprs; // Expressions for nesting Search().
-    Expressions SubExprs;  // Matches other parts of the match, but do not nest.
-    // Expressions SplitExprs; // to split a match like if if-else; if-if-else-else.
-
-    _SEARCHCB *SearchCB = nullptr; // A callback function for custom lookup.
-    _PARSECB * ParseCB  = nullptr; // A callback function for custom rendering.
+    _SEARCHCB * SearchCB  = nullptr; // A callback function for custom lookup.
+    _PARSECB *  ParseCB   = nullptr; // A callback function for custom rendering.
 
     // Pocket pointer is a var that can be linked to an object to be used in callback functions insted of relining on
     // static data members, which is not good for multi-threading operations. (See Template.cpp)
     void *Pocket = nullptr;
+
+    Expressions NestExprs; // Expressions for nesting Search().
+    Expressions SubExprs;  // Matches other parts of the match, but do not nest.
+
+    // void Move(Expression &src) noexcept {
+    //     if (this != &src) {
+    //         this->Flag      = src.Flag;
+    //         this->Connected = src.Connected;
+    //         this->SearchCB  = src.SearchCB;
+    //         this->ParseCB   = src.ParseCB;
+    //         this->Pocket    = src.Pocket;
+
+    //         this->Keyword.Move(src.Keyword);
+    //         this->Replace.Move(src.Replace);
+    //         this->NestExprs.Move(src.NestExprs);
+    //         this->SubExprs.Move(src.SubExprs);
+    //     }
+    // }
 };
 /////////////////////////////////
 struct Match {
@@ -83,6 +96,66 @@ struct Match {
     // Its content does not get parse; it would be faster to do a sub search insead of calling back Search() from
     // an outside function, when the CPU cache already holds the text.
     Array<Match> SubMatch;
+
+    static void _MatchMoveCallback(Match *to, Match *from, UNumber start, UNumber size) {
+        for (UNumber i = 0; i < size; i++) {
+            to[start++].Move(from[i]);
+        }
+    }
+
+    explicit Match() {
+        if (Array<Match>::Callbacks.MoveCallback == nullptr) {
+            Array<Match>::Callbacks.MoveCallback = &_MatchMoveCallback;
+        }
+    }
+
+    inline void Move(Match &src) noexcept {
+        if (this != &src) {
+            this->Offset  = src.Offset;
+            this->Length  = src.Length;
+            this->OLength = src.OLength;
+            this->CLength = src.CLength;
+            this->Tag     = src.Tag;
+            this->ID      = src.ID;
+            this->Expr    = src.Expr;
+
+            this->NestMatch.Move(src.NestMatch);
+            this->SubMatch.Move(src.SubMatch);
+        }
+    }
+
+    void Copy(const Match &src) noexcept {
+        if (this != &src) {
+            this->Offset  = src.Offset;
+            this->Length  = src.Length;
+            this->OLength = src.OLength;
+            this->CLength = src.CLength;
+            this->Tag     = src.Tag;
+            this->ID      = src.ID;
+            this->Expr    = src.Expr;
+
+            this->NestMatch = src.NestMatch;
+            this->SubMatch  = src.SubMatch;
+        }
+    }
+
+    Match(Match &&src) noexcept {
+        Move(src);
+    }
+
+    Match(const Match &src) noexcept {
+        Copy(src);
+    }
+
+    Match &operator=(Match &&src) noexcept {
+        Move(src);
+        return *this;
+    }
+
+    Match &operator=(const Match &src) noexcept {
+        Copy(src);
+        return *this;
+    }
 };
 /////////////////////////////////
 Array<Match> Search(const String &content, const Expressions &exprs, UNumber index = 0, UNumber limit = 0,
@@ -91,8 +164,8 @@ Array<Match> Search(const String &content, const Expressions &exprs, UNumber ind
 void _search(Array<Match> &items, const String &content, const Expressions &exprs, UNumber index = 0, UNumber limit = 0,
              UNumber max = 0, UNumber level = 0) noexcept;
 
-void   Split(const String &, Array<Match> &, UNumber, UNumber) noexcept;
-String Parse(const String &, const Array<Match> &, UNumber = 0, UNumber = 0) noexcept;
+inline void Split(const String &, Array<Match> &, UNumber, UNumber) noexcept;
+String      Parse(const String &, const Array<Match> &, UNumber = 0, UNumber = 0) noexcept;
 /////////////////////////////////
 } // namespace Engine
 } // namespace Qentem

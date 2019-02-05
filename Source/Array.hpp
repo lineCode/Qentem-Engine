@@ -17,6 +17,12 @@
 namespace Qentem {
 
 template <typename T>
+struct ArrayCalls {
+    using MoveCall = void(T *to, T *from, UNumber start, UNumber size);
+    MoveCall *MoveCallback;
+};
+
+template <typename T>
 class Array {
   private:
     UNumber _capacity = 0;
@@ -35,6 +41,8 @@ class Array {
     }
 
   public:
+    static ArrayCalls<T> Callbacks;
+
     UNumber Size    = 0;
     T *     Storage = nullptr;
 
@@ -49,6 +57,27 @@ class Array {
         src._capacity = 0;
         src.Size      = 0;
         src.Storage   = nullptr;
+    }
+
+    void Expand() noexcept {
+        if (this->_capacity == 0) {
+            this->_capacity = 1;
+        } else {
+            this->_capacity *= 2;
+        }
+
+        T *tmp        = this->Storage;
+        this->Storage = new T[this->_capacity];
+
+        if (this->Callbacks.MoveCallback == nullptr) {
+            for (UNumber n = 0; n < this->Size; n++) {
+                this->Storage[n] = tmp[n];
+            }
+        } else if (this->Size != 0) {
+            this->Callbacks.MoveCallback(this->Storage, tmp, 0, this->Size);
+        }
+
+        delete[] tmp;
     }
 
     Array(Array<T> &&src) noexcept {
@@ -76,24 +105,34 @@ class Array {
         return *this;
     }
 
-    Array<T> &Add(const Array<T> &src) noexcept {
+    Array<T> &Add(const Array<T> &src, bool move = false) noexcept {
         if (src.Size != 0) {
             if ((this->Size + src.Size) > this->_capacity) {
                 this->_capacity += src.Size;
+                this->_capacity *= 2;
 
                 T *tmp        = this->Storage;
                 this->Storage = new T[this->_capacity];
 
-                for (UNumber n = 0; n < this->Size; n++) {
-                    this->Storage[n] = tmp[n];
+                if (this->Callbacks.MoveCallback == nullptr) {
+                    for (UNumber n = 0; n < this->Size; n++) {
+                        this->Storage[n] = tmp[n];
+                    }
+                } else if (this->Size != 0) {
+                    this->Callbacks.MoveCallback(this->Storage, tmp, 0, this->Size);
                 }
 
                 delete[] tmp;
             }
 
-            for (UNumber i = 0; i < src.Size; i++) {
-                this->Storage[this->Size] = src.Storage[i];
-                this->Size++;
+            if (!move || (this->Callbacks.MoveCallback == nullptr)) {
+                for (UNumber i = 0; i < src.Size; i++) {
+                    this->Storage[this->Size] = src.Storage[i];
+                }
+                this->Size += src.Size;
+            } else {
+                this->Callbacks.MoveCallback(this->Storage, src.Storage, this->Size, src.Size);
+                this->Size += src.Size;
             }
         }
 
@@ -112,24 +151,15 @@ class Array {
         }
     }
 
-    void Expand() noexcept {
-        if (this->_capacity == 0) {
-            this->_capacity = 1;
-        } else {
-            this->_capacity *= 3;
+    inline T &Last() noexcept {
+        if (this->Size == this->_capacity) {
+            Expand();
         }
 
-        T *tmp        = this->Storage;
-        this->Storage = new T[this->_capacity];
-
-        for (UNumber n = 0; n < this->Size; n++) {
-            this->Storage[n] = tmp[n];
-        }
-
-        delete[] tmp;
+        return this->Storage[this->Size];
     }
 
-    Array<T> &Add(const T &item) noexcept {
+    Array<T> &Add(T &&item) noexcept {
         if (this->Size == this->_capacity) {
             Expand();
         }
@@ -140,7 +170,7 @@ class Array {
         return *this;
     }
 
-    Array<T> &Add(T &&item) noexcept {
+    Array<T> &Add(const T &item) noexcept {
         if (this->Size == this->_capacity) {
             Expand();
         }
@@ -173,6 +203,10 @@ class Array {
         this->Size      = 0;
     }
 };
+
+template <typename T>
+ArrayCalls<T> Array<T>::Callbacks = ArrayCalls<T>();
+
 } // namespace Qentem
 
 #endif

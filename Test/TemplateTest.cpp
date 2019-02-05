@@ -16,10 +16,9 @@
 
 using Qentem::Array;
 using Qentem::String;
-using Qentem::Template;
 using Qentem::Tree;
 
-String read_file(const char fullpath[]) noexcept;
+String read_file(const char *fullpath) noexcept;
 Tree   get_tree() noexcept;
 
 void run() noexcept {
@@ -49,7 +48,7 @@ void run() noexcept {
     std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3).Str;
     std::wcout << "\n";
     // std::wcout << data.ToJSON().Str;
-    // std::wcout << "\n";
+    std::wcout << "\n";
 }
 
 int main() noexcept {
@@ -60,7 +59,7 @@ int main() noexcept {
     return 1;
 }
 
-String read_file(const char fullpath[]) noexcept {
+String read_file(const char *fullpath) noexcept {
     String content;
 
     std::ifstream file(fullpath, std::ios::ate | std::ios::out);
@@ -74,7 +73,7 @@ String read_file(const char fullpath[]) noexcept {
         file.read(_tmp, size);
         _tmp[(u_size - 1)] = L'\0';
 
-        String::SetSize(&content, u_size);
+        content.SetSize(u_size);
         UNumber ln = 0;
 
         while (_tmp[ln] != L'\0') {
@@ -116,12 +115,9 @@ Tree get_tree() noexcept {
     data[L"empty"]      = L"";
     data[L"math"] = L"((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) - (-1) + 2";
 
-    data[L"abc"] = Tree();
-
-    data[L"abc"][L"B"] = L"b";
-
-    data[L"abc"][L"@@"] = 100.0;
-    // data[L"abc"][L"TT"]=false;
+    data[L"abc"]         = Tree();
+    data[L"abc"][L"B"]   = L"b";
+    data[L"abc"][L"@@"]  = 100.0;
     data[L"abc"][L"A"]   = L"a";
     data[L"abc"][L"C"]   = L"c";
     data[L"abc"][L"D"]   = L"d";

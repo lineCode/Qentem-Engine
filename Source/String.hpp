@@ -25,26 +25,28 @@ class String {
     wchar_t *Str    = nullptr;
     UNumber  Length = 0;
 
+    void Move(String &) noexcept;
+    void Copy(const wchar_t *, UNumber, UNumber) noexcept;
+    void SetSize(UNumber) noexcept;
+
     explicit String() = default;
 
-    String(const wchar_t str[]) noexcept;
+    String(const wchar_t *str) noexcept;
     String(wchar_t str) noexcept;
 
     String(String &&) noexcept;
     String(const String &) noexcept;
     virtual ~String() noexcept;
 
-    static String     Part(const String &, UNumber, const UNumber);
-    static UNumber    Hash(const String &, UNumber, const UNumber);
-    static void       SoftTrim(const String &, UNumber &, UNumber &) noexcept;
-    static String     Trim(const String &) noexcept;
-    static String     Revers(const String &) noexcept;
-    static String     FromNumber(double, UNumber min = 1, UNumber max = 0) noexcept;
-    static String     FromNumber(UNumber, UNumber min = 1) noexcept;
-    static const bool ToNumber(const String &, UNumber &, UNumber offset = 0, UNumber limit = 0) noexcept;
-    static const bool ToNumber(const String &, double &, UNumber offset = 0, UNumber limit = 0) noexcept;
-    static void       Add(const wchar_t *, String *, UNumber, UNumber) noexcept;
-    static void       SetSize(String *, UNumber) noexcept;
+    static String  Part(const String &, UNumber, const UNumber);
+    static UNumber Hash(const String &, UNumber, const UNumber);
+    static void    SoftTrim(const String &, UNumber &, UNumber &) noexcept;
+    static String  Trim(const String &) noexcept;
+    static String  Revers(const String &) noexcept;
+    static String  FromNumber(double, UNumber min = 1, UNumber max = 0) noexcept;
+    static String  FromNumber(UNumber, UNumber min = 1) noexcept;
+    static bool    ToNumber(const String &, UNumber &, UNumber offset = 0, UNumber limit = 0) noexcept;
+    static bool    ToNumber(const String &, double &, UNumber offset = 0, UNumber limit = 0) noexcept;
 
     void Clear() noexcept;
 
@@ -54,11 +56,11 @@ class String {
     String &operator+=(String &&src) noexcept;
     String &operator+=(const String &src) noexcept;
 
-    const String operator+(String &&src) const noexcept;
-    const String operator+(const String &src) const noexcept;
+    String operator+(String &&src) const noexcept;
+    String operator+(const String &src) const noexcept;
 
-    const bool operator==(const String &src) const noexcept;
-    const bool operator!=(const String &src) const noexcept;
+    bool operator==(const String &src) const noexcept;
+    bool operator!=(const String &src) const noexcept;
 };
 } // namespace Qentem
 

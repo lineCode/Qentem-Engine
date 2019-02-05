@@ -13,11 +13,10 @@
 
 using Qentem::Engine::Expression;
 using Qentem::Engine::Expressions;
-using Qentem::Engine::Flags;
 using Qentem::Engine::String;
 
-const UNumber Qentem::QRegex::OR(const String &content, const Expression &expr, Match *item, UNumber &started,
-                                 UNumber &ended, UNumber limit) noexcept {
+UNumber Qentem::QRegex::OR(const String &content, const Expression &expr, Match *item, UNumber &started, UNumber &ended,
+                           UNumber limit) noexcept {
     UNumber counter = 0;
     item->Tag       = 1;
 

@@ -34,11 +34,11 @@ struct ALU {
     explicit ALU() noexcept;
     double Evaluate(String &content) const noexcept;
 
-    static const String ParenthesisCallback(const String &, const Match &) noexcept;
-    static const bool   NestNumber(const String &, const Match &, double &) noexcept;
-    static const String EqualCallback(const String &, const Match &) noexcept;
-    static const String MultiplicationCallback(const String &, const Match &) noexcept;
-    static const String AdditionCallback(const String &, const Match &) noexcept;
+    static String ParenthesisCallback(const String &, const Match &) noexcept;
+    static bool   NestNumber(const String &, const Match &, double &) noexcept;
+    static String EqualCallback(const String &, const Match &) noexcept;
+    static String MultiplicationCallback(const String &, const Match &) noexcept;
+    static String AdditionCallback(const String &, const Match &) noexcept;
 };
 } // namespace Qentem
 

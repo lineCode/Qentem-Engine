@@ -20,6 +20,8 @@
 namespace Qentem {
 
 using Qentem::StringStream;
+using Qentem::Engine::Expression;
+using Qentem::Engine::Expressions;
 using Qentem::Engine::Match;
 
 struct Tree;
@@ -35,6 +37,56 @@ struct Hash {
 
     void  Set(const Hash &_hash, const UNumber, const UNumber) noexcept;
     Hash *Get(const UNumber, const UNumber, const UNumber) noexcept;
+
+    static void _HashMoveCallback(Hash *to, Hash *from, UNumber start, UNumber size) {
+        for (UNumber i = 0; i < size; i++) {
+            to[start++].Move(from[i]);
+        }
+    }
+
+    explicit Hash() noexcept {
+        if (Array<Hash>::Callbacks.MoveCallback == nullptr) {
+            Array<Hash>::Callbacks.MoveCallback = &_HashMoveCallback;
+        }
+    }
+
+    void Move(Hash &src) noexcept {
+        if (this != &src) {
+            this->HashValue = src.HashValue;
+            this->ExactID   = src.ExactID;
+            this->Type      = src.Type;
+            this->Key.Move(src.Key);
+            this->Table.Move(src.Table);
+        }
+    }
+
+    void Copy(const Hash &src) noexcept {
+        if (this != &src) {
+            this->HashValue = src.HashValue;
+            this->ExactID   = src.ExactID;
+            this->Type      = src.Type;
+            this->Key       = src.Key;
+            this->Table     = src.Table;
+        }
+    }
+
+    Hash(Hash &&src) noexcept {
+        Move(src);
+    }
+
+    Hash(const Hash &src) noexcept {
+        Copy(src);
+    }
+
+    Hash &operator=(Hash &&src) noexcept {
+        Move(src);
+        return *this;
+    }
+
+    Hash &operator=(const Hash &src) noexcept {
+        Copy(src);
+        return *this;
+    }
 };
 
 struct Field {
@@ -56,8 +108,8 @@ struct Field {
 };
 
 struct Tree {
-    UNumber              HashBase = 19; // OR 97. Choose prime numbers only!
-    Array<UNumber>       Index;
+    UNumber HashBase = 19; // OR 97. Choose prime numbers only!
+
     Array<Hash>          Table;
     Array<UNumber>       Hashes;
     Array<double>        Numbers;
@@ -67,7 +119,76 @@ struct Tree {
     Array<Tree>          Child;
     Array<Array<Tree>>   OChildren;
 
-    explicit Tree() = default;
+    static Expressions JsonQuot;
+
+    static void _TreeMoveCallback(Tree *to, Tree *from, UNumber start, UNumber size) {
+        for (UNumber i = 0; i < size; i++) {
+            to[start++].Move(from[i]);
+        }
+    }
+
+    static void SetJsonQuot() noexcept {
+        if (JsonQuot.Size == 0) {
+            static Expression _JsonQuot;
+            _JsonQuot.Keyword = L"\"";
+            _JsonQuot.Replace = L"\\\"";
+            JsonQuot.Add(&_JsonQuot);
+        }
+    }
+
+    explicit Tree() noexcept {
+        if (Array<Tree>::Callbacks.MoveCallback == nullptr) {
+            Array<Tree>::Callbacks.MoveCallback = &_TreeMoveCallback;
+        }
+    }
+
+    void Move(Tree &src) noexcept {
+        if (this != &src) {
+            this->HashBase = src.HashBase;
+
+            this->Table.Move(src.Table);
+            this->Hashes.Move(src.Hashes);
+            this->Numbers.Move(src.Numbers);
+            this->ONumbers.Move(src.ONumbers);
+            this->Strings.Move(src.Strings);
+            this->OStrings.Move(src.OStrings);
+            this->Child.Move(src.Child);
+            this->OChildren.Move(src.OChildren);
+        }
+    }
+
+    void Copy(const Tree &src) noexcept {
+        if (this != &src) {
+            this->HashBase = src.HashBase;
+
+            this->Table     = src.Table;
+            this->Hashes    = src.Hashes;
+            this->Numbers   = src.Numbers;
+            this->ONumbers  = src.ONumbers;
+            this->Strings   = src.Strings;
+            this->OStrings  = src.OStrings;
+            this->Child     = src.Child;
+            this->OChildren = src.OChildren;
+        }
+    }
+
+    Tree(Tree &&src) noexcept {
+        Move(src);
+    }
+
+    Tree(const Tree &src) noexcept {
+        Copy(src);
+    }
+
+    Tree &operator=(Tree &&src) noexcept {
+        Move(src);
+        return *this;
+    }
+
+    Tree &operator=(const Tree &src) noexcept {
+        Copy(src);
+        return *this;
+    }
 
     Field operator[](const String &key) {
         Field _field;
@@ -90,20 +211,21 @@ struct Tree {
     void        Drop(const String &key, UNumber offset, UNumber limit) noexcept;
     static void Drop(Hash &hash, Tree &storage) noexcept;
 
-    static const bool GetID(UNumber &id, const String &key, UNumber offset, UNumber limit) noexcept;
+    static bool GetID(UNumber &id, const String &key, UNumber offset, UNumber limit) noexcept;
 
-    Tree *         GetChild(const String &key, UNumber offset = 0, UNumber limit = 0) const noexcept;
-    Tree *         GetInfo(Hash **hash, const String &key, UNumber offset = 0, UNumber limit = 0) const noexcept;
-    Array<String> *GetOStrings(const String &key, UNumber offset = 0, UNumber limit = 0) const noexcept;
-    bool const     GetString(String &value, const String &key, UNumber offset = 0, UNumber limit = 0) const noexcept;
-    bool const     GetNumber(UNumber &value, const String &key, UNumber offset = 0, UNumber limit = 0) const noexcept;
-    bool const     GetDouble(double &value, const String &key, UNumber offset = 0, UNumber limit = 0) const noexcept;
-    bool const     GetBool(bool &value, const String &key, UNumber offset = 0, UNumber limit = 0) const noexcept;
+    Tree *         GetChild(const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
+    Tree *         GetInfo(Hash **hash, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
+    Array<String> *GetOStrings(const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
+    bool           GetString(String &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
+    bool           GetNumber(UNumber &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
+    bool           GetDouble(double &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
+    bool           GetBool(bool &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
 
-    String ToJSON() const noexcept;
+    String       ToJSON() const noexcept;
+    StringStream _ToJSON() const noexcept;
 
     static Tree FromJSON(const String &content) noexcept;
-    static Tree MakeTree(const String &content, const Array<Match> &items) noexcept;
+    static void MakeTree(Tree &tree, const String &content, const Array<Match> &items) noexcept;
 };
 
 } // namespace Qentem

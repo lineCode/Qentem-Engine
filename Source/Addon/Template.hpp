@@ -57,13 +57,12 @@ struct Template {
 
     String Render(const String &, Tree *data = nullptr) noexcept;
 
-    static const String RenderVar(const String &, const Match &) noexcept;
-    static const bool   EvaluateIF(const String &, const Match &) noexcept;
-    static const String RenderIF(const String &, const Match &) noexcept;
-
-    static const String RenderIIF(const String &, const Match &) noexcept;
-    static const String RenderLoop(const String &, const Match &) noexcept;
-    static const String Repeat(const String &, const String &, const String &, Tree *) noexcept;
+    static String RenderVar(const String &, const Match &) noexcept;
+    static bool   EvaluateIF(const String &, const Match &) noexcept;
+    static String RenderIF(const String &, const Match &) noexcept;
+    static String RenderIIF(const String &, const Match &) noexcept;
+    static String RenderLoop(const String &, const Match &) noexcept;
+    static String Repeat(const String &, const String &, const String &, Tree *) noexcept;
 };
 } // namespace Qentem
 

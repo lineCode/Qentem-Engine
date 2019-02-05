@@ -47,9 +47,9 @@
                 "Source/Addon/Template.cpp",
                 "Test/TemplateTest.cpp",
                 "Test/EngineTest.cpp",
-                "-checks=*,-cppcoreguidelines-owning-memory,-modernize-use-auto,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-llvm-header-guard,-hicpp*,-googl*,-fuchsia*",
+                "-checks=*,-readability-magic-numbers,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-owning-memory,-modernize-use-auto,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-llvm-header-guard,-hicpp*,-googl*,-fuchsia*",
                 "--",
-                "c++17",
+                "c++11",
                 "-ISource"
             ],
             "group": {
@@ -60,20 +60,7 @@
                 "reveal": "always",
                 "clear": true
             },
-            "problemMatcher": {
-                "owner": "cpp",
-                "fileLocation": [
-                    "relative"
-                ],
-                "pattern": {
-                    "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-                    "file": 1,
-                    "line": 2,
-                    "column": 3,
-                    "severity": 4,
-                    "message": 5
-                }
-            }
+            "problemMatcher": "$gcc"
         },
         {
             "label": "Build .exe", // executable
@@ -115,7 +102,7 @@
                 "Source/Addon/Tree.cpp",
                 // "Source/Addon/ALU.cpp",
                 // "Source/Addon/Template.cpp",
-                "-oBuild/QpieLibx64.so"
+                "-oBuild/QLibx64.so"
             ],
             "group": {
                 "kind": "build",

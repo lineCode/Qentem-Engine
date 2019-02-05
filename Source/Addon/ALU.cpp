@@ -48,12 +48,12 @@ Qentem::ALU::ALU() noexcept {
 }
 
 // e.g. ( 4 + 3 ), ( 2 + ( 4 + ( 1 + 2 ) + 1 ) * 5 - 3 - 2 )
-const String Qentem::ALU::ParenthesisCallback(const String &block, const Match &item) noexcept {
+String Qentem::ALU::ParenthesisCallback(const String &block, const Match &item) noexcept {
     String result = String::Part(block, item.OLength, (block.Length - (item.OLength + item.CLength)));
     return Engine::Parse(result, Engine::Search(result, *(static_cast<Expressions *>(item.Expr->Pocket))));
 }
 
-const bool Qentem::ALU::NestNumber(const String &block, const Match &item, double &number) noexcept {
+bool Qentem::ALU::NestNumber(const String &block, const Match &item, double &number) noexcept {
     if (item.NestMatch.Size != 0) {
         String r = Engine::Parse(block, item.NestMatch, item.Offset, item.Offset + item.Length);
         return ((r.Length != 0) && String::ToNumber(r, number));
@@ -66,7 +66,7 @@ const bool Qentem::ALU::NestNumber(const String &block, const Match &item, doubl
     return false;
 }
 
-const String Qentem::ALU::EqualCallback(const String &block, const Match &item) noexcept {
+String Qentem::ALU::EqualCallback(const String &block, const Match &item) noexcept {
     bool result = false;
 
     if (item.NestMatch.Size != 0) {
@@ -138,7 +138,7 @@ const String Qentem::ALU::EqualCallback(const String &block, const Match &item) 
     return L"0";
 }
 
-const String Qentem::ALU::MultiplicationCallback(const String &block, const Match &item) noexcept {
+String Qentem::ALU::MultiplicationCallback(const String &block, const Match &item) noexcept {
     UNumber op;
     double  number = 0.0;
     if (!ALU::NestNumber(block, item.NestMatch[0], number)) {
@@ -175,7 +175,7 @@ const String Qentem::ALU::MultiplicationCallback(const String &block, const Matc
     return String::FromNumber(number);
 }
 
-const String Qentem::ALU::AdditionCallback(const String &block, const Match &item) noexcept {
+String Qentem::ALU::AdditionCallback(const String &block, const Match &item) noexcept {
     double number = 0.0;
     ALU::NestNumber(block, item.NestMatch[0], number);
 

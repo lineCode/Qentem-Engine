@@ -2,4 +2,4 @@ Notes/
 Build/
 x64/
 .vscode/settings.json
-Test/bigjson.json
+Test/bigjson*
