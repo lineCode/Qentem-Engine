@@ -1,5 +1,4 @@
 # Qentem Engine (v0.5.0)
-General purpose syntax parser.
 
 ## Summary:
 Qentem is a stand-alone library, built to provide a simple way to match existing syntax or new ones. It also provides call-backs for post or per-parsing. Built for templates, then rewritten for general-propose matching of text or syntaxes.
