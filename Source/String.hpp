@@ -39,7 +39,7 @@ class String {
     virtual ~String() noexcept;
 
     static String  Part(const String &, UNumber, const UNumber);
-    static UNumber Hash(const String &, UNumber, const UNumber);
+    static UNumber Hash(const String &, UNumber, const UNumber) noexcept;
     static void    SoftTrim(const String &, UNumber &, UNumber &) noexcept;
     static String  Trim(const String &) noexcept;
     static String  Revers(const String &) noexcept;
@@ -59,8 +59,8 @@ class String {
     String operator+(String &&src) const noexcept;
     String operator+(const String &src) const noexcept;
 
-    bool operator==(const String &src) const noexcept;
-    bool operator!=(const String &src) const noexcept;
+    bool           operator==(const String &src) const noexcept;
+    constexpr bool operator!=(const String &src) const noexcept;
 };
 } // namespace Qentem
 

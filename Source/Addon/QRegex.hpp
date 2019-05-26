@@ -22,7 +22,6 @@ using Qentem::Engine::Match;
 using Qentem::Engine::String;
 
 UNumber OR(const String &, const Expression &, Match *, UNumber &, UNumber &, UNumber) noexcept;
-String  Replace(const String &content, const String &, const Array<String> &) noexcept;
 String  Replace(const String &content, const String &, const String &) noexcept;
 } // namespace QRegex
 } // namespace Qentem

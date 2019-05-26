@@ -53,48 +53,45 @@ Qentem::Field &Qentem::Field::operator=(const double value) noexcept {
     return *this;
 }
 
-Qentem::Field &Qentem::Field::operator=(const Array<double> &value) noexcept {
+Qentem::Field &Qentem::Field::operator=(String &value) noexcept {
     if (this->Storage != nullptr) {
-        this->Storage->Set(this->Key, value, 0, this->Key.Length);
-    }
-    return *this;
-}
-
-Qentem::Field &Qentem::Field::operator=(const String &value) noexcept {
-    if (this->Storage != nullptr) {
-        this->Storage->Set(this->Key, value, 0, this->Key.Length);
+        this->Storage->Set(this->Key, value, 0, this->Key.Length, false);
     }
     return *this;
 }
 
 Qentem::Field &Qentem::Field::operator=(const wchar_t *value) noexcept {
     if (this->Storage != nullptr) {
-        if (value != nullptr) {
-            this->Storage->Set(this->Key, String(value), 0, this->Key.Length);
-        } else {
-            this->Storage->Set(this->Key, 0, this->Key.Length);
-        }
+        String _s = String(value);
+        this->Storage->Set(this->Key, _s, 0, this->Key.Length, true);
     }
     return *this;
 }
 
-Qentem::Field &Qentem::Field::operator=(const Array<String> &value) noexcept {
+Qentem::Field &Qentem::Field::operator=(Array<double> &value) noexcept {
     if (this->Storage != nullptr) {
-        this->Storage->Set(this->Key, value, 0, this->Key.Length);
+        this->Storage->Set(this->Key, value, 0, this->Key.Length, false);
     }
     return *this;
 }
 
-Qentem::Field &Qentem::Field::operator=(const Tree &value) noexcept {
+Qentem::Field &Qentem::Field::operator=(Array<String> &value) noexcept {
     if (this->Storage != nullptr) {
-        this->Storage->Set(this->Key, value, 0, this->Key.Length);
+        this->Storage->Set(this->Key, value, 0, this->Key.Length, false);
     }
     return *this;
 }
 
-Qentem::Field &Qentem::Field::operator=(const Array<Tree> &value) noexcept {
+Qentem::Field &Qentem::Field::operator=(Tree &value) noexcept {
     if (this->Storage != nullptr) {
-        this->Storage->Set(this->Key, value, 0, this->Key.Length);
+        this->Storage->Set(this->Key, value, 0, this->Key.Length, false);
+    }
+    return *this;
+}
+
+Qentem::Field &Qentem::Field::operator=(Array<Tree> &value) noexcept {
+    if (this->Storage != nullptr) {
+        this->Storage->Set(this->Key, value, 0, this->Key.Length, false);
     }
     return *this;
 }
@@ -103,7 +100,7 @@ Qentem::Field &Qentem::Field::operator=(const Field &_field) noexcept {
     if (this->Storage != nullptr) {
         Tree *tree = _field.Storage->GetChild(_field.Key);
         if (tree != nullptr) {
-            this->Storage->Set(this->Key, *tree, 0, this->Key.Length);
+            this->Storage->Set(this->Key, *tree, 0, this->Key.Length, false);
         }
     }
 
@@ -124,11 +121,11 @@ Qentem::Field Qentem::Field::operator[](const String &key) noexcept {
         if (tree != nullptr) {
             return (*tree)[key];
         }
-        // else {
+        // else { // Inseating a new tree
         //     this->Storage->Set(this->Key, Tree());
         //     Field _field;
         //     _field.Key     = key;
-        //     _field.Storage = &(this->Storage->Child[(this->Storage->Child.Size - 1)]);
+        //     _field.Storage = &(this->Storage->Child[(this->Storage->Child.Last(true)))]);
         //     return _field;
         // }
     }
@@ -143,7 +140,7 @@ void Qentem::Tree::InsertHash(const Hash &_hash) noexcept {
     }
 
     this->Table[(_hash.HashValue % HashBase)].Set(_hash, HashBase, 1);
-    Hashes.Add(_hash.HashValue);
+    Hashes.Add(_hash.HashValue); // TODO: Use pointer!
 }
 
 void Qentem::Tree::Drop(Hash &_hash, Tree &storage) noexcept {
@@ -243,7 +240,7 @@ void Qentem::Tree::Set(const String &key, double value, UNumber offset, UNumber 
     }
 }
 
-void Qentem::Tree::Set(const String &key, const Array<double> &value, UNumber offset, UNumber limit) noexcept {
+void Qentem::Tree::Set(const String &key, Array<double> &value, UNumber offset, UNumber limit, bool move) noexcept {
     Hash *  p_hash      = nullptr;
     UNumber _hash_value = String::Hash(key, offset, (offset + limit));
     UNumber id          = (_hash_value % HashBase);
@@ -269,13 +266,21 @@ void Qentem::Tree::Set(const String &key, const Array<double> &value, UNumber of
         _hash.Type = VType::ONumbersT;
 
         InsertHash(_hash);
-        ONumbers.Add(value);
+        if (move) {
+            ONumbers.Last(true).Move(value);
+        } else {
+            ONumbers.Add(value);
+        }
     } else {
-        ONumbers[p_hash->ExactID] = value;
+        if (move) {
+            ONumbers[p_hash->ExactID].Move(value);
+        } else {
+            ONumbers[p_hash->ExactID] = value;
+        }
     }
 }
 
-void Qentem::Tree::Set(const String &key, const String &value, UNumber offset, UNumber limit) noexcept {
+void Qentem::Tree::Set(const String &key, String &value, UNumber offset, UNumber limit, bool move) noexcept {
     Hash *  p_hash      = nullptr;
     UNumber _hash_value = String::Hash(key, offset, (offset + limit));
     UNumber id          = (_hash_value % HashBase);
@@ -300,13 +305,21 @@ void Qentem::Tree::Set(const String &key, const String &value, UNumber offset, U
 
         _hash.Type = VType::StringT;
         InsertHash(_hash);
-        Strings.Add(value);
+        if (move) {
+            Strings.Last(true).Move(value);
+        } else {
+            Strings.Add(value);
+        }
     } else {
-        Strings[p_hash->ExactID] = value;
+        if (move) {
+            Strings[p_hash->ExactID].Move(value);
+        } else {
+            Strings[p_hash->ExactID] = value;
+        }
     }
 }
 
-void Qentem::Tree::Set(const String &key, const Array<String> &value, UNumber offset, UNumber limit) noexcept {
+void Qentem::Tree::Set(const String &key, Array<String> &value, UNumber offset, UNumber limit, bool move) noexcept {
     Hash *  p_hash      = nullptr;
     UNumber _hash_value = String::Hash(key, offset, (offset + limit));
     UNumber id          = (_hash_value % HashBase);
@@ -332,13 +345,21 @@ void Qentem::Tree::Set(const String &key, const Array<String> &value, UNumber of
         _hash.Type = VType::OStringsT;
 
         InsertHash(_hash);
-        OStrings.Add(value);
+        if (move) {
+            OStrings.Last(true).Move(value);
+        } else {
+            OStrings.Add(value);
+        }
     } else {
-        OStrings[p_hash->ExactID] = value;
+        if (move) {
+            OStrings[p_hash->ExactID].Move(value);
+        } else {
+            OStrings[p_hash->ExactID] = value;
+        }
     }
 }
 
-void Qentem::Tree::Set(const String &key, const Tree &value, UNumber offset, UNumber limit) noexcept {
+void Qentem::Tree::Set(const String &key, Tree &value, UNumber offset, UNumber limit, bool move) noexcept {
     Hash *  p_hash      = nullptr;
     UNumber _hash_value = String::Hash(key, offset, (offset + limit));
     UNumber id          = (_hash_value % HashBase);
@@ -364,13 +385,21 @@ void Qentem::Tree::Set(const String &key, const Tree &value, UNumber offset, UNu
         _hash.Type = VType::ChildT;
 
         InsertHash(_hash);
-        Child.Add(value);
+        if (move) {
+            Child.Last(true).Move(value);
+        } else {
+            Child.Add(value);
+        }
     } else {
-        Child[p_hash->ExactID] = value;
+        if (move) {
+            Child[p_hash->ExactID].Move(value);
+        } else {
+            Child[p_hash->ExactID] = value;
+        }
     }
 }
 
-void Qentem::Tree::Set(const String &key, const Array<Tree> &value, UNumber offset, UNumber limit) noexcept {
+void Qentem::Tree::Set(const String &key, Array<Tree> &value, UNumber offset, UNumber limit, bool move) noexcept {
     Hash *  p_hash      = nullptr;
     UNumber _hash_value = String::Hash(key, offset, (offset + limit));
     UNumber id          = (_hash_value % HashBase);
@@ -396,9 +425,17 @@ void Qentem::Tree::Set(const String &key, const Array<Tree> &value, UNumber offs
         _hash.Type = VType::OChildrenT;
 
         InsertHash(_hash);
-        OChildren.Add(value);
+        if (move) {
+            OChildren.Add(value);
+        } else {
+            OChildren.Last(true).Move(value);
+        }
     } else {
-        OChildren[p_hash->ExactID] = value;
+        if (move) {
+            OChildren[p_hash->ExactID].Move(value);
+        } else {
+            OChildren[p_hash->ExactID] = value;
+        }
     }
 }
 
@@ -784,8 +821,6 @@ void Qentem::Tree::MakeTree(Tree &tree, const String &content, const Array<Match
         return;
     }
 
-    // TODO: Use data.Move for Set
-
     Match * json = &(items[0]);
     Match * key;
     Match * data;
@@ -794,6 +829,7 @@ void Qentem::Tree::MakeTree(Tree &tree, const String &content, const Array<Match
     for (UNumber i = 0; i < json->NestMatch.Size; (i += 2)) {
         key     = &(json->NestMatch[i]);
         data_id = (i + 1);
+
         if (data_id != json->NestMatch.Size) {
             data = &(json->NestMatch[data_id]);
 
@@ -829,33 +865,37 @@ void Qentem::Tree::MakeTree(Tree &tree, const String &content, const Array<Match
                                 double number;
                                 if (String::ToNumber(content, number, (ns->Offset + ns->OLength),
                                                      (ns->Length - (ns->OLength + ns->CLength)))) {
-                                    tree.Set(content, Array<double>().Add(number), (key->NestMatch[0].Offset + 1),
-                                             (key->NestMatch[0].Length - 2));
+                                    Array<double> obj;
+                                    obj.Add(number);
+                                    tree.Set(content, obj, (key->NestMatch[0].Offset + 1),
+                                             (key->NestMatch[0].Length - 2), true);
                                 } else {
                                     // Error converting number.
                                 }
                             } else if (ns->NestMatch[0].Expr->Keyword == L'}') {
                                 // Only one ordered object.
                                 Array<Tree> tree_arr;
-                                Tree::MakeTree(tree_arr.Last(), content, ns->NestMatch);
+                                Tree::MakeTree(tree_arr.Last(true), content, ns->NestMatch);
                                 tree_arr.Size++;
 
                                 tree.Set(content, tree_arr, (key->NestMatch[0].Offset + 1),
-                                         (key->NestMatch[0].Length - 2));
+                                         (key->NestMatch[0].Length - 2), true);
                             } else if (ns->NestMatch.Size == 1) {
                                 // Only one ordered string.
-                                tree.Set(content,
-                                         Array<String>().Add(String::Part(content, (ns->NestMatch[0].Offset + 1),
-                                                                          (ns->NestMatch[0].Length - 2))),
-                                         (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2));
+                                Array<String> obj;
+                                obj.Add(
+                                    String::Part(content, (ns->NestMatch[0].Offset + 1), (ns->NestMatch[0].Length - 2)));
+                                tree.Set(content, obj, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2),
+                                         true);
 
                             } else if ((ns->NestMatch[0].NestMatch.Size != 0) &&
                                        ns->NestMatch[0].NestMatch[0].Expr->Keyword == L'}') {
                                 // Objects {}
-                                tree.Set(content, Array<Tree>(), (key->NestMatch[0].Offset + 1),
-                                         (key->NestMatch[0].Length - 2));
+                                Array<Tree> obj;
+                                tree.Set(content, obj, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2),
+                                         false);
 
-                                Array<Tree> *ts = &(tree.OChildren[(tree.OChildren.Size - 1)]);
+                                Array<Tree> *ts = &(tree.OChildren.Last(true));
                                 ts->SetCapacity(ns->NestMatch.Size);
                                 ts->Size = ns->NestMatch.Size;
 
@@ -864,9 +904,10 @@ void Qentem::Tree::MakeTree(Tree &tree, const String &content, const Array<Match
                                 }
                             } else if (ns->NestMatch[0].NestMatch.Size == 1) {
                                 // Strings
-                                tree.Set(content, Array<String>(), (key->NestMatch[0].Offset + 1),
-                                         (key->NestMatch[0].Length - 2));
-                                Array<String> *st = &(tree.OStrings[(tree.OStrings.Size - 1)]);
+                                Array<String> obj;
+                                tree.Set(content, obj, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2),
+                                         false);
+                                Array<String> *st = &(tree.OStrings.Last(true));
                                 st->SetCapacity(ns->NestMatch.Size);
                                 st->Size = ns->NestMatch.Size;
 
@@ -876,10 +917,11 @@ void Qentem::Tree::MakeTree(Tree &tree, const String &content, const Array<Match
                                 }
                             } else {
                                 // Numbers
-                                tree.Set(content, Array<double>(), (key->NestMatch[0].Offset + 1),
-                                         (key->NestMatch[0].Length - 2));
+                                Array<double> obj;
+                                tree.Set(content, obj, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2),
+                                         false);
 
-                                Array<double> *nt = &(tree.ONumbers[(tree.ONumbers.Size - 1)]);
+                                Array<double> *nt = &(tree.ONumbers.Last(true));
                                 nt->SetCapacity(ns->NestMatch.Size);
                                 nt->Size = ns->NestMatch.Size;
                                 double number;
@@ -895,15 +937,15 @@ void Qentem::Tree::MakeTree(Tree &tree, const String &content, const Array<Match
                             }
                         } else if (data->NestMatch[0].Expr->Keyword == L'}') {
                             // Object {}
-                            Tree *p_tree = &(tree.Child.Last());
+                            Tree *p_tree = &(tree.Child.Last(true));
                             Tree::MakeTree(*p_tree, content, data->NestMatch);
-                            tree.Set(content, *p_tree, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2));
+                            tree.Set(content, *p_tree, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2),
+                                     true);
                         } else if (data->NestMatch[0].NestMatch.Size == 0) {
                             // String
-                            tree.Set(
-                                content,
-                                String::Part(content, (data->NestMatch[0].Offset + 1), (data->NestMatch[0].Length - 2)),
-                                (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2));
+                            String _s =
+                                String::Part(content, (data->NestMatch[0].Offset + 1), (data->NestMatch[0].Length - 2));
+                            tree.Set(content, _s, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2), true);
                         }
                     }
                 } else {

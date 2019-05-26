@@ -38,17 +38,7 @@ struct Hash {
     void  Set(const Hash &_hash, const UNumber, const UNumber) noexcept;
     Hash *Get(const UNumber, const UNumber, const UNumber) noexcept;
 
-    static void _HashMoveCallback(Hash *to, Hash *from, UNumber start, UNumber size) {
-        for (UNumber i = 0; i < size; i++) {
-            to[start++].Move(from[i]);
-        }
-    }
-
-    explicit Hash() noexcept {
-        if (Array<Hash>::Callbacks.MoveCallback == nullptr) {
-            Array<Hash>::Callbacks.MoveCallback = &_HashMoveCallback;
-        }
-    }
+    explicit Hash() = default;
 
     void Move(Hash &src) noexcept {
         if (this != &src) {
@@ -96,19 +86,19 @@ struct Field {
     Field &operator=(const Field &) noexcept;
 
     Field &operator=(const double) noexcept;
-    Field &operator=(const Array<double> &value) noexcept;
-    Field &operator=(const String &value) noexcept;
     Field &operator=(const wchar_t value[]) noexcept;
-    Field &operator=(const Array<String> &value) noexcept;
-    Field &operator=(const Tree &value) noexcept;
-    Field &operator=(const Array<Tree> &value) noexcept;
     Field &operator=(const bool value) noexcept;
+    Field &operator=(String &value) noexcept;
+    Field &operator=(Array<double> &value) noexcept;
+    Field &operator=(Array<String> &value) noexcept;
+    Field &operator=(Tree &value) noexcept;
+    Field &operator=(Array<Tree> &value) noexcept;
 
     Field operator[](const String &key) noexcept;
 };
 
 struct Tree {
-    UNumber HashBase = 19; // OR 97. Choose prime numbers only!
+    UNumber HashBase = 19; // Or 97. Choose prime numbers only!
 
     Array<Hash>          Table;
     Array<UNumber>       Hashes;
@@ -121,12 +111,6 @@ struct Tree {
 
     static Expressions JsonQuot;
 
-    static void _TreeMoveCallback(Tree *to, Tree *from, UNumber start, UNumber size) {
-        for (UNumber i = 0; i < size; i++) {
-            to[start++].Move(from[i]);
-        }
-    }
-
     static void SetJsonQuot() noexcept {
         if (JsonQuot.Size == 0) {
             static Expression _JsonQuot;
@@ -136,11 +120,7 @@ struct Tree {
         }
     }
 
-    explicit Tree() noexcept {
-        if (Array<Tree>::Callbacks.MoveCallback == nullptr) {
-            Array<Tree>::Callbacks.MoveCallback = &_TreeMoveCallback;
-        }
-    }
+    explicit Tree() = default;
 
     void Move(Tree &src) noexcept {
         if (this != &src) {
@@ -190,7 +170,7 @@ struct Tree {
         return *this;
     }
 
-    Field operator[](const String &key) {
+    Field operator[](const String &key) noexcept {
         Field _field;
         _field.Key     = key;
         _field.Storage = this;
@@ -200,12 +180,12 @@ struct Tree {
     // void Set(Hash * _hash, const bool, UNumber offset, UNumber limit) noexcept;
     void Set(const String &key, UNumber offset, UNumber limit) noexcept;
     void Set(const String &key, const double value, UNumber offset, UNumber limit) noexcept;
-    void Set(const String &key, const Array<double> &value, UNumber offset, UNumber limit) noexcept;
-    void Set(const String &key, const String &value, UNumber offset, UNumber limit) noexcept;
-    void Set(const String &key, const Array<String> &value, UNumber offset, UNumber limit) noexcept;
-    void Set(const String &key, const Tree &value, UNumber offset, UNumber limit) noexcept;
-    void Set(const String &key, const Array<Tree> &value, UNumber offset, UNumber limit) noexcept;
     void Set(const String &key, const bool value, UNumber offset, UNumber limit) noexcept;
+    void Set(const String &key, String &value, UNumber offset, UNumber limit, bool move) noexcept;
+    void Set(const String &key, Array<double> &value, UNumber offset, UNumber limit, bool move) noexcept;
+    void Set(const String &key, Tree &value, UNumber offset, UNumber limit, bool move) noexcept;
+    void Set(const String &key, Array<String> &value, UNumber offset, UNumber limit, bool move) noexcept;
+    void Set(const String &key, Array<Tree> &value, UNumber offset, UNumber limit, bool move) noexcept;
 
     void        InsertHash(const Hash &_hash) noexcept;
     void        Drop(const String &key, UNumber offset, UNumber limit) noexcept;

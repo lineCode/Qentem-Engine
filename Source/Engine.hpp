@@ -97,17 +97,7 @@ struct Match {
     // an outside function, when the CPU cache already holds the text.
     Array<Match> SubMatch;
 
-    static void _MatchMoveCallback(Match *to, Match *from, UNumber start, UNumber size) {
-        for (UNumber i = 0; i < size; i++) {
-            to[start++].Move(from[i]);
-        }
-    }
-
-    explicit Match() {
-        if (Array<Match>::Callbacks.MoveCallback == nullptr) {
-            Array<Match>::Callbacks.MoveCallback = &_MatchMoveCallback;
-        }
-    }
+    explicit Match() = default;
 
     inline void Move(Match &src) noexcept {
         if (this != &src) {
@@ -147,12 +137,12 @@ struct Match {
         Copy(src);
     }
 
-    Match &operator=(Match &&src) noexcept {
+    Match &operator=(Match &&src) noexcept { // Move
         Move(src);
         return *this;
     }
 
-    Match &operator=(const Match &src) noexcept {
+    Match &operator=(const Match &src) noexcept { // Copy
         Copy(src);
         return *this;
     }
@@ -164,8 +154,8 @@ Array<Match> Search(const String &content, const Expressions &exprs, UNumber ind
 void _search(Array<Match> &items, const String &content, const Expressions &exprs, UNumber index = 0, UNumber limit = 0,
              UNumber max = 0, UNumber level = 0) noexcept;
 
-inline void Split(const String &, Array<Match> &, UNumber, UNumber) noexcept;
-String      Parse(const String &, const Array<Match> &, UNumber = 0, UNumber = 0) noexcept;
+void   Split(const String &, Array<Match> &, UNumber, UNumber) noexcept;
+String Parse(const String &, const Array<Match> &, UNumber = 0, UNumber = 0) noexcept;
 /////////////////////////////////
 } // namespace Engine
 } // namespace Qentem

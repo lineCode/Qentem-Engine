@@ -21,9 +21,9 @@ Qentem::ALU::ALU() noexcept {
     ParensNext.Keyword   = L')';
     ParensExpr.Connected = &ParensNext;
     ParensNext.Flag      = Flags::BUBBLE | Flags::TRIM;
+    ParensNext.ParseCB   = &(ALU::ParenthesisCallback);
+    ParensNext.Pocket    = &(this->MathExprs);
     ParensNext.NestExprs.Add(&ParensExpr);
-    ParensNext.ParseCB = &(ALU::ParenthesisCallback);
-    ParensNext.Pocket  = &(this->MathExprs);
 
     this->ParensExprs.Add(&ParensExpr);
 
@@ -32,17 +32,17 @@ Qentem::ALU::ALU() noexcept {
     MathMul.ParseCB  = &(ALU::MultiplicationCallback);
     MathMul.SearchCB = &(QRegex::OR);
 
-    MathAdd.Keyword = L"+|-";
-    MathAdd.Flag    = Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP | Flags::TRIM;
-    MathAdd.NestExprs.Add(&MathMul);
+    MathAdd.Keyword  = L"+|-";
+    MathAdd.Flag     = Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP | Flags::TRIM;
     MathAdd.ParseCB  = &(ALU::AdditionCallback);
     MathAdd.SearchCB = &(QRegex::OR);
+    MathAdd.NestExprs.Add(&MathMul);
 
-    MathEqu.Keyword = L"==|=|!=|<|>|<=|>=";
-    MathEqu.Flag    = Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP | Flags::TRIM;
-    MathEqu.NestExprs.Add(&MathAdd);
+    MathEqu.Keyword  = L"==|=|!=|<|>|<=|>=";
+    MathEqu.Flag     = Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP | Flags::TRIM;
     MathEqu.ParseCB  = &(ALU::EqualCallback);
     MathEqu.SearchCB = &(QRegex::OR);
+    MathEqu.NestExprs.Add(&MathAdd);
 
     this->MathExprs.Add(&MathEqu);
 }
@@ -207,9 +207,9 @@ String Qentem::ALU::AdditionCallback(const String &block, const Match &item) noe
 double Qentem::ALU::Evaluate(String &content) const noexcept {
     /**
      *
-     * e.g. ((2* (1 * 3)) + 1 - 4) + ((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1) - (1) - (-1) +
-     * 2 = 14 e.g. (6 + 1 - 4) + (5 - 6 + 4) * (8 / 4 + 1) - (1) - (-1) + 2 = 14 e.g. 3 + 3 * 3 - 1 +
-     * 1 + 2 = 14 e.g. 3 + 9 - 1 - -1 + 2 = 14 e.g. 14 = 14 e.g. 1; means true.
+     * e.g. ((2* (1 * 3)) + 1 - 4) + ((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1) - (1) - (-1) + 2 = 14
+     * e.g. (6 + 1 - 4) + (5 - 6 + 4) * (8 / 4 + 1) - (1) - (-1) + 2 = 14 e.g. 3 + 3 * 3 - 1 + 1 + 2 = 14
+     * e.g. 3 + 9 - 1 - -1 + 2 = 14 e.g. 14 = 14 e.g. 1; means true.
      *
      * Steps:
      * First: Look for parenthesis ( operation or number )

@@ -58,15 +58,3 @@ String Qentem::QRegex::Replace(const String &content, const String &find, const 
 
     return Engine::Parse(content, Engine::Search(content, Expressions().Add(&find_key)));
 }
-
-// Short hand replace
-String Qentem::QRegex::Replace(const String &content, const String &find, const Array<String> &replace) noexcept {
-    Expression findexpr;
-    findexpr.Keyword  = find;
-    findexpr.SearchCB = &(QRegex::OR);
-    findexpr.Replace  = replace[0]; // TODO:: Needs more work...
-
-    // findexpr.ParseCB = &;
-
-    return Engine::Parse(content, Engine::Search(content, Expressions().Add(&findexpr)));
-}
