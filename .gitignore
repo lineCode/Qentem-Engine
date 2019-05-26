@@ -2,4 +2,5 @@ Notes/
 Build/
 x64/
 .vscode/settings.json
+.vscode/ipch
 Test/bigjson*

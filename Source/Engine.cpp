@@ -77,7 +77,7 @@ void Qentem::Engine::_search(Array<Match> &items, const String &content, const E
             if (OVERDRIVE) {
                 // If the match is on "OVERDRIVE", then break.
                 OVERDRIVE = false;
-                // Ste the length of the nested match.
+                // Set the length of the nested match.
                 limit = (end_offset - 1);
             } else if (!LOCKED) {
                 if (ce->Connected != nullptr) {
@@ -98,20 +98,20 @@ void Qentem::Engine::_search(Array<Match> &items, const String &content, const E
             if (ce->Connected == nullptr) {
                 // If it's a nesting expression, search again but inside the current match.
                 if ((ce->NestExprs.Size != 0) && (nest_offset != index)) {
-                    // Start a new search inside the current one.
+                    // Start a new search inside the current match.
                     UNumber _size = _item.NestMatch.Size;
                     Engine::_search(_item.NestMatch, content, ce->NestExprs, nest_offset, index,
                                     ((max != 0) ? max : limit), (level + 1));
 
                     if (_item.NestMatch.Size != _size) {
                         if (max > limit) {
-                            // This is important to have the seearch look ahead of the limited length
+                            // This is important to have the search look ahead of the limited length
                             // in order to find the entire currect match.
                             limit     = max; // TO THE MAX!
                             OVERDRIVE = true;
                         }
 
-                        Match *p_item = &(_item.NestMatch[(_item.NestMatch.Size - 1)]);
+                        Match *p_item = &(_item.NestMatch.Last(false));
                         // Seek to avoid having the same closing/ending keywork matched again.
                         nest_offset = (p_item->Offset + p_item->Length);
                         index       = nest_offset;
@@ -150,7 +150,7 @@ void Qentem::Engine::_search(Array<Match> &items, const String &content, const E
                                           ((_item.Offset + _item.Length) - (_item.CLength)));
                         }
 
-                        items.Last().Move(_item);
+                        items.Last(true).Move(_item);
                         items.Size++;
 
                         if ((Flags::ONCE & ce->Flag) != 0) {
@@ -182,10 +182,10 @@ void Qentem::Engine::_search(Array<Match> &items, const String &content, const E
         }
 
         if (LOCKED) {
-            // If there is an ongoing match, then move to the next wchar_t.
+            // If there is an ongoing match, then move to the next char.
             ++index;
         } else {
-            // Switching to the next charrcter if all keywords have been checked.
+            // Switching to the next character if all keywords have been checked.
             if (id == exprs.Size) {
                 id = 0;
                 ++index;
@@ -216,11 +216,11 @@ void Qentem::Engine::_search(Array<Match> &items, const String &content, const E
             } else {
                 // if it's a nested search... with matched items move every thing that has been found to the
                 // main items' list, to avoid searching them again.
-                Match *p_item = &(_item.NestMatch)[(_item.NestMatch.Size - 1)];
-                index         = p_item->Offset + p_item->Length;
-
                 items.Add(_item.NestMatch, true);
+
+                Match *p_item = &(_item.NestMatch)[(_item.NestMatch.Size - 1)];
                 // Seek the offset to where the last match ended.
+                index = p_item->Offset + p_item->Length;
 
                 if (index == limit) {
                     break;
@@ -249,8 +249,8 @@ void Qentem::Engine::_search(Array<Match> &items, const String &content, const E
         Engine::Split(content, items, started, limit);
     }
 
-    // Friday, January 18, 2019
     // AlJumaa, Jamada El Oula 12, 1440
+    // Friday, January 18, 2019
 }
 
 void Qentem::Engine::Split(const String &content, Array<Match> &items, const UNumber index, const UNumber to) noexcept {
@@ -315,9 +315,9 @@ void Qentem::Engine::Split(const String &content, Array<Match> &items, const UNu
             master    = _item.Expr;
 
             if (((Flags::DROPEMPTY & _item.Expr->Flag) == 0) || (_item.Length != 0)) {
-                tmp2 = &splitted.Last();
-                tmp2->Move(_item);
+                tmp2 = &splitted.Last(true);
                 splitted.Size++;
+                tmp2->Move(_item);
 
                 if (tmp->NestMatch.Size != 0) {
                     tmp2->NestMatch.Move(tmp->NestMatch);
@@ -334,7 +334,7 @@ void Qentem::Engine::Split(const String &content, Array<Match> &items, const UNu
             }
             offset = (tmp->Offset + tmp->Length);
         } else {
-            nesties.Last().Move(*tmp);
+            nesties.Last(true).Move(*tmp);
             nesties.Size++;
         }
     }
@@ -359,9 +359,9 @@ void Qentem::Engine::Split(const String &content, Array<Match> &items, const UNu
     }
 
     if (((Flags::DROPEMPTY & _item.Expr->Flag) == 0) || (_item.Length != 0)) {
-        tmp2 = &splitted.Last();
-        tmp2->Move(_item);
+        tmp2 = &splitted.Last(true);
         splitted.Size++;
+        tmp2->Move(_item);
 
         if (_item.Length != 0) {
             if (nesties.Size != 0) {
@@ -382,7 +382,7 @@ void Qentem::Engine::Split(const String &content, Array<Match> &items, const UNu
         items.Move(splitted);
     } else {
         items.SetCapacity(1);
-        items.Size++;
+        items.Size = 1;
 
         items[0].Offset = index;
         items[0].Length = (to - index);

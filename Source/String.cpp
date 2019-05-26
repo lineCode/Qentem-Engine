@@ -44,17 +44,17 @@ void Qentem::String::Copy(const wchar_t *str_p, UNumber start_at, UNumber ln) no
 }
 
 void Qentem::String::Move(String &src) noexcept {
-    if (this->Str != nullptr) {
-        delete[] this->Str;
-    }
+    delete[] this->Str;
 
     this->Str    = src.Str;
     this->Length = src.Length;
     this->_index = src._index;
 
-    src.Length = 0;
-    src._index = 0;
-    src.Str    = nullptr;
+    if (src.Str != nullptr) {
+        src.Length = 0;
+        src._index = 0;
+        src.Str    = nullptr;
+    }
 }
 
 Qentem::String::String(const wchar_t *str) noexcept {
@@ -78,10 +78,8 @@ Qentem::String::String(const String &src) noexcept {
 }
 
 Qentem::String::~String() noexcept {
-    if (this->Str != nullptr) {
-        delete[] this->Str;
-        this->Str = nullptr;
-    }
+    delete[] this->Str;
+    this->Str = nullptr;
 }
 
 Qentem::String &Qentem::String::operator=(String &&src) noexcept { // Move
@@ -96,6 +94,8 @@ Qentem::String &Qentem::String::operator=(const String &src) noexcept { // Copy
     if ((this != &src) && (src.Str != nullptr)) {
         this->Clear();
         Copy(src.Str, 0, src.Length);
+    } else {
+        this->Clear();
     }
 
     return *this;
@@ -121,7 +121,7 @@ Qentem::String &Qentem::String::operator+=(const String &src) noexcept {
 Qentem::String Qentem::String::operator+(String &&src) const noexcept {
     String ns = *this;
 
-    if ((src.Str != nullptr) && (src.Length != 0)) {
+    if (src.Length != 0) {
         ns += src;
         src.Clear();
     }
@@ -132,7 +132,7 @@ Qentem::String Qentem::String::operator+(String &&src) const noexcept {
 Qentem::String Qentem::String::operator+(const String &src) const noexcept {
     String ns = *this;
 
-    if ((src.Str != nullptr) && (src.Length != 0)) {
+    if (src.Length != 0) {
         ns += src;
     }
 
@@ -156,7 +156,7 @@ bool Qentem::String::operator==(const String &src) const noexcept {
     return (i == this->Length);
 }
 
-bool Qentem::String::operator!=(const String &src) const noexcept {
+constexpr bool Qentem::String::operator!=(const String &src) const noexcept {
     return (!(*this == src));
 }
 
@@ -425,7 +425,7 @@ Qentem::String Qentem::String::Part(const String &src, UNumber offset, const UNu
     return bit;
 }
 
-UNumber Qentem::String::Hash(const String &src, UNumber start, const UNumber end_offset) {
+UNumber Qentem::String::Hash(const String &src, UNumber start, const UNumber end_offset) noexcept {
     bool    fl   = false;
     UNumber i    = 0;
     UNumber j    = 1;

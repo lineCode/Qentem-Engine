@@ -73,7 +73,7 @@ Qentem::Template::Template() noexcept {
     IfNext.ParseCB = &(Template::RenderIF);
     IfNext.Pocket  = &(this->Pocket);
     // <if case="{case}">html code</if>
-    TagIf.Keyword   = L"<if";
+    TagIf.Keyword   = L"<if"; // TODO: Add  shalow if for nesting
     IfNext.Keyword  = L"</if>";
     TagIf.Connected = &IfNext;
     IfNext.Flag     = Flags::SPLITROOTONLY;

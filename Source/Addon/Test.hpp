@@ -49,17 +49,7 @@ struct TestBit {
         }
     }
 
-    static void _TestBitMoveCallback(TestBit *to, TestBit *from, UNumber start, UNumber size) {
-        for (UNumber i = 0; i < size; i++) {
-            to[start++].Move(from[i]);
-        }
-    }
-
-    explicit TestBit() noexcept {
-        if (Array<TestBit>::Callbacks.MoveCallback == nullptr) {
-            Array<TestBit>::Callbacks.MoveCallback = &_TestBitMoveCallback;
-        }
-    }
+    explicit TestBit() = default;
 
     TestBit(TestBit &&src) noexcept {
         Move(src);

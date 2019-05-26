@@ -24,18 +24,8 @@ struct StringStream {
     Array<String> _strings;
     UNumber       Length = 0;
 
-    static void _StringMoveCallback(String *to, String *from, UNumber start, UNumber size) {
-        for (UNumber i = 0; i < size; i++) {
-            to[start++].Move(from[i]);
-        }
-    }
-
     explicit StringStream() noexcept {
         _strings.SetCapacity(10);
-
-        if (Array<String>::Callbacks.MoveCallback == nullptr) {
-            Array<String>::Callbacks.MoveCallback = &_StringMoveCallback;
-        }
     }
 
     void Move(String &src) noexcept;
@@ -44,7 +34,7 @@ struct StringStream {
     void operator+=(const String &src) noexcept;
 
     void operator+=(StringStream &&src) noexcept;
-    void operator+=(StringStream const &src) noexcept;
+    void operator+=(StringStream &src) noexcept;
 
     String Eject() noexcept;
 };

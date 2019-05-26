@@ -13,7 +13,7 @@
 
 void Qentem::StringStream::operator+=(String &&src) noexcept {
     this->Length += src.Length;
-    this->_strings.Last().Move(src);
+    this->_strings.Last(true).Move(src);
     this->_strings.Size++;
 }
 
@@ -30,7 +30,7 @@ void Qentem::StringStream::operator+=(StringStream &&src) noexcept {
     src.Length = 0;
 }
 
-void Qentem::StringStream::operator+=(const StringStream &src) noexcept {
+void Qentem::StringStream::operator+=(StringStream &src) noexcept {
     this->_strings.Add(src._strings);
     this->Length += src.Length;
 }

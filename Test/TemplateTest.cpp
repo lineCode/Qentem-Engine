@@ -115,7 +115,8 @@ Tree get_tree() noexcept {
     data[L"empty"]      = L"";
     data[L"math"] = L"((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) - (-1) + 2";
 
-    data[L"abc"]         = Tree();
+    Tree abc;
+    data[L"abc"]         = abc;
     data[L"abc"][L"B"]   = L"b";
     data[L"abc"][L"@@"]  = 100.0;
     data[L"abc"][L"A"]   = L"a";
@@ -124,7 +125,8 @@ Tree get_tree() noexcept {
     data[L"abc"][L"E"]   = Array<String>().Add(L"O").Add(L"K!");
     data[L"abc"][L"A-Z"] = L"ABCDEFGHIGKLMNOBQRST.....";
 
-    data[L"multi"]          = Tree();
+    Tree multi;
+    data[L"multi"]          = multi;
     data[L"multi"][L"arr1"] = data[L"abc"];
     data[L"multi"][L"arr2"] = Array<String>().Add(L"B").Add(L"C").Add(L"D").Add(L"A");
     data[L"multi"][L"C"]    = L"cool";
