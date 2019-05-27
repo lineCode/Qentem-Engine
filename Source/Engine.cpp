@@ -25,7 +25,7 @@ Array<Match> Qentem::Engine::Search(const String &content, const Expressions &ex
         limit = (content.Length - index); // limit becomes the ending offset here.
     }
 
-    if ((exprs.Size == 0) && (index >= limit)) {
+    if ((content.Length == 0) || (exprs.Size == 0) || (index >= limit)) {
         return items;
     }
 

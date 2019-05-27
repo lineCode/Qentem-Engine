@@ -62,8 +62,12 @@ Qentem::Field &Qentem::Field::operator=(String &value) noexcept {
 
 Qentem::Field &Qentem::Field::operator=(const wchar_t *value) noexcept {
     if (this->Storage != nullptr) {
-        String _s = String(value);
-        this->Storage->Set(this->Key, _s, 0, this->Key.Length, true);
+        if (value != nullptr) {
+            String _s = value;
+            this->Storage->Set(this->Key, _s, 0, this->Key.Length, false);
+        } else {
+            this->Storage->Set(this->Key, 0, this->Key.Length);
+        }
     }
     return *this;
 }
@@ -121,13 +125,6 @@ Qentem::Field Qentem::Field::operator[](const String &key) noexcept {
         if (tree != nullptr) {
             return (*tree)[key];
         }
-        // else { // Inseating a new tree
-        //     this->Storage->Set(this->Key, Tree());
-        //     Field _field;
-        //     _field.Key     = key;
-        //     _field.Storage = &(this->Storage->Child[(this->Storage->Child.Last(true)))]);
-        //     return _field;
-        // }
     }
 
     return Field();
@@ -140,7 +137,7 @@ void Qentem::Tree::InsertHash(const Hash &_hash) noexcept {
     }
 
     this->Table[(_hash.HashValue % HashBase)].Set(_hash, HashBase, 1);
-    Hashes.Add(_hash.HashValue); // TODO: Use pointer!
+    Hashes.Add(_hash.HashValue); // TODO: Use pointers!
 }
 
 void Qentem::Tree::Drop(Hash &_hash, Tree &storage) noexcept {
@@ -268,6 +265,7 @@ void Qentem::Tree::Set(const String &key, Array<double> &value, UNumber offset, 
         InsertHash(_hash);
         if (move) {
             ONumbers.Last(true).Move(value);
+            OStrings.Size++;
         } else {
             ONumbers.Add(value);
         }
@@ -307,6 +305,7 @@ void Qentem::Tree::Set(const String &key, String &value, UNumber offset, UNumber
         InsertHash(_hash);
         if (move) {
             Strings.Last(true).Move(value);
+            OStrings.Size++;
         } else {
             Strings.Add(value);
         }
@@ -347,6 +346,7 @@ void Qentem::Tree::Set(const String &key, Array<String> &value, UNumber offset, 
         InsertHash(_hash);
         if (move) {
             OStrings.Last(true).Move(value);
+            OStrings.Size++;
         } else {
             OStrings.Add(value);
         }
@@ -387,6 +387,7 @@ void Qentem::Tree::Set(const String &key, Tree &value, UNumber offset, UNumber l
         InsertHash(_hash);
         if (move) {
             Child.Last(true).Move(value);
+            Child.Size++;
         } else {
             Child.Add(value);
         }
@@ -834,21 +835,19 @@ void Qentem::Tree::MakeTree(Tree &tree, const String &content, const Array<Match
             data = &(json->NestMatch[data_id]);
 
             if (key->NestMatch.Size != 0) {
-                if ((key->Length - 2) != 0) {
+                if (key->Length > 2) {
                     if (data->NestMatch.Size == 0) {
                         // Number or true, false, null
                         double number;
-                        if (data->Length <= 5) {
-                            if (content.Str[data->Offset] == L't') {
-                                // True
-                                tree.Set(content, true, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2));
-                            } else if (content.Str[data->Offset] == L'n') {
-                                // Null
-                                tree.Set(content, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2));
-                            } else if (content.Str[data->Offset] == L'f') {
-                                // False
-                                tree.Set(content, false, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2));
-                            }
+                        if (content.Str[data->Offset] == L't') {
+                            // True
+                            tree.Set(content, true, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2));
+                        } else if (content.Str[data->Offset] == L'n') {
+                            // Null
+                            tree.Set(content, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2));
+                        } else if (content.Str[data->Offset] == L'f') {
+                            // False
+                            tree.Set(content, false, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2));
                         } else if (String::ToNumber(content, number, data->Offset, data->Length)) {
                             // Number
                             tree.Set(content, number, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2));
@@ -892,48 +891,46 @@ void Qentem::Tree::MakeTree(Tree &tree, const String &content, const Array<Match
                                        ns->NestMatch[0].NestMatch[0].Expr->Keyword == L'}') {
                                 // Objects {}
                                 Array<Tree> obj;
-                                tree.Set(content, obj, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2),
-                                         false);
-
-                                Array<Tree> *ts = &(tree.OChildren.Last(true));
-                                ts->SetCapacity(ns->NestMatch.Size);
-                                ts->Size = ns->NestMatch.Size;
+                                obj.SetCapacity(ns->NestMatch.Size);
+                                obj.Size = ns->NestMatch.Size;
 
                                 for (UNumber j = 0; j < ns->NestMatch.Size; j++) {
-                                    Tree::MakeTree(ts->operator[](j), content, ns->NestMatch[j].NestMatch);
+                                    Tree::MakeTree(obj[j], content, ns->NestMatch[j].NestMatch);
                                 }
+
+                                tree.Set(content, obj, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2),
+                                         false);
                             } else if (ns->NestMatch[0].NestMatch.Size == 1) {
-                                // Strings
+                                // // Strings
                                 Array<String> obj;
-                                tree.Set(content, obj, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2),
-                                         false);
-                                Array<String> *st = &(tree.OStrings.Last(true));
-                                st->SetCapacity(ns->NestMatch.Size);
-                                st->Size = ns->NestMatch.Size;
+                                obj.SetCapacity(ns->NestMatch.Size);
+                                obj.Size = ns->NestMatch.Size;
 
                                 for (UNumber j = 0; j < ns->NestMatch.Size; j++) {
-                                    st->operator[](j) = String::Part(content, (ns->NestMatch[j].NestMatch[0].Offset + 1),
-                                                                     (ns->NestMatch[j].NestMatch[0].Length - 2));
+                                    obj[j] = String::Part(content, (ns->NestMatch[j].NestMatch[0].Offset + 1),
+                                                          (ns->NestMatch[j].NestMatch[0].Length - 2));
                                 }
+
+                                tree.Set(content, obj, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2),
+                                         true);
                             } else {
                                 // Numbers
                                 Array<double> obj;
-                                tree.Set(content, obj, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2),
-                                         false);
+                                obj.SetCapacity(ns->NestMatch.Size);
+                                obj.Size = ns->NestMatch.Size;
 
-                                Array<double> *nt = &(tree.ONumbers.Last(true));
-                                nt->SetCapacity(ns->NestMatch.Size);
-                                nt->Size = ns->NestMatch.Size;
                                 double number;
-
                                 for (UNumber j = 0; j < ns->NestMatch.Size; j++) {
                                     if (String::ToNumber(content, number, ns->NestMatch[j].Offset,
                                                          ns->NestMatch[j].Length)) {
-                                        nt->operator[](j) = number;
+                                        obj[j] = number;
                                     } else {
                                         // Error converting number.
                                     }
                                 }
+
+                                tree.Set(content, obj, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2),
+                                         true);
                             }
                         } else if (data->NestMatch[0].Expr->Keyword == L'}') {
                             // Object {}
@@ -941,11 +938,19 @@ void Qentem::Tree::MakeTree(Tree &tree, const String &content, const Array<Match
                             Tree::MakeTree(*p_tree, content, data->NestMatch);
                             tree.Set(content, *p_tree, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2),
                                      true);
-                        } else if (data->NestMatch[0].NestMatch.Size == 0) {
+                        } else {
                             // String
                             String _s =
                                 String::Part(content, (data->NestMatch[0].Offset + 1), (data->NestMatch[0].Length - 2));
-                            tree.Set(content, _s, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2), true);
+
+                            if (data->NestMatch[0].NestMatch.Size == 0) {
+                                tree.Set(content, _s, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2),
+                                         false);
+                            } else {
+                                _s = Engine::Parse(_s, Engine::Search(_s, JsonDeQuot));
+                                tree.Set(content, _s, (key->NestMatch[0].Offset + 1), (key->NestMatch[0].Length - 2),
+                                         false);
+                            }
                         }
                     }
                 } else {
@@ -959,6 +964,9 @@ void Qentem::Tree::MakeTree(Tree &tree, const String &content, const Array<Match
         }
     }
 }
+
+// #include "Addon/Test.hpp" // TODO:: remove
+// #include <iostream>
 
 Tree Qentem::Tree::FromJSON(const String &content) noexcept {
     Expressions json_expres;
@@ -1021,10 +1029,14 @@ Tree Qentem::Tree::FromJSON(const String &content) noexcept {
 
     json_expres.Add(&opened_curly_bracket).Add(&opened_square_bracket); // .Add(&comment1).Add(&comment2)
 
+    SetJsonQuot();
+
     Tree tree;
     Tree::MakeTree(tree, content, Engine::Search(content, json_expres));
+    // std::wcout << Qentem::Test::DumbMatches(content, Engine::Search(content, json_expres), L"    ").Str;
 
     return tree;
 }
 
-Expressions Tree::JsonQuot = Expressions();
+Expressions Tree::JsonQuot   = Expressions(); // See SetJsonQuot
+Expressions Tree::JsonDeQuot = Expressions(); // See SetJsonQuot

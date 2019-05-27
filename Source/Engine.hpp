@@ -51,7 +51,7 @@ struct Flags {
 struct Expression {
     String  Keyword = L""; // What to search for.
     String  Replace = L""; // A text to replace the match.
-    UNumber Flag    = 0;
+    UNumber Flag    = 0;   // Flags for the expression
 
     Expression *Connected = nullptr; // The next part of the match (the next keyword).
     _SEARCHCB * SearchCB  = nullptr; // A callback function for custom lookup.
@@ -81,7 +81,7 @@ struct Expression {
 };
 /////////////////////////////////
 struct Match {
-    UNumber Offset  = 0;
+    UNumber Offset  = 0; // The start position of the matched string
     UNumber Length  = 0;
     UNumber OLength = 0; // Length of opening keyword
     UNumber CLength = 0; // Length of closing keyword
@@ -99,7 +99,7 @@ struct Match {
 
     explicit Match() = default;
 
-    inline void Move(Match &src) noexcept {
+    void Move(Match &src) noexcept {
         if (this != &src) {
             this->Offset  = src.Offset;
             this->Length  = src.Length;
@@ -129,11 +129,11 @@ struct Match {
         }
     }
 
-    Match(Match &&src) noexcept {
+    Match(Match &&src) noexcept { // Move
         Move(src);
     }
 
-    Match(const Match &src) noexcept {
+    Match(const Match &src) noexcept { // Copy
         Copy(src);
     }
 

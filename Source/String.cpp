@@ -20,6 +20,7 @@ void Qentem::String::Copy(const wchar_t *str_p, UNumber start_at, UNumber ln) no
         --ln;
     }
 
+    // Copy any existing characters
     UNumber j = 0;
     if ((this->Length == 0) || (ln > (this->Length - this->_index))) {
         wchar_t *_tmp = this->Str;
@@ -34,50 +35,57 @@ void Qentem::String::Copy(const wchar_t *str_p, UNumber start_at, UNumber ln) no
         delete[] _tmp;
     }
 
+    // Add the the new characters
     for (j = 0; j < ln;) {
         this->Str[start_at++] = str_p[j++];
     }
 
     this->Str[start_at] = L'\0'; // Null ending.
 
+    // Update the index to be at the last character
     this->_index = this->Length = ln + this->_index;
 }
 
+// Moveing a string
 void Qentem::String::Move(String &src) noexcept {
     delete[] this->Str;
 
-    this->Str    = src.Str;
-    this->Length = src.Length;
-    this->_index = src._index;
-
     if (src.Str != nullptr) {
+        this->Str    = src.Str;
+        this->Length = src.Length;
+        this->_index = src._index;
+
         src.Length = 0;
         src._index = 0;
         src.Str    = nullptr;
+    } else {
+        this->Length = 0;
+        this->_index = 0;
+        this->Str    = nullptr;
     }
 }
 
-Qentem::String::String(const wchar_t *str) noexcept {
+Qentem::String::String(const wchar_t *str) noexcept { // init of point to wchar_t
     Copy(str, 0, 0);
 }
 
-Qentem::String::String(wchar_t str) noexcept {
+Qentem::String::String(wchar_t str) noexcept { // init of wchar_t
     Copy(&str, 0, 1);
 }
 
-Qentem::String::String(String &&src) noexcept {
+Qentem::String::String(String &&src) noexcept { // Move
     if ((this != &src) && (src.Str != nullptr)) {
         Move(src);
     }
 }
 
-Qentem::String::String(const String &src) noexcept {
+Qentem::String::String(const String &src) noexcept { // Copy
     if ((this != &src) && (src.Str != nullptr)) {
         Copy(src.Str, 0, src.Length);
     }
 }
 
-Qentem::String::~String() noexcept {
+Qentem::String::~String() noexcept { // Destruct
     delete[] this->Str;
     this->Str = nullptr;
 }
@@ -110,7 +118,7 @@ Qentem::String &Qentem::String::operator+=(String &&src) noexcept { // Move
     return *this;
 }
 
-Qentem::String &Qentem::String::operator+=(const String &src) noexcept {
+Qentem::String &Qentem::String::operator+=(const String &src) noexcept { // Appand a string
     if (src.Length != 0) {
         Copy(src.Str, this->_index, src.Length);
     }
@@ -118,6 +126,7 @@ Qentem::String &Qentem::String::operator+=(const String &src) noexcept {
     return *this;
 }
 
+// Appand a string by moving another into it
 Qentem::String Qentem::String::operator+(String &&src) const noexcept {
     String ns = *this;
 
@@ -129,7 +138,7 @@ Qentem::String Qentem::String::operator+(String &&src) const noexcept {
     return ns;
 }
 
-Qentem::String Qentem::String::operator+(const String &src) const noexcept {
+Qentem::String Qentem::String::operator+(const String &src) const noexcept { // Appand a string and return a new one
     String ns = *this;
 
     if (src.Length != 0) {
@@ -139,7 +148,7 @@ Qentem::String Qentem::String::operator+(const String &src) const noexcept {
     return ns;
 }
 
-bool Qentem::String::operator==(const String &src) const noexcept {
+bool Qentem::String::operator==(const String &src) const noexcept { // Compare
     if (this->Length != src.Length) {
         return false;
     }
@@ -156,7 +165,7 @@ bool Qentem::String::operator==(const String &src) const noexcept {
     return (i == this->Length);
 }
 
-constexpr bool Qentem::String::operator!=(const String &src) const noexcept {
+constexpr bool Qentem::String::operator!=(const String &src) const noexcept { // Compare
     return (!(*this == src));
 }
 
@@ -182,6 +191,7 @@ void Qentem::String::SetSize(const UNumber size) noexcept {
     delete[] _tmp;
 }
 
+// Update the starting index and the ending one to be at the actual characters
 void Qentem::String::SoftTrim(const String &str, UNumber &start, UNumber &end) noexcept {
     if (start >= end) {
         return;
@@ -197,6 +207,7 @@ void Qentem::String::SoftTrim(const String &str, UNumber &start, UNumber &end) n
     }
 }
 
+// Remove empty spaces
 Qentem::String Qentem::String::Trim(const String &str) noexcept {
     UNumber start = 0;
     UNumber end   = (str.Length - start);
@@ -205,6 +216,7 @@ Qentem::String Qentem::String::Trim(const String &str) noexcept {
     return String::Part(str, start, ((end + 1) - start));
 }
 
+// Revers string
 Qentem::String Qentem::String::Revers(const String &str) noexcept {
     if (str.Length < 2) {
         return str;
@@ -448,7 +460,7 @@ UNumber Qentem::String::Hash(const String &src, UNumber start, const UNumber end
     return hash;
 }
 
-void Qentem::String::Clear() noexcept {
+void Qentem::String::Clear() noexcept { // Reset
     delete[] this->Str;
     this->Str    = nullptr;
     this->Length = 0;

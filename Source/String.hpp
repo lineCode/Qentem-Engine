@@ -50,17 +50,17 @@ class String {
 
     void Clear() noexcept;
 
-    String &operator=(String &&src) noexcept;
-    String &operator=(const String &src) noexcept;
+    String &operator=(String &&src) noexcept;      // Move
+    String &operator=(const String &src) noexcept; // Copy
 
-    String &operator+=(String &&src) noexcept;
-    String &operator+=(const String &src) noexcept;
+    String &operator+=(String &&src) noexcept;      // Move
+    String &operator+=(const String &src) noexcept; // Copy
 
-    String operator+(String &&src) const noexcept;
-    String operator+(const String &src) const noexcept;
+    String operator+(String &&src) const noexcept;      // Move
+    String operator+(const String &src) const noexcept; // Copy
 
-    bool           operator==(const String &src) const noexcept;
-    constexpr bool operator!=(const String &src) const noexcept;
+    bool           operator==(const String &src) const noexcept; // compare; equal
+    constexpr bool operator!=(const String &src) const noexcept; // compare: not equal
 };
 } // namespace Qentem
 

@@ -1,12 +1,12 @@
-# Qentem Engine (v0.5.1)
+# Qentem Engine (v0.5.2)
 
 ## Summary:
 Qentem is a stand-alone library, built to provide a simple way to match existing syntaxes or new ones. It also provides call-backs for post or per-parsing. Built for templates, then rewritten for general-propose matching of text or syntaxes - Regular expression on steroids.
 
 ## Background:
-This project was stated to provide a fast way to render templates in PHP and using regular expressions or eval is very expensive operation, not to mention the security risks the involves executing a code at the script privilege level, or even execute binary files.
+This project was stated to provide a fast way to render templates in PHP and using regular expressions or "eval" is very expensive operation, not to mention the security risks the involves executing a code at the script privilege level, or even execute binary files.
 
-The idea came from a JavaScript code that was develop as to solve nested tags/matching in a math operation: (2-1)*(5(2/2)). Regular expression was uses in a recursive function to extract the inner () first and preform the math, then replace the result and so on until there is only numbers left.
+The idea came from a JavaScript code that was develop as to solve nested tags/matching in a math operation: (2-1)*(5(2/2)). Regular expression was used in a recursive function to extract the inner () first and preform the math, then replace the result and so on until there is only one number's left.
 
 The JavaScript code was then adopted as template engine for PHP, but the limitation appeared when matching nested if-statements. Rewritten over and over to remove the need for regular expressions, then performance started to justify the work of using custom code instead of regex.
 

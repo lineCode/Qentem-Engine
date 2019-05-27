@@ -137,7 +137,7 @@ class Array {
         }
     }
 
-    inline T &Last(bool expand) noexcept {
+    T &Last(bool expand) noexcept {
         if (!expand) {
             return this->Storage[(this->Size - 1)];
         }
@@ -171,7 +171,7 @@ class Array {
         return *this;
     }
 
-    inline T &operator[](const UNumber id) const {
+    T &operator[](const UNumber id) const {
         if (id >= this->_capacity) {
             throw;
         }
@@ -179,14 +179,14 @@ class Array {
         return this->Storage[id];
     }
 
-    inline virtual ~Array() noexcept {
+    virtual ~Array() noexcept {
         if (this->Storage != nullptr) {
             delete[] this->Storage;
             this->Storage = nullptr;
         }
     }
 
-    inline void Clear() noexcept {
+    void Clear() noexcept {
         delete[] this->Storage;
         this->Storage   = nullptr;
         this->_capacity = 0;

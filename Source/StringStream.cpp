@@ -40,8 +40,8 @@ Qentem::String Qentem::StringStream::Eject() noexcept {
         return L"";
     }
 
-    String str;
-    str.SetSize(this->Length);
+    String tmp;
+    tmp.SetSize(this->Length);
     String *sstr;
 
     UNumber offset = 0;
@@ -50,11 +50,13 @@ Qentem::String Qentem::StringStream::Eject() noexcept {
     for (UNumber i = 0; i < this->_strings.Size; i++) {
         sstr = &(this->_strings[i]);
         for (j = 0; j < sstr->Length; j++) {
-            str.Str[offset++] = sstr->Str[j];
+            tmp.Str[offset++] = sstr->Str[j];
         }
     }
 
+    tmp.Str[offset] = L'\0'; // Null trimmed string
+
     this->_strings.Clear();
 
-    return str;
+    return tmp;
 }

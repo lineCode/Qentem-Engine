@@ -86,7 +86,7 @@ struct Field {
     Field &operator=(const Field &) noexcept;
 
     Field &operator=(const double) noexcept;
-    Field &operator=(const wchar_t value[]) noexcept;
+    Field &operator=(const wchar_t *value) noexcept;
     Field &operator=(const bool value) noexcept;
     Field &operator=(String &value) noexcept;
     Field &operator=(Array<double> &value) noexcept;
@@ -110,6 +110,7 @@ struct Tree {
     Array<Array<Tree>>   OChildren;
 
     static Expressions JsonQuot;
+    static Expressions JsonDeQuot;
 
     static void SetJsonQuot() noexcept {
         if (JsonQuot.Size == 0) {
@@ -117,6 +118,11 @@ struct Tree {
             _JsonQuot.Keyword = L"\"";
             _JsonQuot.Replace = L"\\\"";
             JsonQuot.Add(&_JsonQuot);
+
+            static Expression _JsonDeQuot;
+            _JsonDeQuot.Keyword = L"\\\"";
+            _JsonDeQuot.Replace = L"\"";
+            JsonDeQuot.Add(&_JsonDeQuot);
         }
     }
 
@@ -177,8 +183,7 @@ struct Tree {
         return _field;
     }
 
-    // void Set(Hash * _hash, const bool, UNumber offset, UNumber limit) noexcept;
-    void Set(const String &key, UNumber offset, UNumber limit) noexcept;
+    void Set(const String &key, UNumber offset, UNumber limit) noexcept; // null
     void Set(const String &key, const double value, UNumber offset, UNumber limit) noexcept;
     void Set(const String &key, const bool value, UNumber offset, UNumber limit) noexcept;
     void Set(const String &key, String &value, UNumber offset, UNumber limit, bool move) noexcept;
