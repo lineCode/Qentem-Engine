@@ -10,9 +10,9 @@
                 "UNICODE",
                 "_UNICODE"
             ],
-            "compilerPath": "/bin/clang++",
+            "compilerPath": "/bin/clang",
             "cStandard": "c11",
-            "cppStandard": "c++11",
+            "cppStandard": "c++17",
             "intelliSenseMode": "gcc-x64"
         },
         {
@@ -27,7 +27,7 @@
             ],
             "compilerPath": "C:\\Program Files\\LLVM\\bin\\clang.exe",
             "cStandard": "c11",
-            "cppStandard": "c++11",
+            "cppStandard": "c++17",
             "intelliSenseMode": "gcc-x64"
         }
     ],

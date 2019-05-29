@@ -304,23 +304,24 @@ String Qentem::Template::Repeat(const String &content, const String &name, const
 
     const Array<Match> items = Engine::Search(content, ser);
 
-    if ((hash->Type == VType::OStringsT) || (hash->Type == VType::ONumbersT)) {
-        const Array<String> *st = &(_storage->OStrings[hash->ExactID]);
-        if (st != nullptr) {
-            for (UNumber i = 0; i < st->Size; i++) {
-                ser[0]->Replace = String::FromNumber(i);
-                rendered += Engine::Parse(content, items);
-            }
-        }
-    } else if (hash->Type == VType::ChildT) {
-        const Tree *ci = &(_storage->Child[hash->ExactID]);
-        if (ci != nullptr) {
-            for (UNumber i = 0; i < ci->Table.Size; i++) {
-                ser[0]->Replace = ci->Table[i].Key;
-                rendered += Engine::Parse(content, items);
-            }
-        }
-    }
+    // TODO: restore with a fix and numbers support
+    // if ((hash->Type == VType::OStringsT) || (hash->Type == VType::ONumbersT)) {
+    //     const Array<String> *st = &(_storage->OStrings[hash->ExactID]);
+    //     if (st != nullptr) {
+    //         for (UNumber i = 0; i < st->Size; i++) {
+    //             ser[0]->Replace = String::FromNumber(i);
+    //             rendered += Engine::Parse(content, items);
+    //         }
+    //     }
+    // } else if (hash->Type == VType::ChildT) {
+    //     const Tree *ci = &(_storage->Child[hash->ExactID]);
+    //     if (ci != nullptr) {
+    //         for (UNumber i = 0; i < ci->Table.Size; i++) {
+    //             ser[0]->Replace = ci->Table[i].Key;
+    //             rendered += Engine::Parse(content, items);
+    //         }
+    //     }
+    // }
 
     return rendered.Eject();
 }

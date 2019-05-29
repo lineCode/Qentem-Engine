@@ -37,7 +37,7 @@ Array<String> Qentem::Test::Extract(const String &content, const Array<Match> &i
 
     String match;
     for (UNumber i = 0; i < items.Size; i++) {
-        match = String(L"\"") + String::Part(content, items[i].Offset, items[i].Length) + L"\" -> O:" +
+        match = String::Part(content, items[i].Offset, items[i].Length) + L" -> O:" +
                 String::FromNumber(items[i].Offset) + L" L:" + String::FromNumber(items[i].Length) + L" OL:" +
                 String::FromNumber(items[i].OLength) + L" CL:" + String::FromNumber(items[i].CLength);
         matches.Add(match);
@@ -52,97 +52,97 @@ String Qentem::Test::DumbExpressions(const Expressions &expres, const String &of
         return offset + L"No expressions!\n";
     }
 
-    String Array     = offset + L"(" + String::FromNumber(static_cast<double>(expres.Size)) + L") => [\n";
+    String _array    = offset + L"(" + String::FromNumber(static_cast<double>(expres.Size)) + L") => [\n";
     String innoffset = L"    ";
     String l_offset  = offset + innoffset + innoffset;
 
     for (UNumber i = index; i < expres.Size; i++) {
 
         if (expres[i] == expr) {
-            Array += offset + innoffset + L"[" + String::FromNumber(static_cast<double>(i)) + L"]: " + L"This.\n";
+            _array += offset + innoffset + L"[" + String::FromNumber(static_cast<double>(i)) + L"]: " + L"This.\n";
             continue;
         }
 
-        Array += offset + innoffset + L"[" + String::FromNumber(static_cast<double>(i)) + L"]: => {\n";
+        _array += offset + innoffset + L"[" + String::FromNumber(static_cast<double>(i)) + L"]: => {\n";
 
-        Array += l_offset + L"Keyword: \"" + expres[i]->Keyword + L"\"\n";
+        _array += l_offset + L"Keyword: \"" + expres[i]->Keyword + L"\"\n";
 
-        Array += l_offset + L"Flags: (" + String::FromNumber(static_cast<double>(expres[i]->Flag)) + L")";
+        _array += l_offset + L"Flags: (" + String::FromNumber(static_cast<double>(expres[i]->Flag)) + L")";
 
         if ((expres[i]->Flag & Flags::COMPACT) != 0) {
-            Array += L" COMPACT";
+            _array += L" COMPACT";
         }
 
         if ((expres[i]->Flag & Flags::BUBBLE) != 0) {
-            Array += L" BUBBLE";
+            _array += L" BUBBLE";
         }
 
         if ((expres[i]->Flag & Flags::NOPARSE) != 0) {
-            Array += L" NOPARSE";
+            _array += L" NOPARSE";
         }
 
         if ((expres[i]->Flag & Flags::IGNORE) != 0) {
-            Array += L" IGNORE";
+            _array += L" IGNORE";
         }
 
         if ((expres[i]->Flag & Flags::SPLIT) != 0) {
-            Array += L" SPLIT";
+            _array += L" SPLIT";
         }
 
         if ((expres[i]->Flag & Flags::SPLITNEST) != 0) {
-            Array += L" SPLITNEST";
+            _array += L" SPLITNEST";
         }
 
         if ((expres[i]->Flag & Flags::GROUPSPLIT) != 0) {
-            Array += L" GROUPSPLIT";
+            _array += L" GROUPSPLIT";
         }
 
         if ((expres[i]->Flag & Flags::POP) != 0) {
-            Array += L" POP";
+            _array += L" POP";
         }
 
         if ((expres[i]->Flag & Flags::ONCE) != 0) {
-            Array += L" ONCE";
+            _array += L" ONCE";
         }
-        Array += L"\n";
+        _array += L"\n";
 
-        Array += l_offset + L"Replace: \"" + expres[i]->Replace + L"\"\n";
+        _array += l_offset + L"Replace: \"" + expres[i]->Replace + L"\"\n";
 
         if (expres[i]->SearchCB != nullptr) {
-            Array += l_offset + L"SearchCB: Yes";
+            _array += l_offset + L"SearchCB: Yes";
 
         } else {
-            Array += l_offset + L"SearchCB: No";
+            _array += l_offset + L"SearchCB: No";
         }
-        Array += L"\n";
+        _array += L"\n";
 
         if (expres[i]->ParseCB != nullptr) {
-            Array += l_offset + L"ParseCB: Yes";
+            _array += l_offset + L"ParseCB: Yes";
 
         } else {
-            Array += l_offset + L"ParseCB: No";
+            _array += l_offset + L"ParseCB: No";
         }
-        Array += L"\n";
+        _array += L"\n";
 
         if (expres[i]->Connected != nullptr) {
-            Array += l_offset + L"Next:\n";
-            Array += Test::DumbExpressions(Expressions().Add(expres[i]->Connected), innoffset + l_offset, 0, expres[i]);
+            _array += l_offset + L"Next:\n";
+            _array += Test::DumbExpressions(Expressions().Add(expres[i]->Connected), innoffset + l_offset, 0, expres[i]);
         }
 
         if (expres[i]->NestExprs.Size != 0) {
-            Array += l_offset + L"NestExprs:\n";
-            Array += Test::DumbExpressions(expres[i]->NestExprs, innoffset + l_offset, 0, expres[i]);
+            _array += l_offset + L"NestExprs:\n";
+            _array += Test::DumbExpressions(expres[i]->NestExprs, innoffset + l_offset, 0, expres[i]);
         }
 
         if (expres[i]->SubExprs.Size != 0) {
-            Array += l_offset + L"SubExprs:\n";
-            Array += Test::DumbExpressions(expres[i]->SubExprs, innoffset + l_offset, 0, expres[i]);
+            _array += l_offset + L"SubExprs:\n";
+            _array += Test::DumbExpressions(expres[i]->SubExprs, innoffset + l_offset, 0, expres[i]);
         }
 
-        Array += l_offset + L"}\n";
+        _array += l_offset + L"}\n";
     }
 
-    return Array + offset + L"]\n";
+    return _array + offset + L"]\n";
 }
 
 String Qentem::Test::DumbMatches(const String &content, const Array<Match> &matches, const String &offset,
@@ -154,25 +154,25 @@ String Qentem::Test::DumbMatches(const String &content, const Array<Match> &matc
     Array<String> items = Test::Extract(content, matches);
 
     String innoffset = L"    ";
-    String Array     = offset + L"(" + String::FromNumber(static_cast<double>(matches.Size)) + L") => [\n";
+    String _array    = offset + L"(" + String::FromNumber(static_cast<double>(matches.Size)) + L") => [\n";
 
-    for (UNumber i = index; i < items.Size;
-         i++) { // It should be matches.size not items, but they should be the same size!
-        Array += innoffset + offset + L"[" + String::FromNumber(static_cast<double>(i)) + L"]: " +
-                 QRegex::Replace(items[i], L"\n", L"\\n") + L"\n";
+    // It should be (matches.size) not (items.Size), but they should be the same size!
+    for (UNumber i = index; i < items.Size; i++) {
+        _array += innoffset + offset + L"[" + String::FromNumber(static_cast<double>(i)) + L"]: " +
+                  QRegex::Replace(items[i], L"\n", L"\\n") + L"\n";
 
         if (matches[i].NestMatch.Size != 0) {
-            Array += innoffset + offset + L"-NestMatch:\n";
-            Array += Test::DumbMatches(content, matches[i].NestMatch, innoffset + innoffset + offset, 0);
+            _array += innoffset + offset + L"-NestMatch:\n";
+            _array += Test::DumbMatches(content, matches[i].NestMatch, innoffset + innoffset + offset, 0);
         }
 
         if (matches[i].SubMatch.Size != 0) {
-            Array += innoffset + offset + L"-SubMatch:\n";
-            Array += Test::DumbMatches(content, matches[i].SubMatch, innoffset + innoffset + offset, 0);
+            _array += innoffset + offset + L"-SubMatch:\n";
+            _array += Test::DumbMatches(content, matches[i].SubMatch, innoffset + innoffset + offset, 0);
         }
     }
 
-    return Array + offset + L"]\n";
+    return _array + offset + L"]\n";
 }
 
 Array<TestBit> Qentem::Test::GetBits() noexcept {

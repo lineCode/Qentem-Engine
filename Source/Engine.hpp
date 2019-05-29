@@ -38,7 +38,7 @@ struct Flags {
     static const unsigned short NOPARSE       = 2;    // Match a Keyword but don't process it inside Parse().
     static const unsigned short IGNORE        = 4;    // Match a Keyword but don't add it.
     static const unsigned short TRIM          = 8;    // Trim the match before adding it.
-    static const unsigned short ONCE          = 16;   // Will stop searching after matching.
+    static const unsigned short ONCE          = 16;   // Will stop searching after the first match.
     static const unsigned short POP           = 32;   // Search again with NestExprs if the match fails (See ALU.cpp).
     static const unsigned short BUBBLE        = 64;   // Parse nested matches.
     static const unsigned short SPLIT         = 128;  // Split a match at a keyword.

@@ -198,11 +198,11 @@ void Qentem::String::SoftTrim(const String &str, UNumber &start, UNumber &end) n
     }
     end -= 1;
 
-    while (str.Str[start] == L' ') {
+    while ((str.Str[start] == L' ') || (str.Str[start] == L'\n')) {
         start += 1;
     }
 
-    while ((end > start) && (str.Str[end] == L' ')) {
+    while ((end > start) && ((str.Str[end] == L' ') || (str.Str[end] == L'\n'))) {
         end -= 1;
     }
 }
@@ -414,7 +414,7 @@ bool Qentem::String::ToNumber(const String &str, double &number, UNumber offset,
     return true;
 }
 
-Qentem::String Qentem::String::Part(const String &src, UNumber offset, const UNumber limit) {
+Qentem::String Qentem::String::Part(const String &src, const UNumber offset, const UNumber limit) {
     if ((limit > src.Length) || ((offset + limit) > src.Length)) {
         throw;
     }
@@ -426,9 +426,9 @@ Qentem::String Qentem::String::Part(const String &src, UNumber offset, const UNu
     String bit;
     bit.SetSize(limit);
 
-    UNumber i = 0;
+    UNumber i = 0, j = offset;
     while (i < limit) {
-        bit.Str[i++] = src.Str[offset++];
+        bit.Str[i++] = src.Str[j++];
     }
 
     bit.Str[i] = L'\0'; // To mark the end of a string.
@@ -437,13 +437,14 @@ Qentem::String Qentem::String::Part(const String &src, UNumber offset, const UNu
     return bit;
 }
 
-UNumber Qentem::String::Hash(const String &src, UNumber start, const UNumber end_offset) noexcept {
+UNumber Qentem::String::Hash(const String &src, const UNumber start, const UNumber end_offset) noexcept {
     bool    fl   = false;
     UNumber i    = 0;
     UNumber j    = 1;
+    UNumber z    = start;
     UNumber hash = 0;
 
-    while (start < end_offset) {
+    while (z < end_offset) {
         if (fl) {
             j  = j * (i + 1);
             fl = false;
@@ -452,9 +453,9 @@ UNumber Qentem::String::Hash(const String &src, UNumber start, const UNumber end
             fl = true;
         }
 
-        hash += (((static_cast<UNumber>(src.Str[start]))) * j);
+        hash += (((static_cast<UNumber>(src.Str[z]))) * j);
         i++;
-        start++;
+        z++;
     }
 
     return hash;

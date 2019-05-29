@@ -26,15 +26,14 @@ void run() noexcept {
     Tree data;
 
     // Template
-    data = get_tree();
+    // data = get_tree();
     // Or
-    // data = Tree::FromJSON(read_file("./Test/temp.json"));
-    std::wcout << Template().Render(read_file("./Test/temp.qtml"), &data).Str;
+    data = Tree::FromJSON(read_file("./Test/temp.json"));
+    // std::wcout << Template().Render(read_file("./Test/temp.qtml"), &data).Str;
 
     // std::wcout << "\nImporting JSON...\n";
     // UNumber took = clock();
     // data         = Tree::FromJSON(read_file("./Test/bigjson.json"));
-    // // data         = Tree::FromJSON(read_file("./Test/temp.json"));
 
     // std::wcout << "Done! ";
     // took = (clock() - took);
@@ -47,13 +46,17 @@ void run() noexcept {
     // took = (clock() - took);
     // std::wcout << "Done! ";
     // std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3).Str;
-    std::wcout << "\n";
+    // std::wcout << "\n";
 
     std::wcout << data.ToJSON().Str;
     std::wcout << "\n";
 }
 
 int main() noexcept {
+    // for (UNumber y = 0; y < 50; y++) {
+    //     run();
+    // }
+
     run();
 
     // std::getchar();

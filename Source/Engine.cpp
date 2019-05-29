@@ -140,12 +140,15 @@ void Qentem::Engine::_search(Array<Match> &items, const String &content, const E
                         }
 
                         if (ce->SubExprs.Size != 0) {
+                            // This could run on its own thread.
                             Engine::_search(_item.SubMatch, content, ce->SubExprs, _item.Offset,
                                             (_item.Offset + _item.Length), 0, 0);
                         }
 
+                        // TODO: Reevaluate
                         if ((level == 0) &&
                             (((Flags::SPLITNEST & ce->Flag) != 0) || ((Flags::SPLITROOTONLY & ce->Flag) != 0))) {
+                            // This could run on its own thread.
                             Engine::Split(content, _item.NestMatch, (_item.Offset + _item.OLength),
                                           ((_item.Offset + _item.Length) - (_item.CLength)));
                         }

@@ -38,9 +38,11 @@ class String {
     String(const String &) noexcept;
     virtual ~String() noexcept;
 
-    static String  Part(const String &, UNumber, const UNumber);
-    static UNumber Hash(const String &, UNumber, const UNumber) noexcept;
-    static void    SoftTrim(const String &, UNumber &, UNumber &) noexcept;
+    // TODO:: implement String::share(const wchar_t *str)
+
+    static String  Part(const String &, const UNumber offset, const UNumber limit);
+    static UNumber Hash(const String &, const UNumber offset, const UNumber limit) noexcept;
+    static void    SoftTrim(const String &, UNumber &start, UNumber &end) noexcept;
     static String  Trim(const String &) noexcept;
     static String  Revers(const String &) noexcept;
     static String  FromNumber(double, UNumber min = 1, UNumber max = 0) noexcept;

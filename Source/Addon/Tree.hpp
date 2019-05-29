@@ -2,7 +2,7 @@
 /**
  * Qentem Tree
  *
- * @brief     Ordered Array With Hasing capability And JSON build-in
+ * @brief     Ordered/Unordered array with hasing capability and JSON build-in
  *
  * @author    Hani Ammar <hani.code@outlook.com>
  * @copyright 2019 Hani Ammar
@@ -26,7 +26,7 @@ using Qentem::Engine::Match;
 
 struct Tree;
 
-enum VType { NullT = 0, BooleanT, NumberT, ONumbersT, StringT, OStringsT, ChildT, OChildrenT };
+enum VType { NullT = 0, BooleanT, NumberT, StringT, ChildT };
 
 struct Hash {
     UNumber     HashValue = 0;
@@ -83,36 +83,34 @@ struct Field {
     String Key     = L"";
     Tree * Storage = nullptr;
 
-    Field &operator=(const Field &) noexcept;
+    Field operator[](const String &key) noexcept;
 
-    Field &operator=(const double) noexcept;
-    Field &operator=(const wchar_t *value) noexcept;
-    Field &operator=(const bool value) noexcept;
-    Field &operator=(String &value) noexcept;
+    Field &operator=(bool value) noexcept;
+    Field &operator=(double value) noexcept;
     Field &operator=(Array<double> &value) noexcept;
+    Field &operator=(const wchar_t *value) noexcept;
+    Field &operator=(String &value) noexcept;
     Field &operator=(Array<String> &value) noexcept;
     Field &operator=(Tree &value) noexcept;
     Field &operator=(Array<Tree> &value) noexcept;
-
-    Field operator[](const String &key) noexcept;
 };
 
 struct Tree {
-    UNumber HashBase = 19; // Or 97. Choose prime numbers only!
+    UNumber HashBase = 19;    // Or 97. Choose prime numbers only!
+    bool    Ordered  = false; // ordered or not ordered array
 
-    Array<Hash>          Table;
-    Array<UNumber>       Hashes;
-    Array<double>        Numbers;
-    Array<Array<double>> ONumbers;
-    Array<String>        Strings;
-    Array<Array<String>> OStrings;
-    Array<Tree>          Child;
-    Array<Array<Tree>>   OChildren;
+    Array<Hash>    Table;
+    Array<UNumber> Hashes; // TODO:: Array<Hash*>
+
+    // Types for unordered
+    Array<double> Numbers;
+    Array<String> Strings;
+    Array<Tree>   Child;
 
     static Expressions JsonQuot;
     static Expressions JsonDeQuot;
 
-    static void SetJsonQuot() noexcept {
+    inline static void SetJsonQuot() noexcept { // TODO:: needs clean up or moving
         if (JsonQuot.Size == 0) {
             static Expression _JsonQuot;
             _JsonQuot.Keyword = L"\"";
@@ -135,11 +133,8 @@ struct Tree {
             this->Table.Move(src.Table);
             this->Hashes.Move(src.Hashes);
             this->Numbers.Move(src.Numbers);
-            this->ONumbers.Move(src.ONumbers);
             this->Strings.Move(src.Strings);
-            this->OStrings.Move(src.OStrings);
             this->Child.Move(src.Child);
-            this->OChildren.Move(src.OChildren);
         }
     }
 
@@ -147,14 +142,11 @@ struct Tree {
         if (this != &src) {
             this->HashBase = src.HashBase;
 
-            this->Table     = src.Table;
-            this->Hashes    = src.Hashes;
-            this->Numbers   = src.Numbers;
-            this->ONumbers  = src.ONumbers;
-            this->Strings   = src.Strings;
-            this->OStrings  = src.OStrings;
-            this->Child     = src.Child;
-            this->OChildren = src.OChildren;
+            this->Table   = src.Table;
+            this->Hashes  = src.Hashes;
+            this->Numbers = src.Numbers;
+            this->Strings = src.Strings;
+            this->Child   = src.Child;
         }
     }
 
@@ -183,34 +175,28 @@ struct Tree {
         return _field;
     }
 
-    void Set(const String &key, UNumber offset, UNumber limit) noexcept; // null
-    void Set(const String &key, const double value, UNumber offset, UNumber limit) noexcept;
-    void Set(const String &key, const bool value, UNumber offset, UNumber limit) noexcept;
-    void Set(const String &key, String &value, UNumber offset, UNumber limit, bool move) noexcept;
-    void Set(const String &key, Array<double> &value, UNumber offset, UNumber limit, bool move) noexcept;
-    void Set(const String &key, Tree &value, UNumber offset, UNumber limit, bool move) noexcept;
-    void Set(const String &key, Array<String> &value, UNumber offset, UNumber limit, bool move) noexcept;
-    void Set(const String &key, Array<Tree> &value, UNumber offset, UNumber limit, bool move) noexcept;
+    static Expressions GetJsonExpres() noexcept;
 
-    void        InsertHash(const Hash &_hash) noexcept;
-    void        Drop(const String &key, UNumber offset, UNumber limit) noexcept;
+    void Insert(const String &key, UNumber offset, UNumber limit, const VType type, void *ptr, const bool move) noexcept;
+    void InsertHash(const Hash &_hash) noexcept;
+    void Drop(const String &key, UNumber offset, UNumber limit) noexcept;
     static void Drop(Hash &hash, Tree &storage) noexcept;
 
     static bool GetID(UNumber &id, const String &key, UNumber offset, UNumber limit) noexcept;
 
-    Tree *         GetChild(const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
-    Tree *         GetInfo(Hash **hash, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
-    Array<String> *GetOStrings(const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
-    bool           GetString(String &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
-    bool           GetNumber(UNumber &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
-    bool           GetDouble(double &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
-    bool           GetBool(bool &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
+    Tree *GetChild(const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
+    Tree *GetInfo(Hash **hash, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
+    bool  GetString(String &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
+    bool  GetNumber(UNumber &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
+    bool  GetDouble(double &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
+    bool  GetBool(bool &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
 
     String       ToJSON() const noexcept;
     StringStream _ToJSON() const noexcept;
 
     static Tree FromJSON(const String &content) noexcept;
     static void MakeTree(Tree &tree, const String &content, const Array<Match> &items) noexcept;
+    static void _makeTree(Tree &tree, const String &content, const Array<Match> &items) noexcept;
 };
 
 } // namespace Qentem

@@ -76,11 +76,15 @@ class Array {
         return *this;
     }
 
-    void Expand() noexcept {
-        if (this->_capacity == 0) {
-            this->_capacity = 1;
+    void Expand(UNumber _add_size) noexcept {
+        if (_add_size == 0) {
+            if (this->_capacity == 0) {
+                this->_capacity = 1;
+            } else {
+                this->_capacity *= 2;
+            }
         } else {
-            this->_capacity *= 2;
+            this->_capacity += _add_size;
         }
 
         T *tmp        = this->Storage;
@@ -137,13 +141,13 @@ class Array {
         }
     }
 
-    T &Last(bool expand) noexcept {
+    T &Last(bool expand) noexcept { // TODO: Add increment to prevent forgetting to increase index
         if (!expand) {
             return this->Storage[(this->Size - 1)];
         }
 
         if (this->Size == this->_capacity) {
-            Expand();
+            Expand(0);
         }
 
         return this->Storage[this->Size];
@@ -151,7 +155,7 @@ class Array {
 
     Array<T> &Add(T &&item) noexcept {
         if (this->Size == this->_capacity) {
-            Expand();
+            Expand(0);
         }
 
         this->Storage[this->Size] = item;
@@ -162,7 +166,7 @@ class Array {
 
     Array<T> &Add(const T &item) noexcept {
         if (this->Size == this->_capacity) {
-            Expand();
+            Expand(0);
         }
 
         this->Storage[this->Size] = item;
@@ -192,7 +196,7 @@ class Array {
         this->_capacity = 0;
         this->Size      = 0;
     }
-};
+}; // namespace Qentem
 } // namespace Qentem
 
 #endif
