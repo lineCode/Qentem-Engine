@@ -39,44 +39,6 @@ struct Hash {
     Hash *Get(const UNumber, const UNumber, const UNumber) noexcept;
 
     explicit Hash() = default;
-
-    void Move(Hash &src) noexcept {
-        if (this != &src) {
-            this->HashValue = src.HashValue;
-            this->ExactID   = src.ExactID;
-            this->Type      = src.Type;
-            this->Key.Move(src.Key);
-            this->Table.Move(src.Table);
-        }
-    }
-
-    void Copy(const Hash &src) noexcept {
-        if (this != &src) {
-            this->HashValue = src.HashValue;
-            this->ExactID   = src.ExactID;
-            this->Type      = src.Type;
-            this->Key       = src.Key;
-            this->Table     = src.Table;
-        }
-    }
-
-    Hash(Hash &&src) noexcept {
-        Move(src);
-    }
-
-    Hash(const Hash &src) noexcept {
-        Copy(src);
-    }
-
-    Hash &operator=(Hash &&src) noexcept {
-        Move(src);
-        return *this;
-    }
-
-    Hash &operator=(const Hash &src) noexcept {
-        Copy(src);
-        return *this;
-    }
 };
 
 struct Field {
@@ -96,7 +58,7 @@ struct Field {
 };
 
 struct Tree {
-    UNumber HashBase = 19;    // Or 97. Choose prime numbers only!
+    UNumber HashBase = 7;     // Or 97. Choose prime numbers only!
     bool    Ordered  = false; // ordered or not ordered array
 
     Array<Hash>    Table;
@@ -125,49 +87,6 @@ struct Tree {
     }
 
     explicit Tree() = default;
-
-    void Move(Tree &src) noexcept {
-        if (this != &src) {
-            this->HashBase = src.HashBase;
-            this->Ordered  = src.Ordered;
-            this->Table.Move(src.Table);
-            this->Hashes.Move(src.Hashes);
-            this->Numbers.Move(src.Numbers);
-            this->Strings.Move(src.Strings);
-            this->Branches.Move(src.Branches);
-        }
-    }
-
-    void Copy(const Tree &src) noexcept {
-        if (this != &src) {
-            this->HashBase = src.HashBase;
-            this->Ordered  = src.Ordered;
-
-            this->Table    = src.Table;
-            this->Hashes   = src.Hashes;
-            this->Numbers  = src.Numbers;
-            this->Strings  = src.Strings;
-            this->Branches = src.Branches;
-        }
-    }
-
-    Tree(Tree &&src) noexcept {
-        Move(src);
-    }
-
-    Tree(const Tree &src) noexcept {
-        Copy(src);
-    }
-
-    Tree &operator=(Tree &&src) noexcept {
-        Move(src);
-        return *this;
-    }
-
-    Tree &operator=(const Tree &src) noexcept {
-        Copy(src);
-        return *this;
-    }
 
     Field operator[](const String &key) noexcept {
         Field _field;

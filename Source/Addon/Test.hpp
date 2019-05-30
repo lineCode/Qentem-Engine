@@ -28,46 +28,6 @@ struct TestBit {
     Expressions   Collect;
     Array<String> Content;
     Array<String> Expected;
-
-    void Move(TestBit &src) noexcept {
-        if (this != &src) {
-            this->Line = src.Line;
-            this->Exprs.Move(src.Exprs);
-            this->Collect.Move(src.Collect);
-            this->Content.Move(src.Content);
-            this->Expected.Move(src.Expected);
-        }
-    }
-
-    void Copy(const TestBit &src) noexcept {
-        if (this != &src) {
-            this->Line     = src.Line;
-            this->Exprs    = src.Exprs;
-            this->Collect  = src.Collect;
-            this->Content  = src.Content;
-            this->Expected = src.Expected;
-        }
-    }
-
-    explicit TestBit() = default;
-
-    TestBit(TestBit &&src) noexcept {
-        Move(src);
-    }
-
-    TestBit(const TestBit &src) noexcept {
-        Copy(src);
-    }
-
-    TestBit &operator=(TestBit &&src) noexcept {
-        Move(src);
-        return *this;
-    }
-
-    TestBit &operator=(const TestBit &src) noexcept {
-        Copy(src);
-        return *this;
-    }
 };
 
 void          CleanBits(Array<TestBit> &) noexcept;

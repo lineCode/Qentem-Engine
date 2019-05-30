@@ -271,7 +271,7 @@ String Qentem::Template::RenderLoop(const String &block, const Match &item) noex
             UNumber        length  = (item.Length - (sm->Length + item.CLength));
             String         content = Template::Repeat(String::Part(block, offset, length), name, var_id, pocket->Data);
 
-            // When bubbling
+            // If bubbling:
             // const UNumber   offset  = (sm->Length - item.OLength);
             // const UNumber   length  = ((item.Length - offset) - (item.OLength + item.CLength));
             // const String   content = Template::DoLoop(String::Part(block,offset, length), name, var_id,

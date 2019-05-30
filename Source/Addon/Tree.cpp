@@ -21,6 +21,9 @@ using Qentem::Engine::Expression;
 using Qentem::Engine::Expressions;
 using Qentem::Engine::Flags;
 
+Expressions Tree::JsonQuot   = Expressions(); // See SetJsonQuot()
+Expressions Tree::JsonDeQuot = Expressions();
+
 void Qentem::Hash::Set(const Hash &_hash, const UNumber base, const UNumber level) noexcept {
     if (this->HashValue == 0) {
         this->HashValue = _hash.HashValue;
@@ -87,7 +90,7 @@ Qentem::Field &Qentem::Field::operator=(String &value) noexcept {
 }
 
 Qentem::Field &Qentem::Field::operator=(Array<String> &value) noexcept {
-    if (this->Storage != nullptr) { // TODO: Needs loop insert in Numbers
+    if (this->Storage != nullptr) { // TODO: Needs loop insert in Strings
     }
     return *this;
 }
@@ -100,7 +103,7 @@ Qentem::Field &Qentem::Field::operator=(Tree &value) noexcept {
 }
 
 Qentem::Field &Qentem::Field::operator=(Array<Tree> &value) noexcept {
-    if (this->Storage != nullptr) { // TODO: Needs loop insert in Numbers
+    if (this->Storage != nullptr) { // TODO: Needs loop insert in Branches
     }
     return *this;
 }
@@ -123,6 +126,7 @@ void Qentem::Tree::InsertHash(const Hash &_hash) noexcept {
         this->Table.Size = HashBase;
     }
 
+    // TODO: This is ok but slow. Needs complate rewrite/redisin
     this->Table[(_hash.HashValue % HashBase)].Set(_hash, HashBase, 1);
     Hashes.Add(_hash.HashValue); // TODO: Use pointers!
 }
@@ -138,7 +142,7 @@ void Qentem::Tree::Drop(Hash &_hash, Tree &storage) noexcept {
             storage.Strings[_hash.ExactID].Clear();
             break;
         case VType::BranchT:
-            storage.Branches[_hash.ExactID] = Tree();
+            storage.Branches[_hash.ExactID] = Tree(); // TODO: Add Clear()
             break;
         default:
             break;
@@ -237,6 +241,7 @@ Tree *Qentem::Tree::GetInfo(Hash **hash, const String &key, UNumber offset, UNum
     return nullptr;
 }
 
+// TODO: make one Get()
 bool Qentem::Tree::GetString(String &value, const String &key, UNumber offset, UNumber limit) noexcept {
     value.Clear();
 
@@ -263,6 +268,7 @@ bool Qentem::Tree::GetString(String &value, const String &key, UNumber offset, U
     return false;
 }
 
+// TODO: make one Get()
 bool Qentem::Tree::GetNumber(UNumber &value, const String &key, UNumber offset, UNumber limit) noexcept {
     value = 0;
     Hash *      _hash;
@@ -336,8 +342,6 @@ void Qentem::Tree::Insert(const String &key, UNumber offset, UNumber limit, cons
     UNumber _hash_value = String::Hash(key, offset, (offset + limit));
     UNumber id          = (_hash_value % HashBase);
 
-    // TODO: implement move
-
     if (id < Table.Size) {
         p_hash = Table[id].Get(_hash_value, HashBase, 1);
         if ((p_hash->HashValue == _hash_value) && (p_hash->Type != type) && (p_hash->Type != VType::NullT)) {
@@ -366,11 +370,19 @@ void Qentem::Tree::Insert(const String &key, UNumber offset, UNumber limit, cons
             } break;
             case VType::StringT: {
                 _hash.ExactID = Strings.Size;
-                Strings.Add(*(static_cast<String *>(ptr)));
+                if (move) {
+                    Strings.Add(static_cast<String &&>(*(static_cast<String *>(ptr))));
+                } else {
+                    Strings.Add(*(static_cast<String *>(ptr)));
+                }
             } break;
             case VType::BranchT: {
                 _hash.ExactID = Branches.Size;
-                Branches.Add(*(static_cast<Tree *>(ptr)));
+                if (move) {
+                    Branches.Add(static_cast<Tree &&>(*(static_cast<Tree *>(ptr))));
+                } else {
+                    Branches.Add(*(static_cast<Tree *>(ptr)));
+                }
             } break;
             default:
                 break;
@@ -378,6 +390,7 @@ void Qentem::Tree::Insert(const String &key, UNumber offset, UNumber limit, cons
 
         InsertHash(_hash);
     } else {
+        // TODO: implement move
         switch (type) {
             // case VType::NullT:
             //     break;
@@ -558,11 +571,12 @@ void Qentem::Tree::_makeTree(Tree &tree, const String &content, const Array<Matc
 
                         Tree o_tree    = Tree();
                         o_tree.Ordered = true;
+                        Match *data    = &(items[i]);
 
                         if (items[i].NestMatch.Size > 0) {
-                            Tree::_makeTree(o_tree, content, items[i].NestMatch);
+                            Tree::_makeTree(o_tree, content, data->NestMatch);
                         } else {
-                            Tree::_makeNumberedTree(o_tree, content, items[i]);
+                            Tree::_makeNumberedTree(o_tree, content, *data);
                         }
 
                         tree.Insert(content, (key->Offset + 1), (key->Length - 2), VType::BranchT, &o_tree, true);
@@ -611,7 +625,7 @@ void Qentem::Tree::_makeTree(Tree &tree, const String &content, const Array<Matc
     } else {
         if (items.Size > 0) {
             if (items[0].Expr->Keyword == L'"') { // Strings
-                tree.Strings.Expand(items.Size);
+                tree.Strings.SetCapacity(items.Size);
 
                 Match *data;
                 for (UNumber i = 0; i < items.Size; i++) {
@@ -619,32 +633,37 @@ void Qentem::Tree::_makeTree(Tree &tree, const String &content, const Array<Matc
                     if (data->NestMatch.Size == 0) {
                         tree.Strings.Add(String::Part(content, (data->Offset + 1), (data->Length - 2)));
                     } else {
-                        String ts = String::Part(content, (data->Offset + 1), (data->Length - 2));
-                        tree.Strings.Add(Engine::Parse(ts, Engine::Search(ts, JsonDeQuot)));
+                        String *rs = &(tree.Strings[tree.Strings.Size]);
+                        tree.Strings.Size++;
+
+                        *rs = String::Part(content, (data->Offset + 1), (data->Length - 2));
+                        Engine::Parse(*rs, Engine::Search(*rs, JsonDeQuot));
                     }
                 }
             } else if (items[0].Expr->Keyword == L'}') { // Unordered arrays
-                tree.Branches.Expand(items.Size);
+                tree.Branches.SetCapacity(items.Size);
 
                 for (UNumber i = 0; i < items.Size; i++) {
-                    Tree uno_tree = Tree();
-                    _makeTree(uno_tree, content, items[i].NestMatch);
-                    tree.Branches.Add(static_cast<Tree &&>(uno_tree)); // Invoke move;
+                    Tree *te = &(tree.Branches[tree.Branches.Size]);
+                    tree.Branches.Size++;
+
+                    _makeTree(*te, content, items[i].NestMatch);
                 }
             } else if (items[0].Expr->Keyword == L']') { // Ordered arrays
-                tree.Branches.Expand(items.Size);
+                Match *data;
+                tree.Branches.SetCapacity(items.Size);
 
                 for (UNumber i = 0; i < items.Size; i++) {
-                    Tree o_tree    = Tree();
-                    o_tree.Ordered = true;
+                    Tree *te = &(tree.Branches[tree.Branches.Size]);
+                    tree.Branches.Size++;
+                    te->Ordered = true;
 
-                    if (items[i].NestMatch.Size > 0) {
-                        Tree::_makeTree(o_tree, content, items[i].NestMatch);
+                    data = &(items[i]);
+                    if (data->NestMatch.Size > 0) {
+                        Tree::_makeTree(*te, content, data->NestMatch);
                     } else {
-                        Tree::_makeNumberedTree(o_tree, content, items[i]);
+                        Tree::_makeNumberedTree(*te, content, *data);
                     }
-
-                    tree.Branches.Add(static_cast<Tree &&>(o_tree)); // Invoke move;
                 }
             }
         } else {
@@ -729,6 +748,3 @@ Tree Qentem::Tree::FromJSON(const String &content) noexcept {
     Tree::MakeTree(tree, content, Engine::Search(content, GetJsonExpres()));
     return tree;
 }
-
-Expressions Tree::JsonQuot   = Expressions(); // See SetJsonQuot
-Expressions Tree::JsonDeQuot = Expressions(); // See SetJsonQuot

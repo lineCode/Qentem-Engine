@@ -63,21 +63,6 @@ struct Expression {
 
     Expressions NestExprs; // Expressions for nesting Search().
     Expressions SubExprs;  // Matches other parts of the match, but do not nest.
-
-    // void Move(Expression &src) noexcept {
-    //     if (this != &src) {
-    //         this->Flag      = src.Flag;
-    //         this->Connected = src.Connected;
-    //         this->SearchCB  = src.SearchCB;
-    //         this->ParseCB   = src.ParseCB;
-    //         this->Pocket    = src.Pocket;
-
-    //         this->Keyword.Move(src.Keyword);
-    //         this->Replace.Move(src.Replace);
-    //         this->NestExprs.Move(src.NestExprs);
-    //         this->SubExprs.Move(src.SubExprs);
-    //     }
-    // }
 };
 /////////////////////////////////
 struct Match {
@@ -96,56 +81,6 @@ struct Match {
     // Its content does not get parse; it would be faster to do a sub search insead of calling back Search() from
     // an outside function, when the CPU cache already holds the text.
     Array<Match> SubMatch;
-
-    explicit Match() = default;
-
-    void Move(Match &src) noexcept {
-        if (this != &src) {
-            this->Offset  = src.Offset;
-            this->Length  = src.Length;
-            this->OLength = src.OLength;
-            this->CLength = src.CLength;
-            this->Tag     = src.Tag;
-            this->ID      = src.ID;
-            this->Expr    = src.Expr;
-
-            this->NestMatch.Move(src.NestMatch);
-            this->SubMatch.Move(src.SubMatch);
-        }
-    }
-
-    void Copy(const Match &src) noexcept {
-        if (this != &src) {
-            this->Offset  = src.Offset;
-            this->Length  = src.Length;
-            this->OLength = src.OLength;
-            this->CLength = src.CLength;
-            this->Tag     = src.Tag;
-            this->ID      = src.ID;
-            this->Expr    = src.Expr;
-
-            this->NestMatch = src.NestMatch;
-            this->SubMatch  = src.SubMatch;
-        }
-    }
-
-    Match(Match &&src) noexcept { // Move
-        Move(src);
-    }
-
-    Match(const Match &src) noexcept { // Copy
-        Copy(src);
-    }
-
-    Match &operator=(Match &&src) noexcept { // Move
-        Move(src);
-        return *this;
-    }
-
-    Match &operator=(const Match &src) noexcept { // Copy
-        Copy(src);
-        return *this;
-    }
 };
 /////////////////////////////////
 Array<Match> Search(const String &content, const Expressions &exprs, UNumber index = 0, UNumber limit = 0,

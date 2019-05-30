@@ -101,16 +101,19 @@ class Array {
         if (src.Size != 0) {
             if ((this->Size + src.Size) > this->_capacity) {
                 this->_capacity += src.Size;
-                this->_capacity *= 2;
 
-                T *tmp        = this->Storage;
-                this->Storage = new T[this->_capacity];
+                if (this->Size != 0) {
+                    T *tmp        = this->Storage;
+                    this->Storage = new T[this->_capacity];
 
-                for (UNumber n = 0; n < this->Size; n++) {
-                    this->Storage[n] = static_cast<T &&>(tmp[n]);
+                    for (UNumber n = 0; n < this->Size; n++) {
+                        this->Storage[n] = static_cast<T &&>(tmp[n]);
+                    }
+
+                    delete[] tmp;
+                } else {
+                    this->Storage = new T[this->_capacity];
                 }
-
-                delete[] tmp;
             }
 
             if (move) {
@@ -141,7 +144,7 @@ class Array {
         }
     }
 
-    T &Last(bool expand) noexcept { // TODO: Add increment to prevent forgetting to increase index
+    T &Last(bool expand) noexcept { // TODO: Remove "expand" and  add "increment" to prevent forgetting to increase index
         if (!expand) {
             return this->Storage[(this->Size - 1)];
         }
