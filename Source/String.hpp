@@ -38,7 +38,7 @@ class String {
     String(const String &) noexcept;
     virtual ~String() noexcept;
 
-    // TODO:: implement String::share(const wchar_t *str)
+    // TODO: implement String::share(const wchar_t *str)
 
     static String  Part(const String &, const UNumber offset, const UNumber limit);
     static UNumber Hash(const String &, const UNumber offset, const UNumber limit) noexcept;

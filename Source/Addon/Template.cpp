@@ -304,7 +304,7 @@ String Qentem::Template::Repeat(const String &content, const String &name, const
 
     const Array<Match> items = Engine::Search(content, ser);
 
-    // TODO: restore with a fix and numbers support
+    // TODO: restore with a fix
     // if ((hash->Type == VType::OStringsT) || (hash->Type == VType::ONumbersT)) {
     //     const Array<String> *st = &(_storage->OStrings[hash->ExactID]);
     //     if (st != nullptr) {
@@ -313,8 +313,8 @@ String Qentem::Template::Repeat(const String &content, const String &name, const
     //             rendered += Engine::Parse(content, items);
     //         }
     //     }
-    // } else if (hash->Type == VType::ChildT) {
-    //     const Tree *ci = &(_storage->Child[hash->ExactID]);
+    // } else if (hash->Type == VType::BranchT) {
+    //     const Tree *ci = &(_storage->Branches[hash->ExactID]);
     //     if (ci != nullptr) {
     //         for (UNumber i = 0; i < ci->Table.Size; i++) {
     //             ser[0]->Replace = ci->Table[i].Key;

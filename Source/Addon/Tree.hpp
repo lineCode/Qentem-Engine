@@ -26,7 +26,7 @@ using Qentem::Engine::Match;
 
 struct Tree;
 
-enum VType { NullT = 0, BooleanT, NumberT, StringT, ChildT };
+enum VType { NullT = 0, BooleanT, NumberT, StringT, BranchT };
 
 struct Hash {
     UNumber     HashValue = 0;
@@ -100,17 +100,17 @@ struct Tree {
     bool    Ordered  = false; // ordered or not ordered array
 
     Array<Hash>    Table;
-    Array<UNumber> Hashes; // TODO:: Array<Hash*>
+    Array<UNumber> Hashes; // TODO: Array<Hash*>
 
     // Types for unordered
     Array<double> Numbers;
     Array<String> Strings;
-    Array<Tree>   Child;
+    Array<Tree>   Branches;
 
     static Expressions JsonQuot;
     static Expressions JsonDeQuot;
 
-    inline static void SetJsonQuot() noexcept { // TODO:: needs clean up or moving
+    inline static void SetJsonQuot() noexcept { // TODO: needs clean up or moving
         if (JsonQuot.Size == 0) {
             static Expression _JsonQuot;
             _JsonQuot.Keyword = L"\"";
@@ -129,24 +129,25 @@ struct Tree {
     void Move(Tree &src) noexcept {
         if (this != &src) {
             this->HashBase = src.HashBase;
-
+            this->Ordered  = src.Ordered;
             this->Table.Move(src.Table);
             this->Hashes.Move(src.Hashes);
             this->Numbers.Move(src.Numbers);
             this->Strings.Move(src.Strings);
-            this->Child.Move(src.Child);
+            this->Branches.Move(src.Branches);
         }
     }
 
     void Copy(const Tree &src) noexcept {
         if (this != &src) {
             this->HashBase = src.HashBase;
+            this->Ordered  = src.Ordered;
 
-            this->Table   = src.Table;
-            this->Hashes  = src.Hashes;
-            this->Numbers = src.Numbers;
-            this->Strings = src.Strings;
-            this->Child   = src.Child;
+            this->Table    = src.Table;
+            this->Hashes   = src.Hashes;
+            this->Numbers  = src.Numbers;
+            this->Strings  = src.Strings;
+            this->Branches = src.Branches;
         }
     }
 
@@ -184,7 +185,7 @@ struct Tree {
 
     static bool GetID(UNumber &id, const String &key, UNumber offset, UNumber limit) noexcept;
 
-    Tree *GetChild(const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
+    Tree *GetBranch(const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
     Tree *GetInfo(Hash **hash, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
     bool  GetString(String &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
     bool  GetNumber(UNumber &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
@@ -194,9 +195,11 @@ struct Tree {
     String       ToJSON() const noexcept;
     StringStream _ToJSON() const noexcept;
 
-    static Tree FromJSON(const String &content) noexcept;
-    static void MakeTree(Tree &tree, const String &content, const Array<Match> &items) noexcept;
+    static void _makeNumberedTree(Tree &tree, const String &content, const Match &item) noexcept;
+
     static void _makeTree(Tree &tree, const String &content, const Array<Match> &items) noexcept;
+    static void MakeTree(Tree &tree, const String &content, const Array<Match> &items) noexcept;
+    static Tree FromJSON(const String &content) noexcept;
 };
 
 } // namespace Qentem

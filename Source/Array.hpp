@@ -153,7 +153,7 @@ class Array {
         return this->Storage[this->Size];
     }
 
-    Array<T> &Add(T &&item) noexcept {
+    Array<T> &Add(T &&item) noexcept { // Move
         if (this->Size == this->_capacity) {
             Expand(0);
         }
@@ -164,7 +164,7 @@ class Array {
         return *this;
     }
 
-    Array<T> &Add(const T &item) noexcept {
+    Array<T> &Add(const T &item) noexcept { // Copy
         if (this->Size == this->_capacity) {
             Expand(0);
         }
@@ -183,19 +183,17 @@ class Array {
         return this->Storage[id];
     }
 
-    virtual ~Array() noexcept {
-        if (this->Storage != nullptr) {
-            delete[] this->Storage;
-            this->Storage = nullptr;
-        }
-    }
-
     void Clear() noexcept {
         delete[] this->Storage;
         this->Storage   = nullptr;
         this->_capacity = 0;
         this->Size      = 0;
     }
+
+    virtual ~Array() noexcept {
+        Clear();
+    }
+
 }; // namespace Qentem
 } // namespace Qentem
 
