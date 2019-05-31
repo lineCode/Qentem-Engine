@@ -1,4 +1,4 @@
-# Qentem Engine (v0.5.5)
+# Qentem Engine (v0.6.0)
 
 ## Summary:
 Qentem is a stand-alone library, built to provide a simple way to match existing syntaxes or new ones. It also provides call-backs for post or per-parsing. Built for templates, then rewritten for general-propose matching of text or syntaxes - Regular expression on steroids.
@@ -12,19 +12,14 @@ The JavaScript code was then adopted as template engine for PHP, but the limitat
 
 But after moving the code base to C (then C++ later) the speed was 1:1000 of what it used to be on PHP. That opened it to unlimited ways of using the new engine, and so, Qentem is used as a name to present an easy and new way of dealing with nested matching, and to describe the mechanism that is being used in this engine.
 
-## Status:
-The project is in a very early stage. However, the engine has been rewritten over and over to ensure it delivers the desire results, which is achieved through extensive tests (3 times the size of the engine). It's working and has a full implementation of HTML template. Also, it has an early implementation for JSON and other syntaxes. Still, the engine does what it should, and the rest is just publishing and add-ons, as the code was built from the ground-up to be module.
-
-To be fair, the HTML Template is actually a HTML JET Engine; since it can do nested if-else statements, nested loops, variables, and has an ALU unit functioning inside if cases/conditions.
-
-## Present:
-I had to stop working on this project to focus on my studies, and now that I have some time, the work will – hopefully – resume.
-
 ## The code:
-It was built to be ported to any managed language, so I tried to limit the use of C/C++ specific syntax. The code itself was ported from PHP. It has no try-catch statements nor Goto. Also, I wanted to use some assembly code, but that would drastically limit it from being ported to other languages.
+Qentem is built to be ported to any managed language, so I tried to limit the use of C++ specific syntax. The code itself was ported from PHP. It has no try-catch statements nor Goto. Also, I wanted to use some assembly code, but that would drastically limit it from being ported to other languages.
 
 ## The algorithm:
-The entire project is about the algorithm not the code. That's why it's written in a as-simple-as-possible form, which allowed it to be compiled easily to Web Assembly without any modifications.
+The project is about the algorithm not the code. That's why it's written in a as-simple-as-possible form, which allowed it to be compiled easily to Web Assembly without any modifications.
 
 ## Q: Why most of the code has no comments?
 A: Well, I had one and half week to port it to C, then C++. Then I had to rewrite most of it in another 2 weeks. And had only two weeks to bug the bugs out. After reaching v0.5.0, my old laptop broke (the poor thing couldn't handle the heat any more), and since the project was on a rapid development stage, I was holding off the comments for the next release, as I wasn't sure if it will actually work or not (it does now), then the semester started, and had to focus on my studies.
+
+## Status:
+The project is in early development stage. However, the engine has been rewritten over and over to ensure it delivers the desire results, which is achieved through extensive tests (3 times the size of the engine). It's working and has a full implementation of HTML template and JSON.

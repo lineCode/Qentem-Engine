@@ -9,8 +9,8 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include "Addon/QRegex.hpp"
-#include "Addon/ALU.hpp"
+#include "Extintion/QRegex.hpp"
+#include "Extintion/ALU.hpp"
 
 using Qentem::String;
 using Qentem::Engine::Flags;

@@ -51,7 +51,7 @@
     //   "type": "python",
     //   "request": "launch",
     //   "cwd": "${workspaceFolder}",
-    //   "program": "${workspaceFolder}/Source/Addon/TestWrapper.py",
+    //   "program": "${workspaceFolder}/Source/Extintion/TestWrapper.py",
     //   "console": "integratedTerminal"
     // }
   ]

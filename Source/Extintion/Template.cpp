@@ -9,8 +9,8 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include "Addon/Template.hpp"
-#include "Addon/Test.hpp"
+#include "Extintion/Template.hpp"
+#include "Extintion/Test.hpp"
 #include "StringStream.hpp"
 
 using Qentem::String;
@@ -118,15 +118,15 @@ String Qentem::Template::Render(const String &content, Tree *data) noexcept {
 // Nest: {v-var_{v-var2_{v-var3_id}}}
 String Qentem::Template::RenderVar(const String &block, const Match &item) noexcept {
     PocketT *_pocket = static_cast<PocketT *>(item.Expr->Pocket);
-    String   value;
 
+    String value;
     if (_pocket->Data->GetString(value, block, (item.Offset + item.OLength),
                                  (item.Length - (item.CLength + item.OLength)))) {
         return value;
     }
 
     return String::Part(block, (item.Offset + item.OLength), (item.Length - (item.CLength + item.OLength)));
-    // return String::Part(block, item.OLength, (block.Length - (item.OLength + item.CLength))); // When Bubble
+    // return String::Part(block, item.OLength, (block.Length - (item.OLength + item.CLength))); // if Bubbling
 }
 
 // <if case="{case}">html code</if>
@@ -304,24 +304,27 @@ String Qentem::Template::Repeat(const String &content, const String &name, const
 
     const Array<Match> items = Engine::Search(content, ser);
 
-    // TODO: restore with a fix
-    // if ((hash->Type == VType::OStringsT) || (hash->Type == VType::ONumbersT)) {
-    //     const Array<String> *st = &(_storage->OStrings[hash->ExactID]);
-    //     if (st != nullptr) {
-    //         for (UNumber i = 0; i < st->Size; i++) {
-    //             ser[0]->Replace = String::FromNumber(i);
-    //             rendered += Engine::Parse(content, items);
-    //         }
-    //     }
-    // } else if (hash->Type == VType::BranchT) {
-    //     const Tree *ci = &(_storage->Branches[hash->ExactID]);
-    //     if (ci != nullptr) {
-    //         for (UNumber i = 0; i < ci->Table.Size; i++) {
-    //             ser[0]->Replace = ci->Table[i].Key;
-    //             rendered += Engine::Parse(content, items);
-    //         }
-    //     }
-    // }
+    if (hash->Type == VType::BranchT) {
+        if (_storage->Ordered) {
+            if (_storage->Strings.Size != 0) {
+                for (UNumber i = 0; i < _storage->Strings.Size; i++) {
+                    ser[0]->Replace = String::FromNumber(i);
+                    rendered += Engine::Parse(content, items);
+                }
+            } else if (_storage->Numbers.Size != 0) {
+                for (UNumber i = 0; i < _storage->Numbers.Size; i++) {
+                    ser[0]->Replace = String::FromNumber(i);
+                    rendered += Engine::Parse(content, items);
+                }
+            }
+
+        } else {
+            for (UNumber i = 0; i < _storage->Table.Size; i++) {
+                ser[0]->Replace = _storage->Table[i].Key;
+                rendered += Engine::Parse(content, items);
+            }
+        }
+    }
 
     return rendered.Eject();
 }

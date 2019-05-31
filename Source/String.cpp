@@ -165,7 +165,7 @@ bool Qentem::String::operator==(const String &src) const noexcept { // Compare
     return (i == this->Length);
 }
 
-constexpr bool Qentem::String::operator!=(const String &src) const noexcept { // Compare
+bool Qentem::String::operator!=(const String &src) const noexcept { // Compare
     return (!(*this == src));
 }
 
@@ -232,6 +232,7 @@ Qentem::String Qentem::String::Revers(const String &str) noexcept {
     return tmp;
 }
 
+// TODO: Using char[] for faster copying
 Qentem::String Qentem::String::FromNumber(UNumber number, UNumber min) noexcept {
     String sign;
     if (number < 0) {
@@ -296,7 +297,7 @@ Qentem::String Qentem::String::FromNumber(double number, UNumber min, UNumber ma
         num = static_cast<UNumber>(number);
     }
 
-    String tmp_l;
+    String tmp_l; // TODO: Set capacity ahead
     while (num > 0.0) {
         tmp_l += wchar_t(((num % 10) + 48));
         num /= 10;

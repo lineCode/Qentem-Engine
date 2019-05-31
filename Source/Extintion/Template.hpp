@@ -13,8 +13,8 @@
 #define QENTEM_TEMPLATE_H
 
 #include "Engine.hpp"
-#include "Addon/ALU.hpp"
-#include "Addon/Tree.hpp"
+#include "Extintion/ALU.hpp"
+#include "Extintion/Tree.hpp"
 
 namespace Qentem {
 

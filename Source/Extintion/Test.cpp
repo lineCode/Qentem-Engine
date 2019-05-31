@@ -9,8 +9,8 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include "Addon/Test.hpp"
-#include "Addon/QRegex.hpp"
+#include "Extintion/Test.hpp"
+#include "Extintion/QRegex.hpp"
 
 using Qentem::Array;
 using Qentem::String;

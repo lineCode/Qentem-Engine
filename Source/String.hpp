@@ -61,8 +61,8 @@ class String {
     String operator+(String &&src) const noexcept;      // Move
     String operator+(const String &src) const noexcept; // Copy
 
-    bool           operator==(const String &src) const noexcept; // compare; equal
-    constexpr bool operator!=(const String &src) const noexcept; // compare: not equal
+    bool operator==(const String &src) const noexcept; // compare; equal
+    bool operator!=(const String &src) const noexcept; // compare: not equal
 };
 } // namespace Qentem
 

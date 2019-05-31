@@ -28,6 +28,7 @@ struct Tree;
 
 enum VType { NullT = 0, BooleanT, NumberT, StringT, BranchT };
 
+// Split this to a file
 struct Hash {
     UNumber     HashValue = 0;
     UNumber     ExactID   = 0;
@@ -41,6 +42,7 @@ struct Hash {
     explicit Hash() = default;
 };
 
+// Split this to a file
 struct Field {
     String Key     = L"";
     Tree * Storage = nullptr;
@@ -95,27 +97,27 @@ struct Tree {
         return _field;
     }
 
-    static Expressions GetJsonExpres() noexcept;
-
-    void Insert(const String &key, UNumber offset, UNumber limit, const VType type, void *ptr, const bool move) noexcept;
-    void InsertHash(const Hash &_hash) noexcept;
-    void Drop(const String &key, UNumber offset, UNumber limit) noexcept;
+    void        Drop(const String &key, UNumber offset, UNumber limit) noexcept;
     static void Drop(Hash &hash, Tree &storage) noexcept;
 
     static bool GetID(UNumber &id, const String &key, UNumber offset, UNumber limit) noexcept;
 
-    Tree *GetBranch(const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
     Tree *GetInfo(Hash **hash, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
     bool  GetString(String &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
     bool  GetNumber(UNumber &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
     bool  GetDouble(double &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
     bool  GetBool(bool &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
+    Tree *GetBranch(const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
+
+    void InsertHash(const Hash &_hash) noexcept;
+    void Insert(const String &key, UNumber offset, UNumber limit, const VType type, void *ptr, const bool move) noexcept;
 
     String       ToJSON() const noexcept;
     StringStream _ToJSON() const noexcept;
 
-    static void _makeNumberedTree(Tree &tree, const String &content, const Match &item) noexcept;
+    static Expressions GetJsonExpres() noexcept;
 
+    static void _makeNumberedTree(Tree &tree, const String &content, const Match &item) noexcept;
     static void _makeTree(Tree &tree, const String &content, const Array<Match> &items) noexcept;
     static void MakeTree(Tree &tree, const String &content, const Array<Match> &items) noexcept;
     static Tree FromJSON(const String &content) noexcept;

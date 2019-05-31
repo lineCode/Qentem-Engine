@@ -9,7 +9,7 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include "Addon/QRegex.hpp"
+#include "Extintion/QRegex.hpp"
 
 using Qentem::Engine::Expression;
 using Qentem::Engine::Expressions;
@@ -51,10 +51,13 @@ UNumber Qentem::QRegex::OR(const String &content, const Expression &expr, Match 
 
 // Short hand replace
 String Qentem::QRegex::Replace(const String &content, const String &find, const String &replace) noexcept {
-    Expression find_key;
-    find_key.Keyword  = find;
-    find_key.SearchCB = &(QRegex::OR);
-    find_key.Replace  = replace;
+    static Expression find_key;
+
+    if (find_key.Keyword != find) { // Caching
+        find_key.Keyword  = find;
+        find_key.SearchCB = &(QRegex::OR);
+        find_key.Replace  = replace;
+    }
 
     return Engine::Parse(content, Engine::Search(content, Expressions().Add(&find_key)));
 }

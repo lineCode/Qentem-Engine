@@ -9,8 +9,8 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include "Addon/QRegex.hpp"
-#include "Addon/Tree.hpp"
+#include "Extintion/QRegex.hpp"
+#include "Extintion/Tree.hpp"
 
 using Qentem::Array;
 using Qentem::Hash;
@@ -109,26 +109,15 @@ Qentem::Field &Qentem::Field::operator=(Array<Tree> &value) noexcept {
 }
 
 Qentem::Field Qentem::Field::operator[](const String &key) noexcept {
-    if (this->Storage != nullptr) {
-        Tree *tree = this->Storage->GetBranch(this->Key, 0, this->Key.Length);
+    if (this->Storage != nullptr) { // TODO: restore with a fix
+        // Tree *tree = this->Storage->GetBranch(this->Key, 0, this->Key.Length);
 
-        if (tree != nullptr) {
-            return (*tree)[key];
-        }
+        // if (tree != nullptr) {
+        //     return (*tree)[key];
+        // }
     }
 
     return Field();
-}
-
-void Qentem::Tree::InsertHash(const Hash &_hash) noexcept {
-    if (this->Table.Size == 0) {
-        this->Table.SetCapacity(HashBase);
-        this->Table.Size = HashBase;
-    }
-
-    // TODO: This is ok but slow. Needs complate rewrite/redisin
-    this->Table[(_hash.HashValue % HashBase)].Set(_hash, HashBase, 1);
-    Hashes.Add(_hash.HashValue); // TODO: Use pointers!
 }
 
 void Qentem::Tree::Drop(Hash &_hash, Tree &storage) noexcept {
@@ -167,17 +156,6 @@ bool Qentem::Tree::GetID(UNumber &id, const String &key, UNumber offset, UNumber
     limit--;
 
     return String::ToNumber(key, id, end, (limit - (end - offset)));
-}
-
-Tree *Qentem::Tree::GetBranch(const String &key, UNumber offset, UNumber limit) noexcept {
-    Hash *_hash;
-    Tree *storage = GetInfo(&_hash, key, offset, limit);
-
-    if ((storage != nullptr) && (_hash->Type == VType::BranchT)) {
-        return storage;
-    }
-
-    return nullptr;
 }
 
 // Key form can be: name, name[id1], name[id1][sub-id2], name[id1][sub-id2][sub-sub-idx]...
@@ -225,12 +203,13 @@ Tree *Qentem::Tree::GetInfo(Hash **hash, const String &key, UNumber offset, UNum
         if ((*hash)->HashValue != 0) {
             if ((*hash)->Type == VType::BranchT) {
                 limit -= (end_offset - offset);
+                Tree *tmp = &(this->Branches[(*hash)->ExactID]);
 
-                if (limit != 0) {
-                    return this->Branches[(*hash)->ExactID].GetInfo(hash, key, end_offset, limit);
+                if ((limit != 0) && !tmp->Ordered) {
+                    return tmp->GetInfo(hash, key, end_offset, limit);
                 }
 
-                return &(this->Branches[(*hash)->ExactID]);
+                return tmp;
             }
 
             return this;
@@ -241,7 +220,6 @@ Tree *Qentem::Tree::GetInfo(Hash **hash, const String &key, UNumber offset, UNum
     return nullptr;
 }
 
-// TODO: make one Get()
 bool Qentem::Tree::GetString(String &value, const String &key, UNumber offset, UNumber limit) noexcept {
     value.Clear();
 
@@ -249,44 +227,68 @@ bool Qentem::Tree::GetString(String &value, const String &key, UNumber offset, U
     const Tree *storage = GetInfo(&_hash, key, offset, limit);
 
     if (storage != nullptr) {
-        if (_hash->Type == VType::StringT) {
-            value = storage->Strings[_hash->ExactID];
-            return true;
-        }
+        if (!storage->Ordered) {
+            if (_hash->Type == VType::StringT) {
+                value = storage->Strings[_hash->ExactID];
+                return true;
+            }
 
-        if (_hash->Type == VType::BooleanT) {
-            value = ((storage->Numbers[_hash->ExactID] == 1.0) ? L"true" : L"false");
-            return true;
-        }
+            if (_hash->Type == VType::BooleanT) {
+                value = ((storage->Numbers[_hash->ExactID] == 1.0) ? L"true" : L"false");
+                return true;
+            }
 
-        if (_hash->Type == VType::NumberT) {
-            value = String::FromNumber(storage->Numbers[_hash->ExactID]);
-            return true;
+            if (_hash->Type == VType::NumberT) {
+                value = String::FromNumber(storage->Numbers[_hash->ExactID]);
+                return true;
+            }
+        } else {
+            UNumber id = 0;
+            storage->GetID(id, key, offset, limit);
+
+            if (storage->Strings.Size > id) {
+                value = storage->Strings[id];
+                return true;
+            } else if (storage->Numbers.Size > id) {
+                value = String::FromNumber(storage->Numbers[id]);
+                return true;
+            }
         }
     }
 
     return false;
 }
 
-// TODO: make one Get()
 bool Qentem::Tree::GetNumber(UNumber &value, const String &key, UNumber offset, UNumber limit) noexcept {
     value = 0;
     Hash *      _hash;
     const Tree *storage = GetInfo(&_hash, key, offset, limit);
 
     if (storage != nullptr) {
-        if (_hash->Type == VType::StringT) {
-            return String::ToNumber(storage->Strings[_hash->ExactID], value);
-        }
+        if (!storage->Ordered) {
+            if (_hash->Type == VType::StringT) {
+                return String::ToNumber(storage->Strings[_hash->ExactID], value);
+            }
 
-        if (_hash->Type == VType::BooleanT) {
-            value = ((storage->Numbers[_hash->ExactID] == 1.0) ? 1 : 0);
-            return true;
-        }
+            if (_hash->Type == VType::BooleanT) {
+                value = ((storage->Numbers[_hash->ExactID] == 1.0) ? 1 : 0);
+                return true;
+            }
 
-        if (_hash->Type == VType::NumberT) {
-            value = static_cast<UNumber>(storage->Numbers[_hash->ExactID]);
-            return true;
+            if (_hash->Type == VType::NumberT) {
+                value = static_cast<UNumber>(storage->Numbers[_hash->ExactID]);
+                return true;
+            }
+        } else {
+            UNumber id = 0;
+            storage->GetID(id, key, offset, limit);
+
+            if (storage->Numbers.Size > id) {
+                value = static_cast<UNumber>(storage->Numbers[id]);
+                return true;
+            } else if (storage->Strings.Size > id) {
+                return String::ToNumber(storage->Strings[id], value);
+            }
         }
     }
 
@@ -299,18 +301,30 @@ bool Qentem::Tree::GetDouble(double &value, const String &key, UNumber offset, U
     const Tree *storage = GetInfo(&_hash, key, offset, limit);
 
     if (storage != nullptr) {
-        if (_hash->Type == VType::StringT) {
-            return String::ToNumber(storage->Strings[_hash->ExactID], value);
-        }
+        if (!storage->Ordered) {
+            if (_hash->Type == VType::StringT) {
+                return String::ToNumber(storage->Strings[_hash->ExactID], value);
+            }
 
-        if (_hash->Type == VType::BooleanT) {
-            value = ((storage->Numbers[_hash->ExactID] == 1.0) ? 1.0 : 0.0);
-            return true;
-        }
+            if (_hash->Type == VType::BooleanT) {
+                value = ((storage->Numbers[_hash->ExactID] == 1.0) ? 1.0 : 0.0);
+                return true;
+            }
 
-        if (_hash->Type == VType::NumberT) {
-            value = storage->Numbers[_hash->ExactID];
-            return true;
+            if (_hash->Type == VType::NumberT) {
+                value = storage->Numbers[_hash->ExactID];
+                return true;
+            }
+        } else {
+            UNumber id = 0;
+            storage->GetID(id, key, offset, limit);
+
+            if (storage->Numbers.Size > id) {
+                value = storage->Numbers[id];
+                return true;
+            } else if (storage->Strings.Size > id) {
+                return String::ToNumber(storage->Strings[id], value);
+            }
         }
     }
 
@@ -322,18 +336,53 @@ bool Qentem::Tree::GetBool(bool &value, const String &key, UNumber offset, UNumb
     const Tree *storage = GetInfo(&_hash, key, offset, limit);
 
     if (storage != nullptr) {
-        if ((_hash->Type == VType::BooleanT) || (_hash->Type == VType::NumberT)) {
-            value = (storage->Numbers[_hash->ExactID] == 1);
-            return true;
-        }
+        if (!storage->Ordered) {
+            if ((_hash->Type == VType::BooleanT) || (_hash->Type == VType::NumberT)) {
+                value = (storage->Numbers[_hash->ExactID] == 1);
+                return true;
+            }
 
-        if (_hash->Type == VType::StringT) {
-            value = (storage->Strings[_hash->ExactID] == L"true");
-            return true;
+            if (_hash->Type == VType::StringT) {
+                value = (storage->Strings[_hash->ExactID] == L"true");
+                return true;
+            }
+        } else {
+            UNumber id = 0;
+            storage->GetID(id, key, offset, limit);
+
+            if (storage->Strings.Size > id) {
+                value = (storage->Strings[id] == L"true");
+                return true;
+            } else if (storage->Numbers.Size > id) {
+                value = (storage->Numbers[id] == 1);
+                return true;
+            }
         }
     }
 
     return false;
+}
+
+Tree *Qentem::Tree::GetBranch(const String &key, UNumber offset, UNumber limit) noexcept {
+    Hash *_hash;
+    Tree *storage = GetInfo(&_hash, key, offset, limit);
+
+    if ((storage != nullptr) && (_hash->Type == VType::BranchT)) {
+        return storage;
+    }
+
+    return nullptr;
+}
+
+void Qentem::Tree::InsertHash(const Hash &_hash) noexcept {
+    if (this->Table.Size == 0) {
+        this->Table.SetCapacity(HashBase);
+        this->Table.Size = HashBase;
+    }
+
+    // TODO: This is ok but slow. Needs complate rewrite/redesign
+    this->Table[(_hash.HashValue % HashBase)].Set(_hash, HashBase, 1);
+    Hashes.Add(_hash.HashValue); // TODO: Use pointers!
 }
 
 void Qentem::Tree::Insert(const String &key, UNumber offset, UNumber limit, const VType type, void *ptr,
@@ -389,7 +438,7 @@ void Qentem::Tree::Insert(const String &key, UNumber offset, UNumber limit, cons
         }
 
         InsertHash(_hash);
-    } else {
+    } else { // Updating existing item
         // TODO: implement move
         switch (type) {
             // case VType::NullT:
@@ -410,108 +459,6 @@ void Qentem::Tree::Insert(const String &key, UNumber offset, UNumber limit, cons
     }
 }
 
-String Qentem::Tree::ToJSON() const noexcept {
-    Tree::SetJsonQuot();
-
-    return Tree::_ToJSON().Eject();
-}
-
-StringStream Qentem::Tree::_ToJSON() const noexcept {
-    StringStream ss;
-
-    Hash *  _hash;
-    UNumber id;
-
-    if (!Ordered) {
-        ss += L'{';
-        for (UNumber i = 0; i < Hashes.Size; i++) {
-            id    = Hashes[i];
-            _hash = Table[(id % HashBase)].Get(id, HashBase, 1);
-
-            if (_hash->HashValue != 0) {
-                if (ss.Length != 1) {
-                    ss += L',';
-                }
-
-                switch (_hash->Type) {
-                    case VType::NullT: {
-                        ss += L'"';
-                        ss += _hash->Key;
-                        ss += L"\":null"; // TODO: implement ss.share(); to have a pointer to this inseat of copying it.
-                    } break;
-                    case VType::BooleanT: {
-                        ss += L'"';
-                        ss += _hash->Key;
-
-                        if (Numbers[_hash->ExactID] != 0) {
-                            ss += L"\":true";
-                        } else {
-                            ss += L"\":false";
-                        }
-                    } break;
-                    case VType::StringT: {
-                        ss += L'"';
-                        ss += _hash->Key;
-                        ss += L"\":\"";
-                        ss += Engine::Parse(Strings[_hash->ExactID], Engine::Search(Strings[_hash->ExactID], JsonQuot));
-                        ss += L'"';
-                    } break;
-                    case VType::NumberT: {
-                        ss += L'"';
-                        ss += _hash->Key;
-                        ss += L"\":";
-                        ss += String::FromNumber(Numbers[_hash->ExactID]);
-                    } break;
-                    case VType::BranchT: {
-                        ss += L'"';
-                        ss += _hash->Key;
-                        ss += L"\":";
-                        ss += Branches[_hash->ExactID]._ToJSON().Eject(); // TODO: test moveing strings
-                    } break;
-                    default:
-                        break;
-                }
-            }
-        }
-
-        ss += L'}';
-    } else {
-        ss += L'[';
-
-        if (Strings.Size != 0) {
-            for (UNumber i = 0; i < Strings.Size; i++) {
-                if (ss.Length != 1) {
-                    ss += L',';
-                }
-
-                ss += L'"';
-                ss += Engine::Parse(Strings[i], Engine::Search(Strings[i], JsonQuot));
-                ss += L'"';
-            }
-        } else if (Numbers.Size != 0) {
-            for (UNumber i = 0; i < Numbers.Size; i++) {
-                if (ss.Length != 1) {
-                    ss += L',';
-                }
-
-                ss += String::FromNumber(Numbers[i]);
-            }
-        } else if (Branches.Size != 0) {
-            for (UNumber i = 0; i < Branches.Size; i++) {
-                if (ss.Length != 1) {
-                    ss += L',';
-                }
-
-                ss += Branches[i]._ToJSON().Eject();
-            }
-        }
-
-        ss += L']';
-    }
-
-    return ss;
-}
-
 void Qentem::Tree::_makeNumberedTree(Tree &tree, const String &content, const Match &item) noexcept {
     double  tn;
     UNumber end;
@@ -522,9 +469,11 @@ void Qentem::Tree::_makeNumberedTree(Tree &tree, const String &content, const Ma
         if ((content.Str[i] == L',') || (content.Str[i] == L']')) {
             end = i;
             String::SoftTrim(content, start, end);
+
             if (String::ToNumber(content, tn, start, ((end + 1) - start))) {
                 tree.Numbers.Add(tn);
             }
+
             start = end + 2;
         }
     }
@@ -549,8 +498,7 @@ void Qentem::Tree::_makeTree(Tree &tree, const String &content, const Array<Matc
 
                         Match *data = &(items[i]);
                         String ts   = String::Part(content, (data->Offset + 1), (data->Length - 2));
-                        if (data->NestMatch.Size == 0) {
-                        } else {
+                        if (data->NestMatch.Size != 0) {
                             ts = Engine::Parse(ts, Engine::Search(ts, JsonDeQuot));
                         }
 
@@ -633,6 +581,7 @@ void Qentem::Tree::_makeTree(Tree &tree, const String &content, const Array<Matc
                     if (data->NestMatch.Size == 0) {
                         tree.Strings.Add(String::Part(content, (data->Offset + 1), (data->Length - 2)));
                     } else {
+                        // TODO: Do cleanup this part.
                         String *rs = &(tree.Strings[tree.Strings.Size]);
                         tree.Strings.Size++;
 
@@ -687,6 +636,108 @@ void Qentem::Tree::MakeTree(Tree &tree, const String &content, const Array<Match
             Tree::_makeNumberedTree(tree, content, *_item);
         }
     }
+}
+
+String Qentem::Tree::ToJSON() const noexcept {
+    Tree::SetJsonQuot();
+
+    return Tree::_ToJSON().Eject();
+}
+
+StringStream Qentem::Tree::_ToJSON() const noexcept {
+    StringStream ss;
+
+    Hash *  _hash;
+    UNumber id;
+
+    if (!Ordered) {
+        ss += L'{';
+        for (UNumber i = 0; i < Hashes.Size; i++) {
+            id    = Hashes[i];
+            _hash = Table[(id % HashBase)].Get(id, HashBase, 1);
+
+            if (_hash->HashValue != 0) {
+                if (ss.Length != 1) {
+                    ss += L',';
+                }
+
+                switch (_hash->Type) {
+                    case VType::NullT: {
+                        ss += L'"';
+                        ss += _hash->Key;
+                        ss += L"\":null"; // TODO: implement share(); to have a pointer to this inseat of copying it.
+                    } break;
+                    case VType::BooleanT: {
+                        ss += L'"';
+                        ss += _hash->Key;
+
+                        if (Numbers[_hash->ExactID] != 0) {
+                            ss += L"\":true";
+                        } else {
+                            ss += L"\":false";
+                        }
+                    } break;
+                    case VType::StringT: {
+                        ss += L'"';
+                        ss += _hash->Key;
+                        ss += L"\":\"";
+                        ss += Engine::Parse(Strings[_hash->ExactID], Engine::Search(Strings[_hash->ExactID], JsonQuot));
+                        ss += L'"';
+                    } break;
+                    case VType::NumberT: {
+                        ss += L'"';
+                        ss += _hash->Key;
+                        ss += L"\":";
+                        ss += String::FromNumber(Numbers[_hash->ExactID]);
+                    } break;
+                    case VType::BranchT: {
+                        ss += L'"';
+                        ss += _hash->Key;
+                        ss += L"\":";
+                        ss += Branches[_hash->ExactID]._ToJSON().Eject();
+                    } break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        ss += L'}';
+    } else {
+        ss += L'[';
+
+        if (Strings.Size != 0) {
+            for (UNumber i = 0; i < Strings.Size; i++) {
+                if (ss.Length != 1) {
+                    ss += L',';
+                }
+
+                ss += L'"';
+                ss += Engine::Parse(Strings[i], Engine::Search(Strings[i], JsonQuot));
+                ss += L'"';
+            }
+        } else if (Numbers.Size != 0) {
+            for (UNumber i = 0; i < Numbers.Size; i++) {
+                if (ss.Length != 1) {
+                    ss += L',';
+                }
+
+                ss += String::FromNumber(Numbers[i]);
+            }
+        } else if (Branches.Size != 0) {
+            for (UNumber i = 0; i < Branches.Size; i++) {
+                if (ss.Length != 1) {
+                    ss += L',';
+                }
+
+                ss += Branches[i]._ToJSON().Eject();
+            }
+        }
+
+        ss += L']';
+    }
+
+    return ss;
 }
 
 Expressions Qentem::Tree::GetJsonExpres() noexcept {
