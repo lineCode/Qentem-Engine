@@ -49,6 +49,7 @@ Hash *Qentem::Hash::Get(const UNumber _hash_value, const UNumber base, const UNu
     return this;
 }
 
+//////////// Fields' Operators
 Qentem::Field &Qentem::Field::operator=(bool value) noexcept {
     if (this->Storage != nullptr) {
         double num = value ? 1.0 : 0.0;
@@ -64,17 +65,11 @@ Qentem::Field &Qentem::Field::operator=(double value) noexcept {
     return *this;
 }
 
-Qentem::Field &Qentem::Field::operator=(Array<double> &value) noexcept {
-    if (this->Storage != nullptr) { // TODO: Needs loop insert in Numbers
-    }
-    return *this;
-}
-
 Qentem::Field &Qentem::Field::operator=(const wchar_t *value) noexcept {
     if (this->Storage != nullptr) {
         if (value != nullptr) {
             String _s = value;
-            this->Storage->Insert(this->Key, 0, this->Key.Length, VType::StringT, &value, true);
+            this->Storage->Insert(this->Key, 0, this->Key.Length, VType::StringT, &_s, true);
         } else {
             this->Storage->Insert(this->Key, 0, this->Key.Length, VType::NullT, nullptr, false);
         }
@@ -89,12 +84,6 @@ Qentem::Field &Qentem::Field::operator=(String &value) noexcept {
     return *this;
 }
 
-Qentem::Field &Qentem::Field::operator=(Array<String> &value) noexcept {
-    if (this->Storage != nullptr) { // TODO: Needs loop insert in Strings
-    }
-    return *this;
-}
-
 Qentem::Field &Qentem::Field::operator=(Tree &value) noexcept {
     if (this->Storage != nullptr) {
         this->Storage->Insert(this->Key, 0, this->Key.Length, VType::BranchT, &value, false);
@@ -102,23 +91,55 @@ Qentem::Field &Qentem::Field::operator=(Tree &value) noexcept {
     return *this;
 }
 
+Qentem::Field &Qentem::Field::operator=(Tree &&value) noexcept {
+    if (this->Storage != nullptr) {
+        this->Storage->Insert(this->Key, 0, this->Key.Length, VType::BranchT, &value, true);
+    }
+    return *this;
+}
+
+Qentem::Field &Qentem::Field::operator=(Array<double> &value) noexcept {
+    if (this->Storage != nullptr) {
+        Tree tmp;
+        tmp.Ordered = true;
+        tmp.Numbers = value;
+        this->Storage->Insert(this->Key, 0, this->Key.Length, VType::BranchT, &tmp, true);
+    }
+    return *this;
+}
+
+Qentem::Field &Qentem::Field::operator=(Array<String> &value) noexcept {
+    if (this->Storage != nullptr) {
+        Tree tmp;
+        tmp.Ordered = true;
+        tmp.Strings = value;
+        this->Storage->Insert(this->Key, 0, this->Key.Length, VType::BranchT, &tmp, true);
+    }
+    return *this;
+}
+
 Qentem::Field &Qentem::Field::operator=(Array<Tree> &value) noexcept {
-    if (this->Storage != nullptr) { // TODO: Needs loop insert in Branches
+    if (this->Storage != nullptr) {
+        Tree tmp;
+        tmp.Ordered  = true;
+        tmp.Branches = value;
+        this->Storage->Insert(this->Key, 0, this->Key.Length, VType::BranchT, &tmp, true);
     }
     return *this;
 }
 
 Qentem::Field Qentem::Field::operator[](const String &key) noexcept {
-    if (this->Storage != nullptr) { // TODO: restore with a fix
-        // Tree *tree = this->Storage->GetBranch(this->Key, 0, this->Key.Length);
+    if (this->Storage != nullptr) {
+        Tree *tree = this->Storage->GetBranch(this->Key, 0, this->Key.Length);
 
-        // if (tree != nullptr) {
-        //     return (*tree)[key];
-        // }
+        if (tree != nullptr) {
+            return (*tree)[key];
+        }
     }
 
     return Field();
 }
+////////////////
 
 void Qentem::Tree::Drop(Hash &_hash, Tree &storage) noexcept {
     _hash.HashValue = 0;

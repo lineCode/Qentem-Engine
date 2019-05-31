@@ -47,16 +47,16 @@ struct Field {
     String Key     = L"";
     Tree * Storage = nullptr;
 
-    Field operator[](const String &key) noexcept;
-
     Field &operator=(bool value) noexcept;
     Field &operator=(double value) noexcept;
-    Field &operator=(Array<double> &value) noexcept;
     Field &operator=(const wchar_t *value) noexcept;
     Field &operator=(String &value) noexcept;
-    Field &operator=(Array<String> &value) noexcept;
     Field &operator=(Tree &value) noexcept;
+    Field &operator=(Tree &&value) noexcept;
+    Field &operator=(Array<double> &value) noexcept;
+    Field &operator=(Array<String> &value) noexcept;
     Field &operator=(Array<Tree> &value) noexcept;
+    Field  operator[](const String &key) noexcept;
 };
 
 struct Tree {

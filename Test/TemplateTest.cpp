@@ -27,9 +27,9 @@ void run() noexcept {
     Tree data;
 
     // Template
-    // data = get_tree();
+    data = get_tree();
     // Or
-    data = Tree::FromJSON(read_file("./Test/temp.json"));
+    // data = Tree::FromJSON(read_file("./Test/temp.json"));
     std::wcout << Template().Render(read_file("./Test/temp.qtml"), &data).Str << "\n";
 
     // std::wcout << "\nImporting JSON...\n";
@@ -48,7 +48,7 @@ void run() noexcept {
     // std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3).Str;
     // std::wcout << "\n";
 
-    // std::wcout << data.ToJSON().Str << "\n";
+    std::wcout << data.ToJSON().Str << "\n";
 }
 
 int main() noexcept {
@@ -96,7 +96,7 @@ String read_file(const char *fullpath) noexcept {
 
 Tree get_tree() noexcept {
     Tree data     = Tree();
-    data.HashBase = 97;
+    data.HashBase = 13;
 
     data[L"var1"]  = L"\"1\"";
     data[L"PP"]    = L"gg";
@@ -119,8 +119,7 @@ Tree get_tree() noexcept {
     data[L"empty"]      = L"";
     data[L"math"] = L"((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) - (-1) + 2";
 
-    Tree abc;
-    data[L"abc"]         = abc;
+    data[L"abc"]         = Tree();
     data[L"abc"][L"B"]   = L"b";
     data[L"abc"][L"@@"]  = 100.0;
     data[L"abc"][L"A"]   = L"a";
@@ -129,11 +128,13 @@ Tree get_tree() noexcept {
     data[L"abc"][L"E"]   = Array<String>().Add(L"O").Add(L"K!");
     data[L"abc"][L"A-Z"] = L"ABCDEFGHIGKLMNOBQRST.....";
 
-    Tree multi;
-    data[L"multi"]          = multi;
-    data[L"multi"][L"arr1"] = data[L"abc"];
-    data[L"multi"][L"arr2"] = Array<String>().Add(L"B").Add(L"C").Add(L"D").Add(L"A");
-    data[L"multi"][L"C"]    = L"cool";
+    // Tree abc = *(data[L"abc"].Storage);
+
+    data[L"multi"]                = Tree();
+    data[L"multi"][L"arr1"]       = Tree();
+    data[L"multi"][L"arr1"][L"E"] = Array<String>().Add(L"O").Add(L"K!");
+    data[L"multi"][L"arr2"]       = Array<String>().Add(L"B").Add(L"C").Add(L"D").Add(L"A");
+    data[L"multi"][L"C"]          = L"cool";
 
     return data;
 }

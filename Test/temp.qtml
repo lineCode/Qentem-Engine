@@ -4,7 +4,7 @@
 <div>{v-abc1[3]}</div>
 <div>{v-abc[A]}</div>
 <div>{v-multi[arr1][E][0]}{v-multi[arr1][E][1]}</div>
-<div>Dose not exist: {v-abc1[1234567890]}</div>
+<div>Does not exist: {v-abc1[1234567890]}</div>
 <div>Empty var: {v-empty}</div>
 
 <!--- Simple inline condition -->
@@ -63,15 +63,15 @@
 
 <!--- Nested loops -->
 <div>
-    <loop set="multi[arr1][E]" var="wxw">
-        <span>loop-wxw): {v-multi[arr1][E][wxw]}</span>
+    <loop set="multi[arr1][E]" var="loop1">
+        <span>loop-loop1): {v-multi[arr1][E][loop1]}</span>
 
-        <loop set="multi[arr1][E]" var="exe">
-            <span>loop-exe): {v-multi[arr1][E][exe]}</span>
+        <loop set="multi[arr1][E]" var="loop2">
+            <span>loop-loop2): {v-multi[arr1][E][loop2]}</span>
         </loop>
 
-        <loop set="multi[arr1][E]" var="rxr">
-            <span>loop-rxr): {v-multi[arr1][E][rxr]}</span>
+        <loop set="multi[arr1][E]" var="loop3">
+            <span>loop-loop3): {v-multi[arr1][E][loop3]}</span>
 
         </loop>
 

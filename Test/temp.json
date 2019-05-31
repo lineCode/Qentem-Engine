@@ -50,16 +50,10 @@
     },
     "multi": {
         "arr1": {
-            "B": "b",
-            "@@": 100,
-            "A": "a",
-            "C": "c",
-            "D": "d",
             "E": [
                 "O",
                 "K!"
-            ],
-            "A-Z": "ABCDEFGHIGKLMNOBQRST....."
+            ]
         },
         "arr2": [
             "B",
