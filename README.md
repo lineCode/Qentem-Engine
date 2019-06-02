@@ -1,4 +1,4 @@
-# Qentem Engine (v0.6.2)
+# Qentem Engine (v0.6.3)
 
 ## Summary:
 Qentem is a stand-alone library, built to provide a simple way to match existing syntaxes or new ones. It also provides call-backs for post or per-parsing. Built for templates, then rewritten for general-propose matching of text or syntaxes - Regular expression on steroids.
@@ -17,9 +17,6 @@ Qentem is built to be ported to any managed language, so I tried to limit the us
 
 ## The algorithm:
 The project is about the algorithm not the code. That's why it's written in a as-simple-as-possible form, which allowed it to be compiled easily to Web Assembly without any modifications.
-
-## Q: Why most of the code has no comments?
-A: Well, I had one and half week to port it to C, then C++. Then I had to rewrite most of it in another 2 weeks. And had only two weeks to bug the bugs out. After reaching v0.5.0, my old laptop broke (the poor thing couldn't handle the heat any more), and since the project was on a rapid development stage, I was holding off the comments for the next release, as I wasn't sure if it will actually work or not (it does now), then the semester started, and had to focus on my studies.
 
 ## Status:
 The project is in early development stage. However, the engine has been rewritten over and over to ensure it delivers the expected results, which is achieved through extensive tests (3 times the size of the engine). It's working and has a full implementation of HTML template and JSON.

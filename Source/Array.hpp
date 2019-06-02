@@ -76,18 +76,27 @@ class Array {
         return *this;
     }
 
-    void Expand(const UNumber _add_size = 0) noexcept {
-        if (_add_size == 0) {
-            if (this->_capacity == 0) {
-                this->_capacity = 1;
-            } else {
-                this->_capacity *= 2;
-            }
+    void Expand() noexcept {
+        if (this->_capacity == 0) {
+            this->_capacity = 1;
         } else {
-            this->_capacity += _add_size;
+            this->_capacity *= 2;
         }
 
         T *tmp        = this->Storage;
+        this->Storage = new T[this->_capacity];
+
+        for (UNumber n = 0; n < this->Size; n++) {
+            this->Storage[n] = static_cast<T &&>(tmp[n]);
+        }
+
+        delete[] tmp;
+    }
+
+    void ExpandTo(const UNumber size) noexcept {
+        this->_capacity += size;
+        T *tmp = this->Storage;
+
         this->Storage = new T[this->_capacity];
 
         for (UNumber n = 0; n < this->Size; n++) {
@@ -180,11 +189,11 @@ class Array {
 
     // constexpr
     T &operator[](const UNumber id) const {
-        if (id >= this->_capacity) {
-            throw;
+        if (id < this->_capacity) {
+            return this->Storage[id];
         }
 
-        return this->Storage[id];
+        throw;
     }
 
     void Clear() noexcept {

@@ -77,8 +77,8 @@ struct Document {
         return _field;
     }
 
-    // static void Drop(Hash &hash, Document &storage) noexcept;
-    // void Drop(const String &key, UNumber offset, UNumber limit) noexcept;
+    static void Drop(Entry &_entry, Document &storage) noexcept;
+    void        Drop(const String &key, UNumber offset, UNumber limit) noexcept;
 
     static bool ExtractID(UNumber &id, const String &key, UNumber offset, UNumber limit) noexcept;
 

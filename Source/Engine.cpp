@@ -77,7 +77,7 @@ void Qentem::Engine::_search(Array<Match> &items, const String &content, const E
             if (OVERDRIVE) {
                 // If the match is on "OVERDRIVE", then break.
                 OVERDRIVE = false;
-                // Set the length of the nested match.
+                // Set the length of the nesting match.
                 limit = (end_offset - 1);
             } else if (!LOCKED) {
                 if (ce->Connected != nullptr) {
@@ -248,7 +248,6 @@ void Qentem::Engine::_search(Array<Match> &items, const String &content, const E
     if (items.Size == 0) {
         if ((Flags::POP & ce->Flag) != 0) { //&& (ce->NestExprs.Size != 0)
             Engine::_search(items, content, ce->NestExprs, started, limit, 0, 0);
-            return;
         }
     } else if ((level == 0) && SPLIT) {
         Engine::Split(content, items, started, limit);

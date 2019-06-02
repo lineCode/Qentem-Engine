@@ -110,32 +110,33 @@ Qentem::Field Qentem::Field::operator[](const String &key) noexcept {
 }
 ////////////////
 
-// void Qentem::Document::Drop(Hash &_hash, Document &storage) noexcept {
-//     _hash.HashValue = 0;
+void Qentem::Document::Drop(Entry &_entry, Document &storage) noexcept {
+    _entry.Type = VType::UndefinedT;
+    storage.Keys[_entry.KeyID].Clear();
 
-//     switch (_hash.Type) {
-//         // case VType::NumberT:
-//         //     storage.Numbers[_hash.ID] = 0; // Waste of time
-//         //     break;
-//         case VType::StringT:
-//             storage.Strings[_hash.ID].Clear();
-//             break;
-//         case VType::DocumentT:
-//             storage.Documents[_hash.ID] = Document(); // TODO: Add Clear()
-//             break;
-//         default:
-//             break;
-//     }
-// }
+    switch (_entry.Type) {
+        // case VType::NumberT:
+        //     storage.Numbers[_hash.ID] = 0; // Waste of time
+        //     break;
+        case VType::StringT:
+            storage.Strings[_entry.ID].Clear();
+            break;
+        case VType::DocumentT:
+            storage.Documents[_entry.ID] = Document(); // TODO: Add Clear()
+            break;
+        default:
+            break;
+    }
+}
 
-// void Qentem::Document::Drop(const String &key, UNumber offset, UNumber limit) noexcept {
-//     Hash *_hash;
-//     Document *storage = GetSource(&_hash, key, offset, limit);
+void Qentem::Document::Drop(const String &key, UNumber offset, UNumber limit) noexcept {
+    Entry *   _entry;
+    Document *storage = GetSource(&_entry, key, offset, limit);
 
-//     if (_hash != nullptr) {
-//         Document::Drop(*_hash, *storage);
-//     }
-// }
+    if (_entry != nullptr) {
+        Document::Drop(*_entry, *storage);
+    }
+}
 
 bool Qentem::Document::ExtractID(UNumber &id, const String &key, UNumber offset, UNumber limit) noexcept {
     UNumber end = (offset + (limit - 1));
@@ -189,7 +190,7 @@ Qentem::Document *Qentem::Document::GetSource(Entry **_entry, const String &key,
     }
 
     *_entry = Exist(_hash, 0, Table);
-    if (_entry != nullptr) {
+    if (*_entry != nullptr) {
         if ((*_entry)->Type == VType::DocumentT) {
             limit -= (end_offset - offset);
             Document *tmp = &(this->Documents[(*_entry)->ID]);
@@ -382,9 +383,9 @@ void Qentem::Document::InsertIndex(const Qentem::Index _index, const UNumber lev
                                    Array<Qentem::Index> &_table) noexcept {
     UNumber id = ((_index.Hash + level) % HashBase);
 
-    if (_table.Size == 0) {
-        _table.SetCapacity(HashBase); // TODO: Use expand to id
-        _table.Size = HashBase;
+    if (!(_table.Size > id)) {
+        _table.ExpandTo((id + 1));
+        _table.Size = id;
     }
 
     if (_table[id].Hash == 0) {
