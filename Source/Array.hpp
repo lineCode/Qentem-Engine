@@ -76,7 +76,7 @@ class Array {
         return *this;
     }
 
-    void Expand(UNumber _add_size) noexcept {
+    void Expand(const UNumber _add_size = 0) noexcept {
         if (_add_size == 0) {
             if (this->_capacity == 0) {
                 this->_capacity = 1;
@@ -150,7 +150,7 @@ class Array {
         }
 
         if (this->Size == this->_capacity) {
-            Expand(0);
+            Expand();
         }
 
         return this->Storage[this->Size];
@@ -158,7 +158,7 @@ class Array {
 
     Array<T> &Add(T &&item) noexcept { // Move
         if (this->Size == this->_capacity) {
-            Expand(0);
+            Expand();
         }
 
         this->Storage[this->Size] = item;
@@ -169,7 +169,7 @@ class Array {
 
     Array<T> &Add(const T &item) noexcept { // Copy
         if (this->Size == this->_capacity) {
-            Expand(0);
+            Expand();
         }
 
         this->Storage[this->Size] = item;
@@ -178,6 +178,7 @@ class Array {
         return *this;
     }
 
+    // constexpr
     T &operator[](const UNumber id) const {
         if (id >= this->_capacity) {
             throw;

@@ -27,7 +27,7 @@ class String {
 
     void Move(String &) noexcept;
     void Copy(const wchar_t *, UNumber, UNumber) noexcept;
-    void SetSize(UNumber) noexcept;
+    void SetLength(UNumber) noexcept;
 
     explicit String() = default;
 
@@ -41,7 +41,7 @@ class String {
     // TODO: implement String::share(const wchar_t *str)
 
     static String  Part(const String &, const UNumber offset, const UNumber limit);
-    static UNumber Hash(const String &, const UNumber offset, const UNumber limit) noexcept;
+    static UNumber Hash(const String &, UNumber offset, const UNumber limit) noexcept;
     static void    SoftTrim(const String &, UNumber &start, UNumber &end) noexcept;
     static String  Trim(const String &) noexcept;
     static String  Revers(const String &) noexcept;

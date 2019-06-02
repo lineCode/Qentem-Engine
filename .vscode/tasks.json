@@ -16,8 +16,8 @@
                 "-ISource",
                 "Source/*.cpp",
                 "Source/Extintion/*.cpp",
-                "Test/TemplateTest.cpp",
-                // "Test/EngineTest.cpp",
+                // "Test/TemplateTest.cpp",
+                "Test/EngineTest.cpp",
                 "-oBuild/QConsole.bin"
             ],
             "group": {
@@ -68,7 +68,7 @@
                 "Source/Engine.cpp",
                 "Source/Extintion/Test.cpp",
                 "Source/Extintion/QRegex.cpp",
-                "Source/Extintion/Tree.cpp",
+                "Source/Extintion/Document.cpp",
                 "Source/Extintion/ALU.cpp",
                 "Source/Extintion/Template.cpp",
                 "Test/TemplateTest.cpp",
@@ -124,7 +124,7 @@
                 "-ISource",
                 "Source/*.cpp",
                 "Source/Extintion/QRegex.cpp",
-                "Source/Extintion/Tree.cpp",
+                "Source/Extintion/Document.cpp",
                 // "Source/Extintion/ALU.cpp",
                 // "Source/Extintion/Template.cpp",
                 "-oBuild/QLibx64.so"

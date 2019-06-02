@@ -41,7 +41,7 @@ Qentem::String Qentem::StringStream::Eject() noexcept {
     }
 
     String tmp;
-    tmp.SetSize(this->Length);
+    tmp.SetLength(this->Length);
     String *sstr;
 
     UNumber offset = 0;

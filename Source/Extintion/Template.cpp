@@ -105,7 +105,7 @@ Qentem::Template::Template() noexcept {
     /////////////////////////////////
 }
 
-String Qentem::Template::Render(const String &content, Tree *data) noexcept {
+String Qentem::Template::Render(const String &content, Document *data) noexcept {
     if (data != nullptr) {
         this->Pocket.Data = data;
     }
@@ -287,9 +287,9 @@ String Qentem::Template::RenderLoop(const String &block, const Match &item) noex
 }
 
 String Qentem::Template::Repeat(const String &content, const String &name, const String &var_name,
-                                Tree *storage) noexcept {
-    Hash *      hash;
-    const Tree *_storage = storage->GetInfo(&hash, name, 0, name.Length);
+                                Document *storage) noexcept {
+    Entry *         _entry;
+    const Document *_storage = storage->GetSource(&_entry, name, 0, name.Length);
 
     if (_storage == nullptr) {
         return L"";
@@ -304,7 +304,7 @@ String Qentem::Template::Repeat(const String &content, const String &name, const
 
     const Array<Match> items = Engine::Search(content, ser);
 
-    if (hash->Type == VType::BranchT) {
+    if (_entry->Type == VType::DocumentT) {
         if (_storage->Ordered) {
             if (_storage->Strings.Size != 0) {
                 for (UNumber i = 0; i < _storage->Strings.Size; i++) {
@@ -317,10 +317,9 @@ String Qentem::Template::Repeat(const String &content, const String &name, const
                     rendered += Engine::Parse(content, items);
                 }
             }
-
         } else {
-            for (UNumber i = 0; i < _storage->Table.Size; i++) {
-                ser[0]->Replace = _storage->Table[i].Key;
+            for (UNumber i = 0; i < _storage->Keys.Size; i++) {
+                ser[0]->Replace = _storage->Keys[i];
                 rendered += Engine::Parse(content, items);
             }
         }

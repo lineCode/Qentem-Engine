@@ -14,13 +14,13 @@
 
 #include "Engine.hpp"
 #include "Extintion/ALU.hpp"
-#include "Extintion/Tree.hpp"
+#include "Extintion/Document.hpp"
 
 namespace Qentem {
 
 struct Template {
     struct PocketT {
-        Tree *      Data = nullptr;
+        Document *      Data = nullptr;
         Qentem::ALU _Alu = Qentem::ALU();
         Expressions Tags;
         Expressions TagsQuotes;
@@ -55,14 +55,14 @@ struct Template {
 
     explicit Template() noexcept;
 
-    String Render(const String &, Tree *data = nullptr) noexcept;
+    String Render(const String &, Document *data = nullptr) noexcept;
 
     static String RenderVar(const String &, const Match &) noexcept;
     static bool   EvaluateIF(const String &, const Match &) noexcept;
     static String RenderIF(const String &, const Match &) noexcept;
     static String RenderIIF(const String &, const Match &) noexcept;
     static String RenderLoop(const String &, const Match &) noexcept;
-    static String Repeat(const String &, const String &, const String &, Tree *) noexcept;
+    static String Repeat(const String &, const String &, const String &, Document *) noexcept;
 };
 } // namespace Qentem
 

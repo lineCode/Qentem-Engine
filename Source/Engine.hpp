@@ -72,7 +72,7 @@ struct Match {
     UNumber CLength = 0; // Length of closing keyword
 
     UNumber     Tag  = 0; // To Mark a match when using callback search (for later sorting, See ALU.cpp).
-    UNumber     ID   = 0; // for personal use.
+    UNumber     ID   = 0; // For personal use.
     Expression *Expr = nullptr;
 
     Array<Match> NestMatch; // To hold sub matches inside a match.

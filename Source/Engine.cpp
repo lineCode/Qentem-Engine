@@ -112,7 +112,7 @@ void Qentem::Engine::_search(Array<Match> &items, const String &content, const E
                             OVERDRIVE = true;
                         }
 
-                        Match *p_item = &(_item.NestMatch.Last(false));
+                        Match *p_item = &(_item.NestMatch[(_item.NestMatch.Size - 1)]);
                         // Seek to avoid having the same closing/ending keywork matched again.
                         nest_offset = (p_item->Offset + p_item->Length);
                         index       = nest_offset;

@@ -169,7 +169,7 @@ bool Qentem::String::operator!=(const String &src) const noexcept { // Compare
     return (!(*this == src));
 }
 
-void Qentem::String::SetSize(const UNumber size) noexcept {
+void Qentem::String::SetLength(const UNumber size) noexcept {
     wchar_t *_tmp = this->Str;
     this->Str     = new wchar_t[(size + 1)];
     UNumber i     = 0;
@@ -221,9 +221,9 @@ Qentem::String Qentem::String::Revers(const String &str) noexcept {
     if (str.Length < 2) {
         return str;
     }
-
+    // TODO: Use the same var by shifting chars form the end to the star.
     String tmp;
-    tmp.SetSize(str.Length);
+    tmp.SetLength(str.Length);
 
     for (UNumber g = str.Length; g > 0;) {
         tmp += str.Str[--g];
@@ -242,7 +242,7 @@ Qentem::String Qentem::String::FromNumber(UNumber number, UNumber min) noexcept 
 
     String tmp_l;
     while (number > 0) {
-        tmp_l += wchar_t(((number % 10) + 48));
+        tmp_l += wchar_t(((number % 10) + 48)); // TODO: Too slow. Use tmp_l.Str[i]
         number /= 10;
     }
 
@@ -425,7 +425,7 @@ Qentem::String Qentem::String::Part(const String &src, const UNumber offset, con
     }
 
     String bit;
-    bit.SetSize(limit);
+    bit.SetLength(limit);
 
     UNumber i = 0, j = offset;
     while (i < limit) {
@@ -438,14 +438,13 @@ Qentem::String Qentem::String::Part(const String &src, const UNumber offset, con
     return bit;
 }
 
-UNumber Qentem::String::Hash(const String &src, const UNumber start, const UNumber end_offset) noexcept {
-    bool    fl   = false;
+UNumber Qentem::String::Hash(const String &src, UNumber start, const UNumber end_offset) noexcept {
     UNumber i    = 0;
     UNumber j    = 1;
-    UNumber z    = start;
     UNumber hash = 0;
+    bool    fl   = false;
 
-    while (z < end_offset) {
+    while (start < end_offset) {
         if (fl) {
             j  = j * (i + 1);
             fl = false;
@@ -454,9 +453,9 @@ UNumber Qentem::String::Hash(const String &src, const UNumber start, const UNumb
             fl = true;
         }
 
-        hash += (((static_cast<UNumber>(src.Str[z]))) * j);
+        hash += (((static_cast<UNumber>(src.Str[start]))) * j);
         i++;
-        z++;
+        start++;
     }
 
     return hash;
