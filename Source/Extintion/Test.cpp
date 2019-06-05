@@ -10,7 +10,7 @@
  */
 
 #include "Extintion/Test.hpp"
-#include "Extintion/QRegex.hpp"
+#include "Extintion/ALU.hpp"
 
 using Qentem::Array;
 using Qentem::String;
@@ -21,8 +21,8 @@ using Qentem::Test::TestBit;
 
 void Qentem::Test::CleanBits(Array<TestBit> &bits) noexcept {
     for (UNumber i = 0; i < bits.Size; i++) {
-        for (UNumber j = 0; j < bits[i].Collect.Size; j++) {
-            delete bits[i].Collect[j];
+        for (UNumber j = 0; j < bits.Storage[i].Collect.Size; j++) {
+            delete bits.Storage[i].Collect.Storage[j];
         }
     }
 }
@@ -31,15 +31,12 @@ Array<String> Qentem::Test::Extract(const String &content, const Array<Match> &i
     Array<String> matches = Array<String>();
     matches.SetCapacity(items.Size);
 
-    // for (UNumber i = 0; i < items.Size; i++) {
-    //     matches.Add(String::Part(content, items[i].Offset, items[i].Length));
-    // }
-
     String match;
     for (UNumber i = 0; i < items.Size; i++) {
-        match = String::Part(content, items[i].Offset, items[i].Length) + L" -> O:" +
-                String::FromNumber(items[i].Offset) + L" L:" + String::FromNumber(items[i].Length) + L" OL:" +
-                String::FromNumber(items[i].OLength) + L" CL:" + String::FromNumber(items[i].CLength);
+        match = String::Part(content, items.Storage[i].Offset, items.Storage[i].Length) + L" -> O:" +
+                String::FromNumber(items.Storage[i].Offset) + L" L:" + String::FromNumber(items.Storage[i].Length) +
+                L" OL:" + String::FromNumber(items.Storage[i].OLength) + L" CL:" +
+                String::FromNumber(items.Storage[i].CLength);
         matches.Add(match);
     }
 
@@ -58,57 +55,57 @@ String Qentem::Test::DumbExpressions(const Expressions &expres, const String &of
 
     for (UNumber i = index; i < expres.Size; i++) {
 
-        if (expres[i] == expr) {
+        if (expres.Storage[i] == expr) {
             _array += offset + innoffset + L"[" + String::FromNumber(static_cast<double>(i)) + L"]: " + L"This.\n";
             continue;
         }
 
         _array += offset + innoffset + L"[" + String::FromNumber(static_cast<double>(i)) + L"]: => {\n";
 
-        _array += l_offset + L"Keyword: \"" + expres[i]->Keyword + L"\"\n";
+        _array += l_offset + L"Keyword: \"" + expres.Storage[i]->Keyword + L"\"\n";
 
-        _array += l_offset + L"Flags: (" + String::FromNumber(static_cast<double>(expres[i]->Flag)) + L")";
+        _array += l_offset + L"Flags: (" + String::FromNumber(static_cast<double>(expres.Storage[i]->Flag)) + L")";
 
-        if ((expres[i]->Flag & Flags::COMPACT) != 0) {
+        if ((expres.Storage[i]->Flag & Flags::COMPACT) != 0) {
             _array += L" COMPACT";
         }
 
-        if ((expres[i]->Flag & Flags::BUBBLE) != 0) {
+        if ((expres.Storage[i]->Flag & Flags::BUBBLE) != 0) {
             _array += L" BUBBLE";
         }
 
-        if ((expres[i]->Flag & Flags::NOPARSE) != 0) {
+        if ((expres.Storage[i]->Flag & Flags::NOPARSE) != 0) {
             _array += L" NOPARSE";
         }
 
-        if ((expres[i]->Flag & Flags::IGNORE) != 0) {
+        if ((expres.Storage[i]->Flag & Flags::IGNORE) != 0) {
             _array += L" IGNORE";
         }
 
-        if ((expres[i]->Flag & Flags::SPLIT) != 0) {
+        if ((expres.Storage[i]->Flag & Flags::SPLIT) != 0) {
             _array += L" SPLIT";
         }
 
-        if ((expres[i]->Flag & Flags::SPLITNEST) != 0) {
+        if ((expres.Storage[i]->Flag & Flags::SPLITNEST) != 0) {
             _array += L" SPLITNEST";
         }
 
-        if ((expres[i]->Flag & Flags::GROUPSPLIT) != 0) {
+        if ((expres.Storage[i]->Flag & Flags::GROUPSPLIT) != 0) {
             _array += L" GROUPSPLIT";
         }
 
-        if ((expres[i]->Flag & Flags::POP) != 0) {
+        if ((expres.Storage[i]->Flag & Flags::POP) != 0) {
             _array += L" POP";
         }
 
-        if ((expres[i]->Flag & Flags::ONCE) != 0) {
+        if ((expres.Storage[i]->Flag & Flags::ONCE) != 0) {
             _array += L" ONCE";
         }
         _array += L"\n";
 
-        _array += l_offset + L"Replace: \"" + expres[i]->Replace + L"\"\n";
+        _array += l_offset + L"Replace: \"" + expres.Storage[i]->Replace + L"\"\n";
 
-        if (expres[i]->SearchCB != nullptr) {
+        if (expres.Storage[i]->SearchCB != nullptr) {
             _array += l_offset + L"SearchCB: Yes";
 
         } else {
@@ -116,7 +113,7 @@ String Qentem::Test::DumbExpressions(const Expressions &expres, const String &of
         }
         _array += L"\n";
 
-        if (expres[i]->ParseCB != nullptr) {
+        if (expres.Storage[i]->ParseCB != nullptr) {
             _array += l_offset + L"ParseCB: Yes";
 
         } else {
@@ -124,19 +121,20 @@ String Qentem::Test::DumbExpressions(const Expressions &expres, const String &of
         }
         _array += L"\n";
 
-        if (expres[i]->Connected != nullptr) {
+        if (expres.Storage[i]->Connected != nullptr) {
             _array += l_offset + L"Next:\n";
-            _array += Test::DumbExpressions(Expressions().Add(expres[i]->Connected), innoffset + l_offset, 0, expres[i]);
+            _array += Test::DumbExpressions(Expressions().Add(expres.Storage[i]->Connected), innoffset + l_offset, 0,
+                                            expres.Storage[i]);
         }
 
-        if (expres[i]->NestExprs.Size != 0) {
+        if (expres.Storage[i]->NestExprs.Size != 0) {
             _array += l_offset + L"NestExprs:\n";
-            _array += Test::DumbExpressions(expres[i]->NestExprs, innoffset + l_offset, 0, expres[i]);
+            _array += Test::DumbExpressions(expres.Storage[i]->NestExprs, innoffset + l_offset, 0, expres.Storage[i]);
         }
 
-        if (expres[i]->SubExprs.Size != 0) {
+        if (expres.Storage[i]->SubExprs.Size != 0) {
             _array += l_offset + L"SubExprs:\n";
-            _array += Test::DumbExpressions(expres[i]->SubExprs, innoffset + l_offset, 0, expres[i]);
+            _array += Test::DumbExpressions(expres.Storage[i]->SubExprs, innoffset + l_offset, 0, expres.Storage[i]);
         }
 
         _array += l_offset + L"}\n";
@@ -151,6 +149,15 @@ String Qentem::Test::DumbMatches(const String &content, const Array<Match> &matc
         return offset + L"No matches!\n";
     }
 
+    static Expressions find_keys;
+    static Expression  find_key;
+
+    if (find_keys.Size != 0) { // Caching
+        find_key.Keyword = L'\n';
+        find_key.Replace = L"\\n";
+        find_keys.Add(&find_key);
+    }
+
     Array<String> items = Test::Extract(content, matches);
 
     String innoffset = L"    ";
@@ -159,16 +166,16 @@ String Qentem::Test::DumbMatches(const String &content, const Array<Match> &matc
     // It should be (matches.size) not (items.Size), but they should be the same size!
     for (UNumber i = index; i < items.Size; i++) {
         _array += innoffset + offset + L"[" + String::FromNumber(static_cast<double>(i)) + L"]: " +
-                  QRegex::Replace(items[i], L"\n", L"\\n") + L"\n";
+                  Engine::Parse(items.Storage[i], Engine::Search(items.Storage[i], find_keys)) + L'\n';
 
-        if (matches[i].NestMatch.Size != 0) {
+        if (matches.Storage[i].NestMatch.Size != 0) {
             _array += innoffset + offset + L"-NestMatch:\n";
-            _array += Test::DumbMatches(content, matches[i].NestMatch, innoffset + innoffset + offset, 0);
+            _array += Test::DumbMatches(content, matches.Storage[i].NestMatch, innoffset + innoffset + offset, 0);
         }
 
-        if (matches[i].SubMatch.Size != 0) {
+        if (matches.Storage[i].SubMatch.Size != 0) {
             _array += innoffset + offset + L"-SubMatch:\n";
-            _array += Test::DumbMatches(content, matches[i].SubMatch, innoffset + innoffset + offset, 0);
+            _array += Test::DumbMatches(content, matches.Storage[i].SubMatch, innoffset + innoffset + offset, 0);
         }
     }
 
@@ -179,12 +186,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     Array<TestBit> bits = Array<TestBit>();
     TestBit        bit;
 
-    Expression *x1;
-    Expression *x2;
-    Expression *x3;
-    Expression *y1;
-    Expression *y2;
-    Expression *y3;
+    Expression *x1, *x2, *x3, *y1, *y2, *y3;
 
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -200,12 +202,12 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
-    bit.Content.Add(L"_").Add(L"-").Add(L" -- ").Add(L"- - - -");
-    bit.Expected.Add(L"_").Add(L"_").Add(L" __ ").Add(L"_ _ _ _");
+    bit.Content.Add(L"-").Add(L" -- ").Add(L"- - - -");
+    bit.Expected.Add(L"*").Add(L" ** ").Add(L"* * * *");
 
     x1          = new Expression();
     x1->Keyword = L"-";
-    x1->Replace = L"_";
+    x1->Replace = L"*";
 
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1);
@@ -619,10 +621,11 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
         }
 
         for (UNumber i = 0; i < item.NestMatch.Size; i++) {
-            Match *nm = &(item.NestMatch[i]);
+            Match *nm = &(item.NestMatch.Storage[i]);
             if (nm->SubMatch.Size != 0) {
-                nc += String::Part(block, (nm->SubMatch[0].Offset + nm->SubMatch[0].OLength),
-                                   (nm->SubMatch[0].Length - (nm->SubMatch[0].OLength + nm->SubMatch[0].CLength)));
+                nc += String::Part(block, (nm->SubMatch.Storage[0].Offset + nm->SubMatch.Storage[0].OLength),
+                                   (nm->SubMatch.Storage[0].Length -
+                                    (nm->SubMatch.Storage[0].OLength + nm->SubMatch.Storage[0].CLength)));
             }
         }
         return nc;
@@ -895,14 +898,14 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
             UNumber temnum = 0;
             UNumber i      = 0;
 
-            if (item.NestMatch[i].Length == 0) {
+            if (item.NestMatch.Storage[i].Length == 0) {
                 // Plus sign at the biggening. Thats cool.
                 i = 1;
             }
 
             Match *nm;
             for (; i < item.NestMatch.Size; i++) {
-                nm = &(item.NestMatch[i]);
+                nm = &(item.NestMatch.Storage[i]);
                 if ((nm->Length == 0) || !String::ToNumber(block, temnum, nm->Offset, nm->Length)) {
                     return L"0";
                 }
@@ -942,7 +945,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
         Match *nm;
         for (UNumber i = 0; i < item.NestMatch.Size; i++) {
-            nm = &(item.NestMatch[i]);
+            nm = &(item.NestMatch.Storage[i]);
 
             if (nm->NestMatch.Size != 0) {
                 r = Engine::Parse(block, nm->NestMatch, nm->Offset, nm->Offset + nm->Length);
@@ -966,7 +969,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
         Match *nm;
         for (UNumber i = 0; i < item.NestMatch.Size; i++) {
-            nm = &(item.NestMatch[i]);
+            nm = &(item.NestMatch.Storage[i]);
             if ((nm->Length == 0) || !String::ToNumber(block, temnum, nm->Offset, nm->Length)) {
                 return L"0";
             }
@@ -1007,7 +1010,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
         Match *nm;
         for (UNumber i = 0; i < item.NestMatch.Size; i++) {
-            nm = &(item.NestMatch[i]);
+            nm = &(item.NestMatch.Storage[i]);
             if ((nm->Length == 0) || !String::ToNumber(block, temnum, nm->Offset, nm->Length)) {
                 return L"0";
             }
@@ -1055,7 +1058,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
 
         Match *nm;
         for (UNumber i = 0; i < item.NestMatch.Size; i++) {
-            nm = &(item.NestMatch[i]);
+            nm = &(item.NestMatch.Storage[i]);
 
             if (nm->NestMatch.Size != 0) {
                 r = Engine::Parse(block, nm->NestMatch, nm->Offset, nm->Offset + nm->Length);
@@ -1147,7 +1150,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
         String nc = L"";
 
         for (UNumber i = 0; i < item.NestMatch.Size; i++) {
-            nc += String::Part(block, item.NestMatch[i].Offset, item.NestMatch[i].Length);
+            nc += String::Part(block, item.NestMatch.Storage[i].Offset, item.NestMatch.Storage[i].Length);
         }
 
         return nc;
@@ -1160,7 +1163,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
     bit.Expected.Add(L"2").Add(L"1").Add(L"3");
 
     x1           = new Expression();
-    x1->SearchCB = &(QRegex::OR);
+    x1->SearchCB = &(ALU::OR);
     x1->Keyword  = L"==|=|!=";
     x1->Flag     = Flags::SPLIT | Flags::GROUPSPLIT;
 
@@ -1341,7 +1344,7 @@ Array<TestBit> Qentem::Test::GetBits() noexcept {
         String nc = L"";
 
         for (UNumber i = 0; i < item.NestMatch.Size; i++) {
-            nc += String::Part(block, item.NestMatch[i].Offset, item.NestMatch[i].Length);
+            nc += String::Part(block, item.NestMatch.Storage[i].Offset, item.NestMatch.Storage[i].Length);
         }
 
         return nc;
@@ -1512,7 +1515,7 @@ String Qentem::Test::FlipSplit(const String &block, const Match &item) noexcept 
 
     if (item.NestMatch.Size != 0) {
         for (UNumber i = 0; i < item.NestMatch.Size; i++) {
-            nc = Test::FlipSplit(block, item.NestMatch[i]) + nc;
+            nc = Test::FlipSplit(block, item.NestMatch.Storage[i]) + nc;
         }
 
         if (item.NestMatch.Size > 1) {
@@ -1528,26 +1531,26 @@ String Qentem::Test::FlipSplit(const String &block, const Match &item) noexcept 
 String Qentem::Test::SubMatchNestMatch(const String &block, const Match &item) noexcept {
     String nc = L"";
     if (item.SubMatch.Size != 0) {
-        Match * sm     = &(item.SubMatch[0]);
+        Match * sm     = &(item.SubMatch.Storage[0]);
         UNumber offset = sm->Offset + sm->Length;
         UNumber length = (item.Length - (sm->Length + item.CLength));
         nc             = String::Part(block, offset, length);
 
         if (sm->NestMatch.Size != 0) {
-            Match *nm = &(sm->NestMatch[1]);
+            Match *nm = &(sm->NestMatch.Storage[1]);
             nc += String::Part(block, (nm->Offset + nm->OLength), (nm->Length - (nm->CLength + nm->OLength)));
         }
     }
 
     // When bubbling; (when starts at 0)
     // if (item.SubMatch.Size != 0) {
-    //     Match *sm     = &(item.SubMatch[0]);
+    //     Match *sm     = &(item.SubMatch.Storage[0]);
     //     UNumber offset = sm->Length;
     //     UNumber length = (item.Length - (offset + item.CLength));
     //     nc            = String::Part(block,offset, length);
 
     //     if (sm->NestMatch.Size != 0) {
-    //         Match *nm = &(sm->NestMatch[1]);
+    //         Match *nm = &(sm->NestMatch.Storage[1]);
     //         nc +=
     //             String::Part(block,((nm->Offset + nm->OLength) - item.Offset), (nm->Length - (nm->CLength +
     //             nm->OLength)));
@@ -1558,13 +1561,13 @@ String Qentem::Test::SubMatchNestMatch(const String &block, const Match &item) n
 }
 
 String Qentem::Test::SubMatchZero(const String &block, const Match &item) noexcept {
-    Match *sm = &(item.SubMatch[0]);
+    Match *sm = &(item.SubMatch.Storage[0]);
     return String::Part(block, (sm->Offset + sm->OLength), (sm->Length - (sm->CLength + sm->OLength)));
 
     // When bubbling; (when starts at 0)
     // String nc = L"";
     // if (item.SubMatch.Size != 0) {
-    //     Match *sm     = &(item.SubMatch[0]);
+    //     Match *sm     = &(item.SubMatch.Storage[0]);
     //     UNumber offset = (sm->Offset - item.Offset);
 
     //     if (sm->OLength > item.OLength) {

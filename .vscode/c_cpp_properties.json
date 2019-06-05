@@ -14,21 +14,6 @@
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "gcc-x64"
-        },
-        {
-            "name": "Windows",
-            "includePath": [
-                "${workspaceFolder}/Source/**"
-            ],
-            "defines": [
-                "_DEBUG",
-                "UNICODE",
-                "_UNICODE"
-            ],
-            "compilerPath": "C:\\Program Files\\LLVM\\bin\\clang.exe",
-            "cStandard": "c11",
-            "cppStandard": "c++17",
-            "intelliSenseMode": "gcc-x64"
         }
     ],
     "version": 4

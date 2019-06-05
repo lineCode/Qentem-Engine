@@ -30,15 +30,15 @@ void run() noexcept {
     data = get_document();
     // Or
     // data = Document::FromJSON(read_file("./Test/temp.json"));
-    // std::wcout << Template().Render(read_file("./Test/temp.qtml"), &data).Str << "\n";
+    std::wcout << Template().Render(read_file("./Test/temp.qtml"), &data).Str << "\n";
 
-    std::wcout << "\nImporting JSON...\n";
-    UNumber took = clock();
-    data         = Document::FromJSON(read_file("./Test/bigjson.json"));
+    // std::wcout << "\nImporting JSON...\n";
+    // UNumber took = clock();
+    // data         = Document::FromJSON(read_file("./Test/bigjson.json"));
 
-    std::wcout << "Done! ";
-    took = (clock() - took);
-    std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3).Str << "\n";
+    // std::wcout << "Done! ";
+    // took = (clock() - took);
+    // std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3).Str << "\n";
 
     // std::wcout << "\n\nExporting JSON...\n";
     // took = clock();
@@ -48,7 +48,7 @@ void run() noexcept {
     // std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3).Str;
     // std::wcout << "\n";
 
-    // std::wcout << data.ToJSON().Str << "\n";
+    std::wcout << data.ToJSON().Str << "\n";
 }
 
 int main() noexcept {
@@ -104,8 +104,8 @@ Document get_document() noexcept {
     data[L"bool2"] = true;
     data[L"&&"]    = 1000.0;
 
-    data[L"var2"]       = L"2";
-    data[L"var2"]       = L"11"; // Testing override .
+    data[L"var2"]       = L"11";
+    data[L"var2"]       = L"2"; // Testing override .
     data[L"var3"]       = L"3";
     data[L"var4"]       = L"4";
     data[L"var5"]       = L"5";

@@ -91,34 +91,24 @@ struct Document {
 
     // void InsertHash(const Hash &_hash) noexcept;
     Entry *Exist(const UNumber hash, const UNumber level, const Array<Index> &_table) const noexcept;
-    void   InsertIndex(const Index _index, const UNumber level, Array<Index> &_table) noexcept;
+    void   InsertIndex(const Index &_index, const UNumber level, Array<Index> &_table) noexcept;
     void Insert(const String &key, UNumber offset, UNumber limit, const VType type, void *ptr, const bool move) noexcept;
 
-    String       ToJSON() const noexcept;
-    StringStream _ToJSON() const noexcept;
+    String ToJSON() const noexcept;
 
-    static Expressions GetJsonExpres() noexcept;
+    static Expressions &GetJsonExpres() noexcept;
 
-    static void     _makeNumberedDocument(Document &document, const String &content, const Match &item) noexcept;
-    static void     _makeDocument(Document &document, const String &content, const Array<Match> &items) noexcept;
-    static void     MakeDocument(Document &document, const String &content, const Array<Match> &items) noexcept;
+    static void     _makeListNumber(Document &document, const String &content, const Match &item) noexcept;
+    static void     _makeDocument(Document &document, const String &content, Array<Match> &items) noexcept;
     static Document FromJSON(const String &content) noexcept;
 
-    static Expressions JsonQuot;
-    static Expressions JsonDeQuot;
-
-    inline static void SetJsonQuot() noexcept { // TODO: needs clean up or moving
-        if (JsonQuot.Size == 0) {
-            static Expression _JsonQuot;
-            _JsonQuot.Keyword = L"\"";
-            _JsonQuot.Replace = L"\\\"";
-            JsonQuot.Add(&_JsonQuot);
-
-            static Expression _JsonDeQuot;
-            _JsonDeQuot.Keyword = L"\\\"";
-            _JsonDeQuot.Replace = L"\"";
-            JsonDeQuot.Add(&_JsonDeQuot);
-        }
+    void Clear() noexcept {
+        Entries.Clear();
+        Table.Clear();
+        Numbers.Clear();
+        Strings.Clear();
+        Keys.Clear();
+        Documents.Clear();
     }
 };
 

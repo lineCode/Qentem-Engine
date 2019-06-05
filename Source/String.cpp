@@ -43,7 +43,7 @@ void Qentem::String::Copy(const wchar_t *str_p, UNumber start_at, UNumber ln) no
     this->Str[start_at] = L'\0'; // Null ending.
 
     // Update the index to be at the last character
-    this->_index = this->Length = ln + this->_index;
+    this->_index = this->Length = (ln + this->_index);
 }
 
 // Moveing a string
@@ -172,21 +172,7 @@ bool Qentem::String::operator!=(const String &src) const noexcept { // Compare
 void Qentem::String::SetLength(const UNumber size) noexcept {
     wchar_t *_tmp = this->Str;
     this->Str     = new wchar_t[(size + 1)];
-    UNumber i     = 0;
-
-    if (size > this->_index) {
-        for (; i < this->_index; i++) {
-            this->Str[i] = _tmp[i];
-        }
-    } else {
-        for (; i < size; i++) {
-            this->Str[i] = _tmp[i];
-        }
-    }
-
-    this->Str[i] = L'\0'; // To mark the end of a string.
-    this->_index = i;
-    this->Length = size;
+    this->Length  = size;
 
     delete[] _tmp;
 }
@@ -196,6 +182,7 @@ void Qentem::String::SoftTrim(const String &str, UNumber &start, UNumber &end) n
     if (start >= end) {
         return;
     }
+
     end -= 1;
 
     while ((str.Str[start] == L' ') || (str.Str[start] == L'\n')) {
@@ -250,7 +237,7 @@ Qentem::String Qentem::String::FromNumber(UNumber number, UNumber min) noexcept 
 
     String min_str;
     for (UNumber i = tmp_l.Length; i < min; i++) {
-        min_str += L"0";
+        min_str += L"0"; // Too slow.
     }
     tmp_l = min_str + tmp_l;
 
@@ -415,21 +402,17 @@ bool Qentem::String::ToNumber(const String &str, double &number, UNumber offset,
     return true;
 }
 
-Qentem::String Qentem::String::Part(const String &src, const UNumber offset, const UNumber limit) {
-    if ((limit > src.Length) || ((offset + limit) > src.Length)) {
-        throw;
-    }
-
-    if (limit == 0) {
-        return L"";
-    }
+Qentem::String Qentem::String::Part(const String &src, UNumber offset, const UNumber limit) noexcept {
+    // if ((limit > src.Length) || ((offset + limit) > src.Length)) {
+    //     throw;
+    // }
 
     String bit;
     bit.SetLength(limit);
 
-    UNumber i = 0, j = offset;
+    UNumber i = 0;
     while (i < limit) {
-        bit.Str[i++] = src.Str[j++];
+        bit.Str[i++] = src.Str[offset++];
     }
 
     bit.Str[i] = L'\0'; // To mark the end of a string.
@@ -446,12 +429,12 @@ UNumber Qentem::String::Hash(const String &src, UNumber start, const UNumber end
 
     while (start < end_offset) {
         if (fl) {
-            j  = j * (i + 1);
-            fl = false;
+            j = j * (i + 1);
         } else {
-            j  = (j + 1);
-            fl = true;
+            j = (j + 1);
         }
+
+        fl = !fl;
 
         hash += (((static_cast<UNumber>(src.Str[start]))) * j);
         i++;

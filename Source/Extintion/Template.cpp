@@ -149,10 +149,10 @@ String Qentem::Template::RenderIF(const String &block, const Match &item) noexce
     bool _true = false;
 
     if (item.SubMatch.Size != 0) {
-        Match *sm = &(item.SubMatch[0]);
+        Match *sm = &(item.SubMatch.Storage[0]);
 
         if (sm->NestMatch.Size != 0) {
-            Match *nm = &(sm->NestMatch[0]);
+            Match *nm = &(sm->NestMatch.Storage[0]);
             _true     = Template::EvaluateIF(block, *nm);
 
             // inner content of if
@@ -161,17 +161,17 @@ String Qentem::Template::RenderIF(const String &block, const Match &item) noexce
 
             // // if_else (splitted content)
             if (item.NestMatch.Size != 0) {
-                nm = &(item.NestMatch[0]);
+                nm = &(item.NestMatch.Storage[0]);
                 if ((Flags::SPLIT & nm->Expr->Flag) != 0) {
                     if (_true) {
                         length = (nm->Length - (offset - nm->Offset));
                     } else {
                         for (UNumber i = 1; i < item.NestMatch.Size; i++) {
-                            if ((item.NestMatch[i].SubMatch.Size == 0) ||
-                                Template::EvaluateIF(block, item.NestMatch[i].SubMatch[0])) {
+                            if ((item.NestMatch.Storage[i].SubMatch.Size == 0) ||
+                                Template::EvaluateIF(block, item.NestMatch.Storage[i].SubMatch.Storage[0])) {
                                 // inner content of the next part.
-                                offset = item.NestMatch[i].Offset;
-                                length = item.NestMatch[i].Length;
+                                offset = item.NestMatch.Storage[i].Offset;
+                                length = item.NestMatch.Storage[i].Length;
                                 _true  = true;
                                 break;
                             }
@@ -210,7 +210,7 @@ String Qentem::Template::RenderIIF(const String &block, const Match &item) noexc
     // case="[statement]" true="[Yes]" false="[No]"
     for (UNumber i = 0; i < items.Size; i++) {
         // With this method, order is not necessary of case=, true=, false=
-        m = &(items[i]);
+        m = &(items.Storage[i]);
         if (m->Offset > 3) {
             switch (block.Str[(m->Offset - 4)]) {
                 case 'a': // c[a]se
@@ -239,11 +239,11 @@ String Qentem::Template::RenderIIF(const String &block, const Match &item) noexc
 // </loop>
 String Qentem::Template::RenderLoop(const String &block, const Match &item) noexcept {
     // To match: <loop (set="abc2" var="loopId")>
-    if ((item.SubMatch.Size != 0) && (item.SubMatch[0].SubMatch.Size != 0)) {
+    if ((item.SubMatch.Size != 0) && (item.SubMatch.Storage[0].SubMatch.Size != 0)) {
         Match *      m;
         String       name;
         String       var_id;
-        const Match *sm = &(item.SubMatch[0]);
+        const Match *sm = &(item.SubMatch.Storage[0]);
 
         // When bubbling
         // adj_offset = ((m->Offset + m->OLength) - (item.Offset + item.OLength));
@@ -252,7 +252,7 @@ String Qentem::Template::RenderLoop(const String &block, const Match &item) noex
 
         // set="(Array_name)" var="(var_id)"
         for (UNumber i = 0; i < sm->SubMatch.Size; i++) {
-            m = &(sm->SubMatch[i]);
+            m = &(sm->SubMatch.Storage[i]);
             if (m->Offset > 1) {
                 switch (block.Str[(m->Offset - 2)]) {
                     case 't': // se[t]
@@ -308,18 +308,18 @@ String Qentem::Template::Repeat(const String &content, const String &name, const
         if (_storage->Ordered) {
             if (_storage->Strings.Size != 0) {
                 for (UNumber i = 0; i < _storage->Strings.Size; i++) {
-                    ser[0]->Replace = String::FromNumber(i);
+                    ser.Storage[0]->Replace = String::FromNumber(i);
                     rendered += Engine::Parse(content, items);
                 }
             } else if (_storage->Numbers.Size != 0) {
                 for (UNumber i = 0; i < _storage->Numbers.Size; i++) {
-                    ser[0]->Replace = String::FromNumber(i);
+                    ser.Storage[0]->Replace = String::FromNumber(i);
                     rendered += Engine::Parse(content, items);
                 }
             }
         } else {
             for (UNumber i = 0; i < _storage->Keys.Size; i++) {
-                ser[0]->Replace = _storage->Keys[i];
+                ser.Storage[0]->Replace = _storage->Keys.Storage[i];
                 rendered += Engine::Parse(content, items);
             }
         }

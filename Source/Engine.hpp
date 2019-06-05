@@ -51,6 +51,7 @@ struct Flags {
 struct Expression {
     String  Keyword = L""; // What to search for.
     String  Replace = L""; // A text to replace the match.
+    UNumber ID      = 0;   // Expression ID
     UNumber Flag    = 0;   // Flags for the expression
 
     Expression *Connected = nullptr; // The next part of the match (the next keyword).
@@ -66,15 +67,17 @@ struct Expression {
 };
 /////////////////////////////////
 struct Match {
-    UNumber Offset  = 0; // The start position of the matched string
-    UNumber Length  = 0;
+    UNumber Offset = 0; // The start position of the matched string
+    UNumber Length = 0; // The length of the entire match.
+
+    // Unused internally
+    UNumber Tag = 0; // To Marak a match when using callback search (for later sorting, See ALU.cpp).
+    UNumber ID  = 0; // Match ID.
+
     UNumber OLength = 0; // Length of opening keyword
     UNumber CLength = 0; // Length of closing keyword
 
-    UNumber     Tag  = 0; // To Mark a match when using callback search (for later sorting, See ALU.cpp).
-    UNumber     ID   = 0; // For personal use.
-    Expression *Expr = nullptr;
-
+    Expression * Expr = nullptr;
     Array<Match> NestMatch; // To hold sub matches inside a match.
 
     // SubMatch: To hold matches inside a match; for checking before evaluation nest matches.
@@ -83,14 +86,15 @@ struct Match {
     Array<Match> SubMatch;
 };
 /////////////////////////////////
-Array<Match> Search(const String &content, const Expressions &exprs, UNumber index = 0, UNumber limit = 0,
+Array<Match> Search(const String &content, const Expressions &exprs, UNumber index = 0, UNumber length = 0,
                     UNumber max = 0) noexcept;
 
-void _search(Array<Match> &items, const String &content, const Expressions &exprs, UNumber index = 0, UNumber limit = 0,
-             UNumber max = 0, UNumber level = 0) noexcept;
+void _search(Array<Match> &items, const String &content, const Expressions &exprs, UNumber index, UNumber limit,
+             UNumber max, const UNumber level) noexcept;
 
-void   Split(const String &, Array<Match> &, UNumber, UNumber) noexcept;
-String Parse(const String &, const Array<Match> &, UNumber = 0, UNumber = 0) noexcept;
+void Split(const String &, Array<Match> &items, UNumber index, UNumber limit) noexcept;
+
+String Parse(const String &, const Array<Match> &items, UNumber index = 0, UNumber length = 0) noexcept;
 /////////////////////////////////
 } // namespace Engine
 } // namespace Qentem

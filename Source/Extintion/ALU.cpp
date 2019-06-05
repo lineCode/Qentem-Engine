@@ -9,12 +9,44 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include "Extintion/QRegex.hpp"
 #include "Extintion/ALU.hpp"
 
 using Qentem::String;
 using Qentem::Engine::Flags;
-using Qentem::QRegex::OR;
+
+UNumber Qentem::ALU::OR(const String &content, const Expression &expr, Match *item, UNumber &started, UNumber &ended,
+                        UNumber limit) noexcept {
+    UNumber counter = 0;
+    item->Tag       = 1;
+
+    for (; counter < expr.Keyword.Length; counter++) {
+        if (content.Str[started] == expr.Keyword.Str[counter]) {
+            // Don't change where it was started.
+            ended = started;
+
+            while ((++counter < expr.Keyword.Length) && (expr.Keyword.Str[counter] != L'|')) {
+                if (content.Str[++ended] != expr.Keyword.Str[counter]) {
+                    // Mismatch.
+                    counter = 0;
+                    break;
+                }
+            }
+
+            if (counter != 0) {
+                return item->Tag;
+            }
+        }
+
+        while (counter < expr.Keyword.Length) {
+            if (expr.Keyword.Str[++counter] == L'|') {
+                item->Tag += 1;
+                break;
+            }
+        }
+    }
+
+    return 0;
+}
 
 Qentem::ALU::ALU() noexcept {
     ParensExpr.Keyword   = L'(';
@@ -30,18 +62,18 @@ Qentem::ALU::ALU() noexcept {
     MathMul.Keyword  = L"*|/|%"; // ^ Needs it's own callback
     MathMul.Flag     = Flags::SPLIT | Flags::GROUPSPLIT | Flags::TRIM;
     MathMul.ParseCB  = &(ALU::MultiplicationCallback);
-    MathMul.SearchCB = &(QRegex::OR);
+    MathMul.SearchCB = &(ALU::OR);
 
     MathAdd.Keyword  = L"+|-";
     MathAdd.Flag     = Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP | Flags::TRIM;
     MathAdd.ParseCB  = &(ALU::AdditionCallback);
-    MathAdd.SearchCB = &(QRegex::OR);
+    MathAdd.SearchCB = &(ALU::OR);
     MathAdd.NestExprs.Add(&MathMul);
 
     MathEqu.Keyword  = L"==|=|!=|<|>|<=|>=";
     MathEqu.Flag     = Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP | Flags::TRIM;
     MathEqu.ParseCB  = &(ALU::EqualCallback);
-    MathEqu.SearchCB = &(QRegex::OR);
+    MathEqu.SearchCB = &(ALU::OR);
     MathEqu.NestExprs.Add(&MathAdd);
 
     this->MathExprs.Add(&MathEqu);
@@ -74,7 +106,7 @@ String Qentem::ALU::EqualCallback(const String &block, const Match &item) noexce
         double  temnum1 = 0.0;
         double  temnum2 = 0.0;
         String  str;
-        Match * nm = &(item.NestMatch[0]);
+        Match * nm = &(item.NestMatch.Storage[0]);
         UNumber op = nm->Tag;
 
         if ((nm->Length - nm->Offset) == 0) {
@@ -87,7 +119,7 @@ String Qentem::ALU::EqualCallback(const String &block, const Match &item) noexce
         }
 
         for (UNumber i = 1; i < item.NestMatch.Size; i++) {
-            nm = &(item.NestMatch[i]);
+            nm = &(item.NestMatch.Storage[i]);
             if (is_str) {
                 result = (str == String::Part(block, nm->Offset, nm->Length)); // TODO: compare without copying block
                 if (op > 3) {
@@ -141,15 +173,15 @@ String Qentem::ALU::EqualCallback(const String &block, const Match &item) noexce
 String Qentem::ALU::MultiplicationCallback(const String &block, const Match &item) noexcept {
     UNumber op;
     double  number = 0.0;
-    if (!ALU::NestNumber(block, item.NestMatch[0], number)) {
+    if (!ALU::NestNumber(block, item.NestMatch.Storage[0], number)) {
         return L"0";
     }
 
     double temnum = 0.0;
-    Match *nm     = &(item.NestMatch[0]);
+    Match *nm     = &(item.NestMatch.Storage[0]);
     op            = nm->Tag;
     for (UNumber i = 1; i < item.NestMatch.Size; i++) {
-        nm = &(item.NestMatch[i]);
+        nm = &(item.NestMatch.Storage[i]);
 
         if (!ALU::NestNumber(block, *nm, temnum)) {
             return L"0";
@@ -177,15 +209,15 @@ String Qentem::ALU::MultiplicationCallback(const String &block, const Match &ite
 
 String Qentem::ALU::AdditionCallback(const String &block, const Match &item) noexcept {
     double number = 0.0;
-    ALU::NestNumber(block, item.NestMatch[0], number);
+    ALU::NestNumber(block, item.NestMatch.Storage[0], number);
 
     double  temnum = 0.0;
     bool    neg    = false;
-    Match * nm     = &(item.NestMatch[0]);
+    Match * nm     = &(item.NestMatch.Storage[0]);
     UNumber op     = nm->Tag;
 
     for (UNumber i = 1; i < item.NestMatch.Size; i++) {
-        nm = &(item.NestMatch[i]);
+        nm = &(item.NestMatch.Storage[i]);
 
         if (!ALU::NestNumber(block, *nm, temnum) && (op == 2) && (nm->Length == 0)) {
             neg = true; // x (- -1) or something like that.

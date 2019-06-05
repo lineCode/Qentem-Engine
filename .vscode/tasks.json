@@ -7,7 +7,7 @@
             "label": "Build .bin", // executable
             "promptOnClose": false,
             "type": "shell",
-            "command": "clang",
+            "command": "clang++",
             "args": [
                 "-g",
                 "-lstdc++",
@@ -31,28 +31,30 @@
             "problemMatcher": "$gcc"
         },
         {
-            "label": "Build .exe", // executable
+            "label": "Build .so",
             "promptOnClose": false,
             "type": "shell",
-            "command": "clang",
+            "command": "clang++",
             "args": [
-                "-g",
                 "-lstdc++",
                 "-Wall",
-                // "-std=c++11",
+                "-std=c++11",
+                "-shared",
+                "-fPIC",
+                "-fmodules",
                 "-ISource",
                 "Source/*.cpp",
-                "Source/Extintion/*.cpp",
-                // "Test/TemplateTest.cpp",
-                "Test/EngineTest.cpp",
-                "-oBuild/QConsole.exe"
+                "Source/Extintion/Document.cpp",
+                "Source/Extintion/ALU.cpp",
+                "Source/Extintion/Template.cpp",
+                "-oBuild/QLibx64.so"
             ],
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
             "presentation": {
-                "reveal": "never",
+                "reveal": "silent",
                 "clear": true
             },
             "problemMatcher": "$gcc"
@@ -63,11 +65,9 @@
             "command": "clang-tidy",
             "args": [
                 "Source/String.cpp",
-                "Source/StringStream.cpp",
                 "Source/Array.hpp",
                 "Source/Engine.cpp",
                 "Source/Extintion/Test.cpp",
-                "Source/Extintion/QRegex.cpp",
                 "Source/Extintion/Document.cpp",
                 "Source/Extintion/ALU.cpp",
                 "Source/Extintion/Template.cpp",
@@ -84,57 +84,6 @@
             },
             "presentation": {
                 "reveal": "always",
-                "clear": true
-            },
-            "problemMatcher": "$gcc"
-        },
-        // {
-        //     "label": "Build .exe", // executable
-        //     "type": "shell",
-        //     "command": "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/MSBuild/15.0/Bin/MSBuild.exe",
-        //     "args": [
-        //         "${cwd}/QConsole.sln",
-        //         "/m",
-        //         "/t:build",
-        //         "/p:configuration=Release",
-        //         "/p:Platform=x64"
-        //     ],
-        //     "group": {
-        //         "kind": "build",
-        //         "isDefault": true
-        //     },
-        //     "presentation": {
-        //         "reveal": "silent",
-        //         "clear": true
-        //     },
-        //     "problemMatcher": "$msCompile"
-        // },
-        {
-            "label": "Build .so",
-            "promptOnClose": false,
-            "type": "shell",
-            "command": "clang",
-            "args": [
-                "-lstdc++",
-                "-Wall",
-                "-std=c++11",
-                "-shared",
-                "-fPIC",
-                "-fmodules",
-                "-ISource",
-                "Source/*.cpp",
-                "Source/Extintion/QRegex.cpp",
-                "Source/Extintion/Document.cpp",
-                // "Source/Extintion/ALU.cpp",
-                // "Source/Extintion/Template.cpp",
-                "-oBuild/QLibx64.so"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "presentation": {
-                "reveal": "silent",
                 "clear": true
             },
             "problemMatcher": "$gcc"

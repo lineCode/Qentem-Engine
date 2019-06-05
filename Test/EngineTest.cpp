@@ -18,17 +18,17 @@ using Qentem::String;
 using Qentem::Test::TestBit;
 
 void qentem_test_engine(bool dumb_express, bool break_on_err) noexcept {
-    Array<TestBit> bits         = Qentem::Test::GetBits();
-    const UNumber  times        = 10000; // 10000 To slow it down!
-    const UNumber  start_at     = 0;
-    const UNumber  child_at     = 0;
-    UNumber        child        = 0;
-    UNumber        errors       = 0;
-    UNumber        total        = 0;
-    UNumber        total_search = 0;
-    UNumber        search_ticks = 0;
-    UNumber        total_parse  = 0;
-    UNumber        parse_ticks  = 0;
+    Array<TestBit> &&bits         = Qentem::Test::GetBits();
+    const UNumber    times        = 10000; // 10000 To slow it down!
+    const UNumber    start_at     = 0;
+    const UNumber    child_at     = 0;
+    UNumber          counter      = 0;
+    UNumber          errors       = 0;
+    UNumber          total        = 0;
+    UNumber          total_search = 0;
+    UNumber          search_ticks = 0;
+    UNumber          total_parse  = 0;
+    UNumber          parse_ticks  = 0;
 
     Array<Qentem::Engine::Match> matches;
     UNumber                      count = start_at;
@@ -36,14 +36,14 @@ void qentem_test_engine(bool dumb_express, bool break_on_err) noexcept {
 
     std::wcout << L"\n #Engine::Search&Parse():\n";
     for (UNumber i = start_at; i < bits.Size; i++) {
-        child = child_at;
+        counter = child_at;
         count += 1;
 
-        for (UNumber t = child_at; t < bits[i].Content.Size; t++) {
+        for (UNumber t = child_at; t < bits.Storage[i].Content.Size; t++) {
 
             search_ticks = clock();
             for (UNumber x = 0; x < times; x++) {
-                matches = Qentem::Engine::Search(bits[i].Content[t], bits[i].Exprs);
+                matches = Qentem::Engine::Search(bits.Storage[i].Content.Storage[t], bits.Storage[i].Exprs);
             }
             search_ticks = (clock() - search_ticks);
             total_search += search_ticks;
@@ -51,13 +51,13 @@ void qentem_test_engine(bool dumb_express, bool break_on_err) noexcept {
             String rendered;
             parse_ticks = clock();
             for (UNumber y = 0; y < times; y++) {
-                rendered = Qentem::Engine::Parse(bits[i].Content[t], matches);
+                rendered = Qentem::Engine::Parse(bits.Storage[i].Content.Storage[t], matches);
             }
             parse_ticks = (clock() - parse_ticks);
             total_parse += parse_ticks;
 
-            pass = (rendered == bits[i].Expected[t]);
-            child += 1;
+            pass = (rendered == bits.Storage[i].Expected.Storage[t]);
+            counter += 1;
             total += 1;
 
             if (pass) {
@@ -66,7 +66,7 @@ void qentem_test_engine(bool dumb_express, bool break_on_err) noexcept {
                 std::wcout << L"\n";
             }
 
-            std::wcout << Qentem::String::FromNumber(count, 2).Str << L"-" << Qentem::String::FromNumber(child, 2).Str;
+            std::wcout << Qentem::String::FromNumber(count, 2).Str << L"-" << Qentem::String::FromNumber(counter, 2).Str;
 
             if (pass) {
                 std::wcout << L": Pass";
@@ -82,19 +82,20 @@ void qentem_test_engine(bool dumb_express, bool break_on_err) noexcept {
 
             if (!pass) {
                 errors += 1;
-                std::wcout << L" -----------" << L" Start debug " << count << L"-" << child << L" -----" << L"\n"
-                           << L"  Line:      " << bits[i].Line << L"\n"
-                           << L"  Content:  \"" << bits[i].Content[t].Str << L"\"\n"
+                std::wcout << L" -----------" << L" Start debug " << count << L"-" << counter << L" -----" << L"\n"
+                           << L"  Line:      " << bits.Storage[i].Line << L"\n"
+                           << L"  Content:  \"" << bits.Storage[i].Content.Storage[t].Str << L"\"\n"
                            << L"  Rendered: \"" << rendered.Str << L"\"\n"
-                           << L"  Expected: \"" << bits[i].Expected[t].Str << L"\"\n"
+                           << L"  Expected: \"" << bits.Storage[i].Expected.Storage[t].Str << L"\"\n"
                            << L"  Matches:\n"
-                           << Qentem::Test::DumbMatches(bits[i].Content[t], matches, L"    ").Str;
+                           << Qentem::Test::DumbMatches(bits.Storage[i].Content.Storage[t], matches, L"    ").Str;
 
                 if (dumb_express) {
-                    std::wcout << L"  Expressions:\n" << Qentem::Test::DumbExpressions(bits[i].Exprs, L"    ").Str;
+                    std::wcout << L"  Expressions:\n"
+                               << Qentem::Test::DumbExpressions(bits.Storage[i].Exprs, L"    ").Str;
                 }
 
-                std::wcout << L"\n  ---------- End debug " << count << L"-" << child << L" -------" << L"\n";
+                std::wcout << L"\n  ---------- End debug " << count << L"-" << counter << L" -------" << L"\n";
 
                 if (break_on_err) {
                     break;

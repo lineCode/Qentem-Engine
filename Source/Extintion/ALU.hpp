@@ -34,6 +34,8 @@ struct ALU {
     explicit ALU() noexcept;
     double Evaluate(String &content) const noexcept;
 
+    static UNumber OR(const String &, const Expression &, Match *, UNumber &, UNumber &, UNumber) noexcept;
+
     static String ParenthesisCallback(const String &, const Match &) noexcept;
     static bool   NestNumber(const String &, const Match &, double &) noexcept;
     static String EqualCallback(const String &, const Match &) noexcept;
