@@ -49,7 +49,7 @@ struct Field {
 };
 
 struct Document {
-    UNumber HashBase = 19; // Or 97. Choose prime numbers only!
+    UNumber HashBase = 7; // Or 97. Choose prime numbers only!
     bool    Ordered  = false;
 
     Array<Entry> Entries;
@@ -399,7 +399,7 @@ void Document::InsertIndex(const Index &_index, const UNumber level, Array<Index
     UNumber id = ((_index.Hash + level) % HashBase);
 
     if (_table.Size <= id) {
-        UNumber s = _table.Size + id + 1;
+        UNumber s = id + 1;
         _table.ExpandTo(s);
         _table.Size = s;
     }
