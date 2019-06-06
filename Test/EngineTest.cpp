@@ -9,7 +9,7 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include "Extintion/Test.hpp"
+#include "Extension/Test.hpp"
 #include <ctime>
 #include <iostream>
 

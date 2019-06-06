@@ -12,8 +12,8 @@
 #ifndef QENTEM_TEMPLATE_H
 #define QENTEM_TEMPLATE_H
 
-#include "Extintion/ALU.hpp"
-#include "Extintion/Document.hpp"
+#include "Extension/ALU.hpp"
+#include "Extension/Document.hpp"
 
 namespace Qentem {
 

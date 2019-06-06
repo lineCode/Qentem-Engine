@@ -9,7 +9,7 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include "Extintion/Template.hpp"
+#include "Extension/Template.hpp"
 #include <ctime>
 #include <fstream>
 #include <iostream>
