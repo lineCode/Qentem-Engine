@@ -30,7 +30,7 @@ static String SubMatchZero(const String &, const Match &) noexcept;
 static String SubMatchNestMatch(const String &, const Match &) noexcept;
 static String FlipSplit(const String &, const Match &) noexcept;
 
-static void CleanBits(Array<TestBit> &bits) noexcept {
+static inline void CleanBits(Array<TestBit> &bits) noexcept {
     for (UNumber i = 0; i < bits.Size; i++) {
         for (UNumber j = 0; j < bits.Storage[i].Collect.Size; j++) {
             delete bits.Storage[i].Collect.Storage[j];
@@ -54,8 +54,8 @@ static Array<String> Extract(const String &content, const Array<Match> &items) n
     return matches;
 }
 
-static String DumbExpressions(const Expressions &expres, const String &offset, UNumber index = 0,
-                              Qentem::Engine::Expression *expr = nullptr) noexcept {
+static inline String DumbExpressions(const Expressions &expres, const String &offset, UNumber index = 0,
+                                     Qentem::Engine::Expression *expr = nullptr) noexcept {
     if (expres.Size == 0) {
         return offset + L"No expressions!\n";
     }
@@ -154,8 +154,8 @@ static String DumbExpressions(const Expressions &expres, const String &offset, U
     return _array + offset + L"]\n";
 }
 
-static String DumbMatches(const String &content, const Array<Match> &matches, const String &offset,
-                          UNumber index = 0) noexcept {
+static inline String DumbMatches(const String &content, const Array<Match> &matches, const String &offset,
+                                 UNumber index = 0) noexcept {
     if (matches.Size == 0) {
         return offset + L"No matches!\n";
     }
@@ -193,7 +193,7 @@ static String DumbMatches(const String &content, const Array<Match> &matches, co
     return _array + offset + L"]\n";
 }
 
-static Array<TestBit> GetBits() noexcept {
+static inline Array<TestBit> GetBits() noexcept {
     Array<TestBit> bits = Array<TestBit>();
     TestBit        bit;
 

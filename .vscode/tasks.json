@@ -14,9 +14,8 @@
                 "-Wall",
                 "-std=c++11",
                 "-ISource",
-                "-ISource/Extintion",
-                "Test/TemplateTest.cpp",
-                // "Test/EngineTest.cpp",
+                // "Test/TemplateTest.cpp",
+                "Test/EngineTest.cpp",
                 "-oBuild/QConsole.bin"
             ],
             "group": {
@@ -28,32 +27,32 @@
                 "clear": true
             },
             "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Build .so",
+            "promptOnClose": false,
+            "type": "shell",
+            "command": "clang++",
+            "args": [
+                "-lstdc++",
+                "-Wall",
+                "-std=c++11",
+                "-shared",
+                "-fPIC",
+                "-fmodules",
+                "-ISource",
+                "filecpp",
+                "-oBuild/QLibx64.so"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "silent",
+                "clear": true
+            },
+            "problemMatcher": "$gcc"
         }
-        // ,
-        // {
-        //     "label": "Build .so",
-        //     "promptOnClose": false,
-        //     "type": "shell",
-        //     "command": "clang++",
-        //     "args": [
-        //         "-lstdc++",
-        //         "-Wall",
-        //         "-std=c++11",
-        //         "-shared",
-        //         "-fPIC",
-        //         "-fmodules",
-        //         "-ISource",
-        //         "-oBuild/QLibx64.so"
-        //     ],
-        //     "group": {
-        //         "kind": "build",
-        //         "isDefault": true
-        //     },
-        //     "presentation": {
-        //         "reveal": "silent",
-        //         "clear": true
-        //     },
-        //     "problemMatcher": "$gcc"
-        // }
     ]
 }

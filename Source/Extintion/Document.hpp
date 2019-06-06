@@ -807,6 +807,8 @@ Expressions &Document::GetJsonExpres() noexcept {
         return json_expres;
     }
 
+    // TODO: Since comments are not standard of JSON, use replace() to remove comments before prossing a json file
+
     static Expression esc_quotation = Expression();
     esc_quotation.Keyword           = L"\\\"";
 

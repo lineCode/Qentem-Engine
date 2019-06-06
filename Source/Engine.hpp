@@ -100,7 +100,7 @@ static void _search(Array<Match> &items, const String &content, const Expression
     UNumber end_at;      // Temp offset.
     UNumber nest_offset; // Temp variable for nested matches.
     while (true) {
-        if (ce->SearchCB == nullptr) { // Note: This condition cost 6% of the execution.
+        if (ce->SearchCB == nullptr) {
             if (content.Str[index] == ce->Keyword.Str[counter]) {
                 end_at = index;
                 while (++counter < ce->Keyword.Length) {
@@ -118,27 +118,28 @@ static void _search(Array<Match> &items, const String &content, const Expression
 
         if (counter != 0) {
             counter = 0;
-            end_at += 1;
 
             if (OVERDRIVE) {
                 // If the match is on "OVERDRIVE", then break.
                 OVERDRIVE = false;
                 // Set the length of the nesting match.
-                limit = (end_at - 1);
+                limit = end_at;
             } else if (!LOCKED) {
                 if (ce->Connected != nullptr) {
                     if ((Flags::TRIM & ce->Connected->Flag) != 0) {
-                        while ((content.Str[end_at] == L' ') || (content.Str[end_at] == L'\n')) {
-                            end_at++;
+                        while ((content.Str[++end_at] == L' ') || (content.Str[end_at] == L'\n')) {
                         }
+                        end_at--;
                     }
-                    _item.OLength = (end_at - index);
+                    _item.OLength = ((end_at + 1) - index);
                 }
 
                 _item.Offset = index;
-                index        = (end_at - 1); // Update the possession
-                nest_offset  = end_at;
+                index        = end_at; // Update the possession
+                nest_offset  = (end_at + 1);
             }
+
+            end_at++; // Next character
 
             if (ce->Connected == nullptr) {
                 // If it's a nesting expression, search again but inside the current match.
@@ -214,13 +215,8 @@ static void _search(Array<Match> &items, const String &content, const Expression
                 LOCKED = false;
                 id     = exprs.Size; // Reset expressions!
             } else {
-                ce = ce->Connected;
-
-                if (LOCKED) {
-                    _item.OLength = 0;
-                } else {
-                    LOCKED = true;
-                }
+                ce     = ce->Connected;
+                LOCKED = true; // Locks the engine from swiching expretions.
             }
         }
 
