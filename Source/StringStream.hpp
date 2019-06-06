@@ -17,9 +17,6 @@
 
 namespace Qentem {
 
-using Qentem::Array;
-using Qentem::String;
-
 struct StringStream {
     Array<String> _strings;
     UNumber       Length = 0;

@@ -27,10 +27,11 @@ void run() noexcept {
     Document data;
 
     // Template
-    data = get_document();
+    // data = get_document();
     // Or
-    // data = Document::FromJSON(read_file("./Test/temp.json"));
-    std::wcout << Template().Render(read_file("./Test/temp.qtml"), &data).Str << "\n";
+    data = Document::FromJSON(read_file("./Test/temp.json"));
+    std::wcout << Template::Render(read_file("./Test/temp.qtml"), &data).Str << "\n";
+    std::wcout << data.ToJSON().Str << "\n";
 
     // std::wcout << "\nImporting JSON...\n";
     // UNumber took = clock();
@@ -45,10 +46,7 @@ void run() noexcept {
     // data.ToJSON();
     // took = (clock() - took);
     // std::wcout << "Done! ";
-    // std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3).Str;
-    // std::wcout << "\n";
-
-    std::wcout << data.ToJSON().Str << "\n";
+    // std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3).Str << "\n";
 }
 
 int main() noexcept {

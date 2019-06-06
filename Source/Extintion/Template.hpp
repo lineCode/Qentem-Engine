@@ -12,58 +12,352 @@
 #ifndef QENTEM_TEMPLATE_H
 #define QENTEM_TEMPLATE_H
 
-#include "Engine.hpp"
 #include "Extintion/ALU.hpp"
 #include "Extintion/Document.hpp"
 
 namespace Qentem {
 
 struct Template {
-    struct PocketT {
-        Document *      Data = nullptr;
-        Qentem::ALU _Alu = Qentem::ALU();
-        Expressions Tags;
-        Expressions TagsQuotes;
-        Expressions TagsVars;
-    };
+    static Document *  Data;
+    static Expressions Tags;
 
-    PocketT Pocket;
+    static Expressions TagsQuotes;
+    static Expressions TagsVars;
 
-    Expression TagVar;
-    Expression VarNext;
+    static void SetTags() noexcept {
+        static Expression TagVar;
+        static Expression VarNext;
 
-    Expression TagIif;
-    Expression IifNext;
+        static Expression TagIif;
+        static Expression IifNext;
 
-    Expression TagQuote;
-    Expression QuoteNext;
+        static Expression TagQuote;
+        static Expression QuoteNext;
 
-    Expression LoopsHead;
-    Expression LoopsHead_T;
+        static Expression LoopsHead;
+        static Expression LoopsHead_T;
 
-    Expression TagLoop;
-    Expression LoopNext;
+        static Expression TagLoop;
+        static Expression LoopNext;
 
-    Expression iFsHead;
-    Expression iFsHead_T;
+        static Expression iFsHead;
+        static Expression iFsHead_T;
 
-    Expression TagIf;
-    Expression IfNext;
+        static Expression TagIf;
+        static Expression IfNext;
 
-    Expression TagELseIf;
-    Expression ELseIfNext;
+        static Expression TagELseIf;
+        static Expression ELseIfNext;
 
-    explicit Template() noexcept;
+        // Variables evaluation.
+        VarNext.ParseCB = &(Template::RenderVar);
+        // {v-var_name}
+        TagVar.Keyword   = L"{v-";
+        VarNext.Keyword  = L"}";
+        TagVar.Connected = &VarNext;
+        VarNext.Flag     = Flags::TRIM;
+        Tags.Add(&TagVar);
+        TagsVars.Add(&TagVar);
+        /////////////////////////////////
 
-    String Render(const String &, Document *data = nullptr) noexcept;
+        // Inline if evaluation.
+        IifNext.ParseCB = &(Template::RenderIIF);
+        //{iif case="3 == 3" true="Yes" false="No"}
+        TagIif.Keyword   = L"{iif";
+        IifNext.Keyword  = L"}";
+        TagIif.Connected = &IifNext;
+        IifNext.Flag     = Flags::BUBBLE;
+        IifNext.NestExprs.Add(&TagVar); // nested by TagVars'
+        Tags.Add(&TagIif);
+        /////////////////////////////////
 
-    static String RenderVar(const String &, const Match &) noexcept;
-    static bool   EvaluateIF(const String &, const Match &) noexcept;
-    static String RenderIF(const String &, const Match &) noexcept;
-    static String RenderIIF(const String &, const Match &) noexcept;
-    static String RenderLoop(const String &, const Match &) noexcept;
-    static String Repeat(const String &, const String &, const String &, Document *) noexcept;
+        // TagsQuotes.
+        TagQuote.Keyword   = L"\"";
+        QuoteNext.Keyword  = L"\"";
+        QuoteNext.Flag     = Flags::TRIM;
+        TagQuote.Connected = &QuoteNext;
+        TagsQuotes.Add(&TagQuote);
+        /////////////////////////////////
+
+        // If spliter.
+        // <else />
+        TagELseIf.Keyword   = L"<else";
+        ELseIfNext.Keyword  = L"/>";
+        ELseIfNext.Flag     = Flags::SPLIT;
+        TagELseIf.Connected = &ELseIfNext;
+        ELseIfNext.SubExprs.Add(&TagQuote);
+        /////////////////////////////////
+
+        // If's head.
+        iFsHead.Keyword   = L"<if";
+        iFsHead_T.Keyword = L">";
+        iFsHead_T.Flag    = Flags::ONCE;
+        iFsHead.Connected = &iFsHead_T;
+        // Nest to prevent matching ">" bigger sign inside if statement.
+        iFsHead_T.NestExprs.Add(&TagQuote);
+        /////////////////////////////////
+
+        // If evaluation.
+        IfNext.ParseCB = &(Template::RenderIF);
+        // <if case="{case}">html code</if>
+        TagIf.Keyword   = L"<if"; // TODO: Add  shalow if for nesting
+        IfNext.Keyword  = L"</if>";
+        TagIf.Connected = &IfNext;
+        IfNext.Flag     = Flags::SPLITROOTONLY;
+        IfNext.SubExprs.Add(&iFsHead);
+        IfNext.NestExprs.Add(&TagIf).Add(&TagELseIf);
+        Tags.Add(&TagIf);
+        /////////////////////////////////
+
+        // Loop's head.
+        LoopsHead.Keyword   = L"<loop";
+        LoopsHead_T.Keyword = L">";
+        LoopsHead.Connected = &LoopsHead_T;
+        LoopsHead_T.Flag    = Flags::ONCE;
+        LoopsHead_T.SubExprs.Add(&TagQuote);
+        /////////////////////////////////
+
+        // Loop evaluation.
+        LoopNext.ParseCB = &(Template::RenderLoop);
+        // <loop set="abc2" var="loopId">
+        //     <span>loopId): -{v-abc2[loopId]}</span>
+        // </loop>
+        TagLoop.Keyword   = L"<loop";
+        LoopNext.Keyword  = L"</loop>";
+        TagLoop.Connected = &LoopNext;
+        LoopNext.SubExprs.Add(&LoopsHead);
+        LoopNext.NestExprs.Add(&TagLoop); // nested by itself
+        Tags.Add(&TagLoop);
+        /////////////////////////////////
+    }
+
+    static String Render(const String &content, Document *data) noexcept {
+        if (Template::Tags.Size == 0) {
+            SetTags();
+        }
+
+        Template::Data = data;
+        return Engine::Parse(content, Engine::Search(content, Template::Tags));
+    }
+
+    // e.g. {v-var_name}
+    // e.g. {v-var_name[id]}
+    // Nest: {v-var_{v-var2_{v-var3_id}}}
+    static String RenderVar(const String &block, const Match &item) noexcept {
+        String value;
+        if (Template::Data->GetString(value, block, (item.Offset + item.OLength),
+                                      (item.Length - (item.CLength + item.OLength)))) {
+            return value;
+        }
+
+        return String::Part(block, (item.Offset + item.OLength), (item.Length - (item.CLength + item.OLength)));
+        // return String::Part(block, item.OLength, (block.Length - (item.OLength + item.CLength))); // if Bubbling
+    }
+
+    // <if case="{case}">html code</if>
+    // <if case="{case}">html code1 <else /> html code2</if>
+    // <if case="{case1}">html code1 <elseif case={case2} /> html code2</if>
+    // <if case="{case}">html code <if case="{case2}" />additional html code</if></if>
+    static bool EvaluateIF(const String &block, const Match &if_case) noexcept {
+        UNumber offset = (if_case.Offset + if_case.OLength);
+        UNumber length = (if_case.Length - (if_case.OLength + if_case.CLength));
+
+        String statement = Engine::Parse(block, Engine::Search(block, Template::TagsVars, offset, (offset + length)),
+                                         offset, (offset + length));
+
+        return (ALU::Evaluate(statement) != 0.0);
+    }
+
+    static String RenderIF(const String &block, const Match &item) noexcept {
+        // Nothing is processed inside the match before checking if the condition is TRUE.
+        bool _true = false;
+
+        if (item.SubMatch.Size != 0) {
+            Match *sm = &(item.SubMatch.Storage[0]);
+
+            if (sm->NestMatch.Size != 0) {
+                Match *nm = &(sm->NestMatch.Storage[0]);
+                _true     = Template::EvaluateIF(block, *nm);
+
+                // inner content of if
+                UNumber offset = (sm->Offset + sm->Length);
+                UNumber length = (item.Length - (sm->Length + item.CLength));
+
+                // // if_else (splitted content)
+                if (item.NestMatch.Size != 0) {
+                    nm = &(item.NestMatch.Storage[0]);
+                    if ((Flags::SPLIT & nm->Expr->Flag) != 0) {
+                        if (_true) {
+                            length = (nm->Length - (offset - nm->Offset));
+                        } else {
+                            for (UNumber i = 1; i < item.NestMatch.Size; i++) {
+                                if ((item.NestMatch.Storage[i].SubMatch.Size == 0) ||
+                                    Template::EvaluateIF(block, item.NestMatch.Storage[i].SubMatch.Storage[0])) {
+                                    // inner content of the next part.
+                                    offset = item.NestMatch.Storage[i].Offset;
+                                    length = item.NestMatch.Storage[i].Length;
+                                    _true  = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (_true) {
+                    return Engine::Parse(block, Engine::Search(block, Template::Tags, offset, (offset + length)), offset,
+                                         (offset + length));
+                }
+            }
+        }
+
+        return L"";
+    }
+
+    // {iif case="3 == 3" true="Yes" false="No"}
+    // {iif case="{v-var_five} == 5" true="5" false="no"}
+    // {iif case="{v-var_five} == 5" true="{v-var_five} is equal to 5" false="no"}
+    // {iif case="3 == 3" true="Yes" false="No"}
+    static String RenderIIF(const String &block, const Match &item) noexcept {
+        const Array<Match> items = Engine::Search(block, Template::TagsQuotes);
+        if (items.Size == 0) {
+            return L"";
+        }
+
+        Match *m;
+        String iif_case;
+        String iif_false;
+        String iif_true;
+
+        // case="[statement]" true="[Yes]" false="[No]"
+        for (UNumber i = 0; i < items.Size; i++) {
+            // With this method, order is not necessary of case=, true=, false=
+            m = &(items.Storage[i]);
+            if (m->Offset > 3) {
+                switch (block.Str[(m->Offset - 4)]) {
+                    case 'a': // c[a]se
+                        iif_case =
+                            String::Part(block, (m->Offset + m->OLength), (m->Length - (m->CLength + m->OLength)));
+                        break;
+                    case 'r': // t[r]ue
+                        iif_true =
+                            String::Part(block, (m->Offset + m->OLength), (m->Length - (m->CLength + m->OLength)));
+                        break;
+                    case 'l': // fa[l]se
+                        iif_false =
+                            String::Part(block, (m->Offset + m->OLength), (m->Length - (m->CLength + m->OLength)));
+                        break;
+                }
+            }
+        }
+
+        if ((iif_case.Length != 0) && (iif_true.Length != 0) && (ALU::Evaluate(iif_case) != 0.0)) {
+            return iif_true;
+        }
+
+        return (iif_false.Length != 0) ? iif_false : L"";
+    }
+
+    // <loop set="abc2" var="loopId">
+    //     <span>loopId): -{v-abc2[loopId]}</span>
+    // </loop>
+    static String RenderLoop(const String &block, const Match &item) noexcept {
+        // To match: <loop (set="abc2" var="loopId")>
+        if ((item.SubMatch.Size != 0) && (item.SubMatch.Storage[0].SubMatch.Size != 0)) {
+            Match *      m;
+            String       name;
+            String       var_id;
+            const Match *sm = &(item.SubMatch.Storage[0]);
+
+            // When bubbling
+            // adj_offset = ((m->Offset + m->OLength) - (item.Offset + item.OLength));
+            // When not
+            // adj_offset = (m->Offset + m->OLength);
+
+            // set="(Array_name)" var="(var_id)"
+            for (UNumber i = 0; i < sm->SubMatch.Size; i++) {
+                m = &(sm->SubMatch.Storage[i]);
+                if (m->Offset > 1) {
+                    switch (block.Str[(m->Offset - 2)]) {
+                        case 't': // se[t]
+                            name =
+                                String::Part(block, (m->Offset + m->OLength), (m->Length - (m->CLength + m->OLength)));
+                            break;
+                        case 'r': // va[r]
+                            var_id =
+                                String::Part(block, (m->Offset + m->OLength), (m->Length - (m->CLength + m->OLength)));
+                            break;
+                    }
+                }
+            }
+
+            if ((name.Length != 0) && (var_id.Length != 0)) {
+                UNumber offset  = sm->Offset + sm->Length;
+                UNumber length  = (item.Length - (sm->Length + item.CLength));
+                String  content = Template::Repeat(String::Part(block, offset, length), name, var_id, Template::Data);
+
+                // If bubbling:
+                // const UNumber   offset  = (sm->Length - item.OLength);
+                // const UNumber   length  = ((item.Length - offset) - (item.OLength + item.CLength));
+                // const String   content = Template::DoLoop(String::Part(block,offset, length), name, var_id,
+                // pocket->Data);
+
+                if (content.Length != 0) {
+                    return Engine::Parse(content, Engine::Search(content, Template::Tags));
+                }
+            }
+        }
+
+        return L"";
+    }
+
+    static String Repeat(const String &content, const String &name, const String &var_name, Document *storage) noexcept {
+        Entry *         _entry;
+        const Document *_storage = storage->GetSource(&_entry, name, 0, name.Length);
+
+        if (_storage == nullptr) {
+            return L"";
+        }
+
+        StringStream rendered;
+        Expressions  ser;
+        Expression   ex;
+        ser.Add(&ex);
+
+        ex.Keyword = var_name;
+
+        const Array<Match> items = Engine::Search(content, ser);
+
+        if (_entry->Type == VType::DocumentT) {
+            if (_storage->Ordered) {
+                if (_storage->Strings.Size != 0) {
+                    for (UNumber i = 0; i < _storage->Strings.Size; i++) {
+                        ser.Storage[0]->Replace = String::FromNumber(i);
+                        rendered += Engine::Parse(content, items);
+                    }
+                } else if (_storage->Numbers.Size != 0) {
+                    for (UNumber i = 0; i < _storage->Numbers.Size; i++) {
+                        ser.Storage[0]->Replace = String::FromNumber(i);
+                        rendered += Engine::Parse(content, items);
+                    }
+                }
+            } else {
+                for (UNumber i = 0; i < _storage->Keys.Size; i++) {
+                    ser.Storage[0]->Replace = _storage->Keys.Storage[i];
+                    rendered += Engine::Parse(content, items);
+                }
+            }
+        }
+
+        return rendered.Eject();
+    }
 };
-} // namespace Qentem
 
+Document *  Template::Data = nullptr;
+Expressions Template::Tags = Engine::Expressions();
+
+Expressions Template::TagsQuotes = Engine::Expressions();
+Expressions Template::TagsVars   = Engine::Expressions();
+
+} // namespace Qentem
 #endif

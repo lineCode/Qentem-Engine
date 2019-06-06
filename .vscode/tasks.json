@@ -14,40 +14,10 @@
                 "-Wall",
                 "-std=c++11",
                 "-ISource",
-                "Source/*.cpp",
-                "Source/Extintion/*.cpp",
-                // "Test/TemplateTest.cpp",
-                "Test/EngineTest.cpp",
+                "-ISource/Extintion",
+                "Test/TemplateTest.cpp",
+                // "Test/EngineTest.cpp",
                 "-oBuild/QConsole.bin"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "presentation": {
-                "reveal": "never",
-                "clear": true
-            },
-            "problemMatcher": "$gcc"
-        },
-        {
-            "label": "Build .so",
-            "promptOnClose": false,
-            "type": "shell",
-            "command": "clang++",
-            "args": [
-                "-lstdc++",
-                "-Wall",
-                "-std=c++11",
-                "-shared",
-                "-fPIC",
-                "-fmodules",
-                "-ISource",
-                "Source/*.cpp",
-                "Source/Extintion/Document.cpp",
-                "Source/Extintion/ALU.cpp",
-                "Source/Extintion/Template.cpp",
-                "-oBuild/QLibx64.so"
             ],
             "group": {
                 "kind": "build",
@@ -58,35 +28,32 @@
                 "clear": true
             },
             "problemMatcher": "$gcc"
-        },
-        {
-            "label": "Check",
-            "type": "shell",
-            "command": "clang-tidy",
-            "args": [
-                "Source/String.cpp",
-                "Source/Array.hpp",
-                "Source/Engine.cpp",
-                "Source/Extintion/Test.cpp",
-                "Source/Extintion/Document.cpp",
-                "Source/Extintion/ALU.cpp",
-                "Source/Extintion/Template.cpp",
-                "Test/TemplateTest.cpp",
-                "Test/EngineTest.cpp",
-                "-checks=*,-readability-magic-numbers,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-owning-memory,-modernize-use-auto,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-llvm-header-guard,-hicpp*,-googl*,-fuchsia*",
-                "--",
-                "c++11",
-                "-ISource"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "presentation": {
-                "reveal": "always",
-                "clear": true
-            },
-            "problemMatcher": "$gcc"
         }
+        // ,
+        // {
+        //     "label": "Build .so",
+        //     "promptOnClose": false,
+        //     "type": "shell",
+        //     "command": "clang++",
+        //     "args": [
+        //         "-lstdc++",
+        //         "-Wall",
+        //         "-std=c++11",
+        //         "-shared",
+        //         "-fPIC",
+        //         "-fmodules",
+        //         "-ISource",
+        //         "-oBuild/QLibx64.so"
+        //     ],
+        //     "group": {
+        //         "kind": "build",
+        //         "isDefault": true
+        //     },
+        //     "presentation": {
+        //         "reveal": "silent",
+        //         "clear": true
+        //     },
+        //     "problemMatcher": "$gcc"
+        // }
     ]
 }

@@ -17,8 +17,7 @@
 namespace Qentem {
 
 template <typename T>
-class Array {
-  public:
+struct Array {
     UNumber Size     = 0;
     UNumber Capacity = 0;
     T *     Storage  = nullptr;
