@@ -51,8 +51,8 @@ struct Template {
 
         // Variables evaluation.
         VarNext.ParseCB = &(Template::RenderVar);
-        // {v-var_name}
-        TagVar.Keyword   = L"{v-";
+        // {v:var_name}
+        TagVar.Keyword   = L"{v:";
         VarNext.Keyword  = L"}";
         TagVar.Connected = &VarNext;
         VarNext.Flag     = Flags::TRIM;
@@ -120,7 +120,7 @@ struct Template {
         // Loop evaluation.
         LoopNext.ParseCB = &(Template::RenderLoop);
         // <loop set="abc2" var="loopId">
-        //     <span>loopId): -{v-abc2[loopId]}</span>
+        //     <span>loopId): -{v:abc2[loopId]}</span>
         // </loop>
         TagLoop.Keyword   = L"<loop";
         LoopNext.Keyword  = L"</loop>";
@@ -140,9 +140,9 @@ struct Template {
         return Engine::Parse(content, Engine::Search(content, Template::Tags));
     }
 
-    // e.g. {v-var_name}
-    // e.g. {v-var_name[id]}
-    // Nest: {v-var_{v-var2_{v-var3_id}}}
+    // e.g. {v:var_name}
+    // e.g. {v:var_name[id]}
+    // Nest: {v:var_{v:var2_{v:var3_id}}}
     static String RenderVar(const String &block, const Match &item) noexcept {
         String value;
         if (Template::Data->GetString(value, block, (item.Offset + item.OLength),
@@ -215,8 +215,8 @@ struct Template {
     }
 
     // {iif case="3 == 3" true="Yes" false="No"}
-    // {iif case="{v-var_five} == 5" true="5" false="no"}
-    // {iif case="{v-var_five} == 5" true="{v-var_five} is equal to 5" false="no"}
+    // {iif case="{v:var_five} == 5" true="5" false="no"}
+    // {iif case="{v:var_five} == 5" true="{v:var_five} is equal to 5" false="no"}
     // {iif case="3 == 3" true="Yes" false="No"}
     static String RenderIIF(const String &block, const Match &item) noexcept {
         const Array<Match> items = Engine::Search(block, Template::TagsQuotes);
@@ -259,7 +259,7 @@ struct Template {
     }
 
     // <loop set="abc2" var="loopId">
-    //     <span>loopId): -{v-abc2[loopId]}</span>
+    //     <span>loopId): -{v:abc2[loopId]}</span>
     // </loop>
     static String RenderLoop(const String &block, const Match &item) noexcept {
         // To match: <loop (set="abc2" var="loopId")>

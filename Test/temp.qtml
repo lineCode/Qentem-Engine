@@ -1,49 +1,49 @@
 <!--- Variables -->
-<div>{v-var2}</div>
-<div>{v-abc[A-Z]}</div>
-<div>{v-abc1[3]}</div>
-<div>{v-abc[A]}</div>
-<div>{v-multi[arr1][E][0]}{v-multi[arr1][E][1]}</div>
-<div>Does not exist: {v-abc1[1234567890]}</div>
-<div>Empty var: {v-empty}</div>
+<div>{v:var2}</div>
+<div>{v:abc[A-Z]}</div>
+<div>{v:abc1[3]}</div>
+<div>{v:abc[A]}</div>
+<div>{v:multi[arr1][E][0]}{v:multi[arr1][E][1]}</div>
+<div>Does not exist: {v:abc1[1234567890]}</div>
+<div>Empty var: {v:empty}</div>
 
 <!--- Simple inline condition -->
-<div>{iif case="{v-var2} = 2" true="2 == 2" false="2 != 1"}</div>
+<div>{iif case="{v:var2} = 2" true="2 == 2" false="2 != 1"}</div>
 
 <!--- Inline condition with one value -->
-<div>{iif case="{v-var4} = 4" true="4 == 4"}</div>
+<div>{iif case="{v:var4} = 4" true="4 == 4"}</div>
 
 <!--- Inline condition with incremental value to a variable in an Array -->
-<div>{iif case="({v-numbers[2]} + 3) = 5" true="eq 5" false="({v-numbers[2]} + 3) != 5"}</div>
+<div>{iif case="({v:numbers[2]} + 3) = 5" true="eq 5" false="({v:numbers[2]} + 3) != 5"}</div>
 
 <!--- Inline condition with math operations -->
-<div>{iif case="{v-math} = 14" true="eq 14" false="{v-math} != 14"}</div>
+<div>{iif case="{v:math} = 14" true="eq 14" false="{v:math} != 14"}</div>
 
 <!--- If conditions -->
 <div>
-    <if case="{v-var2} = 2">
-        <span>{v-var2}</span>
+    <if case="{v:var2} = 2">
+        <span>{v:var2}</span>
     </if>
 
-    <if case="{v-var1} = 1">
-        <span>{v-var1}</span>
-        <if case="{v-var2} = 2">
-            <span>{v-var2}</span>
+    <if case="{v:var1} = 1">
+        <span>{v:var1}</span>
+        <if case="{v:var2} = 2">
+            <span>{v:var2}</span>
         </if>
     </if>
 
-    <if case="{v-var1} = 11">
-        <span>{v-var1}</span>
-    <elseif case="{v-var2} = 22" />
-        <span>{v-var2}</span>
-    <elseif case=" {v-engine} = Qentem " />
-        <span>{v-engine}</span>
+    <if case="{v:var1} = 11">
+        <span>{v:var1}</span>
+    <elseif case="{v:var2} = 22" />
+        <span>{v:var2}</span>
+    <elseif case=" {v:engine} = Qentem " />
+        <span>{v:engine}</span>
     </if>
 
-    <if case="{v-var1} = 11">
-        <span>{v-var1}</span>
+    <if case="{v:var1} = 11">
+        <span>{v:var1}</span>
     <else />
-        <span>{v-var4}</span>
+        <span>{v:var4}</span>
     </if>
 </div>
 
@@ -53,25 +53,25 @@
 -->
 <div>
     <loop set="abc1" var="loop-1">
-        <div>loop-1): {v-abc1[loop-1]}</div>
+        <div>loop-1): {v:abc1[loop-1]}</div>
     </loop>
 
     <loop set="abc2" var="loop-2">
-        <div>loop-2): {v-abc2[loop-2]}</div>
+        <div>loop-2): {v:abc2[loop-2]}</div>
     </loop>
 </div>
 
 <!--- Nested loops -->
 <div>
     <loop set="multi[arr1][E]" var="loop1">
-        <span>loop-loop1): {v-multi[arr1][E][loop1]}</span>
+        <span>loop-loop1): {v:multi[arr1][E][loop1]}</span>
 
         <loop set="multi[arr1][E]" var="loop2">
-            <span>loop-loop2): {v-multi[arr1][E][loop2]}</span>
+            <span>loop-loop2): {v:multi[arr1][E][loop2]}</span>
         </loop>
 
         <loop set="multi[arr1][E]" var="loop3">
-            <span>loop-loop3): {v-multi[arr1][E][loop3]}</span>
+            <span>loop-loop3): {v:multi[arr1][E][loop3]}</span>
 
         </loop>
 

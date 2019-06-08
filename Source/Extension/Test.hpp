@@ -55,7 +55,7 @@ static Array<String> Extract(const String &content, const Array<Match> &items) n
 }
 
 static inline String DumbExpressions(const Expressions &expres, const String &offset, UNumber index = 0,
-                                     Qentem::Engine::Expression *expr = nullptr) noexcept {
+                                     Engine::Expression *expr = nullptr) noexcept {
     if (expres.Size == 0) {
         return offset + L"No expressions!\n";
     }
@@ -1174,7 +1174,7 @@ static inline Array<TestBit> GetBits() noexcept {
     bit.Expected.Add(L"2").Add(L"1").Add(L"3");
 
     x1           = new Expression();
-    x1->SearchCB = &(Qentem::ALU::OR);
+    x1->SearchCB = &(ALU::OR);
     x1->Keyword  = L"==|=|!=";
     x1->Flag     = Flags::SPLIT | Flags::GROUPSPLIT;
 

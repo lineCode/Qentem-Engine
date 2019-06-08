@@ -92,7 +92,7 @@ struct Document {
 
     static void     _makeListNumber(Document &document, const String &content, const Match &item) noexcept;
     static void     _makeDocument(Document &document, const String &content, Array<Match> &items) noexcept;
-    static Document FromJSON(const String &content) noexcept;
+    static Document FromJSON(const String &content, bool comment = false) noexcept;
 
     void Clear() noexcept {
         Entries.Clear();
@@ -104,10 +104,40 @@ struct Document {
     }
 };
 
-Document Document::FromJSON(const String &content) noexcept {
-    Document document;
+Document Document::FromJSON(const String &content, bool comment) noexcept {
+    Document     document;
+    Array<Match> items;
 
-    Array<Match> &&items = Engine::Search(content, GetJsonExpres());
+    String n_content;
+
+    static Expressions comments;
+
+    // C style comments
+    if (comment) {
+        if (comments.Size == 0) {
+            static Expression comment1      = Expression();
+            static Expression comment_next1 = Expression();
+            comment1.Keyword                = L"/*";
+            comment_next1.Keyword           = L"*/";
+            comment_next1.Replace           = L'\n';
+            comment1.Connected              = &comment_next1;
+
+            static Expression comment2      = Expression();
+            static Expression comment_next2 = Expression();
+            comment2.Keyword                = L"//";
+            comment_next2.Keyword           = L'\n';
+            comment_next2.Replace           = L'\n';
+            comment2.Connected              = &comment_next2;
+
+            comments.Add(&comment1);
+            comments.Add(&comment2);
+        }
+
+        n_content = Engine::Parse(content, Engine::Search(content, comments));
+        items     = Engine::Search(n_content, GetJsonExpres());
+    } else {
+        items = Engine::Search(content, GetJsonExpres());
+    }
 
     // return document; // TODO: remove
 
@@ -118,10 +148,18 @@ Document Document::FromJSON(const String &content) noexcept {
             document.Ordered = true;
         }
 
-        if (_item->NestMatch.Size != 0) {
-            Document::_makeDocument(document, content, _item->NestMatch);
-        } else if (document.Ordered) {
-            Document::_makeListNumber(document, content, *_item);
+        if (n_content.Length == 0) {
+            if (_item->NestMatch.Size != 0) {
+                Document::_makeDocument(document, content, _item->NestMatch);
+            } else if (document.Ordered) {
+                Document::_makeListNumber(document, content, *_item);
+            }
+        } else {
+            if (_item->NestMatch.Size != 0) {
+                Document::_makeDocument(document, n_content, _item->NestMatch);
+            } else if (document.Ordered) {
+                Document::_makeListNumber(document, n_content, *_item);
+            }
         }
     }
 
@@ -161,8 +199,8 @@ bool Document::ExtractID(UNumber &id, const String &key, UNumber offset, UNumber
 
     while ((end > offset) && (key.Str[--end] != L'[')) {
     }
-    end++;
-    limit--;
+    ++end;
+    --limit;
 
     return String::ToNumber(key, id, end, (limit - (end - offset)));
 }
@@ -177,11 +215,11 @@ Document *Document::GetSource(Entry **_entry, const String &key, UNumber offset,
     UNumber _hash;
 
     if (key.Str[offset] == L'[') {
-        offset++;
+        ++offset;
         end_offset = offset;
 
         while (key.Str[end_offset] != L']') {
-            end_offset++;
+            ++end_offset;
 
             if (end_offset > (offset + limit)) {
                 return nullptr;
@@ -189,13 +227,13 @@ Document *Document::GetSource(Entry **_entry, const String &key, UNumber offset,
         }
 
         _hash = String::Hash(key, offset, end_offset);
-        end_offset++;
+        ++end_offset;
         offset--;
     } else if (key.Str[(end_offset - 1)] == L']') {
         end_offset = offset;
 
         while (key.Str[end_offset] != L'[') {
-            end_offset++;
+            ++end_offset;
 
             if (end_offset > (offset + limit)) {
                 return nullptr;
@@ -432,7 +470,7 @@ void Document::Insert(const String &key, UNumber offset, UNumber limit, const VT
                     Strings.Storage[Strings.Size] = *(static_cast<String *>(ptr));
                 }
 
-                Strings.Size++;
+                ++Strings.Size;
             } break;
             case VType::NumberT:
             case VType::BooleanT: {
@@ -452,7 +490,7 @@ void Document::Insert(const String &key, UNumber offset, UNumber limit, const VT
                     Documents.Storage[Documents.Size] = *(static_cast<Document *>(ptr));
                 }
 
-                Documents.Size++;
+                ++Documents.Size;
             } break;
             default:
                 break;
@@ -515,7 +553,7 @@ void Document::Insert(const String &key, UNumber offset, UNumber limit, const VT
         }
 
         Keys.Storage[Keys.Size] = String::Part(key, offset, limit);
-        Keys.Size++;
+        ++Keys.Size;
 
         Entries.Add(_entry);
 
@@ -569,10 +607,13 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
                 // TODO: Check for comments.
                 switch (content.Str[j]) {
                     case L'"': {
-                        i++;
+                        ++i;
 
                         Match *data = &(items.Storage[i]);
-                        String ts   = String::Part(content, (data->Offset + 1), (data->Length - 2));
+                        String ts;
+                        if (data->Length != 0) {
+                            ts = String::Part(content, (data->Offset + 1), (data->Length - 2));
+                        }
 
                         if (data->NestMatch.Size != 0) { // TODO: Use local replace
                             ts = Engine::Parse(ts, Engine::Search(ts, JsonDeQuot));
@@ -583,7 +624,7 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
                         done = true;
                     } break;
                     case L'{': {
-                        i++;
+                        ++i;
 
                         Document uno_document = Document();
                         Document::_makeDocument(uno_document, content, items.Storage[i].NestMatch);
@@ -593,7 +634,7 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
                         done = true;
                     } break;
                     case L'[': {
-                        i++;
+                        ++i;
 
                         Document o_document = Document();
                         o_document.Ordered  = true;
@@ -657,11 +698,11 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
                     data = &(items.Storage[i]);
                     if (data->NestMatch.Size == 0) {
                         document.Strings.Storage[i] = String::Part(content, (data->Offset + 1), (data->Length - 2));
-                        document.Strings.Size++;
+                        ++document.Strings.Size;
                     } else {
                         String rs                   = String::Part(content, (data->Offset + 1), (data->Length - 2));
                         document.Strings.Storage[i] = Engine::Parse(rs, Engine::Search(rs, JsonDeQuot));
-                        document.Strings.Size++;
+                        ++document.Strings.Size;
                     }
                 }
             } else if (items.Storage[0].Expr->ID == 1) { // } Unordered arrays
@@ -669,7 +710,7 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
 
                 for (UNumber i = 0; i < items.Size; i++) {
                     Document *te = &(document.Documents.Storage[document.Documents.Size]);
-                    document.Documents.Size++;
+                    ++document.Documents.Size;
 
                     _makeDocument(*te, content, items.Storage[i].NestMatch);
                 }
@@ -679,7 +720,7 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
 
                 for (UNumber i = 0; i < items.Size; i++) {
                     Document *te = &(document.Documents.Storage[document.Documents.Size]);
-                    document.Documents.Size++;
+                    ++document.Documents.Size;
                     te->Ordered = true;
 
                     data = &(items.Storage[i]);
@@ -806,8 +847,6 @@ Expressions &Document::GetJsonExpres() noexcept {
     if (json_expres.Size != 0) {
         return json_expres;
     }
-
-    // TODO: Since comments are not standard of JSON, use replace() to remove comments before prossing a json file
 
     static Expression esc_quotation = Expression();
     esc_quotation.Keyword           = L"\\\"";

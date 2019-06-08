@@ -9,30 +9,28 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include "Extension/Test.hpp"
+#include <Extension/Test.hpp>
 #include <ctime>
 #include <iostream>
 
-using Qentem::Array;
-using Qentem::String;
-using Qentem::Test::TestBit;
-
 void qentem_test_engine(bool dumb_express, bool break_on_err) noexcept {
-    Array<TestBit> &&bits         = Qentem::Test::GetBits();
-    const UNumber    times        = 10000; // 10000 To slow it down!
-    const UNumber    start_at     = 0;
-    const UNumber    child_at     = 0;
-    UNumber          counter      = 0;
-    UNumber          errors       = 0;
-    UNumber          total        = 0;
-    UNumber          total_search = 0;
-    UNumber          search_ticks = 0;
-    UNumber          total_parse  = 0;
-    UNumber          parse_ticks  = 0;
+    Qentem::Array<Qentem::Test::TestBit> &&bits = Qentem::Test::GetBits();
 
-    Array<Qentem::Engine::Match> matches;
-    UNumber                      count = start_at;
-    bool                         pass  = false;
+    const UNumber times        = 10000; // 10000 To slow it down!
+    const UNumber start_at     = 0;
+    const UNumber child_at     = 0;
+    UNumber       counter      = 0;
+    UNumber       errors       = 0;
+    UNumber       total        = 0;
+    UNumber       total_search = 0;
+    UNumber       search_ticks = 0;
+    UNumber       total_parse  = 0;
+    UNumber       parse_ticks  = 0;
+
+    Qentem::Array<Qentem::Engine::Match> matches;
+
+    UNumber count = start_at;
+    bool    pass  = false;
 
     std::wcout << L"\n #Engine::Search&Parse():\n";
     for (UNumber i = start_at; i < bits.Size; i++) {
@@ -48,7 +46,7 @@ void qentem_test_engine(bool dumb_express, bool break_on_err) noexcept {
             search_ticks = (clock() - search_ticks);
             total_search += search_ticks;
 
-            String rendered;
+            Qentem::String rendered;
             parse_ticks = clock();
             for (UNumber y = 0; y < times; y++) {
                 rendered = Qentem::Engine::Parse(bits.Storage[i].Content.Storage[t], matches);
@@ -127,7 +125,7 @@ int main() {
     //     qentem_test_engine(false, false);
     // }
 
-    qentem_test_engine(false, true);
+    qentem_test_engine(false, false);
 
     // std::getwchar();
 

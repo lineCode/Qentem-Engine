@@ -9,7 +9,7 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include "Extension/Template.hpp"
+#include <Extension/Template.hpp>
 #include <ctime>
 #include <fstream>
 #include <iostream>
@@ -62,27 +62,18 @@ int main() noexcept {
 }
 
 String read_file(const char *fullpath) noexcept {
-    String content;
+    String content = L"";
 
     std::ifstream file(fullpath, std::ios::ate | std::ios::out);
     if (file.is_open()) {
         std::streampos size = file.tellg();
         file.seekg(0, std::ios::beg);
         UNumber u_size = (UNumber(size) + 1);
-
-        char *_tmp = new char[u_size];
-
+        char *  _tmp   = new char[u_size];
         file.read(_tmp, size);
         _tmp[(u_size - 1)] = L'\0';
 
-        content.SetLength(u_size);
-        UNumber ln = 0;
-
-        while (_tmp[ln] != L'\0') {
-            content.Str[ln] = _tmp[ln];
-            ln++;
-        }
-
+        content = String(_tmp);
         delete[] _tmp;
         file.close();
     } else {

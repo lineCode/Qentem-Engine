@@ -34,14 +34,15 @@ struct Array {
         src.Storage  = nullptr;
     }
 
+    Array(Array<T> &src) = delete; // Use Add(src, false);
+
     Array<T> &Add(const T &item) noexcept { // Copy
         if (this->Size == this->Capacity) {
-
             ExpandTo((this->Size == 0 ? 1 : (this->Capacity * 2)));
         }
 
         this->Storage[this->Size] = item;
-        this->Size++;
+        ++this->Size;
 
         return *this;
     }

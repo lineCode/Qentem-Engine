@@ -10,8 +10,19 @@
             "command": "clang++",
             "args": [
                 "-g",
+                // "-O3",
                 "-lstdc++",
                 "-Wall",
+                "-Wunused",
+                "-Wcast-align",
+                "-Wold-style-cast",
+                "-Wshadow",
+                // "-Wconversion",
+                // "-Wsign-conversion",
+                "-Wpedantic",
+                "-Wnull-dereference",
+                "-Wdouble-promotion",
+                "-Wformat=2",
                 "-std=c++11",
                 "-ISource",
                 // "Test/TemplateTest.cpp",
@@ -29,20 +40,21 @@
             "problemMatcher": "$gcc"
         },
         {
-            "label": "Build .so",
+            "label": "Build WASM", // JS
             "promptOnClose": false,
             "type": "shell",
-            "command": "clang++",
+            "command": "em++",
             "args": [
-                "-lstdc++",
+                "-O3",
                 "-Wall",
                 "-std=c++11",
-                "-shared",
-                "-fPIC",
-                "-fmodules",
                 "-ISource",
-                "filecpp",
-                "-oBuild/QLibx64.so"
+                "-oExample/QLib.js",
+                "Example/QLib.cpp",
+                "-s",
+                "WASM=1",
+                "-s",
+                "EXTRA_EXPORTED_RUNTIME_METHODS=['ccall', 'cwrap']"
             ],
             "group": {
                 "kind": "build",
@@ -50,6 +62,57 @@
             },
             "presentation": {
                 "reveal": "silent",
+                "clear": true
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Build .so",
+            "promptOnClose": false,
+            "type": "shell",
+            "command": "clang++",
+            "args": [
+                "-O3",
+                "-lstdc++",
+                "-Wall",
+                "-std=c++11",
+                "-shared",
+                "-fPIC",
+                "-fmodules",
+                "-ISource",
+                "Example/QLib.cpp",
+                "-oBuild/QLib.so"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "clear": true
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Check",
+            "type": "shell",
+            "command": "clang-tidy",
+            "args": [
+                "Test/TemplateTest.cpp",
+                "Test/EngineTest.cpp",
+                // "Example/QLib.cpp",
+                "'-header-filter=.*'",
+                "-checks='*,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-non-private-member-variables-in-classes,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-readability*,-hicpp*,-misc-definitions*,-fuchsia*,-llvm-header-guard,-misc-non-private-*,-googl*,-misc-unused-parameters'",
+                "--",
+                "-ISource",
+                "c++11",
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
                 "clear": true
             },
             "problemMatcher": "$gcc"

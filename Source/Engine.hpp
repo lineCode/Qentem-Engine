@@ -127,6 +127,7 @@ static void _search(Array<Match> &items, const String &content, const Expression
             } else if (!LOCKED) {
                 if (ce->Connected != nullptr) {
                     if ((Flags::TRIM & ce->Connected->Flag) != 0) {
+                        // TODO: limit the loop to the max size
                         while ((content.Str[++end_at] == L' ') || (content.Str[end_at] == L'\n')) {
                         }
                         end_at--;
@@ -139,15 +140,15 @@ static void _search(Array<Match> &items, const String &content, const Expression
                 nest_offset  = (end_at + 1);
             }
 
-            end_at++; // Next character
+            ++end_at; // Next character
 
             if (ce->Connected == nullptr) {
                 // If it's a nesting expression, search again but inside the current match.
                 if ((ce->NestExprs.Size != 0) && (nest_offset != index)) {
-                    // Start a new search inside the current match.
                     UNumber _size = _item.NestMatch.Size;
-                    // TODO: Use local var to prevent _item from expanding very often.
-                    _search(_item.NestMatch, content, ce->NestExprs, nest_offset, index, ((max != 0) ? max : limit),
+
+                    // Start a new search inside the current match.
+                    _search(_item.NestMatch, content, ce->NestExprs, nest_offset, index, ((max == 0) ? limit : max),
                             (level + 1));
 
                     if (_item.NestMatch.Size != _size) {
@@ -173,7 +174,7 @@ static void _search(Array<Match> &items, const String &content, const Expression
                         if (((Flags::TRIM & ce->Flag) != 0) && ((index - _item.Offset) != _item.OLength)) {
                             while ((content.Str[--index] == L' ') || (content.Str[index] == L'\n')) {
                             }
-                            index++;
+                            ++index;
                         }
                         _item.CLength = (end_at - index);
                     }
@@ -204,7 +205,7 @@ static void _search(Array<Match> &items, const String &content, const Expression
                         }
 
                         items.Storage[items.Size] = static_cast<Match &&>(_item);
-                        items.Size++;
+                        ++items.Size;
 
                         if ((Flags::ONCE & ce->Flag) != 0) {
                             return;
@@ -348,7 +349,7 @@ static void Split(const String &content, Array<Match> &items, const UNumber inde
 
             if ((Flags::TRIM & _item.Expr->Flag) != 0) {
                 while ((content.Str[_item.Offset] == L' ') || (content.Str[_item.Offset] == L'\n')) {
-                    _item.Offset++;
+                    ++_item.Offset;
                 }
 
                 _item.Length = (tmp->Offset - _item.Offset);
@@ -374,7 +375,7 @@ static void Split(const String &content, Array<Match> &items, const UNumber inde
                 }
 
                 tmp2 = &splitted.Storage[splitted.Size];
-                splitted.Size++;
+                ++splitted.Size;
                 *tmp2 = static_cast<Match &&>(_item);
 
                 if (tmp->NestMatch.Size != 0) {
@@ -397,14 +398,14 @@ static void Split(const String &content, Array<Match> &items, const UNumber inde
             }
 
             nesties.Storage[nesties.Size] = static_cast<Match &&>(*tmp);
-            nesties.Size++;
+            ++nesties.Size;
         }
     }
 
     _item.Offset = offset;
     if ((Flags::TRIM & _item.Expr->Flag) != 0) {
         while ((content.Str[_item.Offset] == L' ') || (content.Str[_item.Offset] == L'\n')) {
-            _item.Offset++;
+            ++_item.Offset;
         }
 
         _item.Length = (to - _item.Offset);
@@ -413,7 +414,7 @@ static void Split(const String &content, Array<Match> &items, const UNumber inde
         if (_item.Length != 0) {
             while ((content.Str[--ends] == L' ') || (content.Str[ends] == L'\n')) {
             }
-            ends++;
+            ++ends;
             _item.Length = (ends - _item.Offset);
         }
     } else {
@@ -430,7 +431,7 @@ static void Split(const String &content, Array<Match> &items, const UNumber inde
         }
 
         tmp2 = &splitted.Storage[splitted.Size];
-        splitted.Size++;
+        ++splitted.Size;
         *tmp2 = static_cast<Match &&>(_item);
 
         if (_item.Length != 0) {

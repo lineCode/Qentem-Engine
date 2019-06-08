@@ -28,14 +28,6 @@ class String {
     String() = default;
 
     void Copy(const wchar_t *str_p, UNumber start_at, UNumber ln) noexcept {
-        if ((ln == 0) && (str_p != nullptr)) {
-            while (str_p[ln++] != L'\0') {
-                // Counting (getting the length).
-            };
-
-            --ln;
-        }
-
         // Copy any existing characters
         UNumber j = 0;
         if ((this->Length == 0) || (ln > (this->Length - this->_index))) {
@@ -62,11 +54,50 @@ class String {
         this->_index = this->Length = (ln + this->_index);
     }
 
-    // Moveing a string
-    void Move(String &src) noexcept {
-        delete[] this->Str;
+    String(const wchar_t *str) noexcept {
+        UNumber _length = 0;
+        while (str[_length++] != L'\0') {
+        };
+        --_length;
+        this->_index = this->Length = _length;
 
-        if (src.Str != nullptr) {
+        this->Str = new wchar_t[_length + 1]; // 1 for /0
+        for (UNumber j = 0; j <= _length; j++) {
+            this->Str[j] = str[j];
+        }
+    }
+
+    String(const char *str) noexcept {
+        UNumber _length = 0;
+        while (str[_length++] != L'\0') {
+        };
+        --_length;
+        this->_index = this->Length = _length;
+
+        this->Str = new wchar_t[_length + 1]; // 1 for /0
+        for (UNumber j = 0; j <= _length; j++) {
+            this->Str[j] = static_cast<wchar_t>(str[j]);
+        }
+    }
+
+    String(const wchar_t str) noexcept { // one wchar
+        this->_index = this->Length = 1;
+
+        this->Str    = new wchar_t[2]; // 1 for /0
+        this->Str[0] = str;
+        this->Str[1] = L'\0';
+    }
+
+    String(const char str) noexcept { // one char
+        this->_index = this->Length = 1;
+
+        this->Str    = new wchar_t[2]; // 1 for /0
+        this->Str[0] = static_cast<wchar_t>(str);
+        this->Str[1] = L'\0';
+    }
+
+    explicit String(String &&src) noexcept { // Move
+        if ((this != &src) && (src.Str != nullptr)) {
             this->Str    = src.Str;
             this->Length = src.Length;
             this->_index = src._index;
@@ -74,41 +105,35 @@ class String {
             src.Length = 0;
             src._index = 0;
             src.Str    = nullptr;
-        } else {
-            this->Length = 0;
-            this->_index = 0;
-            this->Str    = nullptr;
-        }
-    }
-
-    String(const wchar_t *str) noexcept { // init of point to wchar_t
-        Copy(str, 0, 0);
-    }
-
-    String(wchar_t str) noexcept { // init of wchar_t
-        Copy(&str, 0, 1);
-    }
-
-    String(String &&src) noexcept { // Move
-        if ((this != &src) && (src.Str != nullptr)) {
-            Move(src);
         }
     }
 
     String(const String &src) noexcept { // Copy
         if ((this != &src) && (src.Str != nullptr)) {
-            Copy(src.Str, 0, src.Length);
+            this->_index = this->Length = src.Length;
+
+            this->Str = new wchar_t[src.Length + 1]; // 1 for /0
+            for (UNumber j = 0; j <= src.Length; j++) {
+                this->Str[j] = src.Str[j];
+            }
         }
     }
 
-    ~String() noexcept { // Destruct
+    ~String() noexcept {
         delete[] this->Str;
         this->Str = nullptr;
     }
 
     String &operator=(String &&src) noexcept { // Move
         if ((this != &src) && (src.Str != nullptr)) {
-            Move(src);
+            delete[] this->Str;
+            this->Str    = src.Str;
+            this->Length = src.Length;
+            this->_index = src._index;
+
+            src.Length = 0;
+            src._index = 0;
+            src.Str    = nullptr;
         }
 
         return *this;
@@ -116,10 +141,19 @@ class String {
 
     String &operator=(const String &src) noexcept { // Copy
         if ((this != &src) && (src.Str != nullptr)) {
-            this->Clear();
-            Copy(src.Str, 0, src.Length);
+            delete[] this->Str;
+            this->Str    = nullptr;
+            this->_index = this->Length = src.Length;
+
+            this->Str = new wchar_t[src.Length + 1]; // 1 for /0
+            for (UNumber j = 0; j <= src.Length; j++) {
+                this->Str[j] = src.Str[j];
+            }
         } else {
-            this->Clear();
+            delete[] this->Str;
+            this->Str    = nullptr;
+            this->Length = 0;
+            this->_index = 0;
         }
 
         return *this;
@@ -128,7 +162,11 @@ class String {
     String &operator+=(String &&src) noexcept { // Move
         if ((src.Length != 0) && (src.Str != nullptr)) {
             Copy(src.Str, this->_index, src.Length);
-            src.Clear();
+
+            delete[] src.Str;
+            src.Str    = nullptr;
+            src.Length = 0;
+            src._index = 0;
         }
 
         return *this;
@@ -148,7 +186,10 @@ class String {
 
         if (src.Length != 0) {
             ns += src;
-            src.Clear();
+            delete[] src.Str;
+            src.Str    = nullptr;
+            src.Length = 0;
+            src._index = 0;
         }
 
         return ns;
@@ -186,11 +227,9 @@ class String {
     }
 
     void SetLength(const UNumber size) noexcept {
-        wchar_t *_tmp = this->Str;
-        this->Str     = new wchar_t[(size + 1)];
-        this->Length  = size;
-
-        delete[] _tmp;
+        delete[] this->Str;
+        this->Str    = new wchar_t[(size + 1)];
+        this->Length = size;
     }
 
     // Update the starting index and the ending one to be at the actual characters
@@ -219,27 +258,26 @@ class String {
         return Part(str, start, ((end + 1) - start));
     }
 
-    // Revers string
-    static String Revers(const String &str) noexcept {
-        if (str.Length < 2) {
-            return str;
-        }
-        // TODO: Use the same var by shifting chars form the end to the star.
-        String tmp;
-        tmp.SetLength(str.Length);
+    // Revers a string
+    static void Revers(String &str) noexcept {
+        UNumber i = 0;                // Start at 0
+        UNumber x = (str.Length - 1); // End before Length
+        wchar_t ch;
 
-        for (UNumber g = str.Length; g > 0;) {
-            tmp += str.Str[--g];
+        while (i < x) {
+            ch         = str.Str[x];
+            str.Str[x] = str.Str[i];
+            str.Str[i] = ch;
+            ++i;
+            --x;
         }
-
-        return tmp;
     }
 
     // TODO: Using char[] for faster copying
     static String FromNumber(UNumber number, UNumber min = 1) noexcept {
         String sign;
         if (number < 0) {
-            sign = L"-";
+            sign = L'-';
             number *= -1;
         }
 
@@ -249,11 +287,13 @@ class String {
             number /= 10;
         }
 
-        tmp_l = Revers(tmp_l);
+        if (tmp_l.Length != 0) {
+            Revers(tmp_l);
+        }
 
         String min_str;
         for (UNumber i = tmp_l.Length; i < min; i++) {
-            min_str += L"0"; // Too slow. Use Array<wchar>
+            min_str += L'0'; // Too slow. Use Array<wchar>
         }
         tmp_l = min_str + tmp_l;
 
@@ -295,7 +335,9 @@ class String {
                 num /= 10;
             }
 
-            tmp_g = Revers(tmp_g);
+            if (tmp_g.Length != 0) {
+                Revers(tmp_g);
+            }
         } else {
             num = static_cast<UNumber>(number);
         }
@@ -306,7 +348,9 @@ class String {
             num /= 10;
         }
 
-        tmp_l = Revers(tmp_l);
+        if (tmp_l.Length != 0) {
+            Revers(tmp_l);
+        }
 
         String min_str;
         for (UNumber i = tmp_l.Length; i < min; i++) {
@@ -424,15 +468,14 @@ class String {
         // }
 
         String bit;
-        bit.SetLength(limit);
+        bit.Str    = new wchar_t[(limit + 1)];
+        bit.Length = limit;
 
-        UNumber i = 0;
-        while (i < limit) {
-            bit.Str[i++] = src.Str[offset++];
+        while (bit._index < limit) {
+            bit.Str[bit._index++] = src.Str[offset++];
         }
 
-        bit.Str[i] = L'\0'; // To mark the end of a string.
-        bit._index = i;
+        bit.Str[bit._index] = L'\0'; // To mark the end of a string.
 
         return bit;
     }
