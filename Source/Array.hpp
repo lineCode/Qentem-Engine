@@ -22,7 +22,7 @@ struct Array {
     UNumber Capacity = 0;
     T *     Storage  = nullptr;
 
-    explicit Array() = default;
+    Array() = default;
 
     Array(Array<T> &&src) noexcept {
         this->Storage  = src.Storage;

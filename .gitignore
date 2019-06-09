@@ -1,7 +1,7 @@
 Notes/
 Build/
-x64/
+bin/
+obj/
 .vscode/settings.json
 .vscode/ipch/
 Test/bigjson*
-Test/temp2*

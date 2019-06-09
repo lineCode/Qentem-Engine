@@ -18,7 +18,6 @@ void qentem_test_engine(bool dumb_express, bool break_on_err) noexcept {
 
     const UNumber times        = 10000; // 10000 To slow it down!
     const UNumber start_at     = 0;
-    const UNumber child_at     = 0;
     UNumber       counter      = 0;
     UNumber       errors       = 0;
     UNumber       total        = 0;
@@ -34,24 +33,22 @@ void qentem_test_engine(bool dumb_express, bool break_on_err) noexcept {
 
     std::wcout << L"\n #Engine::Search&Parse():\n";
     for (UNumber i = start_at; i < bits.Size; i++) {
-        counter = child_at;
         count += 1;
 
-        for (UNumber t = child_at; t < bits.Storage[i].Content.Size; t++) {
-
-            search_ticks = clock();
+        for (UNumber t = counter; t < bits.Storage[i].Content.Size; t++) {
+            search_ticks = static_cast<UNumber>(clock());
             for (UNumber x = 0; x < times; x++) {
                 matches = Qentem::Engine::Search(bits.Storage[i].Content.Storage[t], bits.Storage[i].Exprs);
             }
-            search_ticks = (clock() - search_ticks);
+            search_ticks = (static_cast<UNumber>(clock()) - search_ticks);
             total_search += search_ticks;
 
             Qentem::String rendered;
-            parse_ticks = clock();
+            parse_ticks = static_cast<UNumber>(clock());
             for (UNumber y = 0; y < times; y++) {
                 rendered = Qentem::Engine::Parse(bits.Storage[i].Content.Storage[t], matches);
             }
-            parse_ticks = (clock() - parse_ticks);
+            parse_ticks = (static_cast<UNumber>(clock()) - parse_ticks);
             total_parse += parse_ticks;
 
             pass = (rendered == bits.Storage[i].Expected.Storage[t]);
@@ -100,6 +97,8 @@ void qentem_test_engine(bool dumb_express, bool break_on_err) noexcept {
                 }
             }
         }
+
+        counter = 0;
 
         if (!pass && break_on_err) {
             break;

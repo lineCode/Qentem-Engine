@@ -289,9 +289,8 @@ class String {
         for (UNumber i = tmp_l.Length; i < min; i++) {
             min_str += L'0'; // Too slow. Use Array<wchar>
         }
-        tmp_l = min_str + tmp_l;
 
-        return tmp_l;
+        return (min_str + tmp_l);
     }
 
     static String FromNumber(double number, UNumber min = 1, UNumber max = 0) noexcept {
@@ -333,7 +332,7 @@ class String {
         }
 
         String tmp_l; // TODO: Set capacity ahead
-        while (num > 0.0) {
+        while (num > 0) {
             tmp_l += wchar_t(((num % 10) + 48));
             num /= 10;
         }
@@ -353,11 +352,7 @@ class String {
             tmp_l += tmp_g;
         }
 
-        if (sign.Length == 0) {
-            return tmp_l;
-        }
-
-        return (sign + tmp_l);
+        return (sign.Length == 0) ? tmp_l : (sign + tmp_l);
     }
 
     static bool ToNumber(const String &str, UNumber &number, UNumber offset = 0, UNumber limit = 0) noexcept {
@@ -375,26 +370,11 @@ class String {
             c = str.Str[--limit];
 
             if ((c <= 47) || (c >= 58)) {
-                if (c == L'-') {
-                    number *= -1;
-                    if (limit > offset) {
-                        number = 0;
-                        return false;
-                    }
-                    break;
-                }
-
-                if (c == L'.') {
-                    number = 0;
-                    m      = 1;
-                    continue;
-                }
-
                 number = 0;
                 return false;
             }
 
-            number += ((c - 48) * m);
+            number += ((static_cast<UNumber>(c) - 48) * m);
 
             if (limit == offset) {
                 break;
@@ -414,19 +394,19 @@ class String {
         }
 
         wchar_t c;
-        number    = 0.0;
-        UNumber m = 1;
+        number   = 0.0;
+        double m = 1;
 
         do {
             c = str.Str[--limit];
 
             if ((c <= 47) || (c >= 58)) {
                 if (c == L'-') {
+                    // if (limit > offset) {
+                    //     number = 0.0;
+                    //     return false;
+                    // }
                     number *= -1.0;
-                    if (limit > offset) {
-                        number = 0.0;
-                        return false;
-                    }
                     break;
                 }
 
@@ -440,7 +420,7 @@ class String {
                 return false;
             }
 
-            number += static_cast<double>((c - 48) * m);
+            number += static_cast<double>((static_cast<double>(c) - 48) * m);
 
             if (limit == offset) {
                 break;

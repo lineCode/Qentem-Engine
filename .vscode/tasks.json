@@ -7,7 +7,7 @@
             "label": "Build .bin", // executable
             "promptOnClose": false,
             "type": "shell",
-            "command": "clang++",
+            "command": "g++",
             "args": [
                 "-g",
                 // "-O3",
@@ -17,8 +17,8 @@
                 "-Wcast-align",
                 "-Wold-style-cast",
                 "-Wshadow",
-                // "-Wconversion",
-                // "-Wsign-conversion",
+                "-Wconversion",
+                "-Wsign-conversion",
                 "-Wpedantic",
                 "-Wnull-dereference",
                 "-Wdouble-promotion",
@@ -72,7 +72,7 @@
             "label": "Build .so",
             "promptOnClose": false,
             "type": "shell",
-            "command": "clang++",
+            "command": "g++",
             "args": [
                 "-O3",
                 "-lstdc++",
@@ -80,7 +80,6 @@
                 "-std=c++11",
                 "-shared",
                 "-fPIC",
-                "-fmodules",
                 "-ISource",
                 "Example/QLib.cpp",
                 "-o",

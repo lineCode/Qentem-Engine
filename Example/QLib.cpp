@@ -33,13 +33,11 @@ const char *renderTemplate(const char *temp, const char *json, bool comments) {
     data.Clear();
     S_json.Clear();
 
-    char *tmp = new char[rend.Length + 1]; // 1 for '\0'
-
     if (rend.Length == 0) {
-        tmp[0] = '\0';
-        return tmp;
+        rend = L"";
     }
 
+    char *tmp = new char[rend.Length + 1]; // 1 for '\0'
     for (UNumber j = 0; j <= rend.Length; j++) {
         // It got it as a "char" type in the first place, so there wont be any above 255.
         tmp[j] = static_cast<char>(static_cast<unsigned int>(rend.Str[j]));

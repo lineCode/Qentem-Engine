@@ -144,9 +144,7 @@ Document Document::FromJSON(const String &content, bool comments) noexcept {
     if (items.Size != 0) {
         Match *_item = &(items.Storage[0]);
 
-        if (_item->Expr->Keyword == L']') {
-            document.Ordered = true;
-        }
+        document.Ordered = (_item->Expr->Keyword == L']');
 
         if (n_content.Length == 0) {
             if (_item->NestMatch.Size != 0) {
@@ -522,7 +520,7 @@ void Document::Insert(const String &key, UNumber offset, UNumber limit, const VT
     }
 
     if (_ent != nullptr) {
-        // Does exist
+        // If exists
         if (_ent->Type != type) {
             // Clearing existing value;
             switch (type) {
@@ -568,7 +566,7 @@ void Document::_makeListNumber(Document &document, const String &content, const 
     UNumber to    = (item.Offset + item.Length);
 
     for (UNumber i = start; i < to; i++) {
-        if ((content.Str[i] == L',') || (content.Str[i] == L']')) {
+        if ((content.Str[i] == L',') || (content.Str[i] == L'\n') || (content.Str[i] == L']')) {
             end = i;
             String::SoftTrim(content, start, end);
 
@@ -656,6 +654,7 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
                         continue;
                     }
                     case L',':
+                    case L'\n':
                     case L'}':
                     case L']': {
                         // true, false, null or a number

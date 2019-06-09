@@ -906,7 +906,7 @@ static inline Array<TestBit> GetBits() noexcept {
 
         if (item.NestMatch.Size != 0) {
             String  r      = L"";
-            UNumber temnum = 0;
+            double  temnum = 0.0;
             UNumber i      = 0;
 
             if (item.NestMatch.Storage[i].Length == 0) {
