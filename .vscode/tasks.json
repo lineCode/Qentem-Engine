@@ -27,7 +27,8 @@
                 "-ISource",
                 // "Test/TemplateTest.cpp",
                 "Test/EngineTest.cpp",
-                "-oBuild/QConsole.bin"
+                "-o",
+                "Build/QConsole.bin"
             ],
             "group": {
                 "kind": "build",
@@ -49,12 +50,13 @@
                 "-Wall",
                 "-std=c++11",
                 "-ISource",
-                "-oExample/QLib.js",
                 "Example/QLib.cpp",
                 "-s",
                 "WASM=1",
                 "-s",
-                "EXTRA_EXPORTED_RUNTIME_METHODS=['ccall', 'cwrap']"
+                "EXTRA_EXPORTED_RUNTIME_METHODS=['ccall', 'cwrap']",
+                "-o",
+                "Example/WebApp/QLib.js"
             ],
             "group": {
                 "kind": "build",
@@ -81,7 +83,8 @@
                 "-fmodules",
                 "-ISource",
                 "Example/QLib.cpp",
-                "-oBuild/QLib.so"
+                "-o",
+                "Build/QLib.so"
             ],
             "group": {
                 "kind": "build",
@@ -100,7 +103,7 @@
             "args": [
                 "Test/TemplateTest.cpp",
                 "Test/EngineTest.cpp",
-                // "Example/QLib.cpp",
+                "Example/QLib.cpp",
                 "'-header-filter=.*'",
                 "-checks='*,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-non-private-member-variables-in-classes,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-readability*,-hicpp*,-misc-definitions*,-fuchsia*,-llvm-header-guard,-misc-non-private-*,-googl*,-misc-unused-parameters'",
                 "--",

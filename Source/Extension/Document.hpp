@@ -92,7 +92,7 @@ struct Document {
 
     static void     _makeListNumber(Document &document, const String &content, const Match &item) noexcept;
     static void     _makeDocument(Document &document, const String &content, Array<Match> &items) noexcept;
-    static Document FromJSON(const String &content, bool comment = false) noexcept;
+    static Document FromJSON(const String &content, bool comments = false) noexcept;
 
     void Clear() noexcept {
         Entries.Clear();
@@ -104,17 +104,17 @@ struct Document {
     }
 };
 
-Document Document::FromJSON(const String &content, bool comment) noexcept {
+Document Document::FromJSON(const String &content, bool comments) noexcept {
     Document     document;
     Array<Match> items;
 
     String n_content;
 
-    static Expressions comments;
+    static Expressions __comments;
 
     // C style comments
-    if (comment) {
-        if (comments.Size == 0) {
+    if (comments) {
+        if (__comments.Size == 0) {
             static Expression comment1      = Expression();
             static Expression comment_next1 = Expression();
             comment1.Keyword                = L"/*";
@@ -129,11 +129,11 @@ Document Document::FromJSON(const String &content, bool comment) noexcept {
             comment_next2.Replace           = L'\n';
             comment2.Connected              = &comment_next2;
 
-            comments.Add(&comment1);
-            comments.Add(&comment2);
+            __comments.Add(&comment1);
+            __comments.Add(&comment2);
         }
 
-        n_content = Engine::Parse(content, Engine::Search(content, comments));
+        n_content = Engine::Parse(content, Engine::Search(content, __comments));
         items     = Engine::Search(n_content, GetJsonExpres());
     } else {
         items = Engine::Search(content, GetJsonExpres());

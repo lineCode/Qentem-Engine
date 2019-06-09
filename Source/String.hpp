@@ -275,12 +275,6 @@ class String {
 
     // TODO: Using char[] for faster copying
     static String FromNumber(UNumber number, UNumber min = 1) noexcept {
-        String sign;
-        if (number < 0) {
-            sign = L'-';
-            number *= -1;
-        }
-
         String tmp_l;
         while (number > 0) {
             tmp_l += wchar_t(((number % 10) + 48)); // TODO: Too slow. Use tmp_l.Str[i]
@@ -297,11 +291,7 @@ class String {
         }
         tmp_l = min_str + tmp_l;
 
-        if (sign.Length == 0) {
-            return tmp_l;
-        }
-
-        return (sign + tmp_l);
+        return tmp_l;
     }
 
     static String FromNumber(double number, UNumber min = 1, UNumber max = 0) noexcept {
