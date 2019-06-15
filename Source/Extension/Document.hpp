@@ -454,7 +454,7 @@ void Document::Insert(const String &key, UNumber offset, UNumber limit, const VT
                       const bool check) noexcept {
     UNumber       id    = 0;
     const UNumber _hash = String::Hash(key, offset, (offset + limit));
-    Entry *       _ent  = (check) ? Exist(_hash, 0, Table) : nullptr;
+    Entry *       _ent  = (!check) ? nullptr : Exist(_hash, 0, Table);
 
     if ((_ent == nullptr) || (_ent->Type != type)) {
         switch (type) {
@@ -552,7 +552,6 @@ void Document::Insert(const String &key, UNumber offset, UNumber limit, const VT
         if (Keys.Size == Keys.Capacity) {
             Keys.ExpandTo((Keys.Size == 0 ? 1 : (Keys.Size * 2)));
         }
-
         Keys.Storage[Keys.Size] = String::Part(key, offset, limit);
         ++Keys.Size;
 
@@ -652,24 +651,31 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
                         UNumber end = j;
                         String::SoftTrim(content, start, end);
 
-                        if (content.Str[start] == L't') {
-                            // True
-                            tn = 1;
-                            document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::BooleanT, &tn, false,
-                                            false);
-                        } else if (content.Str[start] == L'f') {
-                            // False
-                            tn = 0;
-                            document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::BooleanT, &tn, false,
-                                            false);
-                        } else if (content.Str[start] == L'n') {
-                            // Nullcontent.Str[i]
-                            document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::NullT, nullptr, false,
-                                            false);
-                        } else if (String::ToNumber(content, tn, start, ((end + 1) - start))) {
-                            // Number
-                            document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::NumberT, &tn, false,
-                                            false);
+                        switch (content.Str[start]) {
+                            case L't': {
+                                // True
+                                tn = 1;
+                                document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::BooleanT, &tn,
+                                                false, false);
+                            } break;
+                            case L'f': {
+                                // False
+                                tn = 0;
+                                document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::BooleanT, &tn,
+                                                false, false);
+                            } break;
+                            case L'n': {
+                                // Null
+                                document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::NullT, nullptr,
+                                                false, false);
+                            } break;
+                            default: {
+                                if (String::ToNumber(content, tn, start, ((end + 1) - start))) {
+                                    // Number
+                                    document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::NumberT, &tn,
+                                                    false, false);
+                                }
+                            } break;
                         }
 
                         done = true;
@@ -860,7 +866,7 @@ Expressions &Document::GetJsonExpres() noexcept {
     closed_square_bracket.Keyword   = L']';
     closed_square_bracket.ID        = 2;
     opened_square_bracket.Connected = &closed_square_bracket;
-    closed_square_bracket.NestExprs.Add(&opened_square_bracket).Add(&opened_curly_bracket).Add(&quotation_start);
+    closed_square_bracket.NestExprs.Add(&quotation_start).Add(&opened_square_bracket).Add(&opened_curly_bracket);
 
     json_expres.Add(&opened_curly_bracket).Add(&opened_square_bracket);
 

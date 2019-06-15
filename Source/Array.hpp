@@ -24,7 +24,7 @@ struct Array {
 
     Array() = default;
 
-    inline Array(Array<T> &&src) noexcept {
+    Array(Array<T> &&src) noexcept {
         this->Storage  = src.Storage;
         this->Capacity = src.Capacity;
         this->Size     = src.Size;
@@ -165,7 +165,7 @@ struct Array {
         delete[] tmp;
     }
 
-    inline void Clear() noexcept {
+    void Clear() noexcept {
         delete[] this->Storage;
         this->Storage  = nullptr;
         this->Capacity = 0;

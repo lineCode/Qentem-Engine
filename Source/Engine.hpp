@@ -24,9 +24,9 @@ struct Expression;
 // Expressions def
 using Expressions = Array<Expression *>;
 // Parse Callback
-using _PARSECB = const String(const String &, const Match &);
+using _PARSECB = String(const String &, const Match &);
 
-static inline void Split(Array<Match> &, const String &, const UNumber, const UNumber) noexcept;
+static void Split(Array<Match> &, const String &, const UNumber, const UNumber) noexcept;
 /////////////////////////////////
 // Expressions flags
 struct Flags {
@@ -203,10 +203,7 @@ static void _search(Array<Match> &items, const String &content, const Expression
         }
 
         /////////////////////////////////
-        if (LOCKED) {
-            // If there is an ongoing match, then move to the next char.
-            ++index;
-        } else {
+        if (!LOCKED) {
             // Switching to the next character if all keywords have been checked.
             if (id == exprs.Size) {
                 id = 0;
@@ -214,6 +211,9 @@ static void _search(Array<Match> &items, const String &content, const Expression
             }
             // Seting the next keyword for searching.
             ce = exprs.Storage[id++];
+        } else {
+            // If there is an ongoing match, then move to the next char.
+            ++index;
         }
 
         /////////////////////////////////
@@ -279,8 +279,8 @@ static void _search(Array<Match> &items, const String &content, const Expression
     // Friday, January 18, 2019
 }
 /////////////////////////////////
-static const Array<Match> Search(const String &content, const Expressions &exprs, UNumber index = 0, UNumber length = 0,
-                                 UNumber max = 0) noexcept {
+static Array<Match> Search(const String &content, const Expressions &exprs, UNumber index = 0, UNumber length = 0,
+                           UNumber max = 0) noexcept {
     Array<Match> items;
 
     if (length == 0) {
@@ -296,7 +296,7 @@ static const Array<Match> Search(const String &content, const Expressions &exprs
     return items;
 }
 /////////////////////////////////
-static inline void Split(Array<Match> &items, const String &content, const UNumber index, const UNumber to) noexcept {
+static void Split(Array<Match> &items, const String &content, const UNumber index, const UNumber to) noexcept {
     Match *tmp = nullptr;
 
     if (items.Size == 1) {
@@ -438,8 +438,7 @@ static inline void Split(Array<Match> &items, const String &content, const UNumb
     }
 }
 /////////////////////////////////
-static const String Parse(const String &content, const Array<Match> &items, UNumber index = 0,
-                          UNumber length = 0) noexcept {
+static String Parse(const String &content, const Array<Match> &items, UNumber index = 0, UNumber length = 0) noexcept {
     if (length == 0) {
         length = (content.Length - index);
     }

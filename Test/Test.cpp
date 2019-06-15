@@ -20,10 +20,10 @@ using Qentem::StringStream;
 using Qentem::Engine::Match;
 using Qentem::Test::TestBit;
 
-static const bool run_test(const String &name, const Array<TestBit> &bits, const bool Dump_express,
-                           const bool break_on_err) noexcept {
+static bool run_test(const String &name, const Array<TestBit> &bits, const bool Dump_express,
+                     const bool break_on_err) noexcept {
 
-    const UNumber times        = 1; // 3000 To slow it down!
+    const UNumber times        = 1; // 10000 To slow it down!
     const UNumber start_at     = 0;
     UNumber       counter      = 0;
     UNumber       errors       = 0;

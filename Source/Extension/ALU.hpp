@@ -122,19 +122,19 @@ struct ALU {
     }
 
     // e.g. ( 4 + 3 ), ( 2 + ( 4 + ( 1 + 2 ) + 1 ) * 5 - 3 - 2 )
-    static const String ParenthesisCallback(const String &block, const Match &item) noexcept {
+    static String ParenthesisCallback(const String &block, const Match &item) noexcept {
         String result = String::Part(block, item.OLength, (block.Length - (item.OLength + item.CLength)));
         return Engine::Parse(result, Engine::Search(result, ALU::MathExprs));
     }
 
-    static inline const void NestNumber(const String &block, const Match &item, double &number) noexcept {
+    static void NestNumber(const String &block, const Match &item, double &number) noexcept {
         String r = Engine::Parse(block, item.NestMatch, item.Offset, item.Offset + item.Length);
         if (r.Length != 0) {
             String::ToNumber(r, number);
         }
     }
 
-    static const String EqualCallback(const String &block, const Match &item) noexcept {
+    static String EqualCallback(const String &block, const Match &item) noexcept {
         double number1 = 0.0;
         double number2 = 0.0;
 
@@ -184,7 +184,7 @@ struct ALU {
         return String::FromNumber(number1);
     }
 
-    static const String MultiplicationCallback(const String &block, const Match &item) noexcept {
+    static String MultiplicationCallback(const String &block, const Match &item) noexcept {
         double number1 = 0.0;
         double number2 = 0.0;
 
@@ -239,7 +239,7 @@ struct ALU {
         return String::FromNumber(number1);
     }
 
-    static const String AdditionCallback(const String &block, const Match &item) noexcept {
+    static String AdditionCallback(const String &block, const Match &item) noexcept {
         double number1 = 0.0;
         double number2 = 0.0;
 

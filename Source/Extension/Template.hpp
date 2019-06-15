@@ -130,7 +130,7 @@ struct Template {
     // e.g. {v:var_name}
     // e.g. {v:var_name[id]}
     // Nest: {v:var_{v:var2_{v:var3_id}}}
-    static const String RenderVar(const String &block, const Match &item) noexcept {
+    static String RenderVar(const String &block, const Match &item) noexcept {
         String value;
         if (Template::Data->GetString(value, block, (item.Offset + item.OLength),
                                       (item.Length - (item.CLength + item.OLength)))) {
@@ -145,7 +145,7 @@ struct Template {
     // {iif case="{v:var_five} == 5" true="5" false="no"}
     // {iif case="{v:var_five} == 5" true="{v:var_five} is equal to 5" false="no"}
     // {iif case="3 == 3" true="Yes" false="No"}
-    static const String RenderIIF(const String &block, const Match &item) noexcept {
+    static String RenderIIF(const String &block, const Match &item) noexcept {
         const Array<Match> &&items = Engine::Search(block, Template::TagsQuotes);
         if (items.Size == 0) {
             return L"";
@@ -189,7 +189,7 @@ struct Template {
     // <if case="{case}">html code1 <else /> html code2</if>
     // <if case="{case1}">html code1 <elseif case={case2} /> html code2</if>
     // <if case="{case}">html code <if case="{case2}" />additional html code</if></if>
-    static const bool EvaluateIF(const String &block, const Match &if_case) noexcept {
+    static bool EvaluateIF(const String &block, const Match &if_case) noexcept {
         const UNumber offset = (if_case.Offset + if_case.OLength);
         const UNumber length = (if_case.Length - (if_case.OLength + if_case.CLength));
 
@@ -199,7 +199,7 @@ struct Template {
         return (ALU::Evaluate(statement) != 0.0);
     }
 
-    static const String RenderIF(const String &block, const Match &item) noexcept {
+    static String RenderIF(const String &block, const Match &item) noexcept {
         // Nothing is processed inside the match before checking if the condition is TRUE.
         bool _true = false;
 
@@ -258,7 +258,7 @@ struct Template {
     // <loop set="abc2" var="loopId">
     //     <span>loopId): -{v:abc2[loopId]}</span>
     // </loop>
-    static const String RenderLoop(const String &block, const Match &item) noexcept {
+    static String RenderLoop(const String &block, const Match &item) noexcept {
         // To match: <loop (set="abc2" var="loopId")>
         const Array<Match> &&_subMatch =
             Engine::Search(block, Template::TagsHead, item.Offset, (item.Offset + item.Length));
