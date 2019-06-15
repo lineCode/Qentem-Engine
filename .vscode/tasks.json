@@ -10,8 +10,9 @@
             "command": "g++",
             "args": [
                 "-g",
-                // "-O3",
+                // "-O1",
                 "-lstdc++",
+                "-std=c++11",
                 "-Wall",
                 "-Wunused",
                 "-Wcast-align",
@@ -23,10 +24,9 @@
                 "-Wnull-dereference",
                 "-Wdouble-promotion",
                 "-Wformat=2",
-                "-std=c++11",
                 "-ISource",
                 // "Test/TemplateTest.cpp",
-                "Test/EngineTest.cpp",
+                "Test/Test.cpp",
                 "-o",
                 "Build/QConsole.bin"
             ],
@@ -100,8 +100,7 @@
             "type": "shell",
             "command": "clang-tidy",
             "args": [
-                "Test/TemplateTest.cpp",
-                "Test/EngineTest.cpp",
+                "Test/Test.cpp",
                 "Example/QLib.cpp",
                 "'-header-filter=.*'",
                 "-checks='*,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-non-private-member-variables-in-classes,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-readability*,-hicpp*,-misc-definitions*,-fuchsia*,-llvm-header-guard,-misc-non-private-*,-googl*,-misc-unused-parameters'",

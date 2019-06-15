@@ -10,11 +10,11 @@ using Qentem::Template;
 extern "C" {
 const wchar_t *renderTemplate_w(const wchar_t *temp, const wchar_t *json, bool comments) {
     Document &&data     = Document::FromJSON(json, comments);
-    String     rendered = Template::Render(temp, &data);
+    String &&  rendered = Template::Render(temp, &data);
     data.Clear();
 
-    auto _str    = rendered.Str;
-    rendered.Str = nullptr;
+    wchar_t *_str = rendered.Str;
+    rendered.Str  = nullptr;
 
     return _str;
 }
@@ -26,7 +26,7 @@ EMSCRIPTEN_KEEPALIVE
 #endif
 
 const char *renderTemplate(const char *temp, const char *json, bool comments) {
-    String     S_json = String(json);
+    String &&  S_json = String(json);
     Document &&data   = Document::FromJSON(S_json, comments);
     String &&  rend   = Template::Render(temp, &data);
 

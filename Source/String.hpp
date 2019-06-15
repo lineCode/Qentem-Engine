@@ -366,7 +366,7 @@ class String {
         number    = 0;
         UNumber m = 1;
 
-        do {
+        for (;;) {
             c = str.Str[--limit];
 
             if ((c <= 47) || (c >= 58)) {
@@ -381,7 +381,7 @@ class String {
             }
 
             m *= 10;
-        } while (true);
+        }
 
         return true;
     }
@@ -397,7 +397,7 @@ class String {
         number   = 0.0;
         double m = 1;
 
-        do {
+        for (;;) {
             c = str.Str[--limit];
 
             if ((c <= 47) || (c >= 58)) {
@@ -427,7 +427,7 @@ class String {
             }
 
             m *= 10;
-        } while (true);
+        }
 
         return true;
     }

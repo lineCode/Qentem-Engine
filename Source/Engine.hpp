@@ -23,12 +23,10 @@ struct Expression;
 /////////////////////////////////
 // Expressions def
 using Expressions = Array<Expression *>;
-// Search Callback
-using _SEARCHCB = UNumber(const String &, const Expression &, Match *, UNumber &, UNumber &, UNumber limit);
 // Parse Callback
-using _PARSECB = String(const String &, const Match &);
+using _PARSECB = const String(const String &, const Match &);
 
-static void Split(const String &, Array<Match> &, UNumber, UNumber) noexcept;
+static inline void Split(Array<Match> &, const String &, const UNumber, const UNumber) noexcept;
 /////////////////////////////////
 // Expressions flags
 struct Flags {
@@ -46,6 +44,7 @@ struct Flags {
     static const unsigned short SPLITROOTONLY = 1024; // e.g. IF-ELSE (Template.cpp)
     static const unsigned short DROPEMPTY     = 2048; // Trim the match before adding it (spaces and newlines).
 
+    // TODO: unplug SPLIT
     // TODO: Add Flag resume
 };
 /////////////////////////////////
@@ -56,172 +55,154 @@ struct Expression {
     String  Replace;       // A text to replace the match.
 
     Expression *Connected = nullptr; // The next part of the match (the next keyword).
-    _SEARCHCB * SearchCB  = nullptr; // A callback function for custom lookup.
     _PARSECB *  ParseCB   = nullptr; // A callback function for custom rendering.
 
     Expressions NestExprs; // Expressions for nesting Search().
-    Expressions SubExprs;  // Matches other parts of the match, but do not nest.
 };
 /////////////////////////////////
 struct Match {
     UNumber Length = 0; // The length of the entire match.
     UNumber Offset = 0; // The start position of the matched string
 
-    UNumber Tag = 0; // To mark a match when using callback search (for later sorting, See ALU.cpp).
-    UNumber ID  = 0; // Match ID.
-
-    UNumber OLength = 0; // Length of opening keyword
+    UNumber OLength = 0; // Length of opening keyword; For trim
     UNumber CLength = 0; // Length of closing keyword
 
     Expression * Expr = nullptr;
     Array<Match> NestMatch; // To hold sub matches inside a match.
-
-    // SubMatch: To hold matches inside a match; for checking before evaluation nest matches.
-    // Its content does not get parse; it would be faster to do a sub search insead of calling back Search() from
-    // an outside function, when the CPU cache already holds the text.
-    Array<Match> SubMatch;
 };
 /////////////////////////////////
 static void _search(Array<Match> &items, const String &content, const Expressions &exprs, UNumber index, UNumber limit,
                     const UNumber max, const UNumber level) noexcept {
-    bool    LOCKED    = false; // To keep matching the end of the current expression.
-    bool    SPLIT     = false; // To keep tracking a split match.
-    bool    OVERDRIVE = false; // To achieving nesting.
-    UNumber counter   = 0;     // Index for counting.
+    bool          LOCKED      = false; // To keep matching the end of the current expression.
+    bool          SPLIT       = false; // To keep tracking a split match.
+    bool          OVERDRIVE   = false; // To achieving nesting.
+    UNumber       counter     = 0;     // Index for counting.
+    UNumber       id          = 0;     // Expression's id.
+    UNumber       nest_offset = 0;     // Temp variable for nested matches.
+    const UNumber started     = index;
+    Expression *  ce          = exprs.Storage[id++];
+    UNumber       end_at; // Temp offset.
+    Match         _item;  // Temp match
 
-    Match _item;
-
-    const UNumber started = index;
-
-    UNumber id = 0; // Expression's id.
-    // Seting the value of the current expression.
-    Expression *ce = exprs.Storage[id++];
-
-    UNumber end_at;          // Temp offset.
-    UNumber nest_offset = 0; // Temp variable for nested matches.
-    while (true) {
-        if (ce->SearchCB == nullptr) {
-            if (content.Str[index] == ce->Keyword.Str[counter]) {
-                end_at = index;
-                while (++counter < ce->Keyword.Length) {
-                    // Loop through every character.
-                    if (content.Str[++end_at] != ce->Keyword.Str[counter]) {
+    for (;;) {
+        if (content.Str[index] == ce->Keyword.Str[0]) {
+            end_at = index;
+            ++counter;
+            if (ce->Keyword.Length != 1) {
+                while (counter < ce->Keyword.Length) {
+                    if (content.Str[++end_at] != ce->Keyword.Str[counter++]) {
                         // Mismatch.
                         counter = 0;
                         break;
                     }
                 }
             }
-        } else {
-            counter = ce->SearchCB(content, *ce, &_item, index, end_at, limit);
-        }
 
-        if (counter != 0) {
-            counter = 0;
+            if (counter != 0) {
+                counter = 0;
 
-            if (OVERDRIVE) {
-                // If the match is on "OVERDRIVE", then break.
-                OVERDRIVE = false;
-                // Set the length of the nesting match.
-                limit = end_at;
-            } else if (!LOCKED) {
-                if (ce->Connected != nullptr) {
-                    if ((Flags::TRIM & ce->Connected->Flag) != 0) {
-                        // TODO: limit the loop to the max size
-                        while ((content.Str[++end_at] == L' ') || (content.Str[end_at] == L'\n')) {
-                        }
-                        end_at--;
-                    }
-                    _item.OLength = ((end_at + 1) - index);
-                }
-
-                _item.Offset = index;
-                index        = end_at; // Update the possession
-                nest_offset  = (end_at + 1);
-            }
-
-            ++end_at; // Next character
-
-            if (ce->Connected == nullptr) {
-                // If it's a nesting expression, search again but inside the current match.
-                if ((ce->NestExprs.Size != 0) && (nest_offset != index)) {
-                    UNumber _size = _item.NestMatch.Size;
-
-                    // TODO: If it's a resumed match, don't get in here.
-                    // Start a new search inside the current match.
-                    _search(_item.NestMatch, content, ce->NestExprs, nest_offset, index, ((max == 0) ? limit : max),
-                            (level + 1));
-
-                    if (_item.NestMatch.Size != _size) {
-                        if (max > limit) {
-                            // This is important to have the search look ahead of the limited length
-                            // in order to find the entire currect match.
-                            limit     = max; // TO THE MAX!
-                            OVERDRIVE = true;
-                        }
-
-                        // Seek to avoid having the same closing/ending keywork matched again.
-                        index = nest_offset = (_item.NestMatch.Storage[(_item.NestMatch.Size - 1)].Offset +
-                                               _item.NestMatch.Storage[(_item.NestMatch.Size - 1)].Length);
-
-                        continue; // Not done matching. Move to the next char.
-                    }
-                }
-
-                if ((Flags::IGNORE & ce->Flag) == 0) {
-                    _item.Length = (end_at - _item.Offset);
-
-                    if (_item.OLength != 0) {
-                        if (((Flags::TRIM & ce->Flag) != 0) && ((index - _item.Offset) != _item.OLength)) {
-                            while ((content.Str[--index] == L' ') || (content.Str[index] == L'\n')) {
+                if (OVERDRIVE) {
+                    // If the match is on "OVERDRIVE", then break.
+                    OVERDRIVE = false;
+                    // Set the length of the nested match.
+                    limit = end_at;
+                } else if (!LOCKED) {
+                    if (ce->Connected != nullptr) {
+                        if ((Flags::TRIM & ce->Connected->Flag) != 0) {
+                            // TODO: limit the loop to the max size
+                            while ((content.Str[++end_at] == L' ') || (content.Str[end_at] == L'\n')) {
                             }
-                            ++index;
+                            end_at--;
                         }
-                        _item.CLength = (end_at - index);
+                        _item.OLength = ((end_at + 1) - index);
                     }
 
-                    if (((Flags::DROPEMPTY & ce->Flag) == 0) || (_item.Length != (_item.OLength + _item.CLength))) {
-                        _item.Expr = ce;
-
-                        if ((Flags::SPLIT & ce->Flag) != 0) {
-                            SPLIT = true;
-                            // SPLIT = ((Flags::SPLIT & ce->Flag) != 0) This will override the last value. Do not use it!
-                        }
-
-                        if (ce->SubExprs.Size != 0) {
-                            // This could run on its own thread.
-                            _search(_item.SubMatch, content, ce->SubExprs, _item.Offset, (_item.Offset + _item.Length),
-                                    0, 0);
-                        }
-
-                        if ((level == 0) && (_item.NestMatch.Size != 0) &&
-                            (((Flags::SPLITNEST & ce->Flag) != 0) || ((Flags::SPLITROOTONLY & ce->Flag) != 0))) {
-                            // This could run on its own thread.
-                            Split(content, _item.NestMatch, (_item.Offset + _item.OLength),
-                                  ((_item.Offset + _item.Length) - (_item.CLength)));
-                        }
-
-                        if (items.Size == items.Capacity) {
-                            items.ExpandTo((items.Size == 0 ? 3 : (items.Size + 7)));
-                        }
-
-                        items.Storage[items.Size] = static_cast<Match &&>(_item);
-                        ++items.Size;
-                        // TODO: If it's a resumed match, return
-                        if ((Flags::ONCE & ce->Flag) != 0) {
-                            return;
-                        }
-                    }
+                    _item.Offset = index;
+                    index        = end_at; // Update the position TODO: end_at now is index+ce->Keyword.Length
+                    nest_offset  = end_at + 1;
                 }
 
-                LOCKED = false;
-                id     = exprs.Size; // Reset expressions!
-            } else {
-                ce     = ce->Connected;
-                LOCKED = true; // Locks the engine from swiching expretions.
+                ++end_at; // Next character
+
+                if (ce->Connected == nullptr) {
+                    // If it's a nesting expression, search again but inside the current match.
+                    if ((ce->NestExprs.Size != 0) && (nest_offset != index)) {
+
+                        // Start a new search inside the current match.
+                        const UNumber _size = _item.NestMatch.Size;
+                        _search(_item.NestMatch, content, ce->NestExprs, nest_offset, index, ((max == 0) ? limit : max),
+                                (level + 1));
+
+                        if (_item.NestMatch.Size != _size) {
+                            if (max > limit) {
+                                // This is important to have the search look ahead of the limited length
+                                // in order to find the entire currect match.
+                                limit     = max; // TO THE MAX!
+                                OVERDRIVE = true;
+                            }
+
+                            // Seek to avoid having the same closing/ending keywork matched again.
+                            nest_offset = (_item.NestMatch.Storage[(_item.NestMatch.Size - 1)].Offset +
+                                           _item.NestMatch.Storage[(_item.NestMatch.Size - 1)].Length);
+
+                            if (index < nest_offset) {
+                                index = nest_offset;
+                            }
+
+                            continue; // Not done matching. Move to the next char.
+                        }
+                    }
+
+                    if ((Flags::IGNORE & ce->Flag) == 0) {
+                        _item.Length = (end_at - _item.Offset);
+
+                        if (_item.OLength != 0) {
+                            if (((Flags::TRIM & ce->Flag) != 0) && ((index - _item.Offset) != _item.OLength)) {
+                                while ((content.Str[--index] == L' ') || (content.Str[index] == L'\n')) {
+                                }
+                                ++index;
+                            }
+                            _item.CLength = (end_at - index);
+                        }
+
+                        if (((Flags::DROPEMPTY & ce->Flag) == 0) || (_item.Length != (_item.OLength + _item.CLength))) {
+                            _item.Expr = ce;
+
+                            if ((Flags::SPLIT & ce->Flag) != 0) {
+                                SPLIT = true;
+                            }
+
+                            if ((level == 0) && (_item.NestMatch.Size != 0) &&
+                                (((Flags::SPLITNEST & ce->Flag) != 0) || ((Flags::SPLITROOTONLY & ce->Flag) != 0))) {
+                                // This could run on its own thread.
+                                Split(_item.NestMatch, content, (_item.Offset + _item.OLength),
+                                      ((_item.Offset + _item.Length) - (_item.CLength)));
+                            }
+
+                            if (items.Size == items.Capacity) {
+                                items.ExpandTo((items.Size + 1) + items.Size);
+                            }
+
+                            items.Storage[items.Size] = static_cast<Match &&>(_item);
+                            ++items.Size;
+
+                            // TODO: If it's a resumed match, return
+                            if ((Flags::ONCE & ce->Flag) != 0) {
+                                return;
+                            }
+                        }
+                    }
+
+                    LOCKED = false;
+                    id     = exprs.Size; // Reset expressions!
+                } else {
+                    ce     = ce->Connected;
+                    LOCKED = true; // Locks the engine from swiching expretions.
+                }
             }
         }
 
+        /////////////////////////////////
         if (LOCKED) {
             // If there is an ongoing match, then move to the next char.
             ++index;
@@ -235,6 +216,7 @@ static void _search(Array<Match> &items, const String &content, const Expression
             ce = exprs.Storage[id++];
         }
 
+        /////////////////////////////////
         if (index >= limit) {
             if (!LOCKED) {
                 break;
@@ -259,17 +241,16 @@ static void _search(Array<Match> &items, const String &content, const Expression
             } else {
                 // if it's a nested search... with matched items move every thing that has been found to the
                 // main items' list, to avoid searching them again.
-                items.Add(_item.NestMatch, true);
 
-                Match *p_item = &(_item.NestMatch.Storage[(_item.NestMatch.Size - 1)]);
                 // Seek the offset to where the last match ended.
-                index = p_item->Offset + p_item->Length;
+                index = (_item.NestMatch.Storage[(_item.NestMatch.Size - 1)].Offset +
+                         _item.NestMatch.Storage[(_item.NestMatch.Size - 1)].Length);
+
+                items.Add(_item.NestMatch, true);
 
                 if (index == limit) {
                     break;
                 }
-
-                _item.NestMatch.Clear();
             }
 
             if (id == exprs.Size) {
@@ -284,21 +265,22 @@ static void _search(Array<Match> &items, const String &content, const Expression
         }
     }
 
+    /////////////////////////////////
     if (items.Size == 0) {
         if ((Flags::POP & ce->Flag) != 0) {
             _search(items, content, ce->NestExprs, started, limit, 0, 0);
         }
     } else if ((level == 0) && SPLIT) {
-        Split(content, items, started, limit);
+        Split(items, content, started, limit);
     }
 
-    // Hani
+    //////////////// Hani ///////////////////
     // AlJumaa, Jamada El Oula 12, 1440
     // Friday, January 18, 2019
 }
 /////////////////////////////////
-static Array<Match> Search(const String &content, const Expressions &exprs, UNumber index = 0, UNumber length = 0,
-                           UNumber max = 0) noexcept {
+static const Array<Match> Search(const String &content, const Expressions &exprs, UNumber index = 0, UNumber length = 0,
+                                 UNumber max = 0) noexcept {
     Array<Match> items;
 
     if (length == 0) {
@@ -314,13 +296,13 @@ static Array<Match> Search(const String &content, const Expressions &exprs, UNum
     return items;
 }
 /////////////////////////////////
-static void Split(const String &content, Array<Match> &items, const UNumber index, const UNumber to) noexcept {
+static inline void Split(Array<Match> &items, const String &content, const UNumber index, const UNumber to) noexcept {
     Match *tmp = nullptr;
 
     if (items.Size == 1) {
         tmp = &items.Storage[0];
         if (((Flags::SPLITNEST & tmp->Expr->Flag) != 0) && (tmp->NestMatch.Size != 0)) {
-            Engine::Split(content, tmp->NestMatch, (tmp->Offset + tmp->OLength),
+            Engine::Split(tmp->NestMatch, content, (tmp->Offset + tmp->OLength),
                           ((tmp->Offset + tmp->Length) - (tmp->CLength)));
             return;
         }
@@ -343,7 +325,7 @@ static void Split(const String &content, Array<Match> &items, const UNumber inde
         _item.Expr = tmp->Expr;
 
         if (((Flags::SPLITNEST & tmp->Expr->Flag) != 0) && (tmp->NestMatch.Size != 0)) {
-            Engine::Split(content, tmp->NestMatch, (tmp->Offset + tmp->OLength),
+            Engine::Split(tmp->NestMatch, content, (tmp->Offset + tmp->OLength),
                           ((tmp->Offset + tmp->Length) - (tmp->CLength)));
         }
 
@@ -368,9 +350,7 @@ static void Split(const String &content, Array<Match> &items, const UNumber inde
                 _item.Length = (tmp->Offset - _item.Offset);
             }
 
-            _item.Tag = tmp->Tag;
-            _item.ID  = tmp->ID;
-            master    = _item.Expr;
+            master = _item.Expr;
 
             if (((Flags::DROPEMPTY & _item.Expr->Flag) == 0) || (_item.Length != 0)) {
                 if (splitted.Size == splitted.Capacity) {
@@ -388,10 +368,6 @@ static void Split(const String &content, Array<Match> &items, const UNumber inde
                 } else if (tmp2->Expr->NestExprs.Size != 0) {
                     Engine::_search(tmp2->NestMatch, content, _item.Expr->NestExprs, _item.Offset,
                                     (_item.Offset + _item.Length), 0, 0);
-                }
-
-                if (tmp->SubMatch.Size != 0) {
-                    _item.SubMatch = static_cast<Array<Match> &&>(tmp->SubMatch);
                 }
             }
             offset = (tmp->Offset + tmp->Length);
@@ -429,10 +405,6 @@ static void Split(const String &content, Array<Match> &items, const UNumber inde
             splitted.ExpandTo((splitted.Size == 0 ? 3 : (splitted.Size * 2)));
         }
 
-        if (tmp->SubMatch.Size != 0) {
-            _item.SubMatch = static_cast<Array<Match> &&>(tmp->SubMatch);
-        }
-
         tmp2 = &splitted.Storage[splitted.Size];
         ++splitted.Size;
         *tmp2 = static_cast<Match &&>(_item);
@@ -462,13 +434,12 @@ static void Split(const String &content, Array<Match> &items, const UNumber inde
         tmp->Offset    = index;
         tmp->Length    = (to - index);
         tmp->Expr      = master;
-        tmp->ID        = _item.ID;
-        tmp->Tag       = _item.Tag;
         tmp->NestMatch = static_cast<Array<Match> &&>(splitted);
     }
 }
 /////////////////////////////////
-static String Parse(const String &content, const Array<Match> &items, UNumber index = 0, UNumber length = 0) noexcept {
+static const String Parse(const String &content, const Array<Match> &items, UNumber index = 0,
+                          UNumber length = 0) noexcept {
     if (length == 0) {
         length = (content.Length - index);
     }
@@ -476,8 +447,8 @@ static String Parse(const String &content, const Array<Match> &items, UNumber in
     if (index >= length) {
         return content;
     }
-    // Note: Do not return on an empty match as some content is limitted by "index" and length It will always return part
-    // of the string or a copy of it)
+    // Note: Do not return on an empty match as some content is limitted by "index" and length. It should always return
+    // part of the string or a copy of it)
     StringStream rendered; // Final content
     UNumber      offset;
     UNumber      end_offset;

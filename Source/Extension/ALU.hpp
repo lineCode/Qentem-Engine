@@ -23,267 +23,309 @@ using Qentem::Engine::Match;
 
 struct ALU {
     static Expressions MathExprs;
+    static Expressions ParensExprs;
 
-    static UNumber OR(const String &content, const Expression &expr, Match *item, UNumber &started, UNumber &ended,
-                      UNumber limit) noexcept {
-        UNumber counter = 0;
-        item->Tag       = 1;
+    static void SetParensExprs() noexcept {
+        static Expression ParensExpr;
+        static Expression ParensNext;
 
-        for (; counter < expr.Keyword.Length; counter++) {
-            if (content.Str[started] == expr.Keyword.Str[counter]) {
-                // Don't change where it was started.
-                ended = started;
+        static Expression MathExp; // 1
+        static Expression MathRem; // 2
+        static Expression MathDiv; // 3
+        static Expression MathMul; // 4
 
-                while ((++counter < expr.Keyword.Length) && (expr.Keyword.Str[counter] != L'|')) {
-                    if (content.Str[++ended] != expr.Keyword.Str[counter]) {
-                        // Mismatch.
-                        counter = 0;
-                        break;
-                    }
-                }
+        static Expression MathAdd; // 1
+        static Expression MathSub; // 2
 
-                if (counter != 0) {
-                    return item->Tag;
-                }
-            }
+        static Expression MathEqu2; // 1
+        static Expression MathEqu;  // 2
+        static Expression MathNEqu; // 3
+        static Expression MathLEqu; // 4
+        static Expression MathBEqu; // 5
 
-            while (counter < expr.Keyword.Length) {
-                if (expr.Keyword.Str[++counter] == L'|') {
-                    item->Tag += 1;
-                    break;
-                }
-            }
-        }
+        constexpr UNumber flags_ops    = Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP | Flags::TRIM;
+        constexpr UNumber flags_no_pop = Flags::SPLIT | Flags::GROUPSPLIT | Flags::TRIM;
+        ///////////////////////////////////////////
+        MathEqu2.Keyword = L"==";
+        MathEqu2.ID      = 1;
+        MathEqu2.Flag    = flags_ops;
+        MathEqu2.ParseCB = &(EqualCallback);
+        MathEqu2.NestExprs.Add(&MathAdd).Add(&MathSub);
 
-        return 0;
+        MathEqu.Keyword = L"=";
+        MathEqu.ID      = 2;
+        MathEqu.Flag    = flags_ops;
+        MathEqu.ParseCB = &(EqualCallback);
+        MathEqu.NestExprs.Add(&MathAdd).Add(&MathSub);
+
+        MathNEqu.Keyword = L"!=";
+        MathNEqu.ID      = 3;
+        MathNEqu.Flag    = flags_ops;
+        MathNEqu.ParseCB = &(EqualCallback);
+        MathNEqu.NestExprs.Add(&MathAdd).Add(&MathSub);
+
+        MathLEqu.Keyword = L"<=";
+        MathLEqu.ID      = 4;
+        MathLEqu.Flag    = flags_ops;
+        MathLEqu.ParseCB = &(EqualCallback);
+        MathLEqu.NestExprs.Add(&MathAdd).Add(&MathSub);
+
+        MathBEqu.Keyword = L">=";
+        MathBEqu.ID      = 5;
+        MathBEqu.Flag    = flags_ops;
+        MathBEqu.ParseCB = &(EqualCallback);
+        MathBEqu.NestExprs.Add(&MathAdd).Add(&MathSub);
+
+        MathExprs.Add(&MathEqu2).Add(&MathEqu).Add(&MathNEqu).Add(&MathLEqu).Add(&MathBEqu);
+        ///////////////////////////////////////////
+        MathAdd.Keyword = L'+';
+        MathAdd.ID      = 1;
+        MathAdd.Flag    = flags_ops;
+        MathAdd.ParseCB = &(AdditionCallback);
+        MathAdd.NestExprs.Add(&MathExp).Add(&MathRem).Add(&MathDiv).Add(&MathMul);
+
+        MathSub.Keyword = L'-';
+        MathSub.ID      = 2;
+        MathSub.Flag    = flags_ops;
+        MathSub.ParseCB = &(AdditionCallback);
+        MathSub.NestExprs.Add(&MathExp).Add(&MathRem).Add(&MathDiv).Add(&MathMul);
+        ///////////////////////////////////////////
+        MathExp.Keyword = L"^";
+        MathExp.ID      = 1;
+        MathExp.Flag    = flags_no_pop;
+        MathExp.ParseCB = &(MultiplicationCallback);
+
+        MathRem.Keyword = L'%';
+        MathRem.ID      = 2;
+        MathRem.Flag    = flags_no_pop;
+        MathRem.ParseCB = &(MultiplicationCallback);
+
+        MathDiv.Keyword = L'/';
+        MathDiv.ID      = 3;
+        MathDiv.Flag    = flags_no_pop;
+        MathDiv.ParseCB = &(MultiplicationCallback);
+
+        MathMul.Keyword = L"*";
+        MathMul.ID      = 4;
+        MathMul.Flag    = flags_no_pop;
+        MathMul.ParseCB = &(MultiplicationCallback);
+        ///////////////////////////////////////////
+        ParensExpr.Keyword   = L'(';
+        ParensNext.Keyword   = L')';
+        ParensExpr.Connected = &ParensNext;
+        ParensNext.Flag      = Flags::BUBBLE | Flags::TRIM;
+        ParensNext.ParseCB   = &(ParenthesisCallback);
+        ParensNext.NestExprs.Add(&ParensExpr);
+        ///////////////////////////////////////////
+
+        ParensExprs.Add(&ParensExpr);
     }
 
     // e.g. ( 4 + 3 ), ( 2 + ( 4 + ( 1 + 2 ) + 1 ) * 5 - 3 - 2 )
-    static String ParenthesisCallback(const String &block, const Match &item) noexcept {
+    static const String ParenthesisCallback(const String &block, const Match &item) noexcept {
         String result = String::Part(block, item.OLength, (block.Length - (item.OLength + item.CLength)));
         return Engine::Parse(result, Engine::Search(result, ALU::MathExprs));
     }
 
-    static bool NestNumber(const String &block, const Match &item, double &number) noexcept {
-        if (item.NestMatch.Size != 0) {
-            String r = Engine::Parse(block, item.NestMatch, item.Offset, item.Offset + item.Length);
-            return ((r.Length != 0) && String::ToNumber(r, number));
+    static inline const void NestNumber(const String &block, const Match &item, double &number) noexcept {
+        String r = Engine::Parse(block, item.NestMatch, item.Offset, item.Offset + item.Length);
+        if (r.Length != 0) {
+            String::ToNumber(r, number);
         }
-
-        if (item.Length != 0) {
-            return String::ToNumber(block, number, item.Offset, item.Length);
-        }
-
-        return false;
     }
 
-    static String EqualCallback(const String &block, const Match &item) noexcept {
-        bool result = false;
+    static const String EqualCallback(const String &block, const Match &item) noexcept {
+        double number1 = 0.0;
+        double number2 = 0.0;
 
-        if (item.NestMatch.Size != 0) {
-            bool    is_str  = false;
-            double  temnum1 = 0.0;
-            double  temnum2 = 0.0;
-            String  str;
-            Match * nm = &(item.NestMatch.Storage[0]);
-            UNumber op = nm->Tag;
+        Match *m2;
 
-            if ((nm->Length - nm->Offset) == 0) {
-                return L"0";
-            }
+        const Match *m1    = &(item.NestMatch.Storage[0]);
+        UNumber      op_id = m1->Expr->ID;
 
-            if (!NestNumber(block, *nm, temnum1)) {
-                is_str = true;
-                str    = String::Part(block, nm->Offset, nm->Length);
-            }
-
-            for (UNumber i = 1; i < item.NestMatch.Size; i++) {
-                nm = &(item.NestMatch.Storage[i]);
-                if (is_str) {
-                    result = (str == String::Part(block, nm->Offset, nm->Length)); // TODO: compare without copying block
-                    if (op > 3) {
-                        result = !result;
-                    }
-                } else {
-                    if (!NestNumber(block, *nm, temnum2)) {
-                        break;
-                    }
-
-                    switch (op) {
-                        case 1:
-                        case 2:
-                            result = (temnum1 == temnum2);
-                            break;
-                        case 3:
-                            result = (temnum1 != temnum2);
-                            break;
-                        case 4:
-                            result = (temnum1 < temnum2);
-                            break;
-                        case 5:
-                            result = (temnum1 > temnum2);
-                            break;
-                        case 6:
-                            result = (temnum1 <= temnum2);
-                            break;
-                        case 7:
-                            result = (temnum1 >= temnum2);
-                            break;
-                        default:
-                            break;
-                    }
-                }
-
-                if (!result) {
-                    break;
-                }
-
-                op = nm->Tag;
-            }
-        }
-
-        if (result) {
-            return L"1";
-        }
-
-        return L"0";
-    }
-
-    static String MultiplicationCallback(const String &block, const Match &item) noexcept {
-        UNumber op;
-        double  number = 0.0;
-        if (!NestNumber(block, item.NestMatch.Storage[0], number)) {
-            return L"0";
-        }
-
-        double temnum = 0.0;
-        Match *nm     = &(item.NestMatch.Storage[0]);
-        op            = nm->Tag;
-        for (UNumber i = 1; i < item.NestMatch.Size; i++) {
-            nm = &(item.NestMatch.Storage[i]);
-
-            if (!NestNumber(block, *nm, temnum)) {
-                return L"0";
-            }
-
-            switch (op) {
-                case 1:
-                    number *= temnum;
-                    break;
-                case 2:
-                    number /= temnum;
-                    break;
-                case 3:
-                    number = static_cast<double>((static_cast<UNumber>(number) % static_cast<UNumber>(temnum)));
-                    break;
-                default:
-                    return L"0";
-            }
-
-            op = nm->Tag;
-        }
-
-        return String::FromNumber(number);
-    }
-
-    static String AdditionCallback(const String &block, const Match &item) noexcept {
-        double number = 0.0;
-        NestNumber(block, item.NestMatch.Storage[0], number);
-
-        double  temnum = 0.0;
-        bool    neg    = false;
-        Match * nm     = &(item.NestMatch.Storage[0]);
-        UNumber op     = nm->Tag;
-
-        for (UNumber i = 1; i < item.NestMatch.Size; i++) {
-            nm = &(item.NestMatch.Storage[i]);
-
-            if (!NestNumber(block, *nm, temnum) && (op == 2) && (nm->Length == 0)) {
-                neg = true; // x (- -1) or something like that.
-                continue;
-            }
-
-            if ((op == 1) || neg) {
-                number += temnum;
+        if (m1->Length != 0) {
+            if (m1->NestMatch.Size != 0) {
+                NestNumber(block, *m1, number1);
             } else {
-                number -= temnum;
+                String::ToNumber(block, number1, m1->Offset, m1->Length);
             }
-
-            op = nm->Tag;
         }
 
-        return String::FromNumber(number);
+        for (UNumber i = 1; i < item.NestMatch.Size; i++) {
+            m2 = &(item.NestMatch.Storage[i]);
+
+            if (m2->Length != 0) {
+
+                if (m2->NestMatch.Size != 0) {
+                    NestNumber(block, *m2, number2);
+                } else {
+                    String::ToNumber(block, number2, m2->Offset, m2->Length);
+                }
+
+                switch (op_id) {
+                    case 3:
+                        number1 = (number1 != number2) ? 1.0 : 0.0;
+                        break;
+                    case 4:
+                        number1 = (number1 <= number2) ? 1.0 : 0.0;
+                        break;
+                    case 5:
+                        number1 = (number1 >= number2) ? 1.0 : 0.0;
+                        break;
+                    default:
+                        number1 = (number1 == number2) ? 1.0 : 0.0;
+                        break;
+                }
+            }
+
+            op_id = m2->Expr->ID;
+        }
+
+        return String::FromNumber(number1);
+    }
+
+    static const String MultiplicationCallback(const String &block, const Match &item) noexcept {
+        double number1 = 0.0;
+        double number2 = 0.0;
+
+        Match *m2;
+
+        const Match *m1    = &(item.NestMatch.Storage[0]);
+        UNumber      op_id = m1->Expr->ID;
+
+        if (m1->Length != 0) {
+            String::ToNumber(block, number1, m1->Offset, m1->Length);
+        }
+
+        for (UNumber i = 1; i < item.NestMatch.Size; i++) {
+            m2 = &(item.NestMatch.Storage[i]);
+
+            if (m2->Length != 0) {
+
+                String::ToNumber(block, number2, m2->Offset, m2->Length);
+
+                switch (op_id) {
+                    case 1:
+                        if (number2 != 0.0) {
+                            const UNumber times = static_cast<UNumber>(number2);
+                            for (UNumber k = 1; k < times; k++) {
+                                number1 *= number1;
+                            }
+                        } else {
+                            number1 = 1;
+                        }
+                        break;
+                    case 2:
+                        number1 = static_cast<double>(static_cast<UNumber>(number1) % static_cast<UNumber>(number2));
+                        break;
+                    case 3:
+                        if (number2 == 0) {
+                            return L"0";
+                        }
+
+                        number1 /= number2;
+                        break;
+                    default:
+                        number1 *= number2;
+                        break;
+                }
+            } else {
+                return L"0";
+            }
+
+            op_id = m2->Expr->ID;
+        }
+
+        return String::FromNumber(number1);
+    }
+
+    static const String AdditionCallback(const String &block, const Match &item) noexcept {
+        double number1 = 0.0;
+        double number2 = 0.0;
+
+        Match *m2;
+
+        const Match *m1    = &(item.NestMatch.Storage[0]);
+        UNumber      op_id = m1->Expr->ID;
+
+        if (m1->Length != 0) {
+            if (m1->NestMatch.Size != 0) {
+                NestNumber(block, *m1, number1);
+            } else {
+                String::ToNumber(block, number1, m1->Offset, m1->Length);
+            }
+        }
+
+        for (UNumber i = 1; i < item.NestMatch.Size; i++) {
+            m2 = &(item.NestMatch.Storage[i]);
+
+            if (m2->Length != 0) {
+
+                if (m2->NestMatch.Size != 0) {
+                    NestNumber(block, *m2, number2);
+                } else {
+                    String::ToNumber(block, number2, m2->Offset, m2->Length);
+                }
+
+                switch (op_id) {
+                    case 2:
+                        number1 -= number2;
+                        break;
+                    default:
+                        number1 += number2;
+                        break;
+                }
+
+                op_id = m2->Expr->ID;
+            } else if ((op_id == 2) && (op_id == m2->Expr->ID)) {
+                op_id = 1; // Two --
+            } else {
+                op_id = m2->Expr->ID;
+            }
+        }
+
+        return String::FromNumber(number1);
     }
 
     static double Evaluate(String &content) noexcept {
-
-        static Expressions ParensExprs;
-        static Expression  ParensExpr;
-        static Expression  ParensNext;
-
-        static Expression MathEqu;
-        static Expression MathAdd;
-        static Expression MathMul;
-
-        if (ParensExprs.Size == 0) {
-            MathEqu.Keyword  = L"==|=|!=|<|>|<=|>=";
-            MathEqu.Flag     = Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP | Flags::TRIM;
-            MathEqu.ParseCB  = &(EqualCallback);
-            MathEqu.SearchCB = &(OR);
-            MathEqu.NestExprs.Add(&MathAdd);
-            MathExprs.Add(&MathEqu);
-
-            MathAdd.Keyword  = L"+|-";
-            MathAdd.Flag     = Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP | Flags::TRIM;
-            MathAdd.ParseCB  = &(AdditionCallback);
-            MathAdd.SearchCB = &(OR);
-            MathAdd.NestExprs.Add(&MathMul);
-
-            MathMul.Keyword  = L"*|/|%"; // ^  Needs it's own callback
-            MathMul.Flag     = Flags::SPLIT | Flags::GROUPSPLIT | Flags::TRIM;
-            MathMul.ParseCB  = &(MultiplicationCallback);
-            MathMul.SearchCB = &(OR);
-
-            ParensExpr.Keyword   = L'(';
-            ParensNext.Keyword   = L')';
-            ParensExpr.Connected = &ParensNext;
-            ParensNext.Flag      = Flags::BUBBLE | Flags::TRIM;
-            ParensNext.ParseCB   = &(ParenthesisCallback);
-            ParensNext.NestExprs.Add(&ParensExpr);
-
-            ParensExprs.Add(&ParensExpr);
-        }
         /**
          *
          * e.g. ((2* (1 * 3)) + 1 - 4) + ((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1) - (1) - (-1) + 2 = 14
          * e.g. (6 + 1 - 4) + (5 - 6 + 4) * (8 / 4 + 1) - (1) - (-1) + 2 = 14 e.g. 3 + 3 * 3 - 1 + 1 + 2 = 14
-         * e.g. 3 + 9 - 1 - -1 + 2 = 14 e.g. 14 = 14 e.g. 1; means true.
+         * e.g. 3 + 9 - 1 - -1 + 2 = 14 e.g. 14 = 14
+         * 1 means true.
          *
          * Steps:
-         * First: Look for parenthesis ( operation or number )
-         * Second: Process opreations: * and /
+         * First: Look for parenthesis ( operation ora  number )
+         * Second: Process opreations: * / % ^
          * Third: Process : + and -
-         * Forth: Process logic ( = != > < )
+         * Forth: Process logic ( = != > < ... )
          * Fifth: Return final value or 0;
          */
-        content = Engine::Parse(content, Engine::Search(content, ParensExprs));
 
-        if ((content.Length == 0) || (content == L"0")) {
+        if (ParensExprs.Size == 0) {
+            SetParensExprs();
+        }
+
+        // Stage one:
+        content = Engine::Parse(content, Engine::Search(content, ParensExprs));
+        if ((content.Length == 0) || (content == L'0')) {
             return 0;
         }
 
-        content = Engine::Parse(content, Engine::Search(content, MathExprs));
-
-        double num = 0;
-        if ((content.Length == 0) || (content == L"0") || !String::ToNumber(content, num, 0, 0)) {
-            return 0;
+        // Stage two:
+        double num = 0.0;
+        content    = Engine::Parse(content, Engine::Search(content, MathExprs));
+        if ((content.Length == 0) || (content == L'0') || !String::ToNumber(content, num, 0, 0)) {
+            return 0.0;
         }
 
         return num;
     }
 };
 
-Expressions ALU::MathExprs = Engine::Expressions();
+Expressions ALU::MathExprs   = Engine::Expressions();
+Expressions ALU::ParensExprs = Engine::Expressions();
 
 } // namespace Qentem
 

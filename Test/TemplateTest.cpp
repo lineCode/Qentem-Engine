@@ -28,28 +28,27 @@ void run() noexcept {
     // Template
     // data = get_document();
     // Or
-    // data = Document::FromJSON(read_file("./Test/temp.json"));
-    // std::wcout << Qentem::Template::Render(read_file("./Test/temp.qtml"), &data).Str << "\n";
-    // std::wcout << data.ToJSON().Str << "\n";
+    data = Document::FromJSON(read_file("./Test/temp.json"));
+    std::wcout << Qentem::Template::Render(read_file("./Test/temp.qtml"), &data).Str << '\n';
+    // std::wcout << data.ToJSON().Str << '\n';
 
-    std::wcout << "\nImporting JSON...\n";
-    UNumber took = static_cast<UNumber>(clock());
-    data         = Document::FromJSON(read_file("./Test/bigjson.json"));
+    // std::wcout << "Importing...";
+    // UNumber took = static_cast<UNumber>(clock());
+    // data         = Document::FromJSON(read_file("./Test/bigjson.json"));
+    // // Qentem::Engine::Search(read_file("./Test/bigjson.json"), Document::GetJsonExpres());
+    // took = (static_cast<UNumber>(clock()) - took);
+    // std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3).Str << ' ' << '\n';
 
-    std::wcout << "Done! ";
-    took = (static_cast<UNumber>(clock()) - took);
-    std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3).Str << "\n";
-
-    std::wcout << "\n\nExporting JSON...\n";
-    took = static_cast<UNumber>(clock());
-    data.ToJSON();
-    took = (static_cast<UNumber>(clock()) - took);
-    std::wcout << "Done! ";
-    std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3).Str << "\n";
+    // std::wcout << "Exporting...";
+    // took = static_cast<UNumber>(clock());
+    // data.ToJSON();
+    // took = (static_cast<UNumber>(clock()) - took);
+    // std::wcout << "Done! ";
+    // std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3).Str << '\n';
 }
 
 int main() noexcept {
-    // for (UNumber y = 0; y < 50; y++) {
+    // for (UNumber y = 0; y < 100; y++) {
     //     run();
     // }
 
@@ -76,7 +75,7 @@ String read_file(const char *fullpath) noexcept {
         delete[] _tmp;
         file.close();
     } else {
-        std::wcout << "\n" << fullpath << L" does not exist!\n";
+        std::wcout << '\n' << fullpath << L" does not exist!\n";
     }
 
     return content;
@@ -97,29 +96,29 @@ Document get_document() noexcept {
     data[L"var3"]       = L"3";
     data[L"var4"]       = L"4";
     data[L"var5"]       = L"5";
-    data[L"num34"]      = Array<String>().Add(L"3").Add(L"4");
+    data[L"num34"]      = Array<String>().Add(L'3').Add(L'4');
     data[L"var_string"] = L"image";
     data[L"engine"]     = L"Qentem";
-    data[L"abc1"]       = Array<String>().Add(L"B").Add(L"C").Add(L"D").Add(L"A");
-    data[L"abc2"]       = Array<String>().Add(L"E").Add(L"F").Add(L"A");
+    data[L"abc1"]       = Array<String>().Add(L'B').Add(L'C').Add(L'D').Add(L'A');
+    data[L"abc2"]       = Array<String>().Add(L'E').Add(L'F').Add(L'A');
     data[L"numbers"]    = Array<double>().Add(0).Add(1).Add(2).Add(3).Add(4).Add(5);
     data[L"empty"]      = L"";
     data[L"math"] = L"((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) - (-1) + 2";
 
     data[L"abc"]         = Document();
-    data[L"abc"][L"B"]   = L"b";
+    data[L"abc"][L'B']   = L"b";
     data[L"abc"][L"@@"]  = 100.0;
-    data[L"abc"][L"A"]   = L"a";
-    data[L"abc"][L"C"]   = L"c";
-    data[L"abc"][L"D"]   = L"d";
-    data[L"abc"][L"E"]   = Array<String>().Add(L"O").Add(L"K!");
+    data[L"abc"][L'A']   = L"a";
+    data[L"abc"][L'C']   = L"c";
+    data[L"abc"][L'D']   = L"d";
+    data[L"abc"][L'E']   = Array<String>().Add(L'O').Add(L"K!");
     data[L"abc"][L"A-Z"] = L"ABCDEFGHIGKLMNOBQRST.....";
 
     data[L"multi"]                = Document();
     data[L"multi"][L"arr1"]       = Document();
-    data[L"multi"][L"arr1"][L"E"] = Array<String>().Add(L"O").Add(L"K!");
-    data[L"multi"][L"arr2"]       = Array<String>().Add(L"B").Add(L"C").Add(L"D").Add(L"A");
-    data[L"multi"][L"C"]          = L"cool";
+    data[L"multi"][L"arr1"][L'E'] = Array<String>().Add(L'O').Add(L"K!");
+    data[L"multi"][L"arr2"]       = Array<String>().Add(L'B').Add(L'C').Add(L'D').Add(L'A');
+    data[L"multi"][L'C']          = L"cool";
 
     return data;
 }

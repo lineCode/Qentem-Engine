@@ -14,6 +14,11 @@
 
 #include "Engine.hpp"
 
+using Qentem::Engine::Expression;
+using Qentem::Engine::Expressions;
+using Qentem::Engine::Flags;
+using Qentem::Engine::Match;
+
 namespace Qentem {
 
 enum VType { UndefinedT = 0, NullT, BooleanT, NumberT, StringT, DocumentT };
@@ -81,10 +86,10 @@ struct Document {
     bool      GetBool(bool &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
     Document *GetDocument(const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
 
-    // void InsertHash(const Hash &_hash) noexcept;
     Entry *Exist(const UNumber hash, const UNumber level, const Array<Index> &_table) const noexcept;
     void   InsertIndex(const Index &_index, const UNumber level, Array<Index> &_table) noexcept;
-    void Insert(const String &key, UNumber offset, UNumber limit, const VType type, void *ptr, const bool move) noexcept;
+    void   Insert(const String &key, UNumber offset, UNumber limit, const VType type, void *ptr, const bool move,
+                  const bool check = true) noexcept;
 
     String ToJSON() const noexcept;
 
@@ -138,8 +143,6 @@ Document Document::FromJSON(const String &content, bool comments) noexcept {
     } else {
         items = Engine::Search(content, GetJsonExpres());
     }
-
-    // return document; // TODO: remove
 
     if (items.Size != 0) {
         Match *_item = &(items.Storage[0]);
@@ -447,11 +450,11 @@ void Document::InsertIndex(const Index &_index, const UNumber level, Array<Index
     }
 }
 
-void Document::Insert(const String &key, UNumber offset, UNumber limit, const VType type, void *ptr,
-                      const bool move) noexcept {
-    UNumber id    = 0;
-    UNumber _hash = String::Hash(key, offset, (offset + limit));
-    Entry * _ent  = Exist(_hash, 0, Table);
+void Document::Insert(const String &key, UNumber offset, UNumber limit, const VType type, void *ptr, const bool move,
+                      const bool check) noexcept {
+    UNumber       id    = 0;
+    const UNumber _hash = String::Hash(key, offset, (offset + limit));
+    Entry *       _ent  = (check) ? Exist(_hash, 0, Table) : nullptr;
 
     if ((_ent == nullptr) || (_ent->Type != type)) {
         switch (type) {
@@ -580,15 +583,6 @@ void Document::_makeListNumber(Document &document, const String &content, const 
 }
 
 void Document::_makeDocument(Document &document, const String &content, Array<Match> &items) noexcept {
-    static Array<Expression *> JsonDeQuot;
-
-    if (JsonDeQuot.Size == 0) {
-        static Expression _JsonDeQuot;
-        _JsonDeQuot.Keyword = L"\\\"";
-        _JsonDeQuot.Replace = L"\"";
-        JsonDeQuot.Add(&_JsonDeQuot);
-    }
-
     if (!document.Ordered) {
         Match * key;
         UNumber start;
@@ -602,22 +596,19 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
             j     = (key->Offset + key->Length);
 
             for (; j < content.Length; j++) {
-                // TODO: Check for comments.
                 switch (content.Str[j]) {
                     case L'"': {
                         ++i;
 
                         Match *data = &(items.Storage[i]);
-                        String ts;
-                        if (data->Length != 0) {
-                            ts = String::Part(content, (data->Offset + 1), (data->Length - 2));
-                        }
 
-                        if (data->NestMatch.Size != 0) { // TODO: Use local replace
-                            ts = Engine::Parse(ts, Engine::Search(ts, JsonDeQuot));
-                        }
-
-                        document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::StringT, &ts, true);
+                        String ts = (data->Length != 0)
+                                        ? (data->NestMatch.Size != 0)
+                                              ? Engine::Parse(content, data->NestMatch, (data->Offset + 1),
+                                                              ((data->Offset + data->Length) - 1))
+                                              : String::Part(content, (data->Offset + 1), (data->Length - 2))
+                                        : L"";
+                        document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::StringT, &ts, true, false);
 
                         done = true;
                     } break;
@@ -627,7 +618,7 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
                         Document uno_document = Document();
                         Document::_makeDocument(uno_document, content, items.Storage[i].NestMatch);
                         document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::DocumentT, &uno_document,
-                                        true);
+                                        true, false);
 
                         done = true;
                     } break;
@@ -636,16 +627,15 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
 
                         Document o_document = Document();
                         o_document.Ordered  = true;
-                        Match *data         = &(items.Storage[i]);
 
                         if (items.Storage[i].NestMatch.Size > 0) {
-                            Document::_makeDocument(o_document, content, data->NestMatch);
+                            Document::_makeDocument(o_document, content, items.Storage[i].NestMatch);
                         } else {
-                            Document::_makeListNumber(o_document, content, *data);
+                            Document::_makeListNumber(o_document, content, items.Storage[i]);
                         }
 
                         document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::DocumentT, &o_document,
-                                        true);
+                                        true, false);
 
                         done = true;
                     } break;
@@ -665,17 +655,21 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
                         if (content.Str[start] == L't') {
                             // True
                             tn = 1;
-                            document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::BooleanT, &tn, false);
+                            document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::BooleanT, &tn, false,
+                                            false);
                         } else if (content.Str[start] == L'f') {
                             // False
                             tn = 0;
-                            document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::BooleanT, &tn, false);
+                            document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::BooleanT, &tn, false,
+                                            false);
                         } else if (content.Str[start] == L'n') {
                             // Nullcontent.Str[i]
-                            document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::NullT, nullptr, false);
+                            document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::NullT, nullptr, false,
+                                            false);
                         } else if (String::ToNumber(content, tn, start, ((end + 1) - start))) {
                             // Number
-                            document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::NumberT, &tn, false);
+                            document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::NumberT, &tn, false,
+                                            false);
                         }
 
                         done = true;
@@ -692,17 +686,16 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
             if (items.Storage[0].Expr->ID == 3) { // " Strings
                 document.Strings.SetCapacity(items.Size);
 
-                Match *data;
                 for (UNumber i = 0; i < items.Size; i++) {
-                    data = &(items.Storage[i]);
-                    if (data->NestMatch.Size == 0) {
-                        document.Strings.Storage[i] = String::Part(content, (data->Offset + 1), (data->Length - 2));
-                        ++document.Strings.Size;
+                    if (items.Storage[i].NestMatch.Size == 0) {
+                        document.Strings.Storage[i] =
+                            String::Part(content, (items.Storage[i].Offset + 1), (items.Storage[i].Length - 2));
                     } else {
-                        String rs                   = String::Part(content, (data->Offset + 1), (data->Length - 2));
-                        document.Strings.Storage[i] = Engine::Parse(rs, Engine::Search(rs, JsonDeQuot));
-                        ++document.Strings.Size;
+                        document.Strings.Storage[i] =
+                            Engine::Parse(content, items.Storage[i].NestMatch, (items.Storage[i].Offset + 1),
+                                          ((items.Storage[i].Length + items.Storage[i].Offset) - 1));
                     }
+                    ++document.Strings.Size;
                 }
             } else if (items.Storage[0].Expr->ID == 1) { // } Unordered arrays
                 document.Documents.SetCapacity(items.Size);
@@ -714,7 +707,6 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
                     _makeDocument(*te, content, items.Storage[i].NestMatch);
                 }
             } else if (items.Storage[0].Expr->ID == 2) { // ] Ordered arrays
-                Match *data;
                 document.Documents.SetCapacity(items.Size);
 
                 for (UNumber i = 0; i < items.Size; i++) {
@@ -722,11 +714,10 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
                     ++document.Documents.Size;
                     te->Ordered = true;
 
-                    data = &(items.Storage[i]);
-                    if (data->NestMatch.Size > 0) {
-                        Document::_makeDocument(*te, content, data->NestMatch);
+                    if (items.Storage[i].NestMatch.Size > 0) {
+                        Document::_makeDocument(*te, content, items.Storage[i].NestMatch);
                     } else {
-                        Document::_makeListNumber(*te, content, *data);
+                        Document::_makeListNumber(*te, content, items.Storage[i]);
                     }
                 }
             }
@@ -740,15 +731,14 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
 
 String Document::ToJSON() const noexcept {
     static Array<Expression *> JsonQuot;
+    StringStream               ss;
 
     if (JsonQuot.Size == 0) {
         static Expression _JsonQuot;
-        _JsonQuot.Keyword = L"\"";
+        _JsonQuot.Keyword = L'"';
         _JsonQuot.Replace = L"\\\"";
         JsonQuot.Add(&_JsonQuot);
     }
-
-    StringStream ss;
 
     if (!Ordered) {
         Entry *_ptr;
@@ -771,12 +761,7 @@ String Document::ToJSON() const noexcept {
                 case VType::BooleanT: {
                     ss += L'"';
                     ss += Keys.Storage[_ptr->KeyID];
-
-                    if (Numbers.Storage[_ptr->ID] != 0) {
-                        ss += L"\":true";
-                    } else {
-                        ss += L"\":false";
-                    }
+                    ss += (Numbers.Storage[_ptr->ID] != 0) ? L"\":true" : L"\":false";
                 } break;
                 case VType::StringT: {
                     ss += L'"';
@@ -849,6 +834,7 @@ Expressions &Document::GetJsonExpres() noexcept {
 
     static Expression esc_quotation = Expression();
     esc_quotation.Keyword           = L"\\\"";
+    esc_quotation.Replace           = L'"';
 
     static Expression quotation_start = Expression();
     static Expression quotation_end   = Expression();
@@ -868,13 +854,13 @@ Expressions &Document::GetJsonExpres() noexcept {
     closed_curly_bracket.Keyword   = L'}';
     closed_curly_bracket.ID        = 1;
     opened_curly_bracket.Connected = &closed_curly_bracket;
-    closed_curly_bracket.NestExprs.Add(&quotation_start).Add(&opened_square_bracket).Add(&opened_curly_bracket);
+    closed_curly_bracket.NestExprs.Add(&quotation_start).Add(&opened_curly_bracket).Add(&opened_square_bracket);
 
     opened_square_bracket.Keyword   = L'[';
     closed_square_bracket.Keyword   = L']';
     closed_square_bracket.ID        = 2;
     opened_square_bracket.Connected = &closed_square_bracket;
-    closed_square_bracket.NestExprs.Add(&quotation_start).Add(&opened_square_bracket).Add(&opened_curly_bracket);
+    closed_square_bracket.NestExprs.Add(&opened_square_bracket).Add(&opened_curly_bracket).Add(&quotation_start);
 
     json_expres.Add(&opened_curly_bracket).Add(&opened_square_bracket);
 
