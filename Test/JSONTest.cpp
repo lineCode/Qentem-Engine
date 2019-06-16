@@ -1,15 +1,4 @@
-
-/**
- * Qentem Template Test
- *
- * @brief     For testing Qentem Template.
- *
- * @author    Hani Ammar <hani.code@outlook.com>
- * @copyright 2019 Hani Ammar
- * @license   https://opensource.org/licenses/MIT
- */
-
-#include <Extension/Template.hpp>
+#include <Extension/Document.hpp>
 #include <ctime>
 #include <fstream>
 #include <iostream>
@@ -18,31 +7,29 @@ using Qentem::Array;
 using Qentem::Document;
 using Qentem::String;
 
-String   read_file(const char *fullpath) noexcept;
-Document get_document() noexcept;
+String read_file(const char *fullpath) noexcept;
 
 void run() noexcept {
-
     Document data;
 
     std::wcout << "Importing...";
     UNumber took = static_cast<UNumber>(clock());
-    data         = Document::FromJSON(read_file("./Test/bigjson.json"));
-    // Qentem::Engine::Search(read_file("./Test/bigjson.json"), Document::GetJsonExpres());
+    data         = Document::FromJSON(read_file("./Test/bigjson2.json"));
+    // Qentem::Engine::Search(read_file("./Test/bigjson3.json"), Document::GetJsonExpres());
     took = (static_cast<UNumber>(clock()) - took);
     std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3).Str << ' ' << '\n';
 
-    std::wcout << "Exporting...";
-    took = static_cast<UNumber>(clock());
-    data.ToJSON();
-    took = (static_cast<UNumber>(clock()) - took);
-    std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3).Str << '\n';
+    // std::wcout << "Exporting...";
+    // took = static_cast<UNumber>(clock());
+    // data.ToJSON();
+    // took = (static_cast<UNumber>(clock()) - took);
+    // std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3).Str << '\n';
 }
 
 int main() noexcept {
-    for (UNumber y = 0; y < 4; y++) {
+    for (UNumber y = 0; y < 10; y++) {
         run();
-        std::wcout << L'\n';
+        // std::wcout << L'\n';
     }
 
     // run();

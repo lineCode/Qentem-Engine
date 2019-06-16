@@ -16,27 +16,25 @@
 
 namespace Qentem {
 
-class String {
-  private:
-    // TODO: implement share(const wchar_t *str)
-    UNumber _index = 0;
-
-  public:
-    wchar_t *Str    = nullptr; // NULL terminated wchar_t
-    UNumber  Length = 0;
+struct String {
+    UNumber  Length   = 0;
+    UNumber  Capacity = 0;
+    wchar_t *Str      = nullptr; // NULL terminated wchar_t
 
     String() = default;
+    // TODO: implement share(const wchar_t *str)
 
-    void Copy(const wchar_t *str_p, UNumber start_at, UNumber ln) noexcept {
+    static void Copy(String &des, const wchar_t *src_p, UNumber start_at, UNumber ln) noexcept {
         // Copy any existing characters
         UNumber j = 0;
-        if ((this->Length == 0) || (ln > (this->Length - this->_index))) {
-            wchar_t *_tmp = this->Str;
-            this->Str     = new wchar_t[(ln + this->_index + 1)];
+        if ((des.Capacity == 0) || (ln > (des.Capacity - des.Length))) {
+            wchar_t *_tmp = des.Str;
+            des.Capacity  = (ln + des.Length);
+            des.Str       = new wchar_t[(des.Capacity + 1)];
 
             if (_tmp != nullptr) {
-                for (UNumber i = 0; i < this->_index; i++) {
-                    this->Str[i] = _tmp[j++];
+                for (UNumber i = 0; i < des.Length; i++) {
+                    des.Str[i] = _tmp[j++];
                 }
             }
 
@@ -45,136 +43,148 @@ class String {
 
         // Add the the new characters
         for (j = 0; j < ln;) {
-            this->Str[start_at++] = str_p[j++];
+            des.Str[start_at++] = src_p[j++];
         }
 
-        this->Str[start_at] = L'\0'; // Null ending.
+        des.Str[start_at] = L'\0'; // Null ending.
 
         // Update the index to be at the last character
-        this->_index = this->Length = (ln + this->_index);
+        des.Length = (ln + des.Length);
     }
 
     String(const wchar_t *str) noexcept {
         UNumber _length = 0;
-        while (str[_length++] != L'\0') {
+        while (str[_length] != L'\0') {
+            ++_length;
         };
-        --_length;
-        this->_index = this->Length = _length;
 
-        this->Str = new wchar_t[_length + 1]; // 1 for /0
-        for (UNumber j = 0; j <= _length; j++) {
-            this->Str[j] = str[j];
+        if (_length != 0) {
+            this->Length = this->Capacity = _length;
+
+            this->Str = new wchar_t[_length + 1]; // 1 for /0
+            for (UNumber j = 0; j <= _length; j++) {
+                this->Str[j] = str[j];
+            }
         }
     }
 
     String(const char *str) noexcept {
         UNumber _length = 0;
-        while (str[_length++] != L'\0') {
+        while (str[_length] != L'\0') {
+            ++_length;
         };
-        --_length;
-        this->_index = this->Length = _length;
 
-        this->Str = new wchar_t[_length + 1]; // 1 for /0
-        for (UNumber j = 0; j <= _length; j++) {
-            this->Str[j] = static_cast<wchar_t>(str[j]);
+        if (_length != 0) {
+            this->Length = this->Capacity = _length;
+
+            this->Str = new wchar_t[_length + 1]; // 1 for /0
+            for (UNumber j = 0; j <= _length; j++) {
+                this->Str[j] = static_cast<wchar_t>(str[j]);
+            }
         }
     }
 
     String(const wchar_t str) noexcept { // one wchar
-        this->_index = this->Length = 1;
+        if (str != L'\0') {
+            this->Length = this->Capacity = 1;
 
-        this->Str    = new wchar_t[2]; // 1 for /0
-        this->Str[0] = str;
-        this->Str[1] = L'\0';
-    }
-
-    String(const char str) noexcept { // one char
-        this->_index = this->Length = 1;
-
-        this->Str    = new wchar_t[2]; // 1 for /0
-        this->Str[0] = static_cast<wchar_t>(str);
-        this->Str[1] = L'\0';
-    }
-
-    explicit String(String &&src) noexcept { // Move
-        if ((this != &src) && (src.Str != nullptr)) {
-            this->Str    = src.Str;
-            this->Length = src.Length;
-            this->_index = src._index;
-
-            src.Length = 0;
-            src._index = 0;
-            src.Str    = nullptr;
+            this->Str    = new wchar_t[2]; // 1 for /0
+            this->Str[0] = str;
+            this->Str[1] = L'\0';
         }
     }
 
-    String(const String &src) noexcept { // Copy
-        if ((this != &src) && (src.Str != nullptr)) {
-            this->_index = this->Length = src.Length;
+    String(const char str) noexcept { // one char
+        if (str != '\0') {
+            this->Length = this->Capacity = 1;
 
-            this->Str = new wchar_t[src.Length + 1]; // 1 for /0
-            for (UNumber j = 0; j <= src.Length; j++) {
+            this->Str    = new wchar_t[2]; // 1 for /0
+            this->Str[0] = static_cast<wchar_t>(str);
+            this->Str[1] = L'\0';
+        }
+    }
+
+    String(String &&src) noexcept { // Move
+        if (src.Length != 0) {
+            this->Str      = src.Str;
+            this->Capacity = src.Capacity;
+            this->Length   = src.Length;
+
+            src.Capacity = 0;
+            src.Length   = 0;
+            src.Str      = nullptr;
+        }
+    }
+    // noexcept
+    String(const String &src) { // Copy
+        if (src.Length != 0) {
+            this->Length = this->Capacity = src.Length;
+
+            this->Str = new wchar_t[this->Capacity + 1]; // 1 for /0
+            for (UNumber j = 0; j <= this->Capacity; j++) {
                 this->Str[j] = src.Str[j];
             }
         }
     }
 
     ~String() noexcept {
+        this->Capacity = 0;
+        this->Length   = 0;
         delete[] this->Str;
         this->Str = nullptr;
     }
 
     String &operator=(String &&src) noexcept { // Move
-        if ((this != &src) && (src.Str != nullptr)) {
+        if (this != &src) {
             delete[] this->Str;
-            this->Str    = src.Str;
-            this->Length = src.Length;
-            this->_index = src._index;
 
-            src.Length = 0;
-            src._index = 0;
-            src.Str    = nullptr;
+            this->Str      = src.Str;
+            this->Capacity = src.Capacity;
+            this->Length   = src.Length;
+
+            src.Capacity = 0;
+            src.Length   = 0;
+            src.Str      = nullptr;
         }
 
         return *this;
     }
 
     String &operator=(const String &src) noexcept { // Copy
-        if ((this != &src) && (src.Str != nullptr)) {
+        if (this != &src) {
             delete[] this->Str;
-            this->Str    = nullptr;
-            this->_index = this->Length = src.Length;
 
-            this->Str = new wchar_t[src.Length + 1]; // 1 for /0
-            for (UNumber j = 0; j <= src.Length; j++) {
-                this->Str[j] = src.Str[j];
-            }
-        } else {
-            delete[] this->Str;
             this->Str    = nullptr;
-            this->Length = 0;
-            this->_index = 0;
+            this->Length = this->Capacity = src.Length;
+
+            if (src.Length != 0) {
+                this->Str = new wchar_t[this->Length + 1]; // 1 for /0
+                for (UNumber j = 0; j <= this->Length; j++) {
+                    this->Str[j] = src.Str[j];
+                }
+            }
         }
 
         return *this;
     }
 
     String &operator+=(String &&src) noexcept { // Move
-        if ((src.Length != 0) && (src.Str != nullptr)) {
-            Copy(src.Str, this->_index, src.Length);
+        if ((src.Capacity != 0) && (src.Str != nullptr)) {
+            // Copy(src.Str, this->Length, src.Capacity);
+            Copy(*this, src.Str, this->Length, src.Capacity);
 
             delete[] src.Str;
-            src.Str    = nullptr;
-            src.Length = 0;
-            src._index = 0;
+            src.Str      = nullptr;
+            src.Capacity = 0;
+            src.Length   = 0;
         }
 
         return *this;
     }
 
     String &operator+=(const String &src) noexcept { // Appand a string
-        if (src.Length != 0) {
-            Copy(src.Str, this->_index, src.Length);
+        if (src.Capacity != 0) {
+            Copy(*this, src.Str, this->Length, src.Capacity);
         }
 
         return *this;
@@ -182,24 +192,35 @@ class String {
 
     // Appand a string by moving another into it
     String operator+(String &&src) const noexcept {
-        String ns = *this;
+        String ns;
+        ns.SetLength(this->Length + src.Length);
+
+        if (this->Length != 0) {
+            Copy(ns, this->Str, 0, this->Length);
+        }
 
         if (src.Length != 0) {
-            ns += src;
-            delete[] src.Str;
-            src.Str    = nullptr;
-            src.Length = 0;
-            src._index = 0;
+            Copy(ns, src.Str, ns.Length, src.Length);
         }
+
+        delete[] src.Str;
+        src.Str      = nullptr;
+        src.Capacity = 0;
+        src.Length   = 0;
 
         return ns;
     }
 
     String operator+(const String &src) const noexcept { // Appand a string and return a new one
-        String ns = *this;
+        String ns;
+        ns.SetLength(this->Length + src.Length);
+
+        if (this->Length != 0) {
+            Copy(ns, this->Str, 0, this->Length);
+        }
 
         if (src.Length != 0) {
-            ns += src;
+            Copy(ns, src.Str, ns.Length, src.Length);
         }
 
         return ns;
@@ -215,8 +236,8 @@ class String {
         }
 
         UNumber i = 0;
-        while ((this->Str[i] == src.Str[i]) && (++i < this->Length)) {
-            // Nothing is needed here.
+        while ((this->Str[i] != L'\0') && (this->Str[i] == src.Str[i])) {
+            ++i;
         }
 
         return (i == this->Length);
@@ -228,8 +249,9 @@ class String {
 
     void SetLength(const UNumber size) noexcept {
         delete[] this->Str;
-        this->Str    = new wchar_t[(size + 1)];
-        this->Length = size;
+        this->Str      = new wchar_t[(size + 1)];
+        this->Capacity = size;
+        this->Length   = 0;
     }
 
     // Update the starting index and the ending one to be at the actual characters
@@ -253,6 +275,7 @@ class String {
     static String Trim(const String &str) noexcept {
         UNumber start = 0;
         UNumber end   = (str.Length - start);
+
         SoftTrim(str, start, end);
 
         return Part(str, start, ((end + 1) - start));
@@ -260,8 +283,8 @@ class String {
 
     // Revers a string
     static void Revers(String &str) noexcept {
-        UNumber i = 0;                // Start at 0
-        UNumber x = (str.Length - 1); // End before Length
+        UNumber i = 0; // Start at 0
+        UNumber x = (str.Length - 1);
         wchar_t ch;
 
         while (i < x) {
@@ -402,10 +425,6 @@ class String {
 
             if ((c <= 47) || (c >= 58)) {
                 if (c == L'-') {
-                    // if (limit > offset) {
-                    //     number = 0.0;
-                    //     return false;
-                    // }
                     number *= -1.0;
                     break;
                 }
@@ -433,19 +452,19 @@ class String {
     }
 
     static String Part(const String &src, UNumber offset, const UNumber limit) noexcept {
-        // if ((limit > src.Length) || ((offset + limit) > src.Length)) {
+        // if ((limit > src.Capacity) || ((offset + limit) > src.Capacity)) {
         //     throw;
         // }
 
         String bit;
-        bit.Str    = new wchar_t[(limit + 1)];
-        bit.Length = limit;
+        bit.Str      = new wchar_t[(limit + 1)];
+        bit.Capacity = limit;
 
-        while (bit._index < limit) {
-            bit.Str[bit._index++] = src.Str[offset++];
+        while (bit.Length < limit) {
+            bit.Str[bit.Length++] = src.Str[offset++];
         }
 
-        bit.Str[bit._index] = L'\0'; // To mark the end of a string.
+        bit.Str[bit.Length] = L'\0'; // To mark the end of a string.
 
         return bit;
     }
@@ -473,11 +492,11 @@ class String {
         return hash;
     }
 
-    void Clear() noexcept { // Reset
+    void Reset() noexcept { // Reset
         delete[] this->Str;
-        this->Str    = nullptr;
-        this->Length = 0;
-        this->_index = 0;
+        this->Str      = nullptr;
+        this->Capacity = 0;
+        this->Length   = 0;
     }
 };
 } // namespace Qentem

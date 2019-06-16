@@ -26,7 +26,7 @@ struct StringStream {
             Length += src.Length;
 
             if (_strings.Size == _strings.Capacity) {
-                _strings.ExpandTo((_strings.Size == 0 ? 10 : (_strings.Size * 2)));
+                _strings.ExpandTo((_strings.Size + 1) * 4);
             }
 
             _strings.Storage[_strings.Size] = static_cast<String &&>(src);
@@ -38,7 +38,7 @@ struct StringStream {
         Length += src.Length;
 
         if (_strings.Size == _strings.Capacity) {
-            _strings.ExpandTo((_strings.Size == 0 ? 10 : (_strings.Size * 2)));
+            _strings.ExpandTo((_strings.Size + 1) * 4);
         }
 
         _strings.Storage[_strings.Size] = src;
@@ -47,26 +47,26 @@ struct StringStream {
 
     String Eject() noexcept {
         if (Length == 0) {
-            return L"";
+            return L'\0';
         }
 
         String tmp;
         tmp.SetLength(Length);
-        String *sstr;
 
-        UNumber offset = 0;
-        UNumber j      = 0;
+        String *sstr;
+        UNumber j = 0;
 
         for (UNumber i = 0; i < _strings.Size; i++) {
             sstr = &(_strings.Storage[i]);
             for (j = 0; j < sstr->Length; j++) {
-                tmp.Str[offset++] = sstr->Str[j];
+                tmp.Str[tmp.Length++] = sstr->Str[j];
             }
         }
 
-        tmp.Str[offset] = L'\0'; // Null trimmed string
+        tmp.Str[tmp.Length] = L'\0'; // Null trimmed string
 
-        _strings.Clear();
+        _strings.Reset();
+        Length = 0;
 
         return tmp;
     }

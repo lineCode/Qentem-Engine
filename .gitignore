@@ -1,7 +1,8 @@
-Notes/
-Build/
-bin/
-obj/
+Notes
+Build/*
+Example
+bin
+obj
 .vscode/settings.json
-.vscode/ipch/
+.vscode/ipch
 Test/bigjson*

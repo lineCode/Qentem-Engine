@@ -203,17 +203,6 @@ static Array<TestBit> GetEngineBits() noexcept {
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
-    bit.Content.Add(L"").Add(L' ').Add(L"  ");
-    bit.Expected.Add(L"").Add(L' ').Add(L"  ");
-
-    x1 = new Expression(); // Empty
-
-    bit.Exprs.Add(x1);
-    bit.Collect.Add(x1);
-    bits.Add(bit);
-    ///////////////////////////////////////////
-    bit      = TestBit();
-    bit.Line = __LINE__;
     bit.Content.Add(L'-').Add(L" -- ").Add(L"- - - -");
     bit.Expected.Add(L'*').Add(L" ** ").Add(L"* * * *");
 

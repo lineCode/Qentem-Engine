@@ -99,13 +99,13 @@ struct Document {
     static void     _makeDocument(Document &document, const String &content, Array<Match> &items) noexcept;
     static Document FromJSON(const String &content, bool comments = false) noexcept;
 
-    void Clear() noexcept {
-        Entries.Clear();
-        Table.Clear();
-        Numbers.Clear();
-        Strings.Clear();
-        Keys.Clear();
-        Documents.Clear();
+    void Reset() noexcept {
+        Entries.Reset();
+        Table.Reset();
+        Numbers.Reset();
+        Strings.Reset();
+        Keys.Reset();
+        Documents.Reset();
     }
 };
 
@@ -169,17 +169,17 @@ Document Document::FromJSON(const String &content, bool comments) noexcept {
 
 void Document::Drop(Entry &_entry, Document &storage) noexcept {
     _entry.Type = VType::UndefinedT;
-    storage.Keys.Storage[_entry.KeyID].Clear();
+    storage.Keys.Storage[_entry.KeyID].Reset();
 
     switch (_entry.Type) {
         // case VType::NumberT:
         //     storage.Numbers[_hash.ID] = 0; // Waste of time
         //     break;
         case VType::StringT:
-            storage.Strings.Storage[_entry.ID].Clear();
+            storage.Strings.Storage[_entry.ID].Reset();
             break;
         case VType::DocumentT:
-            storage.Documents.Storage[_entry.ID].Clear();
+            storage.Documents.Storage[_entry.ID].Reset();
             break;
         default:
             break;
@@ -265,7 +265,7 @@ Document *Document::GetSource(Entry **_entry, const String &key, UNumber offset,
 }
 
 bool Document::GetString(String &value, const String &key, UNumber offset, UNumber limit) noexcept {
-    value.Clear();
+    value.Reset();
 
     Entry *         _entry;
     const Document *storage = GetSource(&_entry, key, offset, limit);
@@ -462,7 +462,7 @@ void Document::Insert(const String &key, UNumber offset, UNumber limit, const VT
                 id = Strings.Size;
 
                 if (Strings.Size == Strings.Capacity) {
-                    Strings.ExpandTo((Strings.Size == 0 ? 1 : (Strings.Size * 2)));
+                    Strings.ExpandTo((Strings.Size + 1) * 4);
                 }
 
                 if (move) {
@@ -482,7 +482,7 @@ void Document::Insert(const String &key, UNumber offset, UNumber limit, const VT
                 id = Documents.Size;
 
                 if (Documents.Size == Documents.Capacity) {
-                    Documents.ExpandTo((Documents.Size == 0 ? 1 : (Documents.Size * 2)));
+                    Documents.ExpandTo((Documents.Size + 1) * 4);
                 }
 
                 if (move) {
@@ -528,10 +528,10 @@ void Document::Insert(const String &key, UNumber offset, UNumber limit, const VT
             // Clearing existing value;
             switch (type) {
                 case VType::StringT: {
-                    Strings.Storage[_ent->ID].Clear();
+                    Strings.Storage[_ent->ID].Reset();
                 } break;
                 case VType::DocumentT: {
-                    Documents.Storage[_ent->ID].Clear();
+                    Documents.Storage[_ent->ID].Reset();
                 } break;
                 default:
                     break;
@@ -550,7 +550,7 @@ void Document::Insert(const String &key, UNumber offset, UNumber limit, const VT
         _entry.KeyID = Keys.Size;
 
         if (Keys.Size == Keys.Capacity) {
-            Keys.ExpandTo((Keys.Size == 0 ? 1 : (Keys.Size * 2)));
+            Keys.ExpandTo((Keys.Size + 1) * 4);
         }
         Keys.Storage[Keys.Size] = String::Part(key, offset, limit);
         ++Keys.Size;
@@ -732,7 +732,7 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
         }
     }
 
-    items.Clear();
+    items.Reset();
 }
 
 String Document::ToJSON() const noexcept {

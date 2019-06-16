@@ -7,7 +7,7 @@
             "label": "Build .bin", // executable
             "promptOnClose": false,
             "type": "shell",
-            "command": "g++",
+            "command": "clang++",
             "args": [
                 "-g",
                 // "-O1",
@@ -50,7 +50,7 @@
                 "-Wall",
                 "-std=c++11",
                 "-ISource",
-                "Example/QLib.cpp",
+                "Test/QLib.cpp",
                 "-s",
                 "WASM=1",
                 "-s",
@@ -72,7 +72,7 @@
             "label": "Build .so",
             "promptOnClose": false,
             "type": "shell",
-            "command": "g++",
+            "command": "clang++",
             "args": [
                 "-O3",
                 "-lstdc++",
@@ -81,7 +81,7 @@
                 "-shared",
                 "-fPIC",
                 "-ISource",
-                "Example/QLib.cpp",
+                "Test/QLib.cpp",
                 "-o",
                 "Build/QLib.so"
             ],
@@ -101,9 +101,8 @@
             "command": "clang-tidy",
             "args": [
                 "Test/Test.cpp",
-                "Example/QLib.cpp",
                 "'-header-filter=.*'",
-                "-checks='*,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-non-private-member-variables-in-classes,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-readability*,-hicpp*,-misc-definitions*,-fuchsia*,-llvm-header-guard,-misc-non-private-*,-googl*,-misc-unused-parameters'",
+                "-checks='*,-modernize-use-auto,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-non-private-member-variables-in-classes,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-readability*,-hicpp*,-misc-definitions*,-fuchsia*,-llvm-header-guard,-misc-non-private-*,-googl*,-misc-unused-parameters'",
                 "--",
                 "-ISource",
                 "c++11",

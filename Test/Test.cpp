@@ -20,10 +20,63 @@ using Qentem::StringStream;
 using Qentem::Engine::Match;
 using Qentem::Test::TestBit;
 
+static bool TestNumbersConv() noexcept;
+static bool run_test(const String &name, const Array<TestBit> &bits, const bool Dump_express,
+                     const bool break_on_err) noexcept;
+
+int main() {
+    bool pass = false;
+
+    Array<TestBit> bits = Array<TestBit>();
+    for (UNumber i = 0; i < 1; i++) {
+        // Core Engine Tests
+        bits = Qentem::Test::GetEngineBits();
+        pass = run_test(L"Engine", bits, false, true);
+        Qentem::Test::CleanBits(bits); // TODO: Implement a destructor
+
+        if (!pass) {
+            break;
+        }
+
+        // std::wcout << "\n///////////////////////////////////////////////\n";
+
+        // Number Conversion Tests
+        // pass = TestNumbersConv();
+
+        // if (!pass) {
+        //     break;
+        // }
+
+        std::wcout << "\n///////////////////////////////////////////////\n";
+
+        // Arithmetic & logic Evaluation Tests
+        bits = Qentem::Test::GetALUBits();
+        pass = run_test(L"Arithmetic & Logic Evaluation", bits, false, true);
+
+        if (!pass) {
+            break;
+        }
+
+        std::wcout << "\n///////////////////////////////////////////////\n";
+
+        // Template Tests
+        bits = Qentem::Test::GetTemplateBits();
+        pass = run_test(L"Template", bits, false, true);
+    }
+
+    if (pass) {
+        std::wcout << L"\n ALL GOOD!" << '\n';
+    }
+
+    // std::getwchar();
+
+    return 10;
+}
+
 static bool run_test(const String &name, const Array<TestBit> &bits, const bool Dump_express,
                      const bool break_on_err) noexcept {
 
-    const UNumber times        = 1; // 10000 To slow it down!
+    const UNumber times        = 10000; // 10000 To slow it down!
     const UNumber start_at     = 0;
     UNumber       counter      = 0;
     UNumber       errors       = 0;
@@ -152,42 +205,52 @@ static bool run_test(const String &name, const Array<TestBit> &bits, const bool 
     return pass;
 }
 
-int main() {
-    bool           pass = false;
-    Array<TestBit> bits = Array<TestBit>();
+static bool TestNumbersConv() noexcept {
+    struct N_test {
+        double num;
+        String result;
+    };
 
-    for (UNumber i = 0; i < 1; i++) {
-        // Core Engine Tests
-        bits = Qentem::Test::GetEngineBits();
-        pass = run_test(L"Engine", bits, false, true);
-        Qentem::Test::CleanBits(bits); // TODO: Implement a destructor
+    Array<N_test> test;
+    const UNumber times       = 1; // 4000000 To slow it down!
+    UNumber       ticks       = 0;
+    UNumber       total_ticks = 0;
+    bool          pass        = false;
+    ////////////////////////////////
 
-        if (!pass) {
-            break;
+    test.Add({0, L"0"}).Add({1, L"1"}).Add({2, L"2"}).Add({5, L"5"}).Add({9, L"9"});                       // 5
+    test.Add({1000000, L"1000000"}).Add({11, L"11"}).Add({22, L"22"}).Add({55, L"55"}).Add({199, L"199"}); // 5
+    test.Add({10.0, L"10"}).Add({11.00, L"11"}).Add({22.8, L"22.1"}).Add({55.0055, L"55.0055"});           // 4
+
+    ////////////////////////////////
+
+    std::wcout << L"\n #Number Conversion Tests:\n";
+
+    for (UNumber i = 0; i < test.Size; i++) {
+        std::wcout << L' ' << String::FromNumber((i + 1), 2).Str << L") ";
+
+        ticks = static_cast<UNumber>(clock());
+
+        for (size_t k = 0; k < times; k++) {
+            pass = (test.Storage[i].result == String::FromNumber(test.Storage[i].num, 1, 10));
         }
 
-        std::wcout << "\n///////////////////////////////////////////////\n";
+        ticks = (static_cast<UNumber>(clock()) - ticks);
+        total_ticks += ticks;
 
-        // Arithmetic & logic Evaluation Tests
-        bits = Qentem::Test::GetALUBits();
-        pass = run_test(L"Arithmetic & Logic Unit", bits, false, true);
-
-        if (!pass) {
-            break;
+        if (pass) {
+            std::wcout << L"Pass " << String::FromNumber((static_cast<double>(ticks) / CLOCKS_PER_SEC), 2, 3).Str
+                       << L'\n';
+        } else {
+            std::wcout << L"Fail " << test.Storage[i].num << L" != " << String::FromNumber(test.Storage[i].num).Str
+                       << L'\n';
+            // return false;
         }
-
-        std::wcout << "\n///////////////////////////////////////////////\n";
-
-        // Template Tests
-        bits = Qentem::Test::GetTemplateBits();
-        pass = run_test(L"Template", bits, false, true);
     }
 
-    if (pass) {
-        std::wcout << L"\n ALL GOOD!" << '\n';
-    }
+    std::wcout << L"\n Total: " << String::FromNumber((static_cast<double>(total_ticks) / CLOCKS_PER_SEC), 2, 3).Str
+               << L'\n';
 
-    // std::getwchar();
-
-    return 1;
+    ////////////////////////////////
+    return true;
 }

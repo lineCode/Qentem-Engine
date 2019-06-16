@@ -26,7 +26,7 @@ using Expressions = Array<Expression *>;
 // Parse Callback
 using _PARSECB = String(const String &, const Match &);
 
-static void Split(Array<Match> &, const String &, const UNumber, const UNumber) noexcept;
+void Split(Array<Match> &, const String &, const UNumber, const UNumber) noexcept;
 /////////////////////////////////
 // Expressions flags
 struct Flags {
@@ -44,7 +44,6 @@ struct Flags {
     static const unsigned short SPLITROOTONLY = 1024; // e.g. IF-ELSE (Template.cpp)
     static const unsigned short DROPEMPTY     = 2048; // Trim the match before adding it (spaces and newlines).
 
-    // TODO: unplug SPLIT
     // TODO: Add Flag resume
 };
 /////////////////////////////////
@@ -180,7 +179,7 @@ static void _search(Array<Match> &items, const String &content, const Expression
                             }
 
                             if (items.Size == items.Capacity) {
-                                items.ExpandTo((items.Size + 1) + items.Size);
+                                items.ExpandTo((items.Size + 1) * 4);
                             }
 
                             items.Storage[items.Size] = static_cast<Match &&>(_item);
@@ -296,7 +295,7 @@ static Array<Match> Search(const String &content, const Expressions &exprs, UNum
     return items;
 }
 /////////////////////////////////
-static void Split(Array<Match> &items, const String &content, const UNumber index, const UNumber to) noexcept {
+void Split(Array<Match> &items, const String &content, const UNumber index, const UNumber to) noexcept {
     Match *tmp = nullptr;
 
     if (items.Size == 1) {
@@ -354,7 +353,7 @@ static void Split(Array<Match> &items, const String &content, const UNumber inde
 
             if (((Flags::DROPEMPTY & _item.Expr->Flag) == 0) || (_item.Length != 0)) {
                 if (splitted.Size == splitted.Capacity) {
-                    splitted.ExpandTo((splitted.Size == 0 ? 3 : (splitted.Size * 2)));
+                    splitted.ExpandTo((splitted.Size + 1) * 4);
                 }
 
                 tmp2 = &splitted.Storage[splitted.Size];
@@ -373,7 +372,7 @@ static void Split(Array<Match> &items, const String &content, const UNumber inde
             offset = (tmp->Offset + tmp->Length);
         } else {
             if (nesties.Size == nesties.Capacity) {
-                nesties.ExpandTo((nesties.Size == 0 ? 3 : (nesties.Size * 2)));
+                nesties.ExpandTo((nesties.Size + 1) * 4);
             }
 
             nesties.Storage[nesties.Size] = static_cast<Match &&>(*tmp);
@@ -402,7 +401,7 @@ static void Split(Array<Match> &items, const String &content, const UNumber inde
 
     if (((Flags::DROPEMPTY & _item.Expr->Flag) == 0) || (_item.Length != 0)) {
         if (splitted.Size == splitted.Capacity) {
-            splitted.ExpandTo((splitted.Size == 0 ? 3 : (splitted.Size * 2)));
+            splitted.ExpandTo((items.Size + 1) * 4);
         }
 
         tmp2 = &splitted.Storage[splitted.Size];
@@ -420,7 +419,7 @@ static void Split(Array<Match> &items, const String &content, const UNumber inde
     }
 
     if (splitted.Size == 0) {
-        items.Clear();
+        items.Reset();
         return;
     }
 

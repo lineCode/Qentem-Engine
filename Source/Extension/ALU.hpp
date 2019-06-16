@@ -90,7 +90,7 @@ struct ALU {
         MathSub.ParseCB = &(AdditionCallback);
         MathSub.NestExprs.Add(&MathExp).Add(&MathRem).Add(&MathDiv).Add(&MathMul);
         ///////////////////////////////////////////
-        MathExp.Keyword = L"^";
+        MathExp.Keyword = L"^"; // TODO: Needs POP to MathMul to solve 2*5^2.
         MathExp.ID      = 1;
         MathExp.Flag    = flags_no_pop;
         MathExp.ParseCB = &(MultiplicationCallback);
@@ -118,6 +118,8 @@ struct ALU {
         ParensNext.NestExprs.Add(&ParensExpr);
         ///////////////////////////////////////////
 
+        // TODO: Implement && 'AND' 1=1&&1>3
+
         ParensExprs.Add(&ParensExpr);
     }
 
@@ -130,7 +132,7 @@ struct ALU {
     static void NestNumber(const String &block, const Match &item, double &number) noexcept {
         String r = Engine::Parse(block, item.NestMatch, item.Offset, item.Offset + item.Length);
         if (r.Length != 0) {
-            String::ToNumber(r, number);
+            String::ToNumber(r, number); // TODO: Don't copy
         }
     }
 

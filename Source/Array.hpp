@@ -107,7 +107,7 @@ struct Array {
 
     Array<T> &Add(const T &item) noexcept { // Copy
         if (this->Size == this->Capacity) {
-            ExpandTo((this->Size == 0 ? 1 : (this->Capacity * 2)));
+            ExpandTo((this->Capacity + 1) * 4);
         }
 
         this->Storage[this->Size] = item;
@@ -118,7 +118,7 @@ struct Array {
 
     Array<T> &Add(T &&item) noexcept { // Move
         if (this->Size == this->Capacity) {
-            ExpandTo((this->Size == 0 ? 1 : (this->Capacity * 2)));
+            ExpandTo((this->Capacity + 1) * 4);
         }
 
         this->Storage[this->Size] = item;
@@ -165,7 +165,7 @@ struct Array {
         delete[] tmp;
     }
 
-    void Clear() noexcept {
+    void Reset() noexcept {
         delete[] this->Storage;
         this->Storage  = nullptr;
         this->Capacity = 0;
@@ -173,10 +173,9 @@ struct Array {
     }
 
     virtual ~Array() noexcept {
-        Clear();
+        Reset();
     }
-
-}; // namespace Qentem
+};
 } // namespace Qentem
 
 #endif
