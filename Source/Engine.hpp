@@ -117,7 +117,7 @@ static void _search(Array<Match> &items, const String &content, const Expression
                     }
 
                     _item.Offset = index;
-                    index        = end_at; // Update the position TODO: end_at now is index+ce->Keyword.Length
+                    index        = end_at; // Update the position.
                     nest_offset  = end_at + 1;
                 }
 
@@ -265,11 +265,9 @@ static void _search(Array<Match> &items, const String &content, const Expression
     }
 
     /////////////////////////////////
-    if (items.Size == 0) {
-        if ((Flags::POP & ce->Flag) != 0) {
-            _search(items, content, ce->NestExprs, started, limit, 0, 0);
-        }
-    } else if ((level == 0) && SPLIT) {
+    if (((Flags::POP & ce->Flag) != 0) && (items.Size == 0)) {
+        _search(items, content, ce->NestExprs, started, limit, 0, 0);
+    } else if (SPLIT && (level == 0) && (items.Size != 0)) {
         Split(items, content, started, limit);
     }
 
@@ -342,7 +340,7 @@ void Split(Array<Match> &items, const String &content, const UNumber index, cons
                 if (_item.Length != 0) {
                     while ((content.Str[--ends] == L' ') || (content.Str[ends] == L'\n')) {
                     }
-                    ends++;
+                    ++ends;
                     _item.Length = (ends - _item.Offset);
                 }
             } else {

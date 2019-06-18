@@ -22,9 +22,8 @@ struct String {
     wchar_t *Str      = nullptr; // NULL terminated wchar_t
 
     String() = default;
-    // TODO: implement share(const wchar_t *str)
 
-    static void Copy(String &des, const wchar_t *src_p, UNumber start_at, UNumber ln) noexcept {
+    static void Copy(String &des, const wchar_t *src_p, UNumber start_at, const UNumber ln) noexcept {
         // Copy any existing characters
         UNumber j = 0;
         if ((des.Capacity == 0) || (ln > (des.Capacity - des.Length))) {
@@ -38,7 +37,9 @@ struct String {
                 }
             }
 
-            delete[] _tmp;
+            if (_tmp != nullptr) {
+                delete[] _tmp;
+            }
         }
 
         // Add the the new characters
@@ -115,8 +116,8 @@ struct String {
             src.Str      = nullptr;
         }
     }
-    // noexcept
-    String(const String &src) { // Copy
+
+    String(const String &src) noexcept { // Copy
         if (src.Length != 0) {
             this->Length = this->Capacity = src.Length;
 
@@ -130,13 +131,28 @@ struct String {
     ~String() noexcept {
         this->Capacity = 0;
         this->Length   = 0;
-        delete[] this->Str;
-        this->Str = nullptr;
+
+        if (this->Str != nullptr) {
+            delete[] this->Str;
+            this->Str = nullptr;
+        }
+    }
+
+    void Reset() noexcept { // Reset
+        if (this->Str != nullptr) {
+            delete[] this->Str;
+            this->Str = nullptr;
+        }
+
+        this->Capacity = 0;
+        this->Length   = 0;
     }
 
     String &operator=(String &&src) noexcept { // Move
         if (this != &src) {
-            delete[] this->Str;
+            if (this->Str != nullptr) {
+                delete[] this->Str;
+            }
 
             this->Str      = src.Str;
             this->Capacity = src.Capacity;
@@ -152,7 +168,9 @@ struct String {
 
     String &operator=(const String &src) noexcept { // Copy
         if (this != &src) {
-            delete[] this->Str;
+            if (this->Str != nullptr) {
+                delete[] this->Str;
+            }
 
             this->Str    = nullptr;
             this->Length = this->Capacity = src.Length;
@@ -169,12 +187,12 @@ struct String {
     }
 
     String &operator+=(String &&src) noexcept { // Move
-        if ((src.Capacity != 0) && (src.Str != nullptr)) {
-            // Copy(src.Str, this->Length, src.Capacity);
-            Copy(*this, src.Str, this->Length, src.Capacity);
+        if (src.Length != 0) {
+            Copy(*this, src.Str, this->Length, src.Length);
 
             delete[] src.Str;
-            src.Str      = nullptr;
+            src.Str = nullptr;
+
             src.Capacity = 0;
             src.Length   = 0;
         }
@@ -183,8 +201,8 @@ struct String {
     }
 
     String &operator+=(const String &src) noexcept { // Appand a string
-        if (src.Capacity != 0) {
-            Copy(*this, src.Str, this->Length, src.Capacity);
+        if (src.Length != 0) {
+            Copy(*this, src.Str, this->Length, src.Length);
         }
 
         return *this;
@@ -203,8 +221,11 @@ struct String {
             Copy(ns, src.Str, ns.Length, src.Length);
         }
 
-        delete[] src.Str;
-        src.Str      = nullptr;
+        if (src.Str != nullptr) {
+            delete[] src.Str;
+            src.Str = nullptr;
+        }
+
         src.Capacity = 0;
         src.Length   = 0;
 
@@ -236,7 +257,7 @@ struct String {
         }
 
         UNumber i = 0;
-        while ((this->Str[i] != L'\0') && (this->Str[i] == src.Str[i])) {
+        while ((i < this->Length) && (this->Str[i] == src.Str[i])) {
             ++i;
         }
 
@@ -244,14 +265,81 @@ struct String {
     }
 
     bool operator!=(const String &src) const noexcept { // Compare
-        return (!(*this == src));
+        if ((this->Length != src.Length) || (this->Length == 0)) {
+            return true;
+        }
+
+        UNumber i = 0;
+        while ((i < this->Length) && (this->Str[i] == src.Str[i])) {
+            ++i;
+        }
+
+        return (i != this->Length);
     }
 
     void SetLength(const UNumber size) noexcept {
-        delete[] this->Str;
+        if (this->Str != nullptr) {
+            delete[] this->Str;
+        }
+
         this->Str      = new wchar_t[(size + 1)];
+        this->Str[0]   = L'\0';
         this->Capacity = size;
         this->Length   = 0;
+    }
+
+    void ExpandTo(const UNumber size) noexcept {
+        this->Capacity = size;
+        wchar_t *tmp   = this->Str;
+
+        this->Str = new wchar_t[this->Capacity + 1];
+
+        for (UNumber n = 0; n < this->Length; n++) {
+            this->Str[n] = tmp[n];
+        }
+
+        this->Str[this->Length] = L'\0';
+
+        if (tmp != nullptr) {
+            delete[] tmp;
+        }
+    }
+
+    static String Part(const String &src, UNumber offset, const UNumber limit) noexcept {
+        String bit;
+        bit.Str      = new wchar_t[(limit + 1)];
+        bit.Capacity = limit;
+
+        while (bit.Length < limit) {
+            bit.Str[bit.Length++] = src.Str[offset++];
+        }
+
+        bit.Str[bit.Length] = L'\0'; // To mark the end of a string.
+
+        return bit;
+    }
+
+    static UNumber Hash(const String &src, UNumber start, const UNumber end_offset) noexcept {
+        UNumber i    = 0;
+        UNumber j    = 1;
+        UNumber hash = 0;
+        bool    fl   = false;
+
+        while (start < end_offset) {
+            if (fl) {
+                j = j * (i + 1);
+            } else {
+                j = (j + 1);
+            }
+
+            fl = !fl;
+
+            hash += (((static_cast<UNumber>(src.Str[start]))) * j);
+            ++i;
+            ++start;
+        }
+
+        return hash;
     }
 
     // Update the starting index and the ending one to be at the actual characters
@@ -283,102 +371,226 @@ struct String {
 
     // Revers a string
     static void Revers(String &str) noexcept {
-        UNumber i = 0; // Start at 0
-        UNumber x = (str.Length - 1);
         wchar_t ch;
+        UNumber x = (str.Length - 1);
 
-        while (i < x) {
+        for (UNumber i = 0; i < x; i++) {
             ch         = str.Str[x];
             str.Str[x] = str.Str[i];
             str.Str[i] = ch;
-            ++i;
             --x;
         }
     }
 
-    // TODO: Using char[] for faster copying
-    static String FromNumber(UNumber number, UNumber min = 1) noexcept {
-        String tmp_l;
+    static String FromNumber(UNumber number, const UNumber min = 1) noexcept {
+        String tnm;
+
         while (number > 0) {
-            tmp_l += wchar_t(((number % 10) + 48)); // TODO: Too slow. Use tmp_l.Str[i]
+            if (tnm.Length == tnm.Capacity) {
+                tnm.ExpandTo((tnm.Length + 1) * 2);
+            }
+
+            tnm.Str[tnm.Length] = wchar_t((number % 10) + 48);
+            ++tnm.Length;
+
             number /= 10;
         }
 
-        if (tmp_l.Length != 0) {
-            Revers(tmp_l);
+        if (tnm.Length == tnm.Capacity) {
+            if (tnm.Length < min) {
+                tnm.ExpandTo(tnm.Length + 1 + (min - tnm.Length));
+            } else {
+                tnm.ExpandTo(tnm.Length + 1);
+            }
         }
 
-        String min_str;
-        for (UNumber i = tmp_l.Length; i < min; i++) {
-            min_str += L'0'; // Too slow. Use Array<wchar>
+        while (tnm.Length < min) {
+            tnm.Str[tnm.Length] = L'0';
+            ++tnm.Length;
         }
 
-        return (min_str + tmp_l);
+        tnm.Str[tnm.Length] = L'\0';
+
+        Revers(tnm);
+        return tnm;
     }
 
-    static String FromNumber(double number, UNumber min = 1, UNumber max = 0) noexcept {
-        String sign;
-        if (number < 0.0) {
-            sign = L'-';
-            number *= -1.0;
+    static String FromNumber(double number, const UNumber min = 1, UNumber r_min = 0, UNumber r_max = 0) noexcept {
+        String tnm;
+
+        const bool negative = (number < 0);
+        if (negative) {
+            number *= -1;
         }
 
-        UNumber num;
-        String  tmp_g;
-        if (max != 0) {
-            double nuw = 1;
+        if (number != 0) {
+            UNumber num  = static_cast<UNumber>(number);
+            UNumber num2 = num;
+            number -= num;
+            UNumber counter = 0;
 
-            for (UNumber i = 0; i <= max; i++) {
-                nuw *= 10;
-            }
+            while (num != 0) {
+                if (tnm.Length == tnm.Capacity) {
+                    tnm.ExpandTo((tnm.Length + 1) * 2);
+                }
 
-            num = static_cast<UNumber>(number * nuw);
+                tnm.Str[tnm.Length] = wchar_t((num % 10) + 48);
+                ++tnm.Length;
 
-            UNumber di = (num % 10);
-            num /= 10;
-
-            if (di >= 5) {
-                num += 1;
-            }
-
-            for (UNumber g = 0; g < max; g++) {
-                di = (num % 10);
-                tmp_g += wchar_t(di + 48);
                 num /= 10;
+                counter++;
             }
 
-            if (tmp_g.Length != 0) {
-                Revers(tmp_g);
+            if (tnm.Length != 0) {
+                tnm.Str[tnm.Length] = L'\0';
             }
-        } else {
-            num = static_cast<UNumber>(number);
+
+            while (tnm.Length < min) {
+                tnm += L'0';
+            }
+
+            if (negative) {
+                tnm += L'-';
+            }
+
+            if (number != 0) {
+                String tnm2;
+
+                number += 1.1; // Forcing the value to round up to it's original number.
+                // The 0.1 is to prevent any leading zeros from being on the left
+                number *= 1e15; // Moving everyting to the left.
+                number -= 1e15; // Taking 1 back.
+
+                num = static_cast<UNumber>(number);
+                number -= num;
+
+                // The more number in the left side, accuracy is impacted on the right
+                UNumber len = 14 - ((counter > 1) ? (counter - 1) : 0);
+
+                UNumber fnm = (num % 10);
+                if ((number >= 0.5) && (fnm >= 5)) {
+                    num += (10 - fnm); // Yep
+                }
+
+                while (counter > 1) {
+                    num /= 10;
+                    --counter;
+                }
+
+                // TODO: Cache (num % 10)
+                fnm = (num % 10);
+                while (((num % 10) == 0) && (len > 0)) {
+                    --len;
+                    num /= 10;
+                }
+
+                if (((num % 10) == 9) && (fnm >= 5) && (number >= 0.5)) {
+                    ++num;
+                    while (((num % 10) == 0) && (len > 0)) {
+                        --len;
+                        num /= 10;
+                    }
+                }
+
+                if (num != 1) {
+
+                    if (r_max != 0) {
+                        while (r_max < len) {
+                            --len;
+                            num /= 10;
+                        }
+
+                        if ((num % 10) >= 5) {
+                            num /= 10;
+                            ++num;
+                        } else {
+                            num /= 10;
+                        }
+
+                        --len;
+                    }
+
+                    if (num != 10) { // Means .00000000000
+                        tnm2.SetLength(len + 2);
+                        for (UNumber w = 0; w < len; w++) {
+                            tnm2.Str[tnm2.Length] = wchar_t((num % 10) + 48);
+                            ++tnm2.Length;
+
+                            num /= 10;
+                            if (num == 0) {
+                                break;
+                            }
+                        }
+
+                        if (num != 11) {                            // 1.000000000
+                            tnm2 += wchar_t(((num - 1) % 10) + 48); // (num - 1) taking 0.1 back.
+                            tnm2 += L'.';
+                            tnm = tnm2 + tnm;
+                        } else {
+                            tnm2.Reset();
+
+                            tnm.Length = 0;
+
+                            if (r_min != 0) {
+                                tnm += L'.';
+                            }
+
+                            ++num2;
+                            while (num2 != 0) {
+                                tnm += wchar_t((num2 % 10) + 48);
+                                num2 /= 10;
+                            }
+                        }
+                    }
+                }
+
+                Revers(tnm);
+
+                if (r_min > tnm2.Length) {
+                    if (tnm2.Length != 0) {
+                        ++r_min -= tnm2.Length;
+                    }
+
+                    tnm.ExpandTo(tnm.Length + r_min);
+                    while (r_min > 0) {
+                        tnm += L'0';
+                        --r_min;
+                    }
+                }
+            } else if (r_min != 0) {
+                Revers(tnm);
+                tnm.ExpandTo(tnm.Length + r_min + 1);
+
+                tnm += L'.';
+                while (r_min > 0) {
+                    tnm += L'0';
+                    --r_min;
+                }
+            } else {
+                Revers(tnm);
+            }
+
+            return tnm;
         }
 
-        String tmp_l; // TODO: Set capacity ahead
-        while (num > 0) {
-            tmp_l += wchar_t(((num % 10) + 48));
-            num /= 10;
+        tnm.SetLength(min + 1 + r_min);
+
+        while (tnm.Length < min) {
+            tnm += L'0';
         }
 
-        if (tmp_l.Length != 0) {
-            Revers(tmp_l);
+        if (r_min != 0) {
+            tnm += L'.';
+            while (r_min > 0) {
+                tnm += L'0';
+                --r_min;
+            }
         }
 
-        String min_str;
-        for (UNumber i = tmp_l.Length; i < min; i++) {
-            min_str += L'0';
-        }
-        tmp_l = min_str + tmp_l;
-
-        if (tmp_g.Length != 0) {
-            tmp_l += L'.';
-            tmp_l += tmp_g;
-        }
-
-        return (sign.Length == 0) ? tmp_l : (sign + tmp_l);
+        return tnm;
     }
 
-    static bool ToNumber(const String &str, UNumber &number, UNumber offset = 0, UNumber limit = 0) noexcept {
+    static bool ToNumber(const String &str, UNumber &number, const UNumber offset = 0, UNumber limit = 0) noexcept {
         if (limit == 0) {
             limit = str.Length - offset;
         } else {
@@ -386,9 +598,9 @@ struct String {
         }
 
         wchar_t c;
-        number    = 0;
         UNumber m = 1;
 
+        number = 0;
         for (;;) {
             c = str.Str[--limit];
 
@@ -409,7 +621,7 @@ struct String {
         return true;
     }
 
-    static bool ToNumber(const String &str, double &number, UNumber offset = 0, UNumber limit = 0) noexcept {
+    static bool ToNumber(const String &str, double &number, const UNumber offset = 0, UNumber limit = 0) noexcept {
         if (limit == 0) {
             limit = str.Length - offset;
         } else {
@@ -417,9 +629,9 @@ struct String {
         }
 
         wchar_t c;
-        number   = 0.0;
-        double m = 1;
+        double  m = 1.0;
 
+        number = 0.0;
         for (;;) {
             c = str.Str[--limit];
 
@@ -449,54 +661,6 @@ struct String {
         }
 
         return true;
-    }
-
-    static String Part(const String &src, UNumber offset, const UNumber limit) noexcept {
-        // if ((limit > src.Capacity) || ((offset + limit) > src.Capacity)) {
-        //     throw;
-        // }
-
-        String bit;
-        bit.Str      = new wchar_t[(limit + 1)];
-        bit.Capacity = limit;
-
-        while (bit.Length < limit) {
-            bit.Str[bit.Length++] = src.Str[offset++];
-        }
-
-        bit.Str[bit.Length] = L'\0'; // To mark the end of a string.
-
-        return bit;
-    }
-
-    static UNumber Hash(const String &src, UNumber start, const UNumber end_offset) noexcept {
-        UNumber i    = 0;
-        UNumber j    = 1;
-        UNumber hash = 0;
-        bool    fl   = false;
-
-        while (start < end_offset) {
-            if (fl) {
-                j = j * (i + 1);
-            } else {
-                j = (j + 1);
-            }
-
-            fl = !fl;
-
-            hash += (((static_cast<UNumber>(src.Str[start]))) * j);
-            i++;
-            start++;
-        }
-
-        return hash;
-    }
-
-    void Reset() noexcept { // Reset
-        delete[] this->Str;
-        this->Str      = nullptr;
-        this->Capacity = 0;
-        this->Length   = 0;
     }
 };
 } // namespace Qentem

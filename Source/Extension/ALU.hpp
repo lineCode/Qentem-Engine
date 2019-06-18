@@ -54,27 +54,23 @@ struct ALU {
 
         MathEqu.Keyword = L"=";
         MathEqu.ID      = 2;
-        MathEqu.Flag    = flags_ops;
+        MathEqu.Flag    = flags_no_pop;
         MathEqu.ParseCB = &(EqualCallback);
-        MathEqu.NestExprs.Add(&MathAdd).Add(&MathSub);
 
         MathNEqu.Keyword = L"!=";
         MathNEqu.ID      = 3;
-        MathNEqu.Flag    = flags_ops;
+        MathNEqu.Flag    = flags_no_pop;
         MathNEqu.ParseCB = &(EqualCallback);
-        MathNEqu.NestExprs.Add(&MathAdd).Add(&MathSub);
 
         MathLEqu.Keyword = L"<=";
         MathLEqu.ID      = 4;
-        MathLEqu.Flag    = flags_ops;
+        MathLEqu.Flag    = flags_no_pop;
         MathLEqu.ParseCB = &(EqualCallback);
-        MathLEqu.NestExprs.Add(&MathAdd).Add(&MathSub);
 
         MathBEqu.Keyword = L">=";
         MathBEqu.ID      = 5;
-        MathBEqu.Flag    = flags_ops;
+        MathBEqu.Flag    = flags_no_pop;
         MathBEqu.ParseCB = &(EqualCallback);
-        MathBEqu.NestExprs.Add(&MathAdd).Add(&MathSub);
 
         MathExprs.Add(&MathEqu2).Add(&MathEqu).Add(&MathNEqu).Add(&MathLEqu).Add(&MathBEqu);
         ///////////////////////////////////////////
@@ -86,11 +82,10 @@ struct ALU {
 
         MathSub.Keyword = L'-';
         MathSub.ID      = 2;
-        MathSub.Flag    = flags_ops;
+        MathSub.Flag    = flags_no_pop;
         MathSub.ParseCB = &(AdditionCallback);
-        MathSub.NestExprs.Add(&MathExp).Add(&MathRem).Add(&MathDiv).Add(&MathMul);
         ///////////////////////////////////////////
-        MathExp.Keyword = L"^"; // TODO: Needs POP to MathMul to solve 2*5^2.
+        MathExp.Keyword = L"^";
         MathExp.ID      = 1;
         MathExp.Flag    = flags_no_pop;
         MathExp.ParseCB = &(MultiplicationCallback);
@@ -125,14 +120,14 @@ struct ALU {
 
     // e.g. ( 4 + 3 ), ( 2 + ( 4 + ( 1 + 2 ) + 1 ) * 5 - 3 - 2 )
     static String ParenthesisCallback(const String &block, const Match &item) noexcept {
-        String result = String::Part(block, item.OLength, (block.Length - (item.OLength + item.CLength)));
-        return Engine::Parse(result, Engine::Search(result, ALU::MathExprs));
+        return Engine::Parse(block, Engine::Search(block, ALU::MathExprs, item.OLength, (block.Length - item.CLength)),
+                             item.OLength, (block.Length - item.CLength));
     }
 
     static void NestNumber(const String &block, const Match &item, double &number) noexcept {
-        String r = Engine::Parse(block, item.NestMatch, item.Offset, item.Offset + item.Length);
+        String r = Engine::Parse(block, item.NestMatch, item.Offset, (item.Offset + item.Length));
         if (r.Length != 0) {
-            String::ToNumber(r, number); // TODO: Don't copy
+            String::ToNumber(r, number);
         }
     }
 
@@ -209,9 +204,11 @@ struct ALU {
                 switch (op_id) {
                     case 1:
                         if (number2 != 0.0) {
+                            // if (number2 > 1) {
                             const UNumber times = static_cast<UNumber>(number2);
                             for (UNumber k = 1; k < times; k++) {
                                 number1 *= number1;
+                                // }
                             }
                         } else {
                             number1 = 1;
@@ -312,13 +309,13 @@ struct ALU {
         // Stage one:
         content = Engine::Parse(content, Engine::Search(content, ParensExprs));
         if ((content.Length == 0) || (content == L'0')) {
-            return 0;
+            return 0.0;
         }
 
         // Stage two:
         double num = 0.0;
         content    = Engine::Parse(content, Engine::Search(content, MathExprs));
-        if ((content.Length == 0) || (content == L'0') || !String::ToNumber(content, num, 0, 0)) {
+        if ((content.Length == 0) || (content == L'0') || !String::ToNumber(content, num)) {
             return 0.0;
         }
 

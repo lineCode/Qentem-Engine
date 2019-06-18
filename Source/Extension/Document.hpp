@@ -568,7 +568,7 @@ void Document::_makeListNumber(Document &document, const String &content, const 
     UNumber to    = (item.Offset + item.Length);
 
     for (UNumber i = start; i < to; i++) {
-        if ((content.Str[i] == L',') || (content.Str[i] == L'\n') || (content.Str[i] == L']')) {
+        if ((content.Str[i] == L',') || (content.Str[i] == L']')) {
             end = i;
             String::SoftTrim(content, start, end);
 
@@ -643,7 +643,6 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
                         continue;
                     }
                     case L',':
-                    case L'\n':
                     case L'}':
                     case L']': {
                         // true, false, null or a number
@@ -738,6 +737,7 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
 String Document::ToJSON() const noexcept {
     static Array<Expression *> JsonQuot;
     StringStream               ss;
+    Array<Match>               tmpMatchs;
 
     if (JsonQuot.Size == 0) {
         static Expression _JsonQuot;
@@ -746,46 +746,65 @@ String Document::ToJSON() const noexcept {
         JsonQuot.Add(&_JsonQuot);
     }
 
+    static String fss1  = L'{';
+    static String fss2  = L'}';
+    static String fss3  = L',';
+    static String fss4  = L'[';
+    static String fss5  = L']';
+    static String fss6  = L'"';
+    static String fss7  = L"\":null";
+    static String fss8  = L"\":true";
+    static String fss9  = L"\":false";
+    static String fss10 = L"\":\"";
+    static String fss11 = L"\":";
+
     if (!Ordered) {
         Entry *_ptr;
 
-        ss += L'{';
+        ss.Share(&fss1);
 
         for (UNumber i = 0; i < Entries.Size; i++) {
             _ptr = &(Entries.Storage[i]);
 
             if (ss.Length != 1) {
-                ss += L',';
+                ss.Share(&fss3);
             }
 
             switch (_ptr->Type) {
                 case VType::NullT: {
-                    ss += L'"';
+                    ss.Share(&fss6);
                     ss += Keys.Storage[_ptr->KeyID];
-                    ss += L"\":null"; // TODO: implement share(); to have a pointer to this inseat of copying it.
+                    ss.Share(&fss7);
                 } break;
                 case VType::BooleanT: {
-                    ss += L'"';
+                    ss.Share(&fss6);
                     ss += Keys.Storage[_ptr->KeyID];
-                    ss += (Numbers.Storage[_ptr->ID] != 0) ? L"\":true" : L"\":false";
+                    ss.Share((Numbers.Storage[_ptr->ID] != 0) ? &fss8 : &fss9);
                 } break;
                 case VType::StringT: {
-                    ss += L'"';
+                    ss.Share(&fss6);
                     ss += Keys.Storage[_ptr->KeyID];
-                    ss += L"\":\"";
-                    ss += Engine::Parse(Strings.Storage[_ptr->ID], Engine::Search(Strings.Storage[_ptr->ID], JsonQuot));
-                    ss += L'"';
+                    ss.Share(&fss10);
+
+                    tmpMatchs = Engine::Search(Strings.Storage[_ptr->ID], JsonQuot);
+                    if (tmpMatchs.Size == 0) {
+                        ss.Share(&Strings.Storage[_ptr->ID]);
+                    } else {
+                        ss += Engine::Parse(Strings.Storage[_ptr->ID], tmpMatchs);
+                    }
+
+                    ss.Share(&fss6);
                 } break;
                 case VType::NumberT: {
-                    ss += L'"';
+                    ss.Share(&fss6);
                     ss += Keys.Storage[_ptr->KeyID];
-                    ss += L"\":";
+                    ss.Share(&fss11);
                     ss += String::FromNumber(Numbers.Storage[_ptr->ID]);
                 } break;
                 case VType::DocumentT: {
-                    ss += L'"';
+                    ss.Share(&fss6);
                     ss += Keys.Storage[_ptr->KeyID];
-                    ss += L"\":";
+                    ss.Share(&fss11);
                     ss += Documents.Storage[_ptr->ID].ToJSON();
                 } break;
                 default:
@@ -793,24 +812,31 @@ String Document::ToJSON() const noexcept {
             }
         }
 
-        ss += L'}';
+        ss.Share(&fss2);
     } else {
-        ss += L'[';
+        ss.Share(&fss4);
 
         if (Strings.Size != 0) {
             for (UNumber i = 0; i < Strings.Size; i++) {
                 if (ss.Length != 1) {
-                    ss += L',';
+                    ss.Share(&fss3);
                 }
 
-                ss += L'"';
-                ss += Engine::Parse(Strings.Storage[i], Engine::Search(Strings.Storage[i], JsonQuot));
-                ss += L'"';
+                ss.Share(&fss6);
+
+                tmpMatchs = Engine::Search(Strings.Storage[i], JsonQuot);
+                if (tmpMatchs.Size == 0) {
+                    ss.Share(&Strings.Storage[i]);
+                } else {
+                    ss += Engine::Parse(Strings.Storage[i], tmpMatchs);
+                }
+
+                ss.Share(&fss6);
             }
         } else if (Numbers.Size != 0) {
             for (UNumber i = 0; i < Numbers.Size; i++) {
                 if (ss.Length != 1) {
-                    ss += L',';
+                    ss.Share(&fss3);
                 }
 
                 ss += String::FromNumber(Numbers.Storage[i]);
@@ -818,14 +844,14 @@ String Document::ToJSON() const noexcept {
         } else if (Documents.Size != 0) {
             for (UNumber i = 0; i < Documents.Size; i++) {
                 if (ss.Length != 1) {
-                    ss += L',';
+                    ss.Share(&fss3);
                 }
 
                 ss += Documents.Storage[i].ToJSON();
             }
         }
 
-        ss += L']';
+        ss.Share(&fss5);
     }
 
     return ss.Eject();

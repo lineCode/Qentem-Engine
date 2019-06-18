@@ -97,7 +97,7 @@ struct Template {
         // If evaluation.
         IfNext.ParseCB = &(Template::RenderIF);
         // <if case="{case}">html code</if>
-        TagIf.Keyword   = L"<if"; // TODO: Add  shalow if for nesting
+        TagIf.Keyword   = L"<if";
         IfNext.Keyword  = L"</if>";
         TagIf.Connected = &IfNext;
         IfNext.Flag     = Flags::SPLITROOTONLY;
@@ -310,7 +310,11 @@ struct Template {
 
         StringStream rendered;
         Expression   ex;
-        ex.Keyword = var_name;
+        ex.Keyword.SetLength(var_name.Length + 2);
+
+        ex.Keyword += L'[';
+        ex.Keyword += var_name;
+        ex.Keyword += L']';
 
         Expressions ser;
         ser.Add(&ex);
@@ -321,19 +325,31 @@ struct Template {
             if (_storage->Ordered) {
                 if (_storage->Strings.Size != 0) {
                     for (UNumber i = 0; i < _storage->Strings.Size; i++) {
-                        ser.Storage[0]->Replace = String::FromNumber(i);
+                        ser.Storage[0]->Replace += L'[';
+                        ser.Storage[0]->Replace += String::FromNumber(i);
+                        ser.Storage[0]->Replace += L']';
+
                         rendered += Engine::Parse(content, items);
+                        ser.Storage[0]->Replace.Length = 0;
                     }
                 } else if (_storage->Numbers.Size != 0) {
                     for (UNumber i = 0; i < _storage->Numbers.Size; i++) {
-                        ser.Storage[0]->Replace = String::FromNumber(i);
+                        ser.Storage[0]->Replace += L'[';
+                        ser.Storage[0]->Replace += String::FromNumber(i);
+                        ser.Storage[0]->Replace += L']';
+
                         rendered += Engine::Parse(content, items);
+                        ser.Storage[0]->Replace.Length = 0;
                     }
                 }
             } else {
                 for (UNumber i = 0; i < _storage->Keys.Size; i++) {
+                    ser.Storage[0]->Replace += L'[';
                     ser.Storage[0]->Replace = _storage->Keys.Storage[i];
+                    ser.Storage[0]->Replace += L']';
+
                     rendered += Engine::Parse(content, items);
+                    ser.Storage[0]->Replace.Length = 0;
                 }
             }
         }

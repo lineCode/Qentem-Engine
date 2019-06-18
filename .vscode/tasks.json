@@ -25,7 +25,7 @@
                 "-Wdouble-promotion",
                 "-Wformat=2",
                 "-ISource",
-                // "Test/TemplateTest.cpp",
+                // "Test/JSONTest.cpp",
                 "Test/Test.cpp",
                 "-o",
                 "Build/QConsole.bin"
@@ -35,7 +35,7 @@
                 "isDefault": true
             },
             "presentation": {
-                "reveal": "silent",
+                "reveal": "never",
                 "clear": true
             },
             "problemMatcher": "$gcc"
@@ -90,7 +90,7 @@
                 "isDefault": true
             },
             "presentation": {
-                "reveal": "always",
+                "reveal": "silent",
                 "clear": true
             },
             "problemMatcher": "$gcc"
@@ -112,7 +112,7 @@
                 "isDefault": true
             },
             "presentation": {
-                "reveal": "always",
+                "reveal": "silent",
                 "clear": true
             },
             "problemMatcher": "$gcc"
