@@ -148,6 +148,7 @@ struct String {
         this->Length   = 0;
     }
 
+    // TODO: implement char & wchar to prevent constructing and destructing often
     String &operator=(String &&src) noexcept { // Move
         if (this != &src) {
             if (this->Str != nullptr) {
@@ -168,18 +169,22 @@ struct String {
 
     String &operator=(const String &src) noexcept { // Copy
         if (this != &src) {
-            if (this->Str != nullptr) {
-                delete[] this->Str;
-            }
+            if (this->Capacity < src.Length) {
+                if (this->Str != nullptr) {
+                    delete[] this->Str;
+                    this->Str = nullptr;
+                }
 
-            this->Str    = nullptr;
-            this->Length = this->Capacity = src.Length;
+                this->Length = this->Capacity = src.Length;
 
-            if (src.Length != 0) {
                 this->Str = new wchar_t[this->Length + 1]; // 1 for /0
-                for (UNumber j = 0; j <= this->Length; j++) {
+
+                for (UNumber j = 0; j <= this->Length; j++) { // <= to include \0
                     this->Str[j] = src.Str[j];
                 }
+            } else {
+                this->Length = 0;
+                Copy(*this, src.Str, this->Length, src.Length);
             }
         }
 
@@ -289,19 +294,21 @@ struct String {
     }
 
     void ExpandTo(const UNumber size) noexcept {
-        this->Capacity = size;
-        wchar_t *tmp   = this->Str;
+        if (size > this->Capacity) {
+            this->Capacity = size;
+            wchar_t *tmp   = this->Str;
 
-        this->Str = new wchar_t[this->Capacity + 1];
+            this->Str = new wchar_t[this->Capacity + 1];
 
-        for (UNumber n = 0; n < this->Length; n++) {
-            this->Str[n] = tmp[n];
-        }
+            for (UNumber n = 0; n < this->Length; n++) {
+                this->Str[n] = tmp[n];
+            }
 
-        this->Str[this->Length] = L'\0';
+            this->Str[this->Length] = L'\0';
 
-        if (tmp != nullptr) {
-            delete[] tmp;
+            if (tmp != nullptr) {
+                delete[] tmp;
+            }
         }
     }
 
@@ -415,6 +422,7 @@ struct String {
         return tnm;
     }
 
+    // TODO: Fix FromNumber(0, 1, 0, 3); showing 0.000 and not 0
     static String FromNumber(double number, const UNumber min = 1, UNumber r_min = 0, UNumber r_max = 0) noexcept {
         String tnm;
 
@@ -441,16 +449,16 @@ struct String {
                 counter++;
             }
 
-            if (tnm.Length != 0) {
-                tnm.Str[tnm.Length] = L'\0';
-            }
-
             while (tnm.Length < min) {
                 tnm += L'0';
             }
 
             if (negative) {
                 tnm += L'-';
+            }
+
+            if (tnm.Length == 0) {
+                tnm = L"";
             }
 
             if (number != 0) {
@@ -493,7 +501,6 @@ struct String {
                 }
 
                 if (num != 1) {
-
                     if (r_max != 0) {
                         while (r_max < len) {
                             --len;
@@ -541,6 +548,9 @@ struct String {
                                 num2 /= 10;
                             }
                         }
+                    } else if (r_min > 0) {
+                        tnm += L'.';
+                        Revers(tnm);
                     }
                 }
 
@@ -585,6 +595,10 @@ struct String {
                 tnm += L'0';
                 --r_min;
             }
+        }
+
+        if (tnm.Length == 0) {
+            tnm = L'0';
         }
 
         return tnm;

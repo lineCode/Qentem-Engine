@@ -308,13 +308,16 @@ struct Template {
             return L"";
         }
 
+        static const String IDs = L'[';
+        static const String IDe = L']';
+
         StringStream rendered;
         Expression   ex;
         ex.Keyword.SetLength(var_name.Length + 2);
 
-        ex.Keyword += L'[';
+        ex.Keyword += IDs;
         ex.Keyword += var_name;
-        ex.Keyword += L']';
+        ex.Keyword += IDe;
 
         Expressions ser;
         ser.Add(&ex);
@@ -325,31 +328,28 @@ struct Template {
             if (_storage->Ordered) {
                 if (_storage->Strings.Size != 0) {
                     for (UNumber i = 0; i < _storage->Strings.Size; i++) {
-                        ser.Storage[0]->Replace += L'[';
+                        ser.Storage[0]->Replace = IDs;
                         ser.Storage[0]->Replace += String::FromNumber(i);
-                        ser.Storage[0]->Replace += L']';
+                        ser.Storage[0]->Replace += IDe;
 
                         rendered += Engine::Parse(content, items);
-                        ser.Storage[0]->Replace.Length = 0;
                     }
                 } else if (_storage->Numbers.Size != 0) {
                     for (UNumber i = 0; i < _storage->Numbers.Size; i++) {
-                        ser.Storage[0]->Replace += L'[';
+                        ser.Storage[0]->Replace = IDs;
                         ser.Storage[0]->Replace += String::FromNumber(i);
-                        ser.Storage[0]->Replace += L']';
+                        ser.Storage[0]->Replace += IDe;
 
                         rendered += Engine::Parse(content, items);
-                        ser.Storage[0]->Replace.Length = 0;
                     }
                 }
             } else {
                 for (UNumber i = 0; i < _storage->Keys.Size; i++) {
-                    ser.Storage[0]->Replace += L'[';
+                    ser.Storage[0]->Replace = IDs;
                     ser.Storage[0]->Replace = _storage->Keys.Storage[i];
-                    ser.Storage[0]->Replace += L']';
+                    ser.Storage[0]->Replace += IDe;
 
                     rendered += Engine::Parse(content, items);
-                    ser.Storage[0]->Replace.Length = 0;
                 }
             }
         }

@@ -18,13 +18,13 @@ void run() noexcept {
     data = Document::FromJSON(read_file("./Test/bigjson.json"));
     // Qentem::Engine::Search(read_file("./Test/bigjson2.json"), Document::GetJsonExpres());
     took = (static_cast<UNumber>(clock()) - took);
-    std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3).Str << ' ' << '\n';
+    std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << ' ' << '\n';
 
     std::wcout << "Exporting... ";
     took = static_cast<UNumber>(clock());
     data.ToJSON();
     took = (static_cast<UNumber>(clock()) - took);
-    std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3).Str << '\n';
+    std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << '\n';
 
     // std::wcout << data.ToJSON().Str;
 }

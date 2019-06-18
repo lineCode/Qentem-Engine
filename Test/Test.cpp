@@ -76,7 +76,7 @@ int main() {
 static bool run_test(const String &name, const Array<TestBit> &bits, const bool Dump_express,
                      const bool break_on_err) noexcept {
 
-    const UNumber times        = 10000; // 10000 To slow it down!
+    const UNumber times        = 1; // 10000 To slow it down!
     const UNumber start_at     = 0;
     UNumber       counter      = 0;
     UNumber       errors       = 0;
@@ -218,7 +218,7 @@ static bool TestNumbersConv() noexcept {
     };
 
     Array<N_test> test;
-    const UNumber times       = 100000; // 100000 To slow it down!
+    const UNumber times       = 1; // 100000 To slow it down!
     UNumber       ticks       = 0;
     UNumber       total_ticks = 0;
     bool          pass        = false;
