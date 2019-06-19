@@ -299,11 +299,14 @@ static bool TestNumbersConv() noexcept {
         } else {
             std::wcout << L"Fail " << test.Storage[i].result.Str << L" != "
                        << String::FromNumber(test.Storage[i].num).Str << L'\n';
+            std::wcout << L"\n Math is wrong not me.\n";
+
             return false;
         }
     }
 
-    std::wcout << L"\n Total: " << String::FromNumber((static_cast<double>(total_ticks) / CLOCKS_PER_SEC), 2, 3, 3).Str
+    std::wcout << L"\n Math looks good!";
+    std::wcout << L" Total: " << String::FromNumber((static_cast<double>(total_ticks) / CLOCKS_PER_SEC), 2, 3, 3).Str
                << L'\n';
 
     ////////////////////////////////

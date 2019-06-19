@@ -472,7 +472,7 @@ struct String {
                 num = static_cast<UNumber>(number);
                 number -= num;
 
-                // The more number in the left side, accuracy is impacted on the right
+                // accuracy is impacted when bigger number in the left side
                 UNumber len = 14 - ((counter > 1) ? (counter - 1) : 0);
 
                 UNumber fnm = (num % 10);
