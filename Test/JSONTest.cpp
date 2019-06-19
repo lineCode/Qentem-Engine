@@ -11,30 +11,31 @@ String read_file(const char *fullpath) noexcept;
 
 void run() noexcept {
     Document data;
-    UNumber  took = 0;
+    // UNumber  took = 0;
 
-    std::wcout << "Importing... ";
-    took = static_cast<UNumber>(clock());
-    data = Document::FromJSON(read_file("./Test/bigjson.json"));
+    // std::wcout << "Importing... ";
+    // took = static_cast<UNumber>(clock());
+    data = Document::FromJSON(read_file("./Test/temp.json"));
     // Qentem::Engine::Search(read_file("./Test/bigjson2.json"), Document::GetJsonExpres());
-    took = (static_cast<UNumber>(clock()) - took);
-    std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << ' ' << '\n';
+    // took = (static_cast<UNumber>(clock()) - took);
+    // std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << ' ' <<
+    // '\n';
 
-    std::wcout << "Exporting... ";
-    took = static_cast<UNumber>(clock());
-    data.ToJSON();
-    took = (static_cast<UNumber>(clock()) - took);
-    std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << '\n';
+    // std::wcout << "Exporting... ";
+    // took = static_cast<UNumber>(clock());
+    // data.ToJSON();
+    // took = (static_cast<UNumber>(clock()) - took);
+    // std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << '\n';
 
-    // std::wcout << data.ToJSON().Str;
+    std::wcout << data.ToJSON().Str;
 }
 
 int main() noexcept {
-    for (UNumber y = 0; y < 10; y++) {
-        run();
-    }
+    // for (UNumber y = 0; y < 5; y++) {
+    //     run();
+    // }
 
-    // run();
+    run();
     std::wcout << L'\n';
     // std::getchar();
 

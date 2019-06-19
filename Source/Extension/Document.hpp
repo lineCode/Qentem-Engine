@@ -91,7 +91,8 @@ struct Document {
     void   Insert(const String &key, UNumber offset, UNumber limit, const VType type, void *ptr, const bool move,
                   const bool check = true) noexcept;
 
-    String ToJSON() const noexcept;
+    String       ToJSON() const noexcept;
+    StringStream _toJSON() const noexcept;
 
     static Expressions &GetJsonExpres() noexcept;
 
@@ -735,6 +736,10 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
 }
 
 String Document::ToJSON() const noexcept {
+    return _toJSON().Eject();
+}
+
+StringStream Document::_toJSON() const noexcept {
     static Array<Expression *> JsonQuot;
     StringStream               ss;
     Array<Match>               tmpMatchs;
@@ -805,7 +810,7 @@ String Document::ToJSON() const noexcept {
                     ss.Share(&fss6);
                     ss += Keys.Storage[_ptr->KeyID];
                     ss.Share(&fss11);
-                    ss += Documents.Storage[_ptr->ID].ToJSON();
+                    ss += Documents.Storage[_ptr->ID]._toJSON();
                 } break;
                 default:
                     break;
@@ -847,14 +852,14 @@ String Document::ToJSON() const noexcept {
                     ss.Share(&fss3);
                 }
 
-                ss += Documents.Storage[i].ToJSON();
+                ss += Documents.Storage[i]._toJSON();
             }
         }
 
         ss.Share(&fss5);
     }
 
-    return ss.Eject();
+    return ss;
 }
 
 Expressions &Document::GetJsonExpres() noexcept {
