@@ -308,16 +308,13 @@ struct Template {
             return L"";
         }
 
-        static const String IDs = L'[';
-        static const String IDe = L']';
-
         StringStream rendered;
         Expression   ex;
         ex.Keyword.SetLength(var_name.Length + 2);
 
-        ex.Keyword += IDs;
+        ex.Keyword = L'[';
         ex.Keyword += var_name;
-        ex.Keyword += IDe;
+        ex.Keyword += L']';
 
         Expressions ser;
         ser.Add(&ex);
@@ -328,26 +325,26 @@ struct Template {
             if (_storage->Ordered) {
                 if (_storage->Strings.Size != 0) {
                     for (UNumber i = 0; i < _storage->Strings.Size; i++) {
-                        ser.Storage[0]->Replace = IDs;
+                        ser.Storage[0]->Replace = L'[';
                         ser.Storage[0]->Replace += String::FromNumber(i);
-                        ser.Storage[0]->Replace += IDe;
+                        ser.Storage[0]->Replace += L']';
 
                         rendered += Engine::Parse(content, items);
                     }
                 } else if (_storage->Numbers.Size != 0) {
                     for (UNumber i = 0; i < _storage->Numbers.Size; i++) {
-                        ser.Storage[0]->Replace = IDs;
+                        ser.Storage[0]->Replace = L'[';
                         ser.Storage[0]->Replace += String::FromNumber(i);
-                        ser.Storage[0]->Replace += IDe;
+                        ser.Storage[0]->Replace += L']';
 
                         rendered += Engine::Parse(content, items);
                     }
                 }
             } else {
                 for (UNumber i = 0; i < _storage->Keys.Size; i++) {
-                    ser.Storage[0]->Replace = IDs;
+                    ser.Storage[0]->Replace = L'[';
                     ser.Storage[0]->Replace = _storage->Keys.Storage[i];
-                    ser.Storage[0]->Replace += IDe;
+                    ser.Storage[0]->Replace += L']';
 
                     rendered += Engine::Parse(content, items);
                 }

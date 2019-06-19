@@ -53,6 +53,26 @@ struct String {
         des.Length = (ln + des.Length);
     }
 
+    String(const wchar_t str) noexcept { // one wchar
+        if (str != L'\0') {
+            this->Length = this->Capacity = 1;
+
+            this->Str    = new wchar_t[2]; // 1 for /0
+            this->Str[0] = str;
+            this->Str[1] = L'\0';
+        }
+    }
+
+    String(const char str) noexcept { // one char
+        if (str != '\0') {
+            this->Length = this->Capacity = 1;
+
+            this->Str    = new wchar_t[2]; // 1 for /0
+            this->Str[0] = static_cast<wchar_t>(str);
+            this->Str[1] = L'\0';
+        }
+    }
+
     String(const wchar_t *str) noexcept {
         UNumber _length = 0;
         while (str[_length] != L'\0') {
@@ -82,26 +102,6 @@ struct String {
             for (UNumber j = 0; j <= _length; j++) {
                 this->Str[j] = static_cast<wchar_t>(str[j]);
             }
-        }
-    }
-
-    String(const wchar_t str) noexcept { // one wchar
-        if (str != L'\0') {
-            this->Length = this->Capacity = 1;
-
-            this->Str    = new wchar_t[2]; // 1 for /0
-            this->Str[0] = str;
-            this->Str[1] = L'\0';
-        }
-    }
-
-    String(const char str) noexcept { // one char
-        if (str != '\0') {
-            this->Length = this->Capacity = 1;
-
-            this->Str    = new wchar_t[2]; // 1 for /0
-            this->Str[0] = static_cast<wchar_t>(str);
-            this->Str[1] = L'\0';
         }
     }
 
@@ -148,7 +148,33 @@ struct String {
         this->Length   = 0;
     }
 
-    // TODO: implement char & wchar to prevent constructing and destructing often
+    String &operator=(const wchar_t src) noexcept { // Copy
+        if (src != L'\0') {
+            if (this->Capacity == 0) {
+                this->ExpandTo(1);
+            }
+
+            this->Length = 1;
+            this->Str[0] = src;
+            this->Str[1] = L'\0';
+        };
+
+        return *this;
+    }
+
+    String &operator=(const wchar_t *src) noexcept { // Copy
+        UNumber _length = 0;
+        while (src[_length] != L'\0') {
+            ++_length;
+        };
+
+        if (_length != 0) {
+            Copy(*this, src, 0, _length);
+        }
+
+        return *this;
+    }
+
     String &operator=(String &&src) noexcept { // Move
         if (this != &src) {
             if (this->Str != nullptr) {
@@ -191,6 +217,30 @@ struct String {
         return *this;
     }
 
+    String &operator+=(const wchar_t src) noexcept { // Appand a string
+        if (this->Length == this->Capacity) {
+            this->ExpandTo((this->Length + 1) * 2);
+        }
+
+        this->Str[this->Length++] = src;
+        this->Str[this->Length]   = L'\0';
+
+        return *this;
+    }
+
+    String &operator+=(const wchar_t *src) noexcept { // Appand a string
+        UNumber _length = 0;
+        while (src[_length] != L'\0') {
+            ++_length;
+        };
+
+        if (_length != 0) {
+            Copy(*this, src, 0, _length);
+        }
+
+        return *this;
+    }
+
     String &operator+=(String &&src) noexcept { // Move
         if (src.Length != 0) {
             Copy(*this, src.Str, this->Length, src.Length);
@@ -211,6 +261,41 @@ struct String {
         }
 
         return *this;
+    }
+
+    String operator+(const wchar_t src) const noexcept {
+        String ns;
+        ns.SetLength(this->Length + 1);
+
+        if (this->Length != 0) {
+            Copy(ns, this->Str, 0, this->Length);
+        }
+
+        ns.Str[ns.Length++] = src;
+        ns.Str[ns.Length]   = L'\0';
+
+        return ns;
+    }
+
+    String operator+(const wchar_t *src) const noexcept {
+        String ns;
+
+        UNumber _length = 0;
+        while (src[_length] != L'\0') {
+            ++_length;
+        };
+
+        if (_length != 0) {
+            ns.SetLength(this->Length + _length);
+
+            if (this->Length != 0) {
+                Copy(ns, this->Str, 0, this->Length);
+            }
+
+            Copy(ns, src, ns.Length, _length);
+        }
+
+        return ns;
     }
 
     // Appand a string by moving another into it

@@ -250,9 +250,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     x3->Connected = y3;
 
     x1->ParseCB = x2->ParseCB = y3->ParseCB = ([](const String &block, const Match &item) noexcept->String {
-        String nc = String::FromNumber(item.OLength) + L'-';
-        nc += String::FromNumber(item.CLength);
-        return nc;
+        return String::FromNumber(item.OLength) + L'-' + String::FromNumber(item.CLength);
     });
 
     bit.Exprs.Add(x2).Add(x1).Add(x3);
