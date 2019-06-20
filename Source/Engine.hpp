@@ -267,11 +267,11 @@ static void _search(Array<Match> &items, const String &content, const Expression
 
     /////////////////////////////////
 
-    if (items.Size == 0) {
-        if ((Flags::POP & ce->Flag) != 0) {
-            _search(items, content, ce->NestExprs, started, limit, 0, 0);
-        }
-    } else if (SPLIT && (level == 0)) {
+    if (((Flags::POP & ce->Flag) != 0) && (items.Size == 0)) {
+        _search(items, content, ce->NestExprs, started, limit, 0, 0);
+    }
+
+    if (SPLIT && (level == 0)) {
         Split(items, content, started, limit);
     }
 
@@ -280,8 +280,8 @@ static void _search(Array<Match> &items, const String &content, const Expression
     // Friday, January 18, 2019
 }
 /////////////////////////////////
-static Array<Match> Search(const String &content, const Expressions &exprs, UNumber index = 0, UNumber length = 0,
-                           UNumber max = 0) noexcept {
+inline static Array<Match> Search(const String &content, const Expressions &exprs, UNumber index = 0, UNumber length = 0,
+                                  UNumber max = 0) noexcept {
     Array<Match> items;
 
     if (length == 0) {
@@ -421,7 +421,7 @@ void Split(Array<Match> &items, const String &content, const UNumber index, cons
     }
 
     if (splitted.Size == 0) {
-        items.Reset();
+        items.Size = 0;
         return;
     }
 

@@ -26,9 +26,9 @@ struct StringBit {
 
 class StringStream {
   public:
-    Array<String>       _strings;
-    Array<String *>     p_strings;
-    Array<StringStream> collections;
+    Array<String>         _strings;
+    Array<const String *> p_strings;
+    Array<StringStream>   collections;
 
     Array<StringBit> bits;
 
@@ -78,7 +78,7 @@ class StringStream {
         }
     }
 
-    void Share(String *src) noexcept {
+    void Share(const String *src) noexcept {
         if (src->Length != 0) {
             Length += src->Length;
 
@@ -93,13 +93,16 @@ class StringStream {
     }
 
     static void _pack(StringStream &_ss, String &buk) noexcept {
-        String *sstr;
-        UNumber j = 0;
+        const String *sstr;
+        UNumber       j = 0;
 
         for (UNumber i = 0; i < _ss.bits.Size; i++) {
             switch (_ss.bits.Storage[i].Type) {
-                case SType::Bits: {
-                    _pack(_ss.collections.Storage[_ss.bits.Storage[i].Index], buk);
+                case SType::Bit: {
+                    sstr = &(_ss._strings.Storage[_ss.bits.Storage[i].Index]);
+                    for (j = 0; j < sstr->Length; j++) {
+                        buk.Str[buk.Length++] = sstr->Str[j];
+                    }
                     break;
                 }
                 case SType::PBit: {
@@ -109,11 +112,8 @@ class StringStream {
                     }
                     break;
                 }
-                default: {
-                    sstr = &(_ss._strings.Storage[_ss.bits.Storage[i].Index]);
-                    for (j = 0; j < sstr->Length; j++) {
-                        buk.Str[buk.Length++] = sstr->Str[j];
-                    }
+                case SType::Bits: {
+                    _pack(_ss.collections.Storage[_ss.bits.Storage[i].Index], buk);
                     break;
                 }
             }

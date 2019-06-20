@@ -18,25 +18,57 @@
 namespace Qentem {
 
 struct Template {
-    static Document *  Data;
-    static Expressions Tags;
+    static Document *Data;
 
-    static Expressions TagsVars;
-    static Expressions TagsQuotes;
-    static Expressions TagsHead;
+    static const Expressions TagsVars;
+    static const Expressions TagsQuotes;
+    static const Expressions TagsHead;
 
-    static void SetTags() noexcept {
+    static const Expressions TagsAll; // All
+
+    static Expressions _getTagsVara() noexcept {
         static Expression TagVar;
         static Expression VarNext;
 
-        static Expression TagIif;
-        static Expression IifNext;
+        // Variables evaluation.
+        VarNext.ParseCB = &(Template::RenderVar);
+        // {v:var_name}
+        TagVar.Keyword   = L"{v:";
+        VarNext.Keyword  = L'}';
+        TagVar.Connected = &VarNext;
+        VarNext.Flag     = Flags::TRIM;
 
+        return Expressions().Add(&TagVar);
+    }
+
+    static Expressions _getTagsQuotes() noexcept {
         static Expression TagQuote;
         static Expression QuoteNext;
 
+        TagQuote.Keyword   = L'"';
+        QuoteNext.Keyword  = L'"';
+        TagQuote.Connected = &QuoteNext;
+
+        return Expressions().Add(&TagQuote);
+    }
+
+    static Expressions _getTagsHead() noexcept {
         static Expression TagHead;
         static Expression TagHead_T;
+
+        TagHead.Keyword   = L"<";
+        TagHead_T.Keyword = L'>';
+        TagHead_T.Flag    = Flags::ONCE;
+        TagHead.Connected = &TagHead_T;
+        // Nest to prevent matching ">" bigger sign inside if statement.
+        TagHead_T.NestExprs.Add(TagsQuotes);
+
+        return Expressions().Add(&TagHead);
+    }
+
+    static Expressions _getTagsAll() noexcept {
+        static Expression TagIif;
+        static Expression IifNext;
 
         static Expression TagIf;
         static Expression IfNext;
@@ -47,17 +79,6 @@ struct Template {
         static Expression TagLoop;
         static Expression LoopNext;
 
-        // Variables evaluation.
-        VarNext.ParseCB = &(Template::RenderVar);
-        // {v:var_name}
-        TagVar.Keyword   = L"{v:";
-        VarNext.Keyword  = L'}';
-        TagVar.Connected = &VarNext;
-        VarNext.Flag     = Flags::TRIM;
-        Tags.Add(&TagVar);
-        TagsVars.Add(&TagVar);
-        /////////////////////////////////
-
         // Inline if evaluation.
         IifNext.ParseCB = &(Template::RenderIIF);
         //{iif case="3 == 3" true="Yes" false="No"}
@@ -65,15 +86,7 @@ struct Template {
         IifNext.Keyword  = L'}';
         TagIif.Connected = &IifNext;
         IifNext.Flag     = Flags::BUBBLE;
-        IifNext.NestExprs.Add(&TagIif).Add(&TagVar); // nested by itself and TagVars
-        Tags.Add(&TagIif);
-        /////////////////////////////////
-
-        // TagsQuotes.
-        TagQuote.Keyword   = L'"';
-        QuoteNext.Keyword  = L'"';
-        TagQuote.Connected = &QuoteNext;
-        TagsQuotes.Add(&TagQuote);
+        IifNext.NestExprs.Add(&TagIif).Add(TagsVars); // Nested by itself and TagVars
         /////////////////////////////////
 
         // If spliter.
@@ -82,16 +95,6 @@ struct Template {
         ELseIfNext.Keyword  = L"/>";
         ELseIfNext.Flag     = Flags::SPLIT;
         TagELseIf.Connected = &ELseIfNext;
-        // ELseIfNext.SubExprs.Add(&TagQuote);
-        /////////////////////////////////
-
-        TagHead.Keyword   = L"<";
-        TagHead_T.Keyword = L'>';
-        TagHead_T.Flag    = Flags::ONCE;
-        TagHead.Connected = &TagHead_T;
-        // Nest to prevent matching ">" bigger sign inside if statement.
-        TagHead_T.NestExprs.Add(&TagQuote);
-        TagsHead.Add(&TagHead);
         /////////////////////////////////
 
         // If evaluation.
@@ -102,7 +105,6 @@ struct Template {
         TagIf.Connected = &IfNext;
         IfNext.Flag     = Flags::SPLITROOTONLY;
         IfNext.NestExprs.Add(&TagIf).Add(&TagELseIf);
-        Tags.Add(&TagIf);
         /////////////////////////////////
 
         // Loop evaluation.
@@ -113,18 +115,15 @@ struct Template {
         TagLoop.Keyword   = L"<loop";
         LoopNext.Keyword  = L"</loop>";
         TagLoop.Connected = &LoopNext;
-        LoopNext.NestExprs.Add(&TagLoop); // nested by itself
-        Tags.Add(&TagLoop);
+        LoopNext.NestExprs.Add(&TagLoop); // Nested by itself
         /////////////////////////////////
+
+        return Expressions().Add(TagsVars).Add(&TagIif).Add(&TagIf).Add(&TagLoop);
     }
 
     static String Render(const String &content, Document *data) noexcept {
-        if (Template::Tags.Size == 0) {
-            Template::SetTags();
-        }
-
         Template::Data = data;
-        return Engine::Parse(content, Engine::Search(content, Template::Tags));
+        return Engine::Parse(content, Engine::Search(content, Template::TagsAll));
     }
 
     // e.g. {v:var_name}
@@ -246,8 +245,8 @@ struct Template {
                 }
 
                 if (_true) {
-                    return Engine::Parse(block, Engine::Search(block, Template::Tags, offset, (offset + length)), offset,
-                                         (offset + length));
+                    return Engine::Parse(block, Engine::Search(block, Template::TagsAll, offset, (offset + length)),
+                                         offset, (offset + length));
                 }
             }
         }
@@ -292,7 +291,7 @@ struct Template {
                     var_id, Template::Data);
 
                 if (_content.Length != 0) {
-                    return Engine::Parse(_content, Engine::Search(_content, Template::Tags));
+                    return Engine::Parse(_content, Engine::Search(_content, Template::TagsAll));
                 }
             }
         }
@@ -355,12 +354,12 @@ struct Template {
     }
 };
 
-Document *  Template::Data = nullptr;
-Expressions Template::Tags = Engine::Expressions();
+Document *Template::Data = nullptr;
 
-Expressions Template::TagsVars   = Engine::Expressions();
-Expressions Template::TagsQuotes = Engine::Expressions();
-Expressions Template::TagsHead   = Engine::Expressions();
+const Expressions Template::TagsVars   = Template::_getTagsVara();
+const Expressions Template::TagsQuotes = Template::_getTagsQuotes();
+const Expressions Template::TagsHead   = Template::_getTagsHead();
+const Expressions Template::TagsAll    = Template::_getTagsAll();
 
 } // namespace Qentem
 #endif

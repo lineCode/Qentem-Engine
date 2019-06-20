@@ -34,27 +34,45 @@ struct Array {
         src.Storage  = nullptr;
     }
 
-    Array(Array<T> &src) {
+    Array(Array<T> &src) noexcept {
         Add(src, false);
     }
 
     Array<T> &operator=(const Array<T> &src) noexcept {
         if (this != &src) {
-            if (Storage != nullptr) {
-                delete[] Storage;
+            if (src.Size == 0) {
+                if (Storage != nullptr) {
+                    delete[] Storage;
+                    Storage  = nullptr;
+                    Size     = 0;
+                    Capacity = 0;
+                }
+
+                return *this;
             }
 
-            Storage  = nullptr;
-            Capacity = src.Size;
-            Size     = src.Size;
+            Size = src.Size;
 
-            if (src.Size != 0) {
-                Storage = new T[Size];
+            if (Capacity < src.Size) {
+                if (Storage != nullptr) {
+                    delete[] Storage;
+                }
+
+                Storage  = new T[Size];
+                Capacity = src.Size;
+
                 for (UNumber n = 0; n < src.Size; n++) {
                     Storage[n] = static_cast<T &&>(src.Storage[n]);
                 }
+
+                return *this;
+            }
+
+            for (UNumber n = 0; n < src.Size; n++) {
+                Storage[n] = static_cast<T &&>(src.Storage[n]);
             }
         }
+
         return *this;
     }
 
@@ -77,46 +95,82 @@ struct Array {
 
     Array<T> &Add(Array<T> &src, bool move = false) noexcept {
         if (src.Size != 0) {
-            Capacity += src.Size;
+            if ((src.Size + Size) > Capacity) {
+                Capacity += src.Size;
 
-            if (Size != 0) {
-                T *tmp  = Storage;
-                Storage = new T[Capacity];
+                if (Size == 0) {
+                    if (!move) {
+                        Storage = new T[Capacity];
+                    } else {
+                        Storage  = src.Storage;
+                        Capacity = src.Capacity;
+                        Size     = src.Size;
 
-                for (UNumber n = 0; n < Size; n++) {
-                    Storage[n] = static_cast<T &&>(tmp[n]);
-                }
+                        src.Storage  = nullptr;
+                        src.Capacity = 0;
+                        src.Size     = 0;
 
-                if (tmp != nullptr) {
+                        return *this;
+                    }
+                } else {
+                    T *tmp  = Storage;
+                    Storage = new T[Capacity];
+
+                    for (UNumber n = 0; n < Size; n++) {
+                        Storage[n] = static_cast<T &&>(tmp[n]);
+                    }
+
                     delete[] tmp;
                 }
-            } else {
-                Storage = new T[Capacity];
             }
 
             if (move) {
                 for (UNumber i = 0; i < src.Size; i++) {
-                    Storage[Size] = static_cast<T &&>(src.Storage[i]);
+                    Storage[Size++] = static_cast<T &&>(src.Storage[i]);
                 }
+
+                delete[] src.Storage;
+                src.Storage  = nullptr;
+                src.Capacity = 0;
+                src.Size     = 0;
             } else {
                 for (UNumber i = 0; i < src.Size; i++) {
-                    Storage[Size] = src.Storage[i];
+                    Storage[Size++] = src.Storage[i];
+                }
+            }
+        }
+
+        return *this;
+    }
+
+    Array<T> &Add(const Array<T> &src) noexcept {
+        if (src.Size != 0) {
+            if ((src.Size + Size) > Capacity) {
+                Capacity += src.Size;
+
+                if (Size == 0) {
+                    Storage = new T[Capacity];
+                } else {
+                    T *tmp  = Storage;
+                    Storage = new T[Capacity];
+
+                    for (UNumber n = 0; n < Size; n++) {
+                        Storage[n] = static_cast<T &&>(tmp[n]);
+                    }
+
+                    delete[] tmp;
                 }
             }
 
-            Size += src.Size;
-
-            delete[] src.Storage;
-            src.Storage = nullptr;
+            for (UNumber i = 0; i < src.Size; i++) {
+                Storage[Size++] = src.Storage[i];
+            }
         }
-
-        src.Capacity = 0;
-        src.Size     = 0;
 
         return *this;
     }
 
-    Array<T> &Add(const T &item) noexcept { // Copy
+    inline Array<T> &Add(const T &item) noexcept { // Copy
         if (Size == Capacity) {
             Resize((Capacity + 1) * 4);
         }
@@ -127,7 +181,7 @@ struct Array {
         return *this;
     }
 
-    Array<T> &Add(T &&item) noexcept { // Move
+    inline Array<T> &Add(T &&item) noexcept { // Move
         if (Size == Capacity) {
             Resize((Capacity + 1) * 4);
         }
@@ -138,7 +192,7 @@ struct Array {
         return *this;
     }
 
-    void SetCapacity(const UNumber _size) noexcept {
+    inline void SetCapacity(const UNumber _size) noexcept {
         if (Storage != nullptr) {
             delete[] Storage;
             Storage = nullptr;
@@ -152,7 +206,7 @@ struct Array {
         }
     }
 
-    void Resize(const UNumber _size) noexcept {
+    inline void Resize(const UNumber _size) noexcept {
         Capacity = _size;
         T *tmp   = Storage;
 
@@ -171,7 +225,7 @@ struct Array {
         }
     }
 
-    void Reset() noexcept {
+    inline void Reset() noexcept {
         if (Storage != nullptr) {
             delete[] Storage;
             Storage = nullptr;

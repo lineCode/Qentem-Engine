@@ -7,15 +7,17 @@ using Qentem::Array;
 using Qentem::Document;
 using Qentem::String;
 
-String read_file(const char *fullpath) noexcept;
+String   read_file(const char *fullpath) noexcept;
+Document get_document() noexcept;
 
 void run() noexcept {
+    Document data;
 
     UNumber took = 0;
     std::wcout << "Importing... ";
-    took            = static_cast<UNumber>(clock());
-    Document &&data = Document::FromJSON(read_file("./Tests/bigjson.json"));
-    // Qentem::Engine::Search(read_file("./Tests/bigjson.json"), Document::GetJsonExpres());
+    took = static_cast<UNumber>(clock());
+    data = Document::FromJSON(read_file("./Tests/bigjson2.json"));
+    // Qentem::Engine::Search(read_file("./Tests/bigjson.json"), Document::json_expres);
     took = (static_cast<UNumber>(clock()) - took);
     std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << ' ';
 
@@ -27,6 +29,7 @@ void run() noexcept {
     took = (static_cast<UNumber>(clock()) - took);
     std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << '\n';
 
+    // data = get_document();
     // std::wcout << data.ToJSON().Str;
 }
 
@@ -62,4 +65,48 @@ String read_file(const char *fullpath) noexcept {
     }
 
     return content;
+}
+
+Document get_document() noexcept {
+    Document data = Document();
+
+    data[L"var1"] = L"\"1\"";
+    // data[0]        = 44.0;
+    data[L"PP"] = L"gg";
+    // String sss     = data[L"PP"].Storage->GetString(;
+    data[L"nu"]    = nullptr;
+    data[L"bool"]  = false;
+    data[L"bool2"] = true;
+    data[L"&&"]    = 1000.0;
+
+    data[L"var2"]       = L"11";
+    data[L"var2"]       = L"2"; // Testing override .
+    data[L"var3"]       = L"3";
+    data[L"var4"]       = L"4";
+    data[L"var5"]       = L"5";
+    data[L"num34"]      = Array<String>().Add(L'3').Add(L'4');
+    data[L"var_string"] = L"image";
+    data[L"engine"]     = L"Qentem";
+    data[L"abc1"]       = Array<String>().Add(L'B').Add(L'C').Add(L'D').Add(L'A');
+    data[L"abc2"]       = Array<String>().Add(L'E').Add(L'F').Add(L'A');
+    data[L"numbers"]    = Array<double>().Add(0).Add(1).Add(2).Add(3).Add(4).Add(5);
+    data[L"empty"]      = L"";
+    data[L"math"] = L"((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) - (-1) + 2";
+
+    data[L"abc"]         = Document();
+    data[L"abc"][L'B']   = L"b";
+    data[L"abc"][L"@@"]  = 100.0;
+    data[L"abc"][L'A']   = L"a";
+    data[L"abc"][L'C']   = L"c";
+    data[L"abc"][L'D']   = L"d";
+    data[L"abc"][L'E']   = Array<String>().Add(L'O').Add(L"K!");
+    data[L"abc"][L"A-Z"] = L"ABCDEFGHIGKLMNOBQRST.....";
+
+    data[L"multi"]                = Document();
+    data[L"multi"][L"arr1"]       = Document();
+    data[L"multi"][L"arr1"][L'E'] = Array<String>().Add(L'O').Add(L"K!");
+    data[L"multi"][L"arr2"]       = Array<String>().Add(L'B').Add(L'C').Add(L'D').Add(L'A');
+    data[L"multi"][L'C']          = L"cool";
+
+    return data;
 }

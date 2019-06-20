@@ -22,13 +22,10 @@ using Qentem::Engine::Flags;
 using Qentem::Engine::Match;
 
 struct ALU {
-    static Expressions MathExprs;
-    static Expressions ParensExprs;
+    static const Expressions ParensExprs;
+    static const Expressions MathExprs;
 
-    static void SetParensExprs() noexcept {
-        static Expression ParensExpr;
-        static Expression ParensNext;
-
+    static Expressions getMathExprs() noexcept {
         static Expression MathExp; // 1
         static Expression MathRem; // 2
         static Expression MathDiv; // 3
@@ -45,34 +42,6 @@ struct ALU {
 
         constexpr UNumber flags_ops    = Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP | Flags::TRIM;
         constexpr UNumber flags_no_pop = Flags::SPLIT | Flags::GROUPSPLIT | Flags::TRIM;
-        ///////////////////////////////////////////
-        MathEqu2.Keyword = L"==";
-        MathEqu2.ID      = 1;
-        MathEqu2.Flag    = flags_ops;
-        MathEqu2.ParseCB = &(EqualCallback);
-        MathEqu2.NestExprs.Add(&MathAdd).Add(&MathSub);
-
-        MathEqu.Keyword = L"=";
-        MathEqu.ID      = 2;
-        MathEqu.Flag    = flags_no_pop;
-        MathEqu.ParseCB = &(EqualCallback);
-
-        MathNEqu.Keyword = L"!=";
-        MathNEqu.ID      = 3;
-        MathNEqu.Flag    = flags_no_pop;
-        MathNEqu.ParseCB = &(EqualCallback);
-
-        MathLEqu.Keyword = L"<=";
-        MathLEqu.ID      = 4;
-        MathLEqu.Flag    = flags_no_pop;
-        MathLEqu.ParseCB = &(EqualCallback);
-
-        MathBEqu.Keyword = L">=";
-        MathBEqu.ID      = 5;
-        MathBEqu.Flag    = flags_no_pop;
-        MathBEqu.ParseCB = &(EqualCallback);
-
-        MathExprs.Add(&MathEqu2).Add(&MathEqu).Add(&MathNEqu).Add(&MathLEqu).Add(&MathBEqu);
         ///////////////////////////////////////////
         MathAdd.Keyword = L'+';
         MathAdd.ID      = 1;
@@ -105,6 +74,43 @@ struct ALU {
         MathMul.Flag    = flags_no_pop;
         MathMul.ParseCB = &(MultiplicationCallback);
         ///////////////////////////////////////////
+
+        ///////////////////////////////////////////
+        MathEqu2.Keyword = L"==";
+        MathEqu2.ID      = 1;
+        MathEqu2.Flag    = flags_ops;
+        MathEqu2.ParseCB = &(EqualCallback);
+        MathEqu2.NestExprs.Add(&MathAdd).Add(&MathSub);
+
+        MathEqu.Keyword = L"=";
+        MathEqu.ID      = 2;
+        MathEqu.Flag    = flags_no_pop;
+        MathEqu.ParseCB = &(EqualCallback);
+
+        MathNEqu.Keyword = L"!=";
+        MathNEqu.ID      = 3;
+        MathNEqu.Flag    = flags_no_pop;
+        MathNEqu.ParseCB = &(EqualCallback);
+
+        MathLEqu.Keyword = L"<=";
+        MathLEqu.ID      = 4;
+        MathLEqu.Flag    = flags_no_pop;
+        MathLEqu.ParseCB = &(EqualCallback);
+
+        MathBEqu.Keyword = L">=";
+        MathBEqu.ID      = 5;
+        MathBEqu.Flag    = flags_no_pop;
+        MathBEqu.ParseCB = &(EqualCallback);
+
+        return Expressions().Add(&MathEqu2).Add(&MathEqu).Add(&MathNEqu).Add(&MathLEqu).Add(&MathBEqu);
+
+        // TODO: Implement && 'AND' 1=1&&1>3
+    }
+
+    static Expressions getParensExprs() noexcept {
+        static Expression ParensExpr;
+        static Expression ParensNext;
+
         ParensExpr.Keyword   = L'(';
         ParensNext.Keyword   = L')';
         ParensExpr.Connected = &ParensNext;
@@ -113,9 +119,7 @@ struct ALU {
         ParensNext.NestExprs.Add(&ParensExpr);
         ///////////////////////////////////////////
 
-        // TODO: Implement && 'AND' 1=1&&1>3
-
-        ParensExprs.Add(&ParensExpr);
+        return Expressions().Add(&ParensExpr);
     }
 
     // e.g. ( 4 + 3 ), ( 2 + ( 4 + ( 1 + 2 ) + 1 ) * 5 - 3 - 2 )
@@ -302,10 +306,6 @@ struct ALU {
          * Fifth: Return final value or 0;
          */
 
-        if (ParensExprs.Size == 0) {
-            SetParensExprs();
-        }
-
         // Stage one:
         content = Engine::Parse(content, Engine::Search(content, ParensExprs));
         if ((content.Length == 0) || (content == L'0')) {
@@ -323,8 +323,8 @@ struct ALU {
     }
 };
 
-Expressions ALU::MathExprs   = Engine::Expressions();
-Expressions ALU::ParensExprs = Engine::Expressions();
+const Expressions ALU::ParensExprs = ALU::getParensExprs();
+const Expressions ALU::MathExprs   = ALU::getMathExprs();
 
 } // namespace Qentem
 

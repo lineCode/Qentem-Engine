@@ -21,6 +21,8 @@ using Qentem::Engine::Match;
 
 namespace Qentem {
 
+struct JsonFixedString;
+
 enum VType { UndefinedT = 0, NullT, BooleanT, NumberT, StringT, DocumentT };
 
 struct Index {
@@ -41,7 +43,7 @@ struct Field {
     String    Key     = L"";
     Document *Storage = nullptr;
 
-    Field &operator=(bool value) noexcept;
+    Field &operator=(UNumber value) noexcept;
     Field &operator=(double value) noexcept;
     Field &operator=(const wchar_t *value) noexcept;
     Field &operator=(String &value) noexcept;
@@ -50,11 +52,13 @@ struct Field {
     Field &operator=(Array<double> &value) noexcept;
     Field &operator=(Array<String> &value) noexcept;
     Field &operator=(Array<Document> &value) noexcept;
-    Field  operator[](const String &key) noexcept;
+    Field &operator=(bool value) noexcept;
+
+    Field operator[](const String &key) noexcept;
 };
 
 struct Document {
-    UNumber HashBase = 7; // Or 97. Choose prime numbers only!
+    UNumber HashBase = 17; // Or 97. Choose prime numbers only!
     bool    Ordered  = false;
 
     Array<Entry> Entries;
@@ -65,11 +69,27 @@ struct Document {
     Array<String>   Keys;
     Array<Document> Documents;
 
-    explicit Document() = default;
+    static const Expressions json_expres;
+    static const Expressions to_json_expres;
+
+    static const JsonFixedString fxs;
+
+    Document() = default;
 
     Field operator[](const String &key) noexcept {
         Field _field;
         _field.Key     = key;
+        _field.Storage = this;
+        return _field;
+    }
+
+    Field operator[](const UNumber &id) noexcept {
+        Field _field;
+
+        if (id < Keys.Size) {
+            _field.Key = Keys.Storage[id];
+        }
+
         _field.Storage = this;
         return _field;
     }
@@ -91,10 +111,16 @@ struct Document {
     void   Insert(const String &key, UNumber offset, UNumber limit, const VType type, void *ptr, const bool move,
                   const bool check = true) noexcept;
 
-    String       ToJSON() const noexcept;
-    StringStream _toJSON() const noexcept;
+    inline String ToJSON() const noexcept {
+        StringStream ss;
+        _toJSON(ss);
+        return ss.Eject();
+    }
 
-    static Expressions &GetJsonExpres() noexcept;
+    void _toJSON(StringStream &ss) const noexcept;
+
+    static Expressions _getToJsonExpres() noexcept;
+    static Expressions _getJsonExpres() noexcept;
 
     static void     _makeListNumber(Document &document, const String &content, const Match &item) noexcept;
     static void     _makeDocument(Document &document, const String &content, Array<Match> &items) noexcept;
@@ -119,7 +145,9 @@ Document Document::FromJSON(const String &content, bool comments) noexcept {
     static Expressions __comments;
 
     // C style comments
-    if (comments) {
+    if (!comments) {
+        items = Engine::Search(content, Document::json_expres);
+    } else {
         if (__comments.Size == 0) {
             static Expression comment1      = Expression();
             static Expression comment_next1 = Expression();
@@ -140,9 +168,7 @@ Document Document::FromJSON(const String &content, bool comments) noexcept {
         }
 
         n_content = Engine::Parse(content, Engine::Search(content, __comments));
-        items     = Engine::Search(n_content, GetJsonExpres());
-    } else {
-        items = Engine::Search(content, GetJsonExpres());
+        items     = Engine::Search(n_content, json_expres);
     }
 
     if (items.Size != 0) {
@@ -266,7 +292,7 @@ Document *Document::GetSource(Entry **_entry, const String &key, UNumber offset,
 }
 
 bool Document::GetString(String &value, const String &key, UNumber offset, UNumber limit) noexcept {
-    value.Reset();
+    value = L"";
 
     Entry *         _entry;
     const Document *storage = GetSource(&_entry, key, offset, limit);
@@ -602,11 +628,15 @@ void Document::_makeListNumber(Document &document, const String &content, const 
 
 void Document::_makeDocument(Document &document, const String &content, Array<Match> &items) noexcept {
     if (!document.Ordered) {
-        Match * key;
-        UNumber start;
-        UNumber j;
-        bool    done;
-        String  ts;
+
+        Match *  key;
+        Match *  data;
+        UNumber  start;
+        UNumber  j;
+        bool     done;
+        String   ts;
+        Document o_document;
+        Document uno_document;
 
         for (UNumber i = 0; i < items.Size; i++) {
             key   = &(items.Storage[i]);
@@ -619,7 +649,7 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
                     case L'"': {
                         ++i;
 
-                        Match *data = &(items.Storage[i]);
+                        data = &(items.Storage[i]);
                         if (data->NestMatch.Size != 0) {
                             ts = Engine::Parse(content, data->NestMatch, (data->Offset + 1),
                                                ((data->Offset + data->Length) - 1));
@@ -634,7 +664,7 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
                     case L'{': {
                         ++i;
 
-                        Document uno_document = Document();
+                        uno_document = Document();
                         Document::_makeDocument(uno_document, content, items.Storage[i].NestMatch);
                         document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::DocumentT, &uno_document,
                                         true, false);
@@ -644,8 +674,8 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
                     case L'[': {
                         ++i;
 
-                        Document o_document = Document();
-                        o_document.Ordered  = true;
+                        o_document         = Document();
+                        o_document.Ordered = true;
 
                         if (items.Storage[i].NestMatch.Size > 0) {
                             Document::_makeDocument(o_document, content, items.Storage[i].NestMatch);
@@ -726,10 +756,8 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
                 document.Documents.SetCapacity(items.Size);
 
                 for (UNumber i = 0; i < items.Size; i++) {
-                    Document *te = &(document.Documents.Storage[document.Documents.Size]);
-                    ++document.Documents.Size;
-
-                    _makeDocument(*te, content, items.Storage[i].NestMatch);
+                    _makeDocument((document.Documents.Storage[document.Documents.Size++]), content,
+                                  items.Storage[i].NestMatch);
                 }
             } else if (items.Storage[0].Expr->ID == 2) { // ] Ordered arrays
                 document.Documents.SetCapacity(items.Size);
@@ -754,113 +782,102 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
     items.Reset();
 }
 
-String Document::ToJSON() const noexcept {
-    return _toJSON().Eject();
-}
+struct JsonFixedString {
+    const String fss1  = L'{';
+    const String fss2  = L'}';
+    const String fss3  = L',';
+    const String fss4  = L'[';
+    const String fss5  = L']';
+    const String fss6  = L'"';
+    const String fss7  = L"\":null";
+    const String fss8  = L"\":true";
+    const String fss9  = L"\":false";
+    const String fss10 = L"\":\"";
+    const String fss11 = L"\":";
+};
 
-StringStream Document::_toJSON() const noexcept {
-    static Array<Expression *> JsonQuot;
-    StringStream               ss;
-    Array<Match>               tmpMatchs;
-
-    if (JsonQuot.Size == 0) {
-        static Expression _JsonQuot;
-        _JsonQuot.Keyword = L'"';
-        _JsonQuot.Replace = L"\\\"";
-        JsonQuot.Add(&_JsonQuot);
-    }
-
-    static String fss1  = L'{';
-    static String fss2  = L'}';
-    static String fss3  = L',';
-    static String fss4  = L'[';
-    static String fss5  = L']';
-    static String fss6  = L'"';
-    static String fss7  = L"\":null";
-    static String fss8  = L"\":true";
-    static String fss9  = L"\":false";
-    static String fss10 = L"\":\"";
-    static String fss11 = L"\":";
+void Document::_toJSON(StringStream &ss) const noexcept {
+    Array<Match> tmpMatchs;
 
     if (!Ordered) {
         Entry *_ptr;
 
-        ss.Share(&fss1);
+        ss.Share(&fxs.fss1);
 
         for (UNumber i = 0; i < Entries.Size; i++) {
             _ptr = &(Entries.Storage[i]);
 
             if (ss.Length != 1) {
-                ss.Share(&fss3);
+                ss.Share(&fxs.fss3);
             }
 
             switch (_ptr->Type) {
                 case VType::NullT: {
-                    ss.Share(&fss6);
+                    ss.Share(&fxs.fss6);
                     ss += Keys.Storage[_ptr->KeyID];
-                    ss.Share(&fss7);
+                    ss.Share(&fxs.fss7);
                 } break;
                 case VType::BooleanT: {
-                    ss.Share(&fss6);
+                    ss.Share(&fxs.fss6);
                     ss += Keys.Storage[_ptr->KeyID];
-                    ss.Share((Numbers.Storage[_ptr->ID] != 0) ? &fss8 : &fss9);
+                    ss.Share((Numbers.Storage[_ptr->ID] != 0) ? &fxs.fss8 : &fxs.fss9);
                 } break;
                 case VType::StringT: {
-                    ss.Share(&fss6);
+                    ss.Share(&fxs.fss6);
                     ss += Keys.Storage[_ptr->KeyID];
-                    ss.Share(&fss10);
+                    ss.Share(&fxs.fss10);
 
-                    tmpMatchs = Engine::Search(Strings.Storage[_ptr->ID], JsonQuot);
+                    tmpMatchs = Engine::Search(Strings.Storage[_ptr->ID], to_json_expres);
                     if (tmpMatchs.Size == 0) {
                         ss.Share(&Strings.Storage[_ptr->ID]);
                     } else {
                         ss += Engine::Parse(Strings.Storage[_ptr->ID], tmpMatchs);
                     }
 
-                    ss.Share(&fss6);
+                    ss.Share(&fxs.fss6);
                 } break;
                 case VType::NumberT: {
-                    ss.Share(&fss6);
+                    ss.Share(&fxs.fss6);
                     ss += Keys.Storage[_ptr->KeyID];
-                    ss.Share(&fss11);
+                    ss.Share(&fxs.fss11);
                     ss += String::FromNumber(Numbers.Storage[_ptr->ID]);
                 } break;
                 case VType::DocumentT: {
-                    ss.Share(&fss6);
+                    ss.Share(&fxs.fss6);
                     ss += Keys.Storage[_ptr->KeyID];
-                    ss.Share(&fss11);
-                    ss += Documents.Storage[_ptr->ID]._toJSON();
+                    ss.Share(&fxs.fss11);
+                    ss += Documents.Storage[_ptr->ID].ToJSON();
                 } break;
                 default:
                     break;
             }
         }
 
-        ss.Share(&fss2);
+        ss.Share(&fxs.fss2);
     } else {
-        ss.Share(&fss4);
+        ss.Share(&fxs.fss4);
 
         if (Strings.Size != 0) {
             for (UNumber i = 0; i < Strings.Size; i++) {
                 if (ss.Length != 1) {
-                    ss.Share(&fss3);
+                    ss.Share(&fxs.fss3);
                 }
 
-                ss.Share(&fss6);
+                ss.Share(&fxs.fss6);
 
-                tmpMatchs = Engine::Search(Strings.Storage[i], JsonQuot);
+                tmpMatchs = Engine::Search(Strings.Storage[i], to_json_expres);
                 if (tmpMatchs.Size == 0) {
                     ss.Share(&Strings.Storage[i]);
                 } else {
                     ss += Engine::Parse(Strings.Storage[i], tmpMatchs);
                 }
 
-                ss.Share(&fss6);
+                ss.Share(&fxs.fss6);
             }
         } else if (Numbers.Size != 0) {
             for (UNumber i = 0; i < Numbers.Size; i++) {
                 if (ss.Length != 1) {
-                    ss.Share(&fss3);
+                    ss.Share(&fxs.fss3);
                 }
 
                 ss += String::FromNumber(Numbers.Storage[i]);
@@ -868,26 +885,26 @@ StringStream Document::_toJSON() const noexcept {
         } else if (Documents.Size != 0) {
             for (UNumber i = 0; i < Documents.Size; i++) {
                 if (ss.Length != 1) {
-                    ss.Share(&fss3);
+                    ss.Share(&fxs.fss3);
                 }
 
-                ss += Documents.Storage[i]._toJSON();
+                ss += Documents.Storage[i].ToJSON();
             }
         }
 
-        ss.Share(&fss5);
+        ss.Share(&fxs.fss5);
     }
-
-    return ss;
 }
 
-Expressions &Document::GetJsonExpres() noexcept {
-    static Expressions json_expres;
+Expressions Document::_getToJsonExpres() noexcept {
+    static Expression _JsonQuot;
+    _JsonQuot.Keyword = L'"';
+    _JsonQuot.Replace = L"\\\"";
 
-    if (json_expres.Size != 0) {
-        return json_expres;
-    }
+    return Expressions().Add(&_JsonQuot);
+}
 
+Expressions Document::_getJsonExpres() noexcept {
     static Expression esc_quotation = Expression();
     esc_quotation.Keyword           = L"\\\"";
     esc_quotation.Replace           = L'"';
@@ -896,7 +913,7 @@ Expressions &Document::GetJsonExpres() noexcept {
     static Expression quotation_end   = Expression();
     quotation_start.Keyword           = L'"';
     quotation_end.Keyword             = L'"';
-    quotation_end.ID                  = 3; // For faster comparing.
+    quotation_end.ID                  = 3;
     quotation_start.Connected         = &quotation_end;
     quotation_end.NestExprs.Add(&esc_quotation);
 
@@ -918,16 +935,13 @@ Expressions &Document::GetJsonExpres() noexcept {
     opened_square_bracket.Connected = &closed_square_bracket;
     closed_square_bracket.NestExprs.Add(&quotation_start).Add(&opened_square_bracket).Add(&opened_curly_bracket);
 
-    json_expres.Add(&opened_curly_bracket).Add(&opened_square_bracket);
-
-    return json_expres;
+    return Expressions().Add(&opened_curly_bracket).Add(&opened_square_bracket);
 }
 
 //////////// Fields' Operators
-Field &Field::operator=(bool value) noexcept {
+Field &Field::operator=(UNumber value) noexcept {
     if (Storage != nullptr) {
-        double num = value ? 1.0 : 0.0;
-        Storage->Insert(Key, 0, Key.Length, VType::BooleanT, &num, false);
+        Storage->Insert(Key, 0, Key.Length, VType::NumberT, &value, false);
     }
     return *this;
 }
@@ -1002,6 +1016,14 @@ Field &Field::operator=(Array<Document> &value) noexcept {
     return *this;
 }
 
+Field &Field::operator=(bool value) noexcept {
+    if (Storage != nullptr) {
+        double num = value ? 1.0 : 0.0;
+        Storage->Insert(Key, 0, Key.Length, VType::BooleanT, &num, false);
+    }
+    return *this;
+}
+
 Field Field::operator[](const String &key) noexcept {
     if (Storage != nullptr) {
         Document *document = Storage->GetDocument(Key, 0, Key.Length);
@@ -1013,6 +1035,11 @@ Field Field::operator[](const String &key) noexcept {
 
     return Field();
 }
+
+const Expressions Document::json_expres    = Document::_getJsonExpres();
+const Expressions Document::to_json_expres = Document::_getToJsonExpres();
+
+const JsonFixedString Document::fxs = JsonFixedString();
 
 } // namespace Qentem
 #endif

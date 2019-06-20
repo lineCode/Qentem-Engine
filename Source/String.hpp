@@ -132,7 +132,7 @@ struct String {
         Reset();
     }
 
-    void Reset() noexcept {
+    inline void Reset() noexcept {
         if (Str != nullptr) {
             delete[] Str;
             Str = nullptr;
@@ -361,7 +361,7 @@ struct String {
         return (i != Length);
     }
 
-    void SetLength(const UNumber size) noexcept {
+    inline void SetLength(const UNumber size) noexcept {
         Length = 0;
 
         if (Str != nullptr) {
@@ -373,7 +373,7 @@ struct String {
         Capacity = size;
     }
 
-    void Resize(const UNumber size) noexcept {
+    inline void Resize(const UNumber size) noexcept {
         if (size > Capacity) {
             Capacity     = size;
             wchar_t *tmp = Str;
@@ -396,7 +396,7 @@ struct String {
         }
     }
 
-    static String Part(const String &src, UNumber offset, const UNumber limit) noexcept {
+    inline static String Part(const String &src, UNumber offset, const UNumber limit) noexcept {
         String bit;
         bit.Str      = new wchar_t[(limit + 1)];
         bit.Capacity = limit;
@@ -410,7 +410,7 @@ struct String {
         return bit;
     }
 
-    static UNumber Hash(const String &src, UNumber start, const UNumber end_offset) noexcept {
+    inline static UNumber Hash(const String &src, UNumber start, const UNumber end_offset) noexcept {
         UNumber j    = 1;
         UNumber hash = 0;
         bool    fl   = false;
@@ -431,11 +431,7 @@ struct String {
     }
 
     // Update the starting index and the ending one to be at the actual characters
-    static void SoftTrim(const String &str, UNumber &start, UNumber &end) noexcept {
-        if (start >= end) {
-            return;
-        }
-
+    inline static void SoftTrim(const String &str, UNumber &start, UNumber &end) noexcept {
         --end;
 
         while ((str.Str[start] == L' ') || (str.Str[start] == L'\n')) {
@@ -458,7 +454,7 @@ struct String {
     }
 
     // Revers a string
-    static void Revers(String &str) noexcept {
+    inline static void Revers(String &str) noexcept {
         wchar_t ch;
         UNumber x = (str.Length - 1);
 
@@ -531,6 +527,7 @@ struct String {
 
             number -= static_cast<double>(num2);
             if (number != 0) {
+                UNumber num3 = 0; // For the reminder of 10
 
                 number += 1.1; // Forcing the value to round up to it's original number.
                 // The 0.1 is to prevent any leading zeros from being on the left
@@ -551,14 +548,14 @@ struct String {
                     --counter;
                 }
 
-                // TODO: Cache (num % 10)
-                fnm = (num % 10);
-                while (((num % 10) == 0) && (len > 0)) {
+                fnm = num3 = (num % 10);
+                while ((num3 == 0) && (len > 0)) {
                     --len;
                     num /= 10;
+                    num3 = (num % 10);
                 }
 
-                if (((num % 10) == 9) && (fnm >= 5) && (number >= 0.5)) {
+                if ((num3 == 9) && (fnm >= 5) && (number >= 0.5)) {
                     ++num;
                     while (((num % 10) == 0) && (len > 0)) {
                         --len;
@@ -598,8 +595,7 @@ struct String {
                         if (num != 11) {
                             tnm2 += wchar_t(((num - 1) % 10) + 48); // (num - 1) taking 0.1 back.
                         } else {
-                            tnm2.Length = 0;
-                            tnm2.Str[0] = L'\0';
+                            tnm2 = L"";
 
                             ++num2;
                             tnm.Length = 0;
@@ -666,7 +662,8 @@ struct String {
         return true;
     }
 
-    static bool ToNumber(const String &str, double &number, const UNumber offset = 0, UNumber limit = 0) noexcept {
+    inline static bool ToNumber(const String &str, double &number, const UNumber offset = 0,
+                                UNumber limit = 0) noexcept {
         if (limit == 0) {
             limit = str.Length - offset;
         } else {

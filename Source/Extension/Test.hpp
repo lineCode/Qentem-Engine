@@ -1205,10 +1205,6 @@ static Array<TestBit> GetALUBits() noexcept {
     Array<TestBit> bits = Array<TestBit>();
     TestBit        bit;
 
-    if (ALU::ParensExprs.Size == 0) {
-        ALU::SetParensExprs(); // Init
-    }
-
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -1272,10 +1268,6 @@ static Array<TestBit> GetALUBits() noexcept {
 static Array<TestBit> GetTemplateBits() noexcept {
     Array<TestBit> bits = Array<TestBit>();
     TestBit        bit;
-
-    if (Template::Tags.Size == 0) {
-        Template::SetTags();
-    }
 
     static Qentem::Document data = Qentem::Document();
 
@@ -1384,7 +1376,7 @@ static Array<TestBit> GetTemplateBits() noexcept {
 
     ////
 
-    bit.Exprs = Template::Tags;
+    bit.Exprs = Template::TagsAll;
     bits.Add(bit);
     ///////////////////////////////////////////
 
