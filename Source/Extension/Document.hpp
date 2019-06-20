@@ -230,7 +230,7 @@ Document *Document::GetSource(Entry **_entry, const String &key, UNumber offset,
 
         _hash = String::Hash(key, offset, end_offset);
         ++end_offset;
-        offset--;
+        --offset;
     } else if (key.Str[(end_offset - 1)] == L']') {
         end_offset = offset;
 
@@ -250,7 +250,7 @@ Document *Document::GetSource(Entry **_entry, const String &key, UNumber offset,
     if (*_entry != nullptr) {
         if ((*_entry)->Type == VType::DocumentT) {
             limit -= (end_offset - offset);
-            Document *tmp = &(this->Documents.Storage[(*_entry)->ID]);
+            Document *tmp = &(Documents.Storage[(*_entry)->ID]);
 
             if ((limit != 0) && !tmp->Ordered) {
                 return tmp->GetSource(_entry, key, end_offset, limit);
@@ -294,7 +294,9 @@ bool Document::GetString(String &value, const String &key, UNumber offset, UNumb
             if (storage->Strings.Size > id) {
                 value = storage->Strings.Storage[id];
                 return true;
-            } else if (storage->Numbers.Size > id) {
+            }
+
+            if (storage->Numbers.Size > id) {
                 value = String::FromNumber(storage->Numbers.Storage[id]);
                 return true;
             }
@@ -332,7 +334,9 @@ bool Document::GetNumber(UNumber &value, const String &key, UNumber offset, UNum
             if (storage->Numbers.Size > id) {
                 value = static_cast<UNumber>(storage->Numbers.Storage[id]);
                 return true;
-            } else if (storage->Strings.Size > id) {
+            }
+
+            if (storage->Strings.Size > id) {
                 return String::ToNumber(storage->Strings.Storage[id], value);
             }
         }
@@ -369,7 +373,9 @@ bool Document::GetDouble(double &value, const String &key, UNumber offset, UNumb
             if (storage->Numbers.Size > id) {
                 value = storage->Numbers.Storage[id];
                 return true;
-            } else if (storage->Strings.Size > id) {
+            }
+
+            if (storage->Strings.Size > id) {
                 return String::ToNumber(storage->Strings.Storage[id], value);
             }
         }
@@ -400,7 +406,9 @@ bool Document::GetBool(bool &value, const String &key, UNumber offset, UNumber l
             if (storage->Strings.Size > id) {
                 value = (storage->Strings.Storage[id] == L"true");
                 return true;
-            } else if (storage->Numbers.Size > id) {
+            }
+
+            if (storage->Numbers.Size > id) {
                 value = (storage->Numbers.Storage[id] == 1);
                 return true;
             }
@@ -427,9 +435,9 @@ Entry *Document::Exist(const UNumber hash, const UNumber level, const Array<Inde
     if ((_table.Size > id) && (_table.Storage[id].Hash != 0)) {
         if (_table.Storage[id].Hash == hash) {
             return &(Entries.Storage[_table.Storage[id].ID]);
-        } else {
-            return Exist(hash, (level + 3), _table.Storage[id].Table);
         }
+
+        return Exist(hash, (level + 3), _table.Storage[id].Table);
     }
 
     return nullptr;
@@ -439,16 +447,17 @@ void Document::InsertIndex(const Index &_index, const UNumber level, Array<Index
     UNumber id = ((_index.Hash + level) % HashBase);
 
     if (_table.Size <= id) {
-        UNumber s = id + 1;
-        _table.ExpandTo(s);
-        _table.Size = s;
+        _table.Capacity = id + 1;
+        _table.Resize(_table.Capacity);
+        _table.Size = _table.Capacity;
     }
 
     if (_table.Storage[id].Hash == 0) {
         _table.Storage[id] = _index;
-    } else {
-        InsertIndex(_index, (level + 3), _table.Storage[id].Table);
+        return;
     }
+
+    InsertIndex(_index, (level + 3), _table.Storage[id].Table);
 }
 
 void Document::Insert(const String &key, UNumber offset, UNumber limit, const VType type, void *ptr, const bool move,
@@ -463,7 +472,7 @@ void Document::Insert(const String &key, UNumber offset, UNumber limit, const VT
                 id = Strings.Size;
 
                 if (Strings.Size == Strings.Capacity) {
-                    Strings.ExpandTo((Strings.Size + 1) * 4);
+                    Strings.Resize((Strings.Size + 1) * 4);
                 }
 
                 if (move) {
@@ -477,13 +486,18 @@ void Document::Insert(const String &key, UNumber offset, UNumber limit, const VT
             case VType::NumberT:
             case VType::BooleanT: {
                 id = Numbers.Size;
-                Numbers.Add(*(static_cast<double *>(ptr)));
+                if (Numbers.Size == Numbers.Capacity) {
+                    Numbers.Resize((Numbers.Size + 1) * 4);
+                }
+
+                Numbers.Storage[Numbers.Size] = *(static_cast<double *>(ptr));
+                ++Numbers.Size;
             } break;
             case VType::DocumentT: {
                 id = Documents.Size;
 
                 if (Documents.Size == Documents.Capacity) {
-                    Documents.ExpandTo((Documents.Size + 1) * 4);
+                    Documents.Resize((Documents.Size + 1) * 4);
                 }
 
                 if (move) {
@@ -551,12 +565,16 @@ void Document::Insert(const String &key, UNumber offset, UNumber limit, const VT
         _entry.KeyID = Keys.Size;
 
         if (Keys.Size == Keys.Capacity) {
-            Keys.ExpandTo((Keys.Size + 1) * 4);
+            Keys.Resize((Keys.Size + 1) * 4);
         }
         Keys.Storage[Keys.Size] = String::Part(key, offset, limit);
         ++Keys.Size;
 
-        Entries.Add(_entry);
+        if (Entries.Size == Entries.Capacity) {
+            Entries.Resize((Entries.Size + 1) * 4);
+        }
+        Entries.Storage[Entries.Size] = _entry;
+        ++Entries.Size;
 
         InsertIndex(_index, 0, Table);
     }
@@ -588,6 +606,7 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
         UNumber start;
         UNumber j;
         bool    done;
+        String  ts;
 
         for (UNumber i = 0; i < items.Size; i++) {
             key   = &(items.Storage[i]);
@@ -601,13 +620,13 @@ void Document::_makeDocument(Document &document, const String &content, Array<Ma
                         ++i;
 
                         Match *data = &(items.Storage[i]);
+                        if (data->NestMatch.Size != 0) {
+                            ts = Engine::Parse(content, data->NestMatch, (data->Offset + 1),
+                                               ((data->Offset + data->Length) - 1));
+                        } else {
+                            ts = String::Part(content, (data->Offset + 1), (data->Length - 2));
+                        }
 
-                        String ts = (data->Length != 0)
-                                        ? (data->NestMatch.Size != 0)
-                                              ? Engine::Parse(content, data->NestMatch, (data->Offset + 1),
-                                                              ((data->Offset + data->Length) - 1))
-                                              : String::Part(content, (data->Offset + 1), (data->Length - 2))
-                                        : L"";
                         document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::StringT, &ts, true, false);
 
                         done = true;
@@ -906,86 +925,86 @@ Expressions &Document::GetJsonExpres() noexcept {
 
 //////////// Fields' Operators
 Field &Field::operator=(bool value) noexcept {
-    if (this->Storage != nullptr) {
+    if (Storage != nullptr) {
         double num = value ? 1.0 : 0.0;
-        this->Storage->Insert(this->Key, 0, this->Key.Length, VType::BooleanT, &num, false);
+        Storage->Insert(Key, 0, Key.Length, VType::BooleanT, &num, false);
     }
     return *this;
 }
 
 Field &Field::operator=(double value) noexcept {
-    if (this->Storage != nullptr) {
-        this->Storage->Insert(this->Key, 0, this->Key.Length, VType::NumberT, &value, false);
+    if (Storage != nullptr) {
+        Storage->Insert(Key, 0, Key.Length, VType::NumberT, &value, false);
     }
     return *this;
 }
 
 Field &Field::operator=(const wchar_t *value) noexcept {
-    if (this->Storage != nullptr) {
+    if (Storage != nullptr) {
         if (value != nullptr) {
             String _s = value;
-            this->Storage->Insert(this->Key, 0, this->Key.Length, VType::StringT, &_s, true);
+            Storage->Insert(Key, 0, Key.Length, VType::StringT, &_s, true);
         } else {
-            this->Storage->Insert(this->Key, 0, this->Key.Length, VType::NullT, nullptr, false);
+            Storage->Insert(Key, 0, Key.Length, VType::NullT, nullptr, false);
         }
     }
     return *this;
 }
 
 Field &Field::operator=(String &value) noexcept {
-    if (this->Storage != nullptr) {
-        this->Storage->Insert(this->Key, 0, this->Key.Length, VType::StringT, &value, false);
+    if (Storage != nullptr) {
+        Storage->Insert(Key, 0, Key.Length, VType::StringT, &value, false);
     }
     return *this;
 }
 
 Field &Field::operator=(Document &value) noexcept {
-    if (this->Storage != nullptr) {
-        this->Storage->Insert(this->Key, 0, this->Key.Length, VType::DocumentT, &value, false);
+    if (Storage != nullptr) {
+        Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &value, false);
     }
     return *this;
 }
 
 Field &Field::operator=(Document &&value) noexcept {
-    if (this->Storage != nullptr) {
-        this->Storage->Insert(this->Key, 0, this->Key.Length, VType::DocumentT, &value, true);
+    if (Storage != nullptr) {
+        Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &value, true);
     }
     return *this;
 }
 
 Field &Field::operator=(Array<double> &value) noexcept {
-    if (this->Storage != nullptr) {
+    if (Storage != nullptr) {
         Document tmp;
         tmp.Ordered = true;
         tmp.Numbers = value;
-        this->Storage->Insert(this->Key, 0, this->Key.Length, VType::DocumentT, &tmp, true);
+        Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &tmp, true);
     }
     return *this;
 }
 
 Field &Field::operator=(Array<String> &value) noexcept {
-    if (this->Storage != nullptr) {
+    if (Storage != nullptr) {
         Document tmp;
         tmp.Ordered = true;
         tmp.Strings = value;
-        this->Storage->Insert(this->Key, 0, this->Key.Length, VType::DocumentT, &tmp, true);
+        Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &tmp, true);
     }
     return *this;
 }
 
 Field &Field::operator=(Array<Document> &value) noexcept {
-    if (this->Storage != nullptr) {
+    if (Storage != nullptr) {
         Document tmp;
         tmp.Ordered   = true;
         tmp.Documents = value;
-        this->Storage->Insert(this->Key, 0, this->Key.Length, VType::DocumentT, &tmp, true);
+        Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &tmp, true);
     }
     return *this;
 }
 
 Field Field::operator[](const String &key) noexcept {
-    if (this->Storage != nullptr) {
-        Document *document = this->Storage->GetDocument(this->Key, 0, this->Key.Length);
+    if (Storage != nullptr) {
+        Document *document = Storage->GetDocument(Key, 0, Key.Length);
 
         if (document != nullptr) {
             return (*document)[key];

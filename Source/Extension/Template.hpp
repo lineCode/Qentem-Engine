@@ -343,7 +343,7 @@ struct Template {
             } else {
                 for (UNumber i = 0; i < _storage->Keys.Size; i++) {
                     ser.Storage[0]->Replace = L'[';
-                    ser.Storage[0]->Replace = _storage->Keys.Storage[i];
+                    ser.Storage[0]->Replace += _storage->Keys.Storage[i];
                     ser.Storage[0]->Replace += L']';
 
                     rendered += Engine::Parse(content, items);

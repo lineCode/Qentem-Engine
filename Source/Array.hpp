@@ -25,9 +25,9 @@ struct Array {
     Array() = default;
 
     Array(Array<T> &&src) noexcept {
-        this->Storage  = src.Storage;
-        this->Capacity = src.Capacity;
-        this->Size     = src.Size;
+        Storage  = src.Storage;
+        Capacity = src.Capacity;
+        Size     = src.Size;
 
         src.Capacity = 0;
         src.Size     = 0;
@@ -40,18 +40,18 @@ struct Array {
 
     Array<T> &operator=(const Array<T> &src) noexcept {
         if (this != &src) {
-            if (this->Storage != nullptr) {
-                delete[] this->Storage;
+            if (Storage != nullptr) {
+                delete[] Storage;
             }
 
-            this->Storage  = nullptr;
-            this->Capacity = src.Size;
-            this->Size     = src.Size;
+            Storage  = nullptr;
+            Capacity = src.Size;
+            Size     = src.Size;
 
             if (src.Size != 0) {
-                this->Storage = new T[this->Size];
+                Storage = new T[Size];
                 for (UNumber n = 0; n < src.Size; n++) {
-                    this->Storage[n] = static_cast<T &&>(src.Storage[n]);
+                    Storage[n] = static_cast<T &&>(src.Storage[n]);
                 }
             }
         }
@@ -60,13 +60,13 @@ struct Array {
 
     Array<T> &operator=(Array<T> &&src) noexcept {
         if (this != &src) {
-            if (this->Storage != nullptr) {
-                delete[] this->Storage;
+            if (Storage != nullptr) {
+                delete[] Storage;
             }
 
-            this->Storage  = src.Storage;
-            this->Capacity = src.Capacity;
-            this->Size     = src.Size;
+            Storage  = src.Storage;
+            Capacity = src.Capacity;
+            Size     = src.Size;
 
             src.Capacity = 0;
             src.Size     = 0;
@@ -77,34 +77,34 @@ struct Array {
 
     Array<T> &Add(Array<T> &src, bool move = false) noexcept {
         if (src.Size != 0) {
-            this->Capacity += src.Size;
+            Capacity += src.Size;
 
-            if (this->Size != 0) {
-                T *tmp        = this->Storage;
-                this->Storage = new T[this->Capacity];
+            if (Size != 0) {
+                T *tmp  = Storage;
+                Storage = new T[Capacity];
 
-                for (UNumber n = 0; n < this->Size; n++) {
-                    this->Storage[n] = static_cast<T &&>(tmp[n]);
+                for (UNumber n = 0; n < Size; n++) {
+                    Storage[n] = static_cast<T &&>(tmp[n]);
                 }
 
                 if (tmp != nullptr) {
                     delete[] tmp;
                 }
             } else {
-                this->Storage = new T[this->Capacity];
+                Storage = new T[Capacity];
             }
 
             if (move) {
                 for (UNumber i = 0; i < src.Size; i++) {
-                    this->Storage[this->Size] = static_cast<T &&>(src.Storage[i]);
+                    Storage[Size] = static_cast<T &&>(src.Storage[i]);
                 }
             } else {
                 for (UNumber i = 0; i < src.Size; i++) {
-                    this->Storage[this->Size] = src.Storage[i];
+                    Storage[Size] = src.Storage[i];
                 }
             }
 
-            this->Size += src.Size;
+            Size += src.Size;
 
             delete[] src.Storage;
             src.Storage = nullptr;
@@ -117,49 +117,53 @@ struct Array {
     }
 
     Array<T> &Add(const T &item) noexcept { // Copy
-        if (this->Size == this->Capacity) {
-            ExpandTo((this->Capacity + 1) * 4);
+        if (Size == Capacity) {
+            Resize((Capacity + 1) * 4);
         }
 
-        this->Storage[this->Size] = item;
-        ++this->Size;
+        Storage[Size] = item;
+        ++Size;
 
         return *this;
     }
 
     Array<T> &Add(T &&item) noexcept { // Move
-        if (this->Size == this->Capacity) {
-            ExpandTo((this->Capacity + 1) * 4);
+        if (Size == Capacity) {
+            Resize((Capacity + 1) * 4);
         }
 
-        this->Storage[this->Size] = item;
-        ++this->Size;
+        Storage[Size] = item;
+        ++Size;
 
         return *this;
     }
 
-    void SetCapacity(const UNumber size) noexcept {
-        if (this->Storage != nullptr) {
-            delete[] this->Storage;
-            this->Storage = nullptr;
+    void SetCapacity(const UNumber _size) noexcept {
+        if (Storage != nullptr) {
+            delete[] Storage;
+            Storage = nullptr;
         }
 
-        this->Size     = 0;
-        this->Capacity = size;
+        Size     = 0;
+        Capacity = _size;
 
-        if (size != 0) {
-            this->Storage = new T[size];
+        if (_size != 0) {
+            Storage = new T[_size];
         }
     }
 
-    void ExpandTo(const UNumber size) noexcept {
-        this->Capacity = size;
-        T *tmp         = this->Storage;
+    void Resize(const UNumber _size) noexcept {
+        Capacity = _size;
+        T *tmp   = Storage;
 
-        this->Storage = new T[this->Capacity];
+        Storage = new T[Capacity];
 
-        for (UNumber n = 0; n < this->Size; n++) {
-            this->Storage[n] = static_cast<T &&>(tmp[n]);
+        if (_size < Size) {
+            Size = _size;
+        }
+
+        for (UNumber n = 0; n < Size; n++) {
+            Storage[n] = static_cast<T &&>(tmp[n]);
         }
 
         if (tmp != nullptr) {
@@ -168,13 +172,13 @@ struct Array {
     }
 
     void Reset() noexcept {
-        if (this->Storage != nullptr) {
-            delete[] this->Storage;
-            this->Storage = nullptr;
+        if (Storage != nullptr) {
+            delete[] Storage;
+            Storage = nullptr;
         }
 
-        this->Capacity = 0;
-        this->Size     = 0;
+        Capacity = 0;
+        Size     = 0;
     }
 
     virtual ~Array() noexcept {

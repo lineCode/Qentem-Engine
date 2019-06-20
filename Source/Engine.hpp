@@ -72,28 +72,27 @@ struct Match {
 /////////////////////////////////
 static void _search(Array<Match> &items, const String &content, const Expressions &exprs, UNumber index, UNumber limit,
                     const UNumber max, const UNumber level) noexcept {
-    bool          LOCKED      = false; // To keep matching the end of the current expression.
-    bool          SPLIT       = false; // To keep tracking a split match.
-    bool          OVERDRIVE   = false; // To achieving nesting.
-    UNumber       counter     = 0;     // Index for counting.
-    UNumber       id          = 0;     // Expression's id.
-    UNumber       nest_offset = 0;     // Temp variable for nested matches.
-    const UNumber started     = index;
-    Expression *  ce          = exprs.Storage[id++];
-    UNumber       end_at; // Temp offset.
-    Match         _item;  // Temp match
+    bool        LOCKED      = false; // To keep matching the end of the current expression.
+    bool        SPLIT       = false; // To keep tracking a split match.
+    bool        OVERDRIVE   = false; // To achieving nesting.
+    UNumber     counter     = 0;     // Index for counting.
+    UNumber     nest_offset = 0;     // Temp variable for nested matches.
+    UNumber     id          = 0;     // Expression's id.
+    Expression *ce          = exprs.Storage[id++];
+    UNumber     end_at; // Temp offset.
+    Match       _item;  // Temp match
+
+    const UNumber started = index;
 
     for (;;) {
         if (content.Str[index] == ce->Keyword.Str[0]) {
             end_at = index;
-            ++counter;
-            if (ce->Keyword.Length != 1) {
-                while (counter < ce->Keyword.Length) {
-                    if (content.Str[++end_at] != ce->Keyword.Str[counter++]) {
-                        // Mismatch.
-                        counter = 0;
-                        break;
-                    }
+
+            while (++counter < ce->Keyword.Length) {
+                if (content.Str[++end_at] != ce->Keyword.Str[counter]) {
+                    // Mismatch.
+                    counter = 0;
+                    break;
                 }
             }
 
@@ -111,7 +110,7 @@ static void _search(Array<Match> &items, const String &content, const Expression
                             // TODO: limit the loop to the max size
                             while ((content.Str[++end_at] == L' ') || (content.Str[end_at] == L'\n')) {
                             }
-                            end_at--;
+                            --end_at;
                         }
                         _item.OLength = ((end_at + 1) - index);
                     }
@@ -179,7 +178,7 @@ static void _search(Array<Match> &items, const String &content, const Expression
                             }
 
                             if (items.Size == items.Capacity) {
-                                items.ExpandTo((items.Size + 1) * 4);
+                                items.Resize((items.Size + 1) * 4);
                             }
 
                             items.Storage[items.Size] = static_cast<Match &&>(_item);
@@ -194,7 +193,9 @@ static void _search(Array<Match> &items, const String &content, const Expression
 
                     LOCKED = false;
                     id     = exprs.Size; // Reset expressions!
-                } else {
+                }
+
+                if (ce->Connected != nullptr) { // This way is faster than using "else"
                     ce     = ce->Connected;
                     LOCKED = true; // Locks the engine from swiching expretions.
                 }
@@ -202,17 +203,17 @@ static void _search(Array<Match> &items, const String &content, const Expression
         }
 
         /////////////////////////////////
+        ++index;
+
         if (!LOCKED) {
             // Switching to the next character if all keywords have been checked.
             if (id == exprs.Size) {
                 id = 0;
-                ++index;
+            } else {
+                --index;
             }
-            // Seting the next keyword for searching.
+
             ce = exprs.Storage[id++];
-        } else {
-            // If there is an ongoing match, then move to the next char.
-            ++index;
         }
 
         /////////////////////////////////
@@ -265,9 +266,12 @@ static void _search(Array<Match> &items, const String &content, const Expression
     }
 
     /////////////////////////////////
-    if (((Flags::POP & ce->Flag) != 0) && (items.Size == 0)) {
-        _search(items, content, ce->NestExprs, started, limit, 0, 0);
-    } else if (SPLIT && (level == 0) && (items.Size != 0)) {
+
+    if (items.Size == 0) {
+        if ((Flags::POP & ce->Flag) != 0) {
+            _search(items, content, ce->NestExprs, started, limit, 0, 0);
+        }
+    } else if (SPLIT && (level == 0)) {
         Split(items, content, started, limit);
     }
 
@@ -284,7 +288,7 @@ static Array<Match> Search(const String &content, const Expressions &exprs, UNum
         length = (content.Length - index); // limit becomes the ending offset here.
     }
 
-    if ((content.Length == 0) || (exprs.Size == 0) || (index >= length)) {
+    if ((content.Length == 0) || (index >= length)) {
         return items;
     }
 
@@ -351,7 +355,7 @@ void Split(Array<Match> &items, const String &content, const UNumber index, cons
 
             if (((Flags::DROPEMPTY & _item.Expr->Flag) == 0) || (_item.Length != 0)) {
                 if (splitted.Size == splitted.Capacity) {
-                    splitted.ExpandTo((splitted.Size + 1) * 4);
+                    splitted.Resize((splitted.Size + 1) * 4);
                 }
 
                 tmp2 = &splitted.Storage[splitted.Size];
@@ -370,7 +374,7 @@ void Split(Array<Match> &items, const String &content, const UNumber index, cons
             offset = (tmp->Offset + tmp->Length);
         } else {
             if (nesties.Size == nesties.Capacity) {
-                nesties.ExpandTo((nesties.Size + 1) * 4);
+                nesties.Resize((nesties.Size + 1) * 4);
             }
 
             nesties.Storage[nesties.Size] = static_cast<Match &&>(*tmp);
@@ -399,7 +403,7 @@ void Split(Array<Match> &items, const String &content, const UNumber index, cons
 
     if (((Flags::DROPEMPTY & _item.Expr->Flag) == 0) || (_item.Length != 0)) {
         if (splitted.Size == splitted.Capacity) {
-            splitted.ExpandTo((items.Size + 1) * 4);
+            splitted.Resize((items.Size + 1) * 4);
         }
 
         tmp2 = &splitted.Storage[splitted.Size];
