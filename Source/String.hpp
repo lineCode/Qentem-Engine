@@ -55,21 +55,21 @@ struct String {
 
     String(const wchar_t str) noexcept { // one wchar
         if (str != L'\0') {
-            this->Length = this->Capacity = 1;
+            Length = Capacity = 1;
 
-            this->Str    = new wchar_t[2]; // 1 for /0
-            this->Str[0] = str;
-            this->Str[1] = L'\0';
+            Str    = new wchar_t[2]; // 1 for /0
+            Str[0] = str;
+            Str[1] = L'\0';
         }
     }
 
     String(const char str) noexcept { // one char
         if (str != '\0') {
-            this->Length = this->Capacity = 1;
+            Length = Capacity = 1;
 
-            this->Str    = new wchar_t[2]; // 1 for /0
-            this->Str[0] = static_cast<wchar_t>(str);
-            this->Str[1] = L'\0';
+            Str    = new wchar_t[2]; // 1 for /0
+            Str[0] = static_cast<wchar_t>(str);
+            Str[1] = L'\0';
         }
     }
 
@@ -80,11 +80,11 @@ struct String {
         };
 
         if (_length != 0) {
-            this->Length = this->Capacity = _length;
+            Length = Capacity = _length;
 
-            this->Str = new wchar_t[_length + 1]; // 1 for /0
+            Str = new wchar_t[_length + 1]; // 1 for /0
             for (UNumber j = 0; j <= _length; j++) {
-                this->Str[j] = str[j];
+                Str[j] = str[j];
             }
         }
     }
@@ -96,20 +96,20 @@ struct String {
         };
 
         if (_length != 0) {
-            this->Length = this->Capacity = _length;
+            Length = Capacity = _length;
 
-            this->Str = new wchar_t[_length + 1]; // 1 for /0
+            Str = new wchar_t[_length + 1]; // 1 for /0
             for (UNumber j = 0; j <= _length; j++) {
-                this->Str[j] = static_cast<wchar_t>(str[j]);
+                Str[j] = static_cast<wchar_t>(str[j]);
             }
         }
     }
 
     String(String &&src) noexcept { // Move
         if (src.Length != 0) {
-            this->Str      = src.Str;
-            this->Capacity = src.Capacity;
-            this->Length   = src.Length;
+            Str      = src.Str;
+            Capacity = src.Capacity;
+            Length   = src.Length;
 
             src.Capacity = 0;
             src.Length   = 0;
@@ -119,44 +119,38 @@ struct String {
 
     String(const String &src) noexcept { // Copy
         if (src.Length != 0) {
-            this->Length = this->Capacity = src.Length;
+            Length = Capacity = src.Length;
 
-            this->Str = new wchar_t[this->Capacity + 1]; // 1 for /0
-            for (UNumber j = 0; j <= this->Capacity; j++) {
-                this->Str[j] = src.Str[j];
+            Str = new wchar_t[Capacity + 1]; // 1 for /0
+            for (UNumber j = 0; j <= Capacity; j++) {
+                Str[j] = src.Str[j];
             }
         }
     }
 
     ~String() noexcept {
-        this->Capacity = 0;
-        this->Length   = 0;
-
-        if (this->Str != nullptr) {
-            delete[] this->Str;
-            this->Str = nullptr;
-        }
+        Reset();
     }
 
-    void Reset() noexcept { // Reset
-        if (this->Str != nullptr) {
-            delete[] this->Str;
-            this->Str = nullptr;
+    void Reset() noexcept {
+        if (Str != nullptr) {
+            delete[] Str;
+            Str = nullptr;
         }
 
-        this->Capacity = 0;
-        this->Length   = 0;
+        Capacity = 0;
+        Length   = 0;
     }
 
     String &operator=(const wchar_t src) noexcept { // Copy
         if (src != L'\0') {
-            if (this->Capacity == 0) {
-                this->ExpandTo(1);
+            if (Capacity == 0) {
+                Resize(1);
             }
 
-            this->Length = 1;
-            this->Str[0] = src;
-            this->Str[1] = L'\0';
+            Length = 1;
+            Str[0] = src;
+            Str[1] = L'\0';
         };
 
         return *this;
@@ -177,13 +171,13 @@ struct String {
 
     String &operator=(String &&src) noexcept { // Move
         if (this != &src) {
-            if (this->Str != nullptr) {
-                delete[] this->Str;
+            if (Str != nullptr) {
+                delete[] Str;
             }
 
-            this->Str      = src.Str;
-            this->Capacity = src.Capacity;
-            this->Length   = src.Length;
+            Str      = src.Str;
+            Capacity = src.Capacity;
+            Length   = src.Length;
 
             src.Capacity = 0;
             src.Length   = 0;
@@ -195,22 +189,22 @@ struct String {
 
     String &operator=(const String &src) noexcept { // Copy
         if (this != &src) {
-            if (this->Capacity < src.Length) {
-                if (this->Str != nullptr) {
-                    delete[] this->Str;
-                    this->Str = nullptr;
+            if (Capacity < src.Length) {
+                if (Str != nullptr) {
+                    delete[] Str;
                 }
 
-                this->Length = this->Capacity = src.Length;
+                Str = new wchar_t[src.Length + 1]; // 1 for /0
 
-                this->Str = new wchar_t[this->Length + 1]; // 1 for /0
+                Length   = src.Length;
+                Capacity = src.Length;
 
-                for (UNumber j = 0; j <= this->Length; j++) { // <= to include \0
-                    this->Str[j] = src.Str[j];
+                for (UNumber j = 0; j <= src.Length; j++) { // <= to include \0
+                    Str[j] = src.Str[j];
                 }
             } else {
-                this->Length = 0;
-                Copy(*this, src.Str, this->Length, src.Length);
+                Length = 0;
+                Copy(*this, src.Str, Length, src.Length);
             }
         }
 
@@ -218,12 +212,12 @@ struct String {
     }
 
     String &operator+=(const wchar_t src) noexcept { // Appand a string
-        if (this->Length == this->Capacity) {
-            this->ExpandTo((this->Length + 1) * 2);
+        if (Length == Capacity) {
+            Resize((Length + 1) * 3);
         }
 
-        this->Str[this->Length++] = src;
-        this->Str[this->Length]   = L'\0';
+        Str[Length++] = src;
+        Str[Length]   = L'\0';
 
         return *this;
     }
@@ -235,7 +229,7 @@ struct String {
         };
 
         if (_length != 0) {
-            Copy(*this, src, 0, _length);
+            Copy(*this, src, this->Length, _length);
         }
 
         return *this;
@@ -243,7 +237,7 @@ struct String {
 
     String &operator+=(String &&src) noexcept { // Move
         if (src.Length != 0) {
-            Copy(*this, src.Str, this->Length, src.Length);
+            Copy(*this, src.Str, Length, src.Length);
 
             delete[] src.Str;
             src.Str = nullptr;
@@ -257,7 +251,7 @@ struct String {
 
     String &operator+=(const String &src) noexcept { // Appand a string
         if (src.Length != 0) {
-            Copy(*this, src.Str, this->Length, src.Length);
+            Copy(*this, src.Str, Length, src.Length);
         }
 
         return *this;
@@ -265,10 +259,10 @@ struct String {
 
     String operator+(const wchar_t src) const noexcept {
         String ns;
-        ns.SetLength(this->Length + 1);
+        ns.SetLength(Length + 1);
 
-        if (this->Length != 0) {
-            Copy(ns, this->Str, 0, this->Length);
+        if (Length != 0) {
+            Copy(ns, Str, 0, Length);
         }
 
         ns.Str[ns.Length++] = src;
@@ -286,10 +280,10 @@ struct String {
         };
 
         if (_length != 0) {
-            ns.SetLength(this->Length + _length);
+            ns.SetLength(Length + _length);
 
-            if (this->Length != 0) {
-                Copy(ns, this->Str, 0, this->Length);
+            if (Length != 0) {
+                Copy(ns, Str, 0, Length);
             }
 
             Copy(ns, src, ns.Length, _length);
@@ -301,10 +295,10 @@ struct String {
     // Appand a string by moving another into it
     String operator+(String &&src) const noexcept {
         String ns;
-        ns.SetLength(this->Length + src.Length);
+        ns.SetLength(Length + src.Length);
 
-        if (this->Length != 0) {
-            Copy(ns, this->Str, 0, this->Length);
+        if (Length != 0) {
+            Copy(ns, Str, 0, Length);
         }
 
         if (src.Length != 0) {
@@ -324,10 +318,10 @@ struct String {
 
     String operator+(const String &src) const noexcept { // Appand a string and return a new one
         String ns;
-        ns.SetLength(this->Length + src.Length);
+        ns.SetLength(Length + src.Length);
 
-        if (this->Length != 0) {
-            Copy(ns, this->Str, 0, this->Length);
+        if (Length != 0) {
+            Copy(ns, Str, 0, Length);
         }
 
         if (src.Length != 0) {
@@ -338,58 +332,63 @@ struct String {
     }
 
     bool operator==(const String &src) const noexcept { // Compare
-        if (this->Length != src.Length) {
+        if (Length != src.Length) {
             return false;
         }
 
-        if (this->Length == 0) {
+        if (Length == 0) {
             return true;
         }
 
         UNumber i = 0;
-        while ((i < this->Length) && (this->Str[i] == src.Str[i])) {
+        while ((i < Length) && (Str[i] == src.Str[i])) {
             ++i;
         }
 
-        return (i == this->Length);
+        return (i == Length);
     }
 
     bool operator!=(const String &src) const noexcept { // Compare
-        if ((this->Length != src.Length) || (this->Length == 0)) {
+        if ((Length != src.Length) || (Length == 0)) {
             return true;
         }
 
         UNumber i = 0;
-        while ((i < this->Length) && (this->Str[i] == src.Str[i])) {
+        while ((i < Length) && (Str[i] == src.Str[i])) {
             ++i;
         }
 
-        return (i != this->Length);
+        return (i != Length);
     }
 
     void SetLength(const UNumber size) noexcept {
-        if (this->Str != nullptr) {
-            delete[] this->Str;
+        Length = 0;
+
+        if (Str != nullptr) {
+            delete[] Str;
         }
 
-        this->Str      = new wchar_t[(size + 1)];
-        this->Str[0]   = L'\0';
-        this->Capacity = size;
-        this->Length   = 0;
+        Str      = new wchar_t[(size + 1)]; // always add 1 for \0
+        Str[0]   = L'\0';
+        Capacity = size;
     }
 
-    void ExpandTo(const UNumber size) noexcept {
-        if (size > this->Capacity) {
-            this->Capacity = size;
-            wchar_t *tmp   = this->Str;
+    void Resize(const UNumber size) noexcept {
+        if (size > Capacity) {
+            Capacity     = size;
+            wchar_t *tmp = Str;
 
-            this->Str = new wchar_t[this->Capacity + 1];
+            Str = new wchar_t[size + 1];
 
-            for (UNumber n = 0; n < this->Length; n++) {
-                this->Str[n] = tmp[n];
+            if (size < Length) {
+                Length = size;
             }
 
-            this->Str[this->Length] = L'\0';
+            for (UNumber n = 0; n < Length; n++) {
+                Str[n] = tmp[n];
+            }
+
+            Str[Length] = L'\0';
 
             if (tmp != nullptr) {
                 delete[] tmp;
@@ -412,23 +411,20 @@ struct String {
     }
 
     static UNumber Hash(const String &src, UNumber start, const UNumber end_offset) noexcept {
-        UNumber i    = 0;
         UNumber j    = 1;
         UNumber hash = 0;
         bool    fl   = false;
 
-        while (start < end_offset) {
+        for (UNumber i = 0; start < end_offset;) {
             if (fl) {
-                j = j * (i + 1);
+                j *= (++i);
             } else {
-                j = (j + 1);
+                ++j;
             }
 
             fl = !fl;
 
-            hash += (((static_cast<UNumber>(src.Str[start]))) * j);
-            ++i;
-            ++start;
+            hash += (((static_cast<UNumber>(src.Str[start++]))) * j++);
         }
 
         return hash;
@@ -440,14 +436,14 @@ struct String {
             return;
         }
 
-        end -= 1;
+        --end;
 
         while ((str.Str[start] == L' ') || (str.Str[start] == L'\n')) {
-            start += 1;
+            ++start;
         }
 
         while ((end > start) && ((str.Str[end] == L' ') || (str.Str[end] == L'\n'))) {
-            end -= 1;
+            --end;
         }
     }
 
@@ -479,7 +475,7 @@ struct String {
 
         while (number > 0) {
             if (tnm.Length == tnm.Capacity) {
-                tnm.ExpandTo((tnm.Length + 1) * 2);
+                tnm.Resize((tnm.Length + 1) * 3);
             }
 
             tnm.Str[tnm.Length] = wchar_t((number % 10) + 48);
@@ -490,9 +486,9 @@ struct String {
 
         if (tnm.Length == tnm.Capacity) {
             if (tnm.Length < min) {
-                tnm.ExpandTo(tnm.Length + 1 + (min - tnm.Length));
+                tnm.Resize(tnm.Length + 1 + (min - tnm.Length));
             } else {
-                tnm.ExpandTo(tnm.Length + 1);
+                tnm.Resize(tnm.Length + 1);
             }
         }
 
@@ -507,9 +503,9 @@ struct String {
         return tnm;
     }
 
-    // TODO: Fix FromNumber(0, 1, 0, 3); showing 0.000 and not 0
     static String FromNumber(double number, const UNumber min = 1, UNumber r_min = 0, UNumber r_max = 0) noexcept {
         String tnm;
+        String tnm2;
 
         const bool negative = (number < 0);
         if (negative) {
@@ -517,50 +513,35 @@ struct String {
         }
 
         if (number != 0) {
-            UNumber num  = static_cast<UNumber>(number);
-            UNumber num2 = num;
-            number -= num;
             UNumber counter = 0;
+            UNumber num     = static_cast<UNumber>(number);
+            UNumber num2    = num;
 
             while (num != 0) {
                 if (tnm.Length == tnm.Capacity) {
-                    tnm.ExpandTo((tnm.Length + 1) * 2);
+                    tnm.Resize((tnm.Length + 1) * 3);
                 }
 
                 tnm.Str[tnm.Length] = wchar_t((num % 10) + 48);
                 ++tnm.Length;
 
                 num /= 10;
-                counter++;
+                ++counter;
             }
 
-            while (tnm.Length < min) {
-                tnm += L'0';
-            }
-
-            if (negative) {
-                tnm += L'-';
-            }
-
-            if (tnm.Length == 0) {
-                tnm = L"";
-            }
-
+            number -= static_cast<double>(num2);
             if (number != 0) {
-                String tnm2;
 
                 number += 1.1; // Forcing the value to round up to it's original number.
                 // The 0.1 is to prevent any leading zeros from being on the left
                 number *= 1e15; // Moving everyting to the left.
                 number -= 1e15; // Taking 1 back.
 
-                num = static_cast<UNumber>(number);
-                number -= num;
-
-                // accuracy is impacted when bigger number in the left side
+                num         = static_cast<UNumber>(number);
                 UNumber len = 14 - ((counter > 1) ? (counter - 1) : 0);
-
                 UNumber fnm = (num % 10);
+
+                number -= static_cast<double>(num);
                 if ((number >= 0.5) && (fnm >= 5)) {
                     num += (10 - fnm); // Yep
                 }
@@ -603,7 +584,7 @@ struct String {
                     }
 
                     if (num != 10) { // Means .00000000000
-                        tnm2.SetLength(len + 2);
+                        tnm2.SetLength(r_min + len + 2);
                         for (UNumber w = 0; w < len; w++) {
                             tnm2.Str[tnm2.Length] = wchar_t((num % 10) + 48);
                             ++tnm2.Length;
@@ -614,78 +595,43 @@ struct String {
                             }
                         }
 
-                        if (num != 11) {                            // 1.000000000
+                        if (num != 11) {
                             tnm2 += wchar_t(((num - 1) % 10) + 48); // (num - 1) taking 0.1 back.
-                            tnm2 += L'.';
-                            tnm = tnm2 + tnm;
                         } else {
-                            tnm2.Reset();
-
-                            tnm.Length = 0;
-
-                            if (r_min != 0) {
-                                tnm += L'.';
-                            }
+                            tnm2.Length = 0;
+                            tnm2.Str[0] = L'\0';
 
                             ++num2;
+                            tnm.Length = 0;
                             while (num2 != 0) {
                                 tnm += wchar_t((num2 % 10) + 48);
                                 num2 /= 10;
                             }
                         }
-                    } else if (r_min > 0) {
-                        tnm += L'.';
-                        Revers(tnm);
                     }
                 }
-
-                Revers(tnm);
-
-                if (r_min > tnm2.Length) {
-                    if (tnm2.Length != 0) {
-                        ++r_min -= tnm2.Length;
-                    }
-
-                    tnm.ExpandTo(tnm.Length + r_min);
-                    while (r_min > 0) {
-                        tnm += L'0';
-                        --r_min;
-                    }
-                }
-            } else if (r_min != 0) {
-                Revers(tnm);
-                tnm.ExpandTo(tnm.Length + r_min + 1);
-
-                tnm += L'.';
-                while (r_min > 0) {
-                    tnm += L'0';
-                    --r_min;
-                }
-            } else {
-                Revers(tnm);
             }
-
-            return tnm;
         }
-
-        tnm.SetLength(min + 1 + r_min);
 
         while (tnm.Length < min) {
             tnm += L'0';
         }
 
-        if (r_min != 0) {
-            tnm += L'.';
-            while (r_min > 0) {
-                tnm += L'0';
-                --r_min;
-            }
+        if (negative) {
+            tnm += L'-';
         }
 
-        if (tnm.Length == 0) {
-            tnm = L'0';
+        while (tnm2.Length < r_min) {
+            tnm2 += L'0';
         }
 
+        if (tnm2.Length != 0) {
+            tnm2 += L".";
+            tnm2 += tnm;
+            tnm = static_cast<String &&>(tnm2);
+        }
+
+        Revers(tnm);
         return tnm;
     }
 

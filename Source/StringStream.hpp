@@ -17,8 +17,9 @@
 
 namespace Qentem {
 
+enum SType { Bit = 0, PBit, Bits };
+
 struct StringBit {
-    enum SType { Bit = 0, PBit, Bits };
     SType   Type;
     UNumber Index;
 };
@@ -40,11 +41,11 @@ class StringStream {
             Length += col.Length;
 
             if (collections.Size == collections.Capacity) {
-                collections.ExpandTo((collections.Size + 1) * 4);
+                collections.Resize((collections.Size + 1) * 4);
             }
 
             collections.Storage[collections.Size] = col;
-            bits.Add({StringBit::SType::Bits, collections.Size});
+            bits.Add({SType::Bits, collections.Size});
             ++collections.Size;
         }
     }
@@ -54,11 +55,11 @@ class StringStream {
             Length += src.Length;
 
             if (_strings.Size == _strings.Capacity) {
-                _strings.ExpandTo((_strings.Size + 1) * 4);
+                _strings.Resize((_strings.Size + 1) * 4);
             }
 
             _strings.Storage[_strings.Size] = src;
-            bits.Add({StringBit::SType::Bit, _strings.Size});
+            bits.Add({SType::Bit, _strings.Size});
             ++_strings.Size;
         }
     }
@@ -68,11 +69,11 @@ class StringStream {
             Length += src.Length;
 
             if (_strings.Size == _strings.Capacity) {
-                _strings.ExpandTo((_strings.Size + 1) * 4);
+                _strings.Resize((_strings.Size + 1) * 4);
             }
 
             _strings.Storage[_strings.Size] = src;
-            bits.Add({StringBit::SType::Bit, _strings.Size});
+            bits.Add({SType::Bit, _strings.Size});
             ++_strings.Size;
         }
     }
@@ -82,11 +83,11 @@ class StringStream {
             Length += src->Length;
 
             if (p_strings.Size == p_strings.Capacity) {
-                p_strings.ExpandTo((p_strings.Size + 1) * 4);
+                p_strings.Resize((p_strings.Size + 1) * 4);
             }
 
             p_strings.Storage[p_strings.Size] = src;
-            bits.Add({StringBit::SType::PBit, p_strings.Size});
+            bits.Add({SType::PBit, p_strings.Size});
             ++p_strings.Size;
         }
     }
@@ -97,11 +98,11 @@ class StringStream {
 
         for (UNumber i = 0; i < _ss.bits.Size; i++) {
             switch (_ss.bits.Storage[i].Type) {
-                case StringBit::SType::Bits: {
+                case SType::Bits: {
                     _pack(_ss.collections.Storage[_ss.bits.Storage[i].Index], buk);
                     break;
                 }
-                case StringBit::SType::PBit: {
+                case SType::PBit: {
                     sstr = _ss.p_strings.Storage[_ss.bits.Storage[i].Index];
                     for (j = 0; j < sstr->Length; j++) {
                         buk.Str[buk.Length++] = sstr->Str[j];
@@ -120,24 +121,20 @@ class StringStream {
     }
 
     String Eject() noexcept {
-        if (Length == 0) {
-            return L"";
+        String tmp;
+        tmp.SetLength(Length); // Will always add 1 for \0
+
+        if (Length != 0) {
+            _pack(*this, tmp);
+            // To allow the reuse of this object
+            Length           = 0;
+            _strings.Size    = 0;
+            p_strings.Size   = 0;
+            collections.Size = 0;
+            bits.Size        = 0;
         }
 
-        String tmp;
-        tmp.SetLength(Length);
-
-        _pack(*this, tmp);
-
         tmp.Str[tmp.Length] = L'\0'; // Null trimmming
-
-        _strings.Reset();
-        p_strings.Reset();
-        collections.Reset();
-        bits.Reset();
-
-        Length = 0;
-
         return tmp;
     }
 };

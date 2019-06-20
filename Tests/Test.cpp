@@ -25,10 +25,11 @@ static bool run_test(const String &name, const Array<TestBit> &bits, const bool 
                      const bool break_on_err) noexcept;
 
 int main() {
-    bool pass = false;
+    bool          pass  = false;
+    const UNumber times = 1;
 
     Array<TestBit> bits = Array<TestBit>();
-    for (UNumber i = 0; i < 1; i++) {
+    for (UNumber i = 0; i < times; i++) {
         // Core Engine Tests
         bits = Qentem::Test::GetEngineBits();
         pass = run_test(L"Engine", bits, false, true);
@@ -65,7 +66,7 @@ int main() {
     }
 
     if (pass) {
-        std::wcout << L"\n ALL GOOD!" << '\n';
+        std::wcout << L"\n ALL GOOD!\n\n";
     }
 
     // std::getwchar();
@@ -101,7 +102,7 @@ static bool run_test(const String &name, const Array<TestBit> &bits, const bool 
     }
 
     for (UNumber i = start_at; i < bits.Size; i++) {
-        count += 1;
+        ++count;
 
         if (bits.Storage[i].Expected.Size != bits.Storage[i].Content.Size) {
 
@@ -126,8 +127,8 @@ static bool run_test(const String &name, const Array<TestBit> &bits, const bool 
             total_parse += parse_ticks;
 
             pass = (rendered == bits.Storage[i].Expected.Storage[t]);
-            counter += 1;
-            total += 1;
+            ++counter;
+            ++total;
 
             if (pass) {
                 ss += L' ';
@@ -150,7 +151,7 @@ static bool run_test(const String &name, const Array<TestBit> &bits, const bool 
             ss += String::FromNumber((static_cast<double>(parse_ticks) / CLOCKS_PER_SEC), 2, 3, 3) + L")\n";
 
             if (!pass) {
-                errors += 1;
+                ++errors;
 
                 ss += L" ----------- Start debug ";
                 ss += String::FromNumber(count) + L'-';
