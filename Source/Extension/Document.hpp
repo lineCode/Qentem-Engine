@@ -310,7 +310,7 @@ bool Document::GetString(String &value, const String &key, UNumber offset, UNumb
             }
 
             if (_entry->Type == VType::NumberT) {
-                value = String::FromNumber(storage->Numbers.Storage[_entry->ID]);
+                value = String::FromNumber(storage->Numbers.Storage[_entry->ID], 1, 0, 3);
                 return true;
             }
         } else {
@@ -323,7 +323,7 @@ bool Document::GetString(String &value, const String &key, UNumber offset, UNumb
             }
 
             if (storage->Numbers.Size > id) {
-                value = String::FromNumber(storage->Numbers.Storage[id]);
+                value = String::FromNumber(storage->Numbers.Storage[id], 1, 0, 3);
                 return true;
             }
         }

@@ -11,7 +11,7 @@
             "args": [
                 "-g",
                 // "-Os",
-                "-lstdc++",
+                "-stdlib=libc++",
                 "-std=c++11",
                 "-Wall",
                 "-Wunused",
@@ -46,17 +46,17 @@
             "type": "shell",
             "command": "em++",
             "args": [
-                "-Os",
+                // "-Os",
                 "-Wall",
                 "-std=c++11",
                 "-ISource",
-                "Tests/QLib.cpp",
+                "Example/QLib.cpp",
                 "-s",
                 "WASM=1",
                 "-s",
                 "EXTRA_EXPORTED_RUNTIME_METHODS=['ccall', 'cwrap']",
                 "-o",
-                "Example/WebApp/QLib.js"
+                "Example/JQen/JQen.js"
             ],
             "group": {
                 "kind": "build",
@@ -81,7 +81,7 @@
                 "-shared",
                 "-fPIC",
                 "-ISource",
-                "Tests/QLib.cpp",
+                "Example/QLib.cpp",
                 "-o",
                 "Build/QLib.so"
             ],

@@ -43,13 +43,11 @@ static Array<String> Extract(const String &content, const Array<Match> &items) n
     Array<String> matches = Array<String>();
     matches.SetCapacity(items.Size);
 
-    String match;
     for (UNumber i = 0; i < items.Size; i++) {
-        match = String::Part(content, items.Storage[i].Offset, items.Storage[i].Length) + L" -> O:" +
-                String::FromNumber(items.Storage[i].Offset) + L" L:" + String::FromNumber(items.Storage[i].Length) +
-                L" OL:" + String::FromNumber(items.Storage[i].OLength) + L" CL:" +
-                String::FromNumber(items.Storage[i].CLength);
-        matches.Add(match);
+        matches.Add(String::Part(content, items.Storage[i].Offset, items.Storage[i].Length) + L" -> O:" +
+                    String::FromNumber(items.Storage[i].Offset) + L" L:" + String::FromNumber(items.Storage[i].Length) +
+                    L" OL:" + String::FromNumber(items.Storage[i].OLength) + L" CL:" +
+                    String::FromNumber(items.Storage[i].CLength));
     }
 
     return matches;
