@@ -142,6 +142,14 @@ struct String {
         Length   = 0;
     }
 
+    inline wchar_t *Eject() noexcept {
+        wchar_t *_str = Str;
+        Str           = nullptr;
+        Capacity      = 0;
+        Length        = 0;
+        return _str;
+    }
+
     String &operator=(const wchar_t src) noexcept { // Copy
         if (src != L'\0') {
             if (Capacity == 0) {

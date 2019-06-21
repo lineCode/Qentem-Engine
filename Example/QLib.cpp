@@ -13,10 +13,7 @@ const wchar_t *renderTemplate_w(const wchar_t *temp, const wchar_t *json, bool c
     String &&  rendered = Template::Render(temp, &data);
     data.Reset();
 
-    wchar_t *_str = rendered.Str;
-    rendered.Str  = nullptr;
-
-    return _str;
+    return rendered.Eject();
 }
 }
 
