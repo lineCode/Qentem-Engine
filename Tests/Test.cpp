@@ -21,48 +21,61 @@ using Qentem::Engine::Match;
 using Qentem::Test::TestBit;
 
 static bool TestNumbersConv() noexcept;
-static bool run_test(const String &name, const Array<TestBit> &bits, const bool Dump_express,
-                     const bool break_on_err) noexcept;
+static bool run_tests(const String &name, const Array<TestBit> &bits, const bool Dump_express,
+                      const bool break_on_err) noexcept;
 
 int main() {
     bool          pass  = false;
     const UNumber times = 1;
 
+    const bool TestEngine   = true;
+    const bool NumbersConv  = true;
+    const bool TestALU      = true;
+    const bool TestTemplate = true;
+
     Array<TestBit> bits = Array<TestBit>();
     for (UNumber i = 0; i < times; i++) {
-        // Core Engine Tests
-        bits = Qentem::Test::GetEngineBits();
-        pass = run_test(L"Engine", bits, false, true);
-        Qentem::Test::CleanBits(bits); // TODO: Implement a destructor
+        if (TestEngine) {
+            // Core Engine Tests
+            bits = Qentem::Test::GetEngineBits();
+            pass = run_tests(L"Engine", bits, false, true);
+            Qentem::Test::CleanBits(bits); // TODO: Implement a destructor
 
-        if (!pass) {
-            break;
+            if (!pass) {
+                break;
+            }
+
+            std::wcout << "\n///////////////////////////////////////////////\n";
         }
 
-        std::wcout << "\n///////////////////////////////////////////////\n";
+        if (NumbersConv) {
+            // Number Conversion Tests
+            pass = TestNumbersConv();
 
-        // Number Conversion Tests
-        pass = TestNumbersConv();
+            if (!pass) {
+                break;
+            }
 
-        if (!pass) {
-            break;
+            std::wcout << "\n///////////////////////////////////////////////\n";
         }
 
-        std::wcout << "\n///////////////////////////////////////////////\n";
+        if (TestALU) {
+            // Arithmetic & logic Evaluation Tests
+            bits = Qentem::Test::GetALUBits();
+            pass = run_tests(L"Arithmetic & Logic Evaluation", bits, false, true);
 
-        // Arithmetic & logic Evaluation Tests
-        bits = Qentem::Test::GetALUBits();
-        pass = run_test(L"Arithmetic & Logic Evaluation", bits, false, true);
+            if (!pass) {
+                break;
+            }
 
-        if (!pass) {
-            break;
+            std::wcout << "\n///////////////////////////////////////////////\n";
         }
 
-        std::wcout << "\n///////////////////////////////////////////////\n";
-
-        // Template Tests
-        bits = Qentem::Test::GetTemplateBits();
-        pass = run_test(L"Template", bits, false, true);
+        if (TestTemplate) {
+            // Template Tests
+            bits = Qentem::Test::GetTemplateBits();
+            pass = run_tests(L"Template", bits, false, true);
+        }
     }
 
     if (pass) {
@@ -74,8 +87,8 @@ int main() {
     return 10;
 }
 
-static bool run_test(const String &name, const Array<TestBit> &bits, const bool Dump_express,
-                     const bool break_on_err) noexcept {
+static bool run_tests(const String &name, const Array<TestBit> &bits, const bool Dump_express,
+                      const bool break_on_err) noexcept {
 
     const UNumber times        = 1; // 10000 To slow it down!
     const UNumber start_at     = 0;
@@ -96,9 +109,15 @@ static bool run_test(const String &name, const Array<TestBit> &bits, const bool 
     ss += name + L" Tests:\n";
 
     if (start_at != 0) {
-        ss += L" Starting at ";
+        ss += L"\n Starting at ";
         ss += String::FromNumber(start_at, 2);
-        ss += L'\n';
+        ss += L"\n\n";
+    }
+
+    if (counter != 0) {
+        ss += L"\n Counter at ";
+        ss += String::FromNumber(counter, 2);
+        ss += L"\n\n";
     }
 
     for (UNumber i = start_at; i < bits.Size; i++) {
@@ -133,7 +152,7 @@ static bool run_test(const String &name, const Array<TestBit> &bits, const bool 
             if (pass) {
                 ss += L' ';
             } else {
-                ss += L'\n';
+                ss += L"\n ";
             }
 
             ss += String::FromNumber(count, 2) + L'-';

@@ -192,6 +192,197 @@ static String DumpMatches(const String &content, const Array<Match> &matches, co
     return _array + offset + L"]\n";
 }
 
+static Array<TestBit> GetALUBits() noexcept {
+    Array<TestBit> bits = Array<TestBit>();
+    TestBit        bit;
+
+    ///////////////////////////////////////////
+    bit      = TestBit();
+    bit.Line = __LINE__;
+
+    bit.Content.Add(L"+1").Add(L" +1 ").Add(L"1+").Add(L" 1+ ").Add(L"1+ ").Add(L" 1+").Add(L"1+1").Add(L" 1 + 1 ");
+    bit.Expected.Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"2").Add(L"2");
+
+    bit.Content.Add(L" -1 ").Add(L"-1").Add(L"1-").Add(L" 1- ").Add(L"1- ").Add(L" 1-").Add(L"1-1").Add(L" 1 - 1 ");
+    bit.Expected.Add(L"-1").Add(L"-1").Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"0").Add(L"0");
+
+    bit.Content.Add(L"1-").Add(L"--1").Add(L"1--").Add(L"1--1").Add(L"1---1");
+    bit.Expected.Add(L"1").Add(L"1").Add(L"1").Add(L"2").Add(L"0");
+
+    bit.Content.Add(L"-1--1");
+    bit.Expected.Add(L"0");
+
+    bit.Content.Add(L"+1+1+2+11").Add(L"1+1+2+11+").Add(L"1-1-2-11").Add(L"-1-1-2-11");
+    bit.Expected.Add(L"15").Add(L"15").Add(L"-13").Add(L"-15");
+
+    bit.Content.Add(L"+1-2+3").Add(L"+1+2-3").Add(L"-1-2+3-").Add(L"-1+2-3-");
+    bit.Expected.Add(L"2").Add(L"0").Add(L"0").Add(L"-2");
+
+    ////
+    bit.Content.Add(L"*1").Add(L" 1*1 ").Add(L"3*5").Add(L" 5*3**1*2 ").Add(L" 5*3*1*2 ");
+    bit.Expected.Add(L"0").Add(L"1").Add(L"15").Add(L"0").Add(L"30");
+
+    bit.Content.Add(L"/1").Add(L" 1/1 ").Add(L"100/5").Add(L" 5/3//1/2 ").Add(L" 32/2/2/2/2/2 ");
+    bit.Expected.Add(L"0").Add(L"1").Add(L"20").Add(L"0").Add(L"1");
+
+    ////
+    bit.Content.Add(L"2*1+1*2").Add(L"1+1*2");
+    bit.Expected.Add(L"4").Add(L"3");
+
+    ////
+    bit.Content.Add(L"4^0").Add(L"4^2").Add(L"8^2").Add(L"8^1");
+    bit.Expected.Add(L"1").Add(L"16").Add(L"64").Add(L"8");
+
+    ////
+    bit.Content.Add(L"2=2").Add(L"2==2").Add(L"1=2").Add(L"2==1").Add(L"2==1+1").Add(L"2/2==1");
+    bit.Expected.Add(L"1").Add(L"1").Add(L"0").Add(L"0").Add(L"1").Add(L"1");
+
+    bit.Content.Add(L"2!=2").Add(L"1!=2").Add(L"1<=2").Add(L"2>=2").Add(L"2<=2").Add(L"2<=1").Add(L"1>=2").Add(L"2>=1");
+    bit.Expected.Add(L"0").Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"0").Add(L"0").Add(L"1");
+
+    bit.Content.Add(L"3 + 9 - 1 - -1 + 2 == 14");
+    bit.Expected.Add(L"1");
+    ////
+    bit.Exprs = Qentem::ALU::MathExprs;
+    bits.Add(bit);
+    ///////////////////////////////////////////
+    bit      = TestBit();
+    bit.Line = __LINE__;
+
+    bit.Content.Add(L"(2*(1+1))").Add(L"((1+10)+(5*5))");
+    bit.Expected.Add(L"4").Add(L"36");
+
+    bit.Content.Add(
+        L"(((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) + (1) + 2 = 14)");
+    bit.Expected.Add(L"1");
+
+    bit.Exprs = Qentem::ALU::ParensExprs;
+    bits.Add(bit);
+    ///////////////////////////////////////////
+    return bits;
+}
+
+static Array<TestBit> GetTemplateBits() noexcept {
+    Array<TestBit> bits = Array<TestBit>();
+    TestBit        bit;
+
+    static Qentem::Document data = Qentem::Document();
+
+    data[L"r1"] = L"Familly";
+    data[L"e1"] = L"";
+    data[L"e2"] = L" ";
+
+    data[L"lvl2"] = Qentem::Document();
+
+    data[L"lvl2"][L"r1"] = L"l2";
+    data[L"lvl2"][L"e1"] = L"";
+    data[L"lvl2"][L"e2"] = L" ";
+
+    data[L"lvl2"][L"numbers"] = Array<double>().Add(1).Add(2);
+    data[L"lvl2"][L"strings"] = Array<String>().Add(L"N1").Add(L"N2").Add(L"N3");
+
+    Template::Data = &data;
+
+    ///////////////////////////////////////////
+    bit      = TestBit();
+    bit.Line = __LINE__;
+
+    bit.Content.Add(L"{v:r1}  ").Add(L" {v:r2}  ").Add(L"{v:e1} ").Add(L"{v:e2}");
+    bit.Expected.Add(L"Familly  ").Add(L" r2  ").Add(L" ").Add(L" ");
+
+    bit.Content.Add(L"{v:lvl2[r1]}").Add(L"{v:lvl2[r2]}").Add(L"{v:lvl2[e1]}").Add(L" {v:lvl2[e2]} ");
+    bit.Expected.Add(L"l2").Add(L"lvl2[r2]").Add(L"").Add(L"   ");
+
+    bit.Content.Add(L"{v:lvl2[numbers][0]}").Add(L"{v:lvl2[numbers][1]}").Add(L"{v:lvl2[numbers][3]}");
+    bit.Expected.Add(L"1").Add(L"2").Add(L"lvl2[numbers][3]");
+
+    bit.Content.Add(L"{v:lvl2[strings][0]}").Add(L"{v:lvl2[strings][1]}").Add(L"{v:lvl2[strings][3]}");
+    bit.Expected.Add(L"N1").Add(L"N2").Add(L"lvl2[strings][3]");
+
+    ////
+
+    bit.Content.Add(L"{iif case=\"10\" true =\"{iif case =\"1\" true=\"5\"}\"}");
+    bit.Expected.Add(L"5");
+
+    bit.Content.Add(L"{iif case=\"1\" false=\"10\"}");
+    bit.Expected.Add(L"");
+
+    bit.Content.Add(L"{iif case = \"1\" true = \"1\" false = \"0\"}");
+    bit.Expected.Add(L"1");
+
+    bit.Content.Add(L"{iif case=\"0\" true=\"1\" false=\"0\"}");
+    bit.Expected.Add(L"0");
+
+    bit.Content.Add(
+        L"{iif case=\"((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) + (1) + 2\" true =\"14\"}");
+    bit.Expected.Add(L"14");
+
+    bit.Content.Add(L"{iif case=\"0\" true=\"1\"}");
+    bit.Expected.Add(L"");
+
+    bit.Content.Add(L"{iif case=\"{v:lvl2[numbers][1]} = 2\" true=\"it's true! \" false =\"it's false\"}");
+    bit.Expected.Add(L"it's true! ");
+
+    bit.Content.Add(L"{iif case=\"0\" true=\"{iif case=\"1\" true=\"5\"}\"}");
+    bit.Expected.Add(L"");
+
+    bit.Content.Add(L"{iif case=\"0\" false=\"{iif case=\"1\" true=\"35.5\"}\"}");
+    bit.Expected.Add(L"35.5");
+
+    ////
+
+    bit.Content.Add(L"<loop set =\"lvl2[numbers]\" var =\"id\">l-[id]): {v:lvl2[numbers][id]}\n </loop>");
+    bit.Expected.Add(L"l-[0]): 1\n l-[1]): 2\n ");
+
+    bit.Content.Add(
+        L"<loop set=\"lvl2[numbers]\" var=\"id\"><loop set =\"lvl2[numbers]\" var =\"i2\">l-[id]-[i2]):{v:lvl2[numbers][i2]}\n </loop></loop>");
+    bit.Expected.Add(L"l-[0]-[0]):1\n l-[0]-[1]):2\n l-[1]-[0]):1\n l-[1]-[1]):2\n ");
+
+    bit.Content.Add("<loop set=\"lvl2[strings]\" var =\"sw\">l-[sw]): {v:lvl2[strings][sw]}\n</loop>");
+    bit.Expected.Add(L"l-[0]): N1\nl-[1]): N2\nl-[2]): N3\n");
+
+    bit.Content.Add(
+        L"Space <loop set=\"lvl2[strings]\" var=\"sw\">l-[sw]): {v:lvl2[strings][sw]}\n</loop><loop set =\"lvl2[numbers]\" var=\"id\">l-[id]): {v:lvl2[numbers][id]}\n </loop>");
+    bit.Expected.Add(L"Space l-[0]): N1\nl-[1]): N2\nl-[2]): N3\nl-[0]): 1\n l-[1]): 2\n ");
+
+    ////
+
+    bit.Content.Add(L" <if case=\"1\"> 5 </if> ")
+        .Add(L"<if case=\"0\">5</if> ")
+        .Add(L" <if case=\"100\"><if case=\"1\">6</if></if>")
+        .Add(L"<if case=\"8\"><if case=\"88\"><if case=\"888\">7</if></if></if>")
+        .Add(L"<if case=\"1\"><if case=\"1\"><if case=\"1\"><if case=\"1\">8</if></if></if></if>");
+    bit.Expected.Add(L"  5  ").Add(L" ").Add(L" 6").Add(L"7").Add(L"8");
+
+    bit.Content.Add(L"<if case=\"1\">4<else /> 6 </if>")
+        .Add(L"<if case=\"0\"> 4 <else />6</if>")
+        .Add(L"<if case=\"0\"> 4 <else /><if case=\"0\"> 4 <else /><if case=\"0\"> 4 <else />7</if></if></if>");
+    bit.Expected.Add(L"4").Add(L"6").Add(L"7");
+
+    bit.Content.Add(L"<if case=\"0\"><else />91</if>");
+    bit.Expected.Add(L"91");
+
+    bit.Content.Add(L"<if case=\"0\">4<elseif case=\"{v:lvl2[numbers][0]} = 1\" /> 6 </if>");
+    bit.Expected.Add(L" 6 ");
+
+    bit.Content.Add(L"<if case=\"1\">4<elseif case=\"{v:lvl2[numbers][0]} = 1\" /> 6 </if>");
+    bit.Expected.Add(L"4");
+
+    bit.Content.Add(L"<if case=\"0\">4<elseif case=\"0\" /> 6 <elseif case=\"1\" />9</if>");
+    bit.Expected.Add(L"9");
+
+    bit.Content.Add(L"<if case=\"0\">4<elseif case=\"0\" /> 6 <else />91</if>");
+    bit.Expected.Add(L"91");
+
+    ////
+
+    bit.Exprs = Template::TagsAll;
+    bits.Add(bit);
+    ///////////////////////////////////////////
+
+    return bits;
+}
+
 static Array<TestBit> GetEngineBits() noexcept {
     Array<TestBit> bits = Array<TestBit>();
     TestBit        bit;
@@ -1197,188 +1388,6 @@ static String FlipSplit(const String &block, const Match &item) noexcept {
     }
 
     return nc;
-}
-
-static Array<TestBit> GetALUBits() noexcept {
-    Array<TestBit> bits = Array<TestBit>();
-    TestBit        bit;
-
-    ///////////////////////////////////////////
-    bit      = TestBit();
-    bit.Line = __LINE__;
-
-    bit.Content.Add(L"+1").Add(L" +1 ").Add(L"1+").Add(L" 1+ ").Add(L"1+ ").Add(L" 1+").Add(L"1+1").Add(L" 1 + 1 ");
-    bit.Expected.Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"2").Add(L"2");
-
-    bit.Content.Add(L" -1 ").Add(L"-1").Add(L"1-").Add(L" 1- ").Add(L"1- ").Add(L" 1-").Add(L"1-1").Add(L" 1 - 1 ");
-    bit.Expected.Add(L"-1").Add(L"-1").Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"0").Add(L"0");
-
-    bit.Content.Add(L"1-").Add(L"--1").Add(L"1--").Add(L"1--1").Add(L"1---1");
-    bit.Expected.Add(L"1").Add(L"1").Add(L"1").Add(L"2").Add(L"0");
-
-    bit.Content.Add(L"-1--1");
-    bit.Expected.Add(L"0");
-
-    bit.Content.Add(L"+1+1+2+11").Add(L"1+1+2+11+").Add(L"1-1-2-11").Add(L"-1-1-2-11");
-    bit.Expected.Add(L"15").Add(L"15").Add(L"-13").Add(L"-15");
-
-    bit.Content.Add(L"+1-2+3").Add(L"+1+2-3").Add(L"-1-2+3-").Add(L"-1+2-3-");
-    bit.Expected.Add(L"2").Add(L"0").Add(L"0").Add(L"-2");
-
-    ////
-    bit.Content.Add(L"*1").Add(L" 1*1 ").Add(L"3*5").Add(L" 5*3**1*2 ").Add(L" 5*3*1*2 ");
-    bit.Expected.Add(L"0").Add(L"1").Add(L"15").Add(L"0").Add(L"30");
-
-    bit.Content.Add(L"/1").Add(L" 1/1 ").Add(L"100/5").Add(L" 5/3//1/2 ").Add(L" 32/2/2/2/2/2 ");
-    bit.Expected.Add(L"0").Add(L"1").Add(L"20").Add(L"0").Add(L"1");
-
-    ////
-    bit.Content.Add(L"2*1+1*2").Add(L"1+1*2");
-    bit.Expected.Add(L"4").Add(L"3");
-
-    ////
-    bit.Content.Add(L"4^0").Add(L"4^2").Add(L"8^2").Add(L"8^1");
-    bit.Expected.Add(L"1").Add(L"16").Add(L"64").Add(L"8");
-
-    ////
-    bit.Content.Add(L"2=2").Add(L"2==2").Add(L"1=2").Add(L"2==1").Add(L"2==1+1").Add(L"2/2==1");
-    bit.Expected.Add(L"1").Add(L"1").Add(L"0").Add(L"0").Add(L"1").Add(L"1");
-
-    bit.Content.Add(L"2!=2").Add(L"1!=2").Add(L"1<=2").Add(L"2>=2").Add(L"2<=2").Add(L"2<=1").Add(L"1>=2").Add(L"2>=1");
-    bit.Expected.Add(L"0").Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"0").Add(L"0").Add(L"1");
-
-    ////
-    bit.Exprs = Qentem::ALU::MathExprs;
-    bits.Add(bit);
-    ///////////////////////////////////////////
-    bit      = TestBit();
-    bit.Line = __LINE__;
-
-    bit.Content.Add(L"(2*(1+1))").Add(L"((1+10)+(5*5))");
-    bit.Expected.Add(L"4").Add(L"36");
-
-    bit.Exprs = Qentem::ALU::ParensExprs;
-    bits.Add(bit);
-    ///////////////////////////////////////////
-    return bits;
-}
-
-static Array<TestBit> GetTemplateBits() noexcept {
-    Array<TestBit> bits = Array<TestBit>();
-    TestBit        bit;
-
-    static Qentem::Document data = Qentem::Document();
-
-    data[L"r1"] = L"Familly";
-    data[L"e1"] = L"";
-    data[L"e2"] = L" ";
-
-    data[L"lvl2"] = Qentem::Document();
-
-    data[L"lvl2"][L"r1"] = L"l2";
-    data[L"lvl2"][L"e1"] = L"";
-    data[L"lvl2"][L"e2"] = L" ";
-
-    data[L"lvl2"][L"numbers"] = Array<double>().Add(1).Add(2);
-    data[L"lvl2"][L"strings"] = Array<String>().Add(L"N1").Add(L"N2").Add(L"N3");
-
-    Template::Data = &data;
-
-    ///////////////////////////////////////////
-    bit      = TestBit();
-    bit.Line = __LINE__;
-
-    bit.Content.Add(L"{v:r1}  ").Add(L" {v:r2}  ").Add(L"{v:e1} ").Add(L"{v:e2}");
-    bit.Expected.Add(L"Familly  ").Add(L" r2  ").Add(L" ").Add(L" ");
-
-    bit.Content.Add(L"{v:lvl2[r1]}").Add(L"{v:lvl2[r2]}").Add(L"{v:lvl2[e1]}").Add(L" {v:lvl2[e2]} ");
-    bit.Expected.Add(L"l2").Add(L"lvl2[r2]").Add(L"").Add(L"   ");
-
-    bit.Content.Add(L"{v:lvl2[numbers][0]}").Add(L"{v:lvl2[numbers][1]}").Add(L"{v:lvl2[numbers][3]}");
-    bit.Expected.Add(L"1").Add(L"2").Add(L"lvl2[numbers][3]");
-
-    bit.Content.Add(L"{v:lvl2[strings][0]}").Add(L"{v:lvl2[strings][1]}").Add(L"{v:lvl2[strings][3]}");
-    bit.Expected.Add(L"N1").Add(L"N2").Add(L"lvl2[strings][3]");
-
-    ////
-
-    bit.Content.Add(L"{iif case=\"1\" true=\"1\" false=\"0\"}");
-    bit.Expected.Add(L"1");
-
-    bit.Content.Add(L"{iif case=\"1\" false=\"10\"}");
-    bit.Expected.Add(L"");
-
-    bit.Content.Add(L"{iif case=\"0\" true=\"1\" false=\"0\"}");
-    bit.Expected.Add(L"0");
-
-    bit.Content.Add(L"{iif case=\"1\" true=\"1\"}");
-    bit.Expected.Add(L"1");
-
-    bit.Content.Add(L"{iif case=\"0\" true=\"1\"}");
-    bit.Expected.Add(L"");
-
-    bit.Content.Add(L"{iif case=\"{v:lvl2[numbers][1]} = 2\" true=\"it's true! \" false=\"it's false\"}");
-    bit.Expected.Add(L"it's true! ");
-
-    bit.Content.Add(L"{iif case=\"10\" true=\"{iif case=\"1\" true=\"5\"}\"}");
-    bit.Expected.Add(L"5");
-
-    bit.Content.Add(L"{iif case=\"0\" true=\"{iif case=\"1\" true=\"5\"}\"}");
-    bit.Expected.Add(L"");
-
-    bit.Content.Add(L"{iif case=\"0\" false=\"{iif case=\"1\" true=\"35.5\"}\"}");
-    bit.Expected.Add(L"35.5");
-
-    ////
-
-    bit.Content.Add(L"<loop set=\"lvl2[numbers]\" var=\"id\">l-[id]): {v:lvl2[numbers][id]}\n </loop>");
-    bit.Expected.Add(L"l-[0]): 1\n l-[1]): 2\n ");
-
-    bit.Content.Add(
-        L"<loop set=\"lvl2[numbers]\" var=\"id\"><loop set=\"lvl2[numbers]\" var=\"i2\">l-[id]-[i2]):{v:lvl2[numbers][i2]}\n </loop></loop>");
-    bit.Expected.Add(L"l-[0]-[0]):1\n l-[0]-[1]):2\n l-[1]-[0]):1\n l-[1]-[1]):2\n ");
-
-    bit.Content.Add("<loop set=\"lvl2[strings]\" var=\"sw\">l-[sw]): {v:lvl2[strings][sw]}\n</loop>");
-    bit.Expected.Add(L"l-[0]): N1\nl-[1]): N2\nl-[2]): N3\n");
-
-    bit.Content.Add(
-        L"Space <loop set=\"lvl2[strings]\" var=\"sw\">l-[sw]): {v:lvl2[strings][sw]}\n</loop><loop set=\"lvl2[numbers]\" var=\"id\">l-[id]): {v:lvl2[numbers][id]}\n </loop>");
-    bit.Expected.Add(L"Space l-[0]): N1\nl-[1]): N2\nl-[2]): N3\nl-[0]): 1\n l-[1]): 2\n ");
-
-    ////
-
-    bit.Content.Add(L" <if case=\"1\"> 5 </if> ")
-        .Add(L"<if case=\"0\">5</if> ")
-        .Add(L" <if case=\"1\"><if case=\"1\"><if case=\"1\"><if case=\"1\">8</if></if></if></if>");
-    bit.Expected.Add(L"  5  ").Add(L" ").Add(L" 8");
-
-    bit.Content.Add(L"<if case=\"1\">4<else /> 6 </if>")
-        .Add(L"<if case=\"0\"> 4 <else />6</if>")
-        .Add(L"<if case=\"0\"> 4 <else /><if case=\"0\"> 4 <else /><if case=\"0\"> 4 <else />7</if></if></if>");
-    bit.Expected.Add(L"4").Add(L"6").Add(L"7");
-
-    bit.Content.Add(L"<if case=\"0\"><else />91</if>");
-    bit.Expected.Add(L"91");
-
-    bit.Content.Add(L"<if case=\"0\">4<elseif case=\"{v:lvl2[numbers][0]} = 1\" /> 6 </if>");
-    bit.Expected.Add(L" 6 ");
-
-    bit.Content.Add(L"<if case=\"1\">4<elseif case=\"{v:lvl2[numbers][0]} = 1\" /> 6 </if>");
-    bit.Expected.Add(L"4");
-
-    bit.Content.Add(L"<if case=\"0\">4<elseif case=\"0\" /> 6 <elseif case=\"1\" />9</if>");
-    bit.Expected.Add(L"9");
-
-    bit.Content.Add(L"<if case=\"0\">4<elseif case=\"0\" /> 6 <else />91</if>");
-    bit.Expected.Add(L"91");
-
-    ////
-
-    bit.Exprs = Template::TagsAll;
-    bits.Add(bit);
-    ///////////////////////////////////////////
-
-    return bits;
 }
 
 } // namespace Test

@@ -28,26 +28,26 @@ struct Template {
 
     static Expressions _getTagsVara() noexcept {
         static Expression TagVar;
-        static Expression VarNext;
+        static Expression VarTail;
 
         // Variables evaluation.
-        VarNext.ParseCB = &(Template::RenderVar);
+        VarTail.ParseCB = &(Template::RenderVar);
         // {v:var_name}
         TagVar.Keyword   = L"{v:";
-        VarNext.Keyword  = L'}';
-        TagVar.Connected = &VarNext;
-        VarNext.Flag     = Flags::TRIM;
+        VarTail.Keyword  = L'}';
+        TagVar.Connected = &VarTail;
+        VarTail.Flag     = Flags::TRIM;
 
         return Expressions().Add(&TagVar);
     }
 
     static Expressions _getTagsQuotes() noexcept {
         static Expression TagQuote;
-        static Expression QuoteNext;
+        static Expression QuoteTail;
 
         TagQuote.Keyword   = L'"';
-        QuoteNext.Keyword  = L'"';
-        TagQuote.Connected = &QuoteNext;
+        QuoteTail.Keyword  = L'"';
+        TagQuote.Connected = &QuoteTail;
 
         return Expressions().Add(&TagQuote);
     }
@@ -68,54 +68,64 @@ struct Template {
 
     static Expressions _getTagsAll() noexcept {
         static Expression TagIif;
-        static Expression IifNext;
+        static Expression IifTail;
 
         static Expression TagIf;
-        static Expression IfNext;
+        static Expression IfTail;
+
+        static Expression ShallowTagIf;
+        static Expression ShallowIfTail;
 
         static Expression TagELseIf;
-        static Expression ELseIfNext;
+        static Expression ELseIfTail;
 
         static Expression TagLoop;
-        static Expression LoopNext;
+        static Expression LoopTail;
 
         // Inline if evaluation.
-        IifNext.ParseCB = &(Template::RenderIIF);
+        IifTail.ParseCB = &(Template::RenderIIF);
         //{iif case="3 == 3" true="Yes" false="No"}
         TagIif.Keyword   = L"{iif";
-        IifNext.Keyword  = L'}';
-        TagIif.Connected = &IifNext;
-        IifNext.Flag     = Flags::BUBBLE;
-        IifNext.NestExprs.Add(&TagIif).Add(TagsVars); // Nested by itself and TagVars
+        IifTail.Keyword  = L'}';
+        TagIif.Connected = &IifTail;
+        IifTail.Flag     = Flags::BUBBLE;
+        IifTail.NestExprs.Add(&TagIif).Add(TagsVars); // Nested by itself and TagVars
         /////////////////////////////////
 
         // If spliter.
         // <else />
         TagELseIf.Keyword   = L"<else";
-        ELseIfNext.Keyword  = L"/>";
-        ELseIfNext.Flag     = Flags::SPLIT;
-        TagELseIf.Connected = &ELseIfNext;
+        ELseIfTail.Keyword  = L"/>";
+        ELseIfTail.Flag     = Flags::SPLIT;
+        TagELseIf.Connected = &ELseIfTail;
         /////////////////////////////////
 
+        // Shallow IF
+        // To not match anything inside inner if until it's needed.
+        ShallowTagIf.Keyword   = L"<if";
+        ShallowIfTail.Keyword  = L"</if>";
+        ShallowTagIf.Connected = &ShallowIfTail;
+        ShallowIfTail.NestExprs.Add(&ShallowTagIf);
+
         // If evaluation.
-        IfNext.ParseCB = &(Template::RenderIF);
+        IfTail.ParseCB = &(Template::RenderIF);
         // <if case="{case}">html code</if>
         TagIf.Keyword   = L"<if";
-        IfNext.Keyword  = L"</if>";
-        TagIf.Connected = &IfNext;
-        IfNext.Flag     = Flags::SPLITROOTONLY;
-        IfNext.NestExprs.Add(&TagIf).Add(&TagELseIf);
+        IfTail.Keyword  = L"</if>";
+        TagIf.Connected = &IfTail;
+        IfTail.Flag     = Flags::SPLITNEST;
+        IfTail.NestExprs.Add(&ShallowTagIf).Add(&TagELseIf);
         /////////////////////////////////
 
         // Loop evaluation.
-        LoopNext.ParseCB = &(Template::RenderLoop);
+        LoopTail.ParseCB = &(Template::RenderLoop);
         // <loop set="abc2" var="loopId">
         //     <span>loopId): -{v:abc2[loopId]}</span>
         // </loop>
         TagLoop.Keyword   = L"<loop";
-        LoopNext.Keyword  = L"</loop>";
-        TagLoop.Connected = &LoopNext;
-        LoopNext.NestExprs.Add(&TagLoop); // Nested by itself
+        LoopTail.Keyword  = L"</loop>";
+        TagLoop.Connected = &LoopTail;
+        LoopTail.NestExprs.Add(&TagLoop); // Nested by itself
         /////////////////////////////////
 
         return Expressions().Add(TagsVars).Add(&TagIif).Add(&TagIf).Add(&TagLoop);
@@ -150,29 +160,39 @@ struct Template {
             return L"";
         }
 
-        Match *m;
-        String iif_case;
-        String iif_false;
-        String iif_true;
+        Match * m;
+        String  iif_case;
+        String  iif_false;
+        String  iif_true;
+        UNumber start_at;
 
         // case="[statement]" true="[Yes]" false="[No]"
         for (UNumber i = 0; i < items.Size; i++) {
             // With this method, order is not necessary of case=, true=, false=
             m = &(items.Storage[i]);
-            if (m->Offset > 3) {
-                switch (block.Str[(m->Offset - 4)]) {
-                    case 'a': // c[a]se
+            if (m->Offset > 5) { // for the length of: set= or var=
+                start_at = m->Offset;
+
+                while ((start_at <= m->Offset) && (start_at > 0)) {
+                    --start_at;
+
+                    if (block.Str[start_at] == L'a') { // c[a]se
                         iif_case =
                             String::Part(block, (m->Offset + m->OLength), (m->Length - (m->CLength + m->OLength)));
                         break;
-                    case 'r': // t[r]ue
+                    }
+
+                    if (block.Str[start_at] == L'r') { // t[r]ue
                         iif_true =
                             String::Part(block, (m->Offset + m->OLength), (m->Length - (m->CLength + m->OLength)));
                         break;
-                    case 'l': // fa[l]se
+                    }
+
+                    if (block.Str[start_at] == L'l') { // fa[l]se
                         iif_false =
                             String::Part(block, (m->Offset + m->OLength), (m->Length - (m->CLength + m->OLength)));
                         break;
+                    }
                 }
             }
         }
@@ -223,12 +243,11 @@ struct Template {
                         if (_true) {
                             length = (nm->Length - (offset - nm->Offset));
                         } else {
-                            Array<Match> _subMatch2 = Array<Match>();
+                            Array<Match> _subMatch2;
+
                             for (UNumber i = 1; i < item.NestMatch.Size; i++) {
                                 _subMatch2 =
                                     Engine::Search(block, Template::TagsHead, offset, item.NestMatch.Storage[i].Offset);
-                                // return String::Part(block, (_subMatch2.Storage[0].NestMatch.Storage[0].Offset),
-                                //                     (_subMatch2.Storage[0].NestMatch.Storage[0].Length));
 
                                 // inner content of the next part.
                                 offset = item.NestMatch.Storage[i].Offset;
@@ -268,19 +287,28 @@ struct Template {
             const Match *sm = &(_subMatch.Storage[0]);
 
             // set="(Array_name)" var="(var_id)"
-            Match *m;
+            Match * m;
+            UNumber start_at;
+
             for (UNumber i = 0; i < sm->NestMatch.Size; i++) {
                 m = &(sm->NestMatch.Storage[i]);
-                if (m->Offset > 1) {
-                    switch (block.Str[(m->Offset - 2)]) {
-                        case 't': // se[t]
+                if (m->Offset > 5) { // for the length of: set= or var= + 1
+                    start_at = m->Offset;
+
+                    while ((start_at <= m->Offset) && (start_at > item.Offset)) {
+                        --start_at;
+
+                        if (block.Str[start_at] == L't') { // se[t]
                             name =
                                 String::Part(block, (m->Offset + m->OLength), (m->Length - (m->CLength + m->OLength)));
                             break;
-                        case 'r': // va[r]
+                        }
+
+                        if (block.Str[start_at] == L'r') { // va[r]
                             var_id =
                                 String::Part(block, (m->Offset + m->OLength), (m->Length - (m->CLength + m->OLength)));
                             break;
+                        }
                     }
                 }
             }

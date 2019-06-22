@@ -53,6 +53,7 @@ struct ALU {
         MathSub.ID      = 2;
         MathSub.Flag    = flags_no_pop;
         MathSub.ParseCB = &(AdditionCallback);
+        MathSub.NestExprs.Add(&MathExp).Add(&MathRem).Add(&MathDiv).Add(&MathMul);
         ///////////////////////////////////////////
         MathExp.Keyword = L"^";
         MathExp.ID      = 1;
@@ -74,8 +75,6 @@ struct ALU {
         MathMul.Flag    = flags_no_pop;
         MathMul.ParseCB = &(MultiplicationCallback);
         ///////////////////////////////////////////
-
-        ///////////////////////////////////////////
         MathEqu2.Keyword = L"==";
         MathEqu2.ID      = 1;
         MathEqu2.Flag    = flags_ops;
@@ -84,23 +83,27 @@ struct ALU {
 
         MathEqu.Keyword = L"=";
         MathEqu.ID      = 2;
-        MathEqu.Flag    = flags_no_pop;
+        MathEqu.Flag    = flags_ops;
         MathEqu.ParseCB = &(EqualCallback);
+        MathEqu.NestExprs.Add(&MathAdd).Add(&MathSub);
 
         MathNEqu.Keyword = L"!=";
         MathNEqu.ID      = 3;
         MathNEqu.Flag    = flags_no_pop;
         MathNEqu.ParseCB = &(EqualCallback);
+        MathNEqu.NestExprs.Add(&MathAdd).Add(&MathSub);
 
         MathLEqu.Keyword = L"<=";
         MathLEqu.ID      = 4;
         MathLEqu.Flag    = flags_no_pop;
         MathLEqu.ParseCB = &(EqualCallback);
+        MathLEqu.NestExprs.Add(&MathAdd).Add(&MathSub);
 
         MathBEqu.Keyword = L">=";
         MathBEqu.ID      = 5;
         MathBEqu.Flag    = flags_no_pop;
         MathBEqu.ParseCB = &(EqualCallback);
+        MathBEqu.NestExprs.Add(&MathAdd).Add(&MathSub);
 
         return Expressions().Add(&MathEqu2).Add(&MathEqu).Add(&MathNEqu).Add(&MathLEqu).Add(&MathBEqu);
 
@@ -315,11 +318,11 @@ struct ALU {
         // Stage two:
         double num = 0.0;
         content    = Engine::Parse(content, Engine::Search(content, MathExprs));
-        if ((content.Length == 0) || (content == L'0') || !String::ToNumber(content, num)) {
-            return 0.0;
+        if ((content.Length != 0) && String::ToNumber(content, num)) {
+            return num;
         }
 
-        return num;
+        return 0.0;
     }
 };
 

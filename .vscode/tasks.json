@@ -24,11 +24,12 @@
                 "-Wnull-dereference",
                 "-Wdouble-promotion",
                 "-Wformat=2",
-                "-ISource",
-                // "Tests/JSONTest.cpp",
-                "Tests/Test.cpp",
+                "-I",
+                "./Source",
+                // "./Tests/JSONTest.cpp",
+                "./Tests/Test.cpp",
                 "-o",
-                "Build/QConsole.bin"
+                "./Build/QConsole.bin"
             ],
             "group": {
                 "kind": "build",
@@ -46,24 +47,25 @@
             "type": "shell",
             "command": "em++",
             "args": [
-                // "-Os",
+                "-Os",
                 "-Wall",
                 "-std=c++11",
-                "-ISource",
-                "Example/QLib.cpp",
+                "-I",
+                "./Source",
+                "./Example/QLib.cpp",
                 "-s",
                 "WASM=1",
                 "-s",
                 "EXTRA_EXPORTED_RUNTIME_METHODS=['ccall', 'cwrap']",
                 "-o",
-                "Example/JQen/JQen.js"
+                "./Example/JQen/JQen.js"
             ],
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
             "presentation": {
-                "reveal": "silent",
+                "reveal": "always",
                 "clear": true
             },
             "problemMatcher": "$gcc"
@@ -80,17 +82,18 @@
                 "-std=c++11",
                 "-shared",
                 "-fPIC",
-                "-ISource",
-                "Example/QLib.cpp",
+                "-I",
+                "./Source",
+                "./Example/QLib.cpp",
                 "-o",
-                "Build/QLib.so"
+                "./Build/QLib.so"
             ],
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
             "presentation": {
-                "reveal": "silent",
+                "reveal": "always",
                 "clear": true
             },
             "problemMatcher": "$gcc"
@@ -104,7 +107,8 @@
                 "'-header-filter=.*'",
                 "-checks='*,-modernize-use-auto,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-non-private-member-variables-in-classes,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-readability*,-hicpp*,-misc-definitions*,-fuchsia*,-llvm-header-guard,-misc-non-private-*,-googl*,-misc-unused-parameters'",
                 "--",
-                "-ISource",
+                "-I",
+                "./Source",
                 "c++11",
             ],
             "group": {
@@ -112,7 +116,7 @@
                 "isDefault": true
             },
             "presentation": {
-                "reveal": "silent",
+                "reveal": "always",
                 "clear": true
             },
             "problemMatcher": "$gcc"
