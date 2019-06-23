@@ -169,26 +169,26 @@ struct Template {
         // case="[statement]" true="[Yes]" false="[No]"
         for (UNumber i = 0; i < items.Size; i++) {
             // With this method, order is not necessary of case=, true=, false=
-            m = &(items.Storage[i]);
+            m = &(items[i]);
             if (m->Offset > 5) { // for the length of: set= or var=
                 start_at = m->Offset;
 
                 while ((start_at <= m->Offset) && (start_at > 0)) {
                     --start_at;
 
-                    if (block.Str[start_at] == L'a') { // c[a]se
+                    if (block[start_at] == L'a') { // c[a]se
                         iif_case =
                             String::Part(block, (m->Offset + m->OLength), (m->Length - (m->CLength + m->OLength)));
                         break;
                     }
 
-                    if (block.Str[start_at] == L'r') { // t[r]ue
+                    if (block[start_at] == L'r') { // t[r]ue
                         iif_true =
                             String::Part(block, (m->Offset + m->OLength), (m->Length - (m->CLength + m->OLength)));
                         break;
                     }
 
-                    if (block.Str[start_at] == L'l') { // fa[l]se
+                    if (block[start_at] == L'l') { // fa[l]se
                         iif_false =
                             String::Part(block, (m->Offset + m->OLength), (m->Length - (m->CLength + m->OLength)));
                         break;
@@ -226,10 +226,10 @@ struct Template {
             Engine::Search(block, Template::TagsHead, item.Offset, (item.Offset + item.Length));
 
         if (_subMatch.Size != 0) {
-            Match *sm = &(_subMatch.Storage[0]);
+            Match *sm = &(_subMatch[0]);
 
             if (sm->NestMatch.Size != 0) {
-                Match *nm = &(sm->NestMatch.Storage[0]);
+                Match *nm = &(sm->NestMatch[0]);
                 _true     = Template::EvaluateIF(block, *nm);
 
                 // inner content of if
@@ -238,7 +238,7 @@ struct Template {
 
                 // // if_else (splitted content)
                 if (item.NestMatch.Size != 0) {
-                    nm = &(item.NestMatch.Storage[0]);
+                    nm = &(item.NestMatch[0]);
                     if ((Flags::SPLIT & nm->Expr->Flag) != 0) {
                         if (_true) {
                             length = (nm->Length - (offset - nm->Offset));
@@ -246,15 +246,14 @@ struct Template {
                             Array<Match> _subMatch2;
 
                             for (UNumber i = 1; i < item.NestMatch.Size; i++) {
-                                _subMatch2 =
-                                    Engine::Search(block, Template::TagsHead, offset, item.NestMatch.Storage[i].Offset);
+                                _subMatch2 = Engine::Search(block, Template::TagsHead, offset, item.NestMatch[i].Offset);
 
                                 // inner content of the next part.
-                                offset = item.NestMatch.Storage[i].Offset;
-                                length = item.NestMatch.Storage[i].Length;
+                                offset = item.NestMatch[i].Offset;
+                                length = item.NestMatch[i].Length;
 
-                                if ((_subMatch2.Storage[0].NestMatch.Size == 0) ||
-                                    Template::EvaluateIF(block, _subMatch2.Storage[0].NestMatch.Storage[0])) {
+                                if ((_subMatch2[0].NestMatch.Size == 0) ||
+                                    Template::EvaluateIF(block, _subMatch2[0].NestMatch[0])) {
                                     _true = true;
                                     break;
                                 }
@@ -281,30 +280,30 @@ struct Template {
         const Array<Match> &&_subMatch =
             Engine::Search(block, Template::TagsHead, item.Offset, (item.Offset + item.Length));
 
-        if ((_subMatch.Size != 0) && (_subMatch.Storage[0].NestMatch.Size != 0)) {
+        if ((_subMatch.Size != 0) && (_subMatch[0].NestMatch.Size != 0)) {
             String       name;
             String       var_id;
-            const Match *sm = &(_subMatch.Storage[0]);
+            const Match *sm = &(_subMatch[0]);
 
             // set="(Array_name)" var="(var_id)"
             Match * m;
             UNumber start_at;
 
             for (UNumber i = 0; i < sm->NestMatch.Size; i++) {
-                m = &(sm->NestMatch.Storage[i]);
+                m = &(sm->NestMatch[i]);
                 if (m->Offset > 5) { // for the length of: set= or var= + 1
                     start_at = m->Offset;
 
                     while ((start_at <= m->Offset) && (start_at > item.Offset)) {
                         --start_at;
 
-                        if (block.Str[start_at] == L't') { // se[t]
+                        if (block[start_at] == L't') { // se[t]
                             name =
                                 String::Part(block, (m->Offset + m->OLength), (m->Length - (m->CLength + m->OLength)));
                             break;
                         }
 
-                        if (block.Str[start_at] == L'r') { // va[r]
+                        if (block[start_at] == L'r') { // va[r]
                             var_id =
                                 String::Part(block, (m->Offset + m->OLength), (m->Length - (m->CLength + m->OLength)));
                             break;
@@ -352,26 +351,26 @@ struct Template {
             if (_storage->Ordered) {
                 if (_storage->Strings.Size != 0) {
                     for (UNumber i = 0; i < _storage->Strings.Size; i++) {
-                        ser.Storage[0]->Replace = L'[';
-                        ser.Storage[0]->Replace += String::FromNumber(i);
-                        ser.Storage[0]->Replace += L']';
+                        ser[0]->Replace = L'[';
+                        ser[0]->Replace += String::FromNumber(i);
+                        ser[0]->Replace += L']';
 
                         rendered += Engine::Parse(content, items);
                     }
                 } else if (_storage->Numbers.Size != 0) {
                     for (UNumber i = 0; i < _storage->Numbers.Size; i++) {
-                        ser.Storage[0]->Replace = L'[';
-                        ser.Storage[0]->Replace += String::FromNumber(i);
-                        ser.Storage[0]->Replace += L']';
+                        ser[0]->Replace = L'[';
+                        ser[0]->Replace += String::FromNumber(i);
+                        ser[0]->Replace += L']';
 
                         rendered += Engine::Parse(content, items);
                     }
                 }
             } else {
                 for (UNumber i = 0; i < _storage->Keys.Size; i++) {
-                    ser.Storage[0]->Replace = L'[';
-                    ser.Storage[0]->Replace += _storage->Keys.Storage[i];
-                    ser.Storage[0]->Replace += L']';
+                    ser[0]->Replace = L'[';
+                    ser[0]->Replace += _storage->Keys[i];
+                    ser[0]->Replace += L']';
 
                     rendered += Engine::Parse(content, items);
                 }

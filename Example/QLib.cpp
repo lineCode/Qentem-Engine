@@ -6,6 +6,7 @@
 using Qentem::Document;
 using Qentem::String;
 using Qentem::Template;
+using Qentem::UNumber;
 
 extern "C" {
 const wchar_t *renderTemplate_w(const wchar_t *temp, const wchar_t *json, bool comments) {
@@ -37,7 +38,7 @@ const char *renderTemplate(const char *temp, const char *json, bool comments) {
     char *tmp = new char[rend.Length + 1]; // 1 for '\0'
     for (UNumber j = 0; j <= rend.Length; j++) {
         // It got it as a "char" type in the first place, so there wont be any above 255.
-        tmp[j] = static_cast<char>(static_cast<unsigned int>(rend.Str[j]));
+        tmp[j] = static_cast<char>(static_cast<unsigned int>(rend[j]));
     }
 
     return tmp;

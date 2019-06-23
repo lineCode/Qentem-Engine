@@ -26,7 +26,7 @@ using Expressions = Array<Expression *>;
 // Parse Callback
 using _PARSECB = String(const String &, const Match &);
 
-void Split(Array<Match> &, const String &, const UNumber, const UNumber) noexcept;
+static void Split(Array<Match> &items, const String &content, UNumber index, UNumber to) noexcept;
 /////////////////////////////////
 // Expressions flags
 struct Flags {
@@ -77,19 +77,19 @@ static void _search(Array<Match> &items, const String &content, const Expression
     bool        OVERDRIVE   = false; // To achieving nesting.
     UNumber     counter     = 0;     // Index for counting.
     UNumber     nest_offset = 0;     // Temp variable for nested matches.
-    UNumber     id          = 0;     // Expression's id.
-    Expression *ce          = exprs.Storage[id++];
+    UNumber     id          = 1;     // Expression's id.
+    Expression *ce          = exprs[0];
     UNumber     end_at; // Temp offset.
     Match       _item;  // Temp match
 
     const UNumber started = index;
 
     for (;;) {
-        if (content.Str[index] == ce->Keyword.Str[0]) {
+        if (content[index] == ce->Keyword[0]) {
             end_at = index;
 
             while (++counter < ce->Keyword.Length) {
-                if (content.Str[++end_at] != ce->Keyword.Str[counter]) {
+                if (content[++end_at] != ce->Keyword[counter]) {
                     // Mismatch.
                     counter = 0;
                     break;
@@ -108,7 +108,7 @@ static void _search(Array<Match> &items, const String &content, const Expression
                     if (ce->Connected != nullptr) {
                         if ((Flags::TRIM & ce->Connected->Flag) != 0) {
                             // TODO: limit the loop to the max size
-                            while ((content.Str[++end_at] == L' ') || (content.Str[end_at] == L'\n')) {
+                            while ((content[++end_at] == L' ') || (content[end_at] == L'\n')) {
                             }
                             --end_at;
                         }
@@ -140,8 +140,8 @@ static void _search(Array<Match> &items, const String &content, const Expression
                             }
 
                             // Seek to avoid having the same closing/ending keywork matched again.
-                            nest_offset = (_item.NestMatch.Storage[(_item.NestMatch.Size - 1)].Offset +
-                                           _item.NestMatch.Storage[(_item.NestMatch.Size - 1)].Length);
+                            nest_offset = (_item.NestMatch[(_item.NestMatch.Size - 1)].Offset +
+                                           _item.NestMatch[(_item.NestMatch.Size - 1)].Length);
 
                             if (index < nest_offset) {
                                 index = nest_offset;
@@ -156,7 +156,7 @@ static void _search(Array<Match> &items, const String &content, const Expression
 
                         if (_item.OLength != 0) {
                             if (((Flags::TRIM & ce->Flag) != 0) && ((index - _item.Offset) != _item.OLength)) {
-                                while ((content.Str[--index] == L' ') || (content.Str[index] == L'\n')) {
+                                while ((content[--index] == L' ') || (content[index] == L'\n')) {
                                 }
                                 ++index;
                             }
@@ -182,7 +182,7 @@ static void _search(Array<Match> &items, const String &content, const Expression
                                 items.Resize((items.Size + 1) * 4);
                             }
 
-                            items.Storage[items.Size] = static_cast<Match &&>(_item);
+                            items[items.Size] = static_cast<Match &&>(_item);
                             ++items.Size;
 
                             // TODO: If it's a resumed match, return
@@ -214,7 +214,8 @@ static void _search(Array<Match> &items, const String &content, const Expression
                 --index;
             }
 
-            ce = exprs.Storage[id++];
+            ce = exprs[id];
+            ++id;
         }
 
         /////////////////////////////////
@@ -244,8 +245,8 @@ static void _search(Array<Match> &items, const String &content, const Expression
                 // root items' list, to avoid searching them again.
 
                 // Seek the offset to where the last match ended.
-                index = (_item.NestMatch.Storage[(_item.NestMatch.Size - 1)].Offset +
-                         _item.NestMatch.Storage[(_item.NestMatch.Size - 1)].Length);
+                index = (_item.NestMatch[(_item.NestMatch.Size - 1)].Offset +
+                         _item.NestMatch[(_item.NestMatch.Size - 1)].Length);
 
                 items.Add(_item.NestMatch, true);
 
@@ -262,7 +263,7 @@ static void _search(Array<Match> &items, const String &content, const Expression
             OVERDRIVE = false;
             LOCKED    = false;
 
-            ce = exprs.Storage[id]; // Reset
+            ce = exprs[id]; // Reset
         }
     }
 
@@ -316,7 +317,7 @@ static String Parse(const String &content, const Array<Match> &items, UNumber in
 
     for (UNumber id = 0; id < items.Size; id++) {
         // Current match
-        _item = &(items.Storage[id]);
+        _item = &(items[id]);
 
         if ((Flags::NOPARSE & _item->Expr->Flag) != 0) {
             continue;
@@ -369,11 +370,11 @@ static String Parse(const String &content, const Array<Match> &items, UNumber in
 } // namespace Engine
 
 /////////////////////////////////
-void Engine::Split(Array<Match> &items, const String &content, const UNumber index, const UNumber to) noexcept {
+static void Engine::Split(Array<Match> &items, const String &content, const UNumber index, const UNumber to) noexcept {
     Match *tmp = nullptr;
 
     if (items.Size == 1) {
-        tmp = &items.Storage[0];
+        tmp = &items[0];
         if (((Flags::SPLITNEST & tmp->Expr->Flag) != 0) && (tmp->NestMatch.Size != 0)) {
             Engine::Split(tmp->NestMatch, content, (tmp->Offset + tmp->OLength),
                           ((tmp->Offset + tmp->Length) - (tmp->CLength)));
@@ -394,7 +395,7 @@ void Engine::Split(Array<Match> &items, const String &content, const UNumber ind
     Match *      tmp2   = nullptr;
 
     for (UNumber i = 0; i < items.Size; i++) {
-        tmp        = &(items.Storage[i]);
+        tmp        = &(items[i]);
         _item.Expr = tmp->Expr;
 
         if (((Flags::SPLITNEST & tmp->Expr->Flag) != 0) && (tmp->NestMatch.Size != 0)) {
@@ -406,7 +407,7 @@ void Engine::Split(Array<Match> &items, const String &content, const UNumber ind
             _item.Offset = offset;
 
             if ((Flags::TRIM & _item.Expr->Flag) != 0) {
-                while ((content.Str[_item.Offset] == L' ') || (content.Str[_item.Offset] == L'\n')) {
+                while ((content[_item.Offset] == L' ') || (content[_item.Offset] == L'\n')) {
                     ++_item.Offset;
                 }
 
@@ -414,7 +415,7 @@ void Engine::Split(Array<Match> &items, const String &content, const UNumber ind
                 ends         = tmp->Offset;
 
                 if (_item.Length != 0) {
-                    while ((content.Str[--ends] == L' ') || (content.Str[ends] == L'\n')) {
+                    while ((content[--ends] == L' ') || (content[ends] == L'\n')) {
                     }
                     ++ends;
                     _item.Length = (ends - _item.Offset);
@@ -430,7 +431,7 @@ void Engine::Split(Array<Match> &items, const String &content, const UNumber ind
                     splitted.Resize((splitted.Size + 1) * 4);
                 }
 
-                tmp2 = &splitted.Storage[splitted.Size];
+                tmp2 = &splitted[splitted.Size];
                 ++splitted.Size;
                 *tmp2 = static_cast<Match &&>(_item);
 
@@ -449,14 +450,14 @@ void Engine::Split(Array<Match> &items, const String &content, const UNumber ind
                 nesties.Resize((nesties.Size + 1) * 4);
             }
 
-            nesties.Storage[nesties.Size] = static_cast<Match &&>(*tmp);
+            nesties[nesties.Size] = static_cast<Match &&>(*tmp);
             ++nesties.Size;
         }
     }
 
     _item.Offset = offset;
     if ((Flags::TRIM & _item.Expr->Flag) != 0) {
-        while ((content.Str[_item.Offset] == L' ') || (content.Str[_item.Offset] == L'\n')) {
+        while ((content[_item.Offset] == L' ') || (content[_item.Offset] == L'\n')) {
             ++_item.Offset;
         }
 
@@ -464,7 +465,7 @@ void Engine::Split(Array<Match> &items, const String &content, const UNumber ind
         ends         = to;
 
         if (_item.Length != 0) {
-            while ((content.Str[--ends] == L' ') || (content.Str[ends] == L'\n')) {
+            while ((content[--ends] == L' ') || (content[ends] == L'\n')) {
             }
             ++ends;
             _item.Length = (ends - _item.Offset);
@@ -478,7 +479,7 @@ void Engine::Split(Array<Match> &items, const String &content, const UNumber ind
             splitted.Resize((items.Size + 1) * 4);
         }
 
-        tmp2 = &splitted.Storage[splitted.Size];
+        tmp2 = &splitted[splitted.Size];
         ++splitted.Size;
         *tmp2 = static_cast<Match &&>(_item);
 
@@ -502,7 +503,7 @@ void Engine::Split(Array<Match> &items, const String &content, const UNumber ind
     } else {
         items.SetCapacity(1);
         items.Size = 1;
-        tmp        = &items.Storage[0];
+        tmp        = &items[0];
 
         tmp->Offset    = index;
         tmp->Length    = (to - index);

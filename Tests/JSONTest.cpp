@@ -6,6 +6,7 @@
 using Qentem::Array;
 using Qentem::Document;
 using Qentem::String;
+using Qentem::UNumber;
 
 String   read_file(const char *fullpath) noexcept;
 Document get_document() noexcept;
@@ -53,12 +54,14 @@ String read_file(const char *fullpath) noexcept {
         std::streampos size = file.tellg();
         file.seekg(0, std::ios::beg);
         UNumber u_size = (UNumber(size) + 1);
-        char *  _tmp   = new char[u_size];
+        char *  _tmp;
+        Qentem::Memory::Allocate<char>(&_tmp, u_size);
+
         file.read(_tmp, size);
         _tmp[(u_size - 1)] = L'\0';
 
         content = String(_tmp);
-        delete[] _tmp;
+        Qentem::Memory::Deallocate<char>(&_tmp);
         file.close();
     } else {
         std::wcout << '\n' << fullpath << L" does not exist!\n";

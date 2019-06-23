@@ -44,7 +44,7 @@ class StringStream {
                 collections.Resize((collections.Size + 1) * 4);
             }
 
-            collections.Storage[collections.Size] = col;
+            collections[collections.Size] = col;
             bits.Add({SType::Bits, collections.Size});
             ++collections.Size;
         }
@@ -58,7 +58,7 @@ class StringStream {
                 _strings.Resize((_strings.Size + 1) * 4);
             }
 
-            _strings.Storage[_strings.Size] = src;
+            _strings[_strings.Size] = src;
             bits.Add({SType::Bit, _strings.Size});
             ++_strings.Size;
         }
@@ -72,7 +72,7 @@ class StringStream {
                 _strings.Resize((_strings.Size + 1) * 4);
             }
 
-            _strings.Storage[_strings.Size] = src;
+            _strings[_strings.Size] = src;
             bits.Add({SType::Bit, _strings.Size});
             ++_strings.Size;
         }
@@ -86,7 +86,7 @@ class StringStream {
                 p_strings.Resize((p_strings.Size + 1) * 4);
             }
 
-            p_strings.Storage[p_strings.Size] = src;
+            p_strings[p_strings.Size] = src;
             bits.Add({SType::PBit, p_strings.Size});
             ++p_strings.Size;
         }
@@ -97,26 +97,27 @@ class StringStream {
         UNumber       j = 0;
 
         for (UNumber i = 0; i < _ss.bits.Size; i++) {
-            switch (_ss.bits.Storage[i].Type) {
-                case SType::Bit: {
-                    sstr = &(_ss._strings.Storage[_ss.bits.Storage[i].Index]);
-                    for (j = 0; j < sstr->Length; j++) {
-                        buk.Str[buk.Length++] = sstr->Str[j];
-                    }
-                    break;
+            if (_ss.bits[i].Type == SType::Bit) {
+                sstr = &(_ss._strings[_ss.bits[i].Index]);
+                for (j = 0; j < sstr->Length;) {
+                    buk[buk.Length] = sstr->operator[](j);
+                    ++j;
+                    ++buk.Length;
                 }
-                case SType::PBit: {
-                    sstr = _ss.p_strings.Storage[_ss.bits.Storage[i].Index];
-                    for (j = 0; j < sstr->Length; j++) {
-                        buk.Str[buk.Length++] = sstr->Str[j];
-                    }
-                    break;
-                }
-                case SType::Bits: {
-                    _pack(_ss.collections.Storage[_ss.bits.Storage[i].Index], buk);
-                    break;
-                }
+                continue;
             }
+
+            if (_ss.bits[i].Type == SType::PBit) {
+                sstr = _ss.p_strings[_ss.bits[i].Index];
+                for (j = 0; j < sstr->Length;) {
+                    buk[buk.Length] = sstr->operator[](j);
+                    ++j;
+                    ++buk.Length;
+                }
+                continue;
+            }
+
+            _pack(_ss.collections[_ss.bits[i].Index], buk);
         }
     }
 
@@ -134,7 +135,7 @@ class StringStream {
             bits.Size        = 0;
         }
 
-        tmp.Str[tmp.Length] = L'\0'; // Null trimmming
+        tmp[tmp.Length] = L'\0'; // Null trimmming
         return tmp;
     }
 };

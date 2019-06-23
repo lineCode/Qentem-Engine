@@ -7,11 +7,10 @@
             "label": "Build .bin", // executable
             "promptOnClose": false,
             "type": "shell",
-            "command": "clang++",
+            "command": "g++",
             "args": [
                 "-g",
-                // "-Os",
-                "-stdlib=libc++",
+                // "-O3",
                 "-std=c++11",
                 "-Wall",
                 "-Wunused",
@@ -74,10 +73,9 @@
             "label": "Build .so",
             "promptOnClose": false,
             "type": "shell",
-            "command": "clang++",
+            "command": "g++",
             "args": [
-                "-Os",
-                "-lstdc++",
+                "-O3",
                 "-Wall",
                 "-std=c++11",
                 "-shared",
@@ -103,9 +101,10 @@
             "type": "shell",
             "command": "clang-tidy",
             "args": [
-                "Tests/Test.cpp",
+                "./Tests/Test.cpp",
+                "./Tests/JSONTest.cpp",
                 "'-header-filter=.*'",
-                "-checks='*,-modernize-use-auto,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-non-private-member-variables-in-classes,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-readability*,-hicpp*,-misc-definitions*,-fuchsia*,-llvm-header-guard,-misc-non-private-*,-googl*,-misc-unused-parameters'",
+                "-checks='*,-modernize-avoid-c-arrays,-cppcoreguidelines-avoid-c-arrays,-modernize-use-auto,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-non-private-member-variables-in-classes,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-readability-magic-numbers,-hicpp*,-fuchs*,-llvm-header-guard,-misc-non-private-*,-googl*,-misc-unused-parameters'",
                 "--",
                 "-I",
                 "./Source",
@@ -120,6 +119,27 @@
                 "clear": true
             },
             "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Build .exe", // executable
+            "type": "shell",
+            "command": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin/MSBuild.exe",
+            "args": [
+                "${cwd}/QConsole.sln",
+                "/m",
+                "/t:build",
+                "/p:configuration=Debug",
+                "/p:Platform=x64"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "silent",
+                "clear": true
+            },
+            "problemMatcher": "$msCompile"
         }
     ]
 }

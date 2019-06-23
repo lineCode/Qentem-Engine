@@ -17,6 +17,7 @@
 using Qentem::Array;
 using Qentem::String;
 using Qentem::StringStream;
+using Qentem::UNumber;
 using Qentem::Engine::Match;
 using Qentem::Test::TestBit;
 
@@ -123,16 +124,16 @@ static bool run_tests(const String &name, const Array<TestBit> &bits, const bool
     for (UNumber i = start_at; i < bits.Size; i++) {
         ++count;
 
-        if (bits.Storage[i].Expected.Size != bits.Storage[i].Content.Size) {
+        if (bits[i].Expected.Size != bits[i].Content.Size) {
 
-            std::wcout << L"Check Expected & Content Size @" << String::FromNumber(bits.Storage[i].Line).Str << L'\n';
+            std::wcout << L"Check Expected & Content Size @" << String::FromNumber(bits[i].Line).Str << L'\n';
             return false;
         }
 
-        for (UNumber t = counter; t < bits.Storage[i].Content.Size; t++) {
+        for (UNumber t = counter; t < bits[i].Content.Size; t++) {
             search_ticks = static_cast<UNumber>(clock());
             for (UNumber x = 0; x < times; x++) {
-                matches = Qentem::Engine::Search(bits.Storage[i].Content.Storage[t], bits.Storage[i].Exprs);
+                matches = Qentem::Engine::Search(bits[i].Content[t], bits[i].Exprs);
             }
             search_ticks = (static_cast<UNumber>(clock()) - search_ticks);
             total_search += search_ticks;
@@ -140,12 +141,12 @@ static bool run_tests(const String &name, const Array<TestBit> &bits, const bool
             String rendered;
             parse_ticks = static_cast<UNumber>(clock());
             for (UNumber y = 0; y < times; y++) {
-                rendered = Qentem::Engine::Parse(bits.Storage[i].Content.Storage[t], matches);
+                rendered = Qentem::Engine::Parse(bits[i].Content[t], matches);
             }
             parse_ticks = (static_cast<UNumber>(clock()) - parse_ticks);
             total_parse += parse_ticks;
 
-            pass = (rendered == bits.Storage[i].Expected.Storage[t]);
+            pass = (rendered == bits[i].Expected[t]);
             ++counter;
             ++total;
 
@@ -176,19 +177,19 @@ static bool run_tests(const String &name, const Array<TestBit> &bits, const bool
                 ss += String::FromNumber(count) + L'-';
                 ss += String::FromNumber(counter);
                 ss += L" -----\n  Line:      ";
-                ss += String::FromNumber(bits.Storage[i].Line) + L'\n';
+                ss += String::FromNumber(bits[i].Line) + L'\n';
                 ss += L"  Content:  ";
-                ss += Qentem::Test::ReplaceNewLine(bits.Storage[i].Content.Storage[t]) + L'\n';
+                ss += Qentem::Test::ReplaceNewLine(bits[i].Content[t]) + L'\n';
                 ss += L"  Rendered: \"";
                 ss += Qentem::Test::ReplaceNewLine(rendered) + L"\"\n";
                 ss += L"  Expected: \"";
-                ss += Qentem::Test::ReplaceNewLine(bits.Storage[i].Expected.Storage[t]) + L"\"\n";
+                ss += Qentem::Test::ReplaceNewLine(bits[i].Expected[t]) + L"\"\n";
                 ss += L"  Matches:\n";
-                ss += Qentem::Test::DumpMatches(bits.Storage[i].Content.Storage[t], matches, L"    ");
+                ss += Qentem::Test::DumpMatches(bits[i].Content[t], matches, L"    ");
 
                 if (Dump_express) {
                     ss += L"  Expressions: ";
-                    ss += Qentem::Test::DumpExpressions(bits.Storage[i].Exprs, L"    ");
+                    ss += Qentem::Test::DumpExpressions(bits[i].Exprs, L"    ");
                 }
 
                 ss += L"\n  ---------- End debug ";
@@ -307,7 +308,7 @@ static bool TestNumbersConv() noexcept {
         ticks = static_cast<UNumber>(clock());
 
         for (size_t k = 0; k < times; k++) {
-            pass = (test.Storage[i].result == String::FromNumber(test.Storage[i].num));
+            pass = (test[i].result == String::FromNumber(test[i].num));
         }
 
         ticks = (static_cast<UNumber>(clock()) - ticks);
@@ -317,8 +318,7 @@ static bool TestNumbersConv() noexcept {
             std::wcout << L"Pass " << String::FromNumber((static_cast<double>(ticks) / CLOCKS_PER_SEC), 2, 3, 3).Str
                        << L'\n';
         } else {
-            std::wcout << L"Fail " << test.Storage[i].result.Str << L" != "
-                       << String::FromNumber(test.Storage[i].num).Str << L'\n';
+            std::wcout << L"Fail " << test[i].result.Str << L" != " << String::FromNumber(test[i].num).Str << L'\n';
             std::wcout << L"\n Math is wrong not me.\n";
 
             return false;

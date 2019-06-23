@@ -144,7 +144,7 @@ struct ALU {
 
         Match *m2;
 
-        const Match *m1    = &(item.NestMatch.Storage[0]);
+        const Match *m1    = &(item.NestMatch[0]);
         UNumber      op_id = m1->Expr->ID;
 
         if (m1->Length != 0) {
@@ -156,7 +156,7 @@ struct ALU {
         }
 
         for (UNumber i = 1; i < item.NestMatch.Size; i++) {
-            m2 = &(item.NestMatch.Storage[i]);
+            m2 = &(item.NestMatch[i]);
 
             if (m2->Length != 0) {
 
@@ -194,7 +194,7 @@ struct ALU {
 
         Match *m2;
 
-        const Match *m1    = &(item.NestMatch.Storage[0]);
+        const Match *m1    = &(item.NestMatch[0]);
         UNumber      op_id = m1->Expr->ID;
 
         if (m1->Length != 0) {
@@ -202,7 +202,7 @@ struct ALU {
         }
 
         for (UNumber i = 1; i < item.NestMatch.Size; i++) {
-            m2 = &(item.NestMatch.Storage[i]);
+            m2 = &(item.NestMatch[i]);
 
             if (m2->Length != 0) {
 
@@ -251,7 +251,7 @@ struct ALU {
 
         Match *m2;
 
-        const Match *m1    = &(item.NestMatch.Storage[0]);
+        const Match *m1    = &(item.NestMatch[0]);
         UNumber      op_id = m1->Expr->ID;
 
         if (m1->Length != 0) {
@@ -263,7 +263,7 @@ struct ALU {
         }
 
         for (UNumber i = 1; i < item.NestMatch.Size; i++) {
-            m2 = &(item.NestMatch.Storage[i]);
+            m2 = &(item.NestMatch[i]);
 
             if (m2->Length != 0) {
 

@@ -12,7 +12,7 @@
 #ifndef QENTEM_ARRAY_H
 #define QENTEM_ARRAY_H
 
-#include "Common.hpp"
+#include "Memory.hpp"
 
 namespace Qentem {
 
@@ -21,6 +21,7 @@ struct Array {
     UNumber Size     = 0;
     UNumber Capacity = 0;
     T *     Storage  = nullptr;
+    bool    Shared   = false;
 
     Array() = default;
 
@@ -41,12 +42,9 @@ struct Array {
     Array<T> &operator=(const Array<T> &src) noexcept {
         if (this != &src) {
             if (src.Size == 0) {
-                if (Storage != nullptr) {
-                    delete[] Storage;
-                    Storage  = nullptr;
-                    Size     = 0;
-                    Capacity = 0;
-                }
+                Memory::Deallocate<T>(&Storage);
+                Size     = 0;
+                Capacity = 0;
 
                 return *this;
             }
@@ -54,22 +52,20 @@ struct Array {
             Size = src.Size;
 
             if (Capacity < src.Size) {
-                if (Storage != nullptr) {
-                    delete[] Storage;
-                }
+                Memory::Deallocate<T>(&Storage);
+                Memory::Allocate<T>(&Storage, Size);
 
-                Storage  = new T[Size];
                 Capacity = src.Size;
 
                 for (UNumber n = 0; n < src.Size; n++) {
-                    Storage[n] = static_cast<T &&>(src.Storage[n]);
+                    Storage[n] = static_cast<T &&>(src[n]);
                 }
 
                 return *this;
             }
 
             for (UNumber n = 0; n < src.Size; n++) {
-                Storage[n] = static_cast<T &&>(src.Storage[n]);
+                Storage[n] = static_cast<T &&>(src[n]);
             }
         }
 
@@ -78,9 +74,7 @@ struct Array {
 
     Array<T> &operator=(Array<T> &&src) noexcept {
         if (this != &src) {
-            if (Storage != nullptr) {
-                delete[] Storage;
-            }
+            Memory::Deallocate<T>(&Storage);
 
             Storage  = src.Storage;
             Capacity = src.Capacity;
@@ -100,7 +94,7 @@ struct Array {
 
                 if (Size == 0) {
                     if (!move) {
-                        Storage = new T[Capacity];
+                        Memory::Allocate<T>(&Storage, Capacity);
                     } else {
                         Storage  = src.Storage;
                         Capacity = src.Capacity;
@@ -113,29 +107,29 @@ struct Array {
                         return *this;
                     }
                 } else {
-                    T *tmp  = Storage;
-                    Storage = new T[Capacity];
+                    T *tmp = Storage;
+                    Memory::Allocate<T>(&Storage, Capacity);
 
                     for (UNumber n = 0; n < Size; n++) {
                         Storage[n] = static_cast<T &&>(tmp[n]);
                     }
 
-                    delete[] tmp;
+                    Memory::Deallocate<T>(&tmp);
                 }
             }
 
             if (move) {
                 for (UNumber i = 0; i < src.Size; i++) {
-                    Storage[Size++] = static_cast<T &&>(src.Storage[i]);
+                    Storage[Size++] = static_cast<T &&>(src[i]);
                 }
 
-                delete[] src.Storage;
+                Memory::Deallocate<T>(&src.Storage);
                 src.Storage  = nullptr;
                 src.Capacity = 0;
                 src.Size     = 0;
             } else {
                 for (UNumber i = 0; i < src.Size; i++) {
-                    Storage[Size++] = src.Storage[i];
+                    Storage[Size++] = src[i];
                 }
             }
         }
@@ -149,21 +143,21 @@ struct Array {
                 Capacity += src.Size;
 
                 if (Size == 0) {
-                    Storage = new T[Capacity];
+                    Memory::Allocate<T>(&Storage, Capacity);
                 } else {
-                    T *tmp  = Storage;
-                    Storage = new T[Capacity];
+                    T *tmp = Storage;
+                    Memory::Allocate<T>(&Storage, Capacity);
 
                     for (UNumber n = 0; n < Size; n++) {
                         Storage[n] = static_cast<T &&>(tmp[n]);
                     }
 
-                    delete[] tmp;
+                    Memory::Deallocate<T>(&tmp);
                 }
             }
 
             for (UNumber i = 0; i < src.Size; i++) {
-                Storage[Size++] = src.Storage[i];
+                Storage[Size++] = src[i];
             }
         }
 
@@ -193,24 +187,19 @@ struct Array {
     }
 
     inline void SetCapacity(const UNumber _size) noexcept {
-        if (Storage != nullptr) {
-            delete[] Storage;
-            Storage = nullptr;
-        }
+        Memory::Deallocate<T>(&Storage);
 
         Size     = 0;
         Capacity = _size;
 
-        if (_size != 0) {
-            Storage = new T[_size];
-        }
+        Memory::Allocate<T>(&Storage, _size);
     }
 
     inline void Resize(const UNumber _size) noexcept {
         Capacity = _size;
         T *tmp   = Storage;
 
-        Storage = new T[Capacity];
+        Memory::Allocate<T>(&Storage, Capacity);
 
         if (_size < Size) {
             Size = _size;
@@ -220,23 +209,32 @@ struct Array {
             Storage[n] = static_cast<T &&>(tmp[n]);
         }
 
-        if (tmp != nullptr) {
-            delete[] tmp;
-        }
+        Memory::Deallocate<T>(&tmp);
+    }
+
+    inline T &operator[](const UNumber __index) const noexcept { // Compare
+        return Storage[__index];
+    }
+
+    inline void Share(T *_storage, UNumber _size) noexcept {
+        Storage = _storage;
+
+        Capacity = _size;
+        Size     = _size;
+        Shared   = true;
     }
 
     inline void Reset() noexcept {
-        if (Storage != nullptr) {
-            delete[] Storage;
-            Storage = nullptr;
-        }
+        Memory::Deallocate<T>(&Storage);
 
         Capacity = 0;
         Size     = 0;
     }
 
     virtual ~Array() noexcept {
-        Reset();
+        if (!Shared) {
+            Reset();
+        }
     }
 };
 } // namespace Qentem

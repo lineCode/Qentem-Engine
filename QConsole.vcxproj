@@ -79,7 +79,7 @@
     <TargetName>QConsole</TargetName>
     <OutDir>$(SolutionDir)Build\</OutDir>
     <LinkIncremental>true</LinkIncremental>
-    <!-- <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet> -->
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

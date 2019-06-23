@@ -13,10 +13,12 @@
 #define QENTEM_COMMON_H
 
 // #include <stddef.h>
-// using UNumber = size_t;
 
+namespace Qentem {
+
+// using UNumber = size_t;
 using UNumber = unsigned long long;
 
-namespace Qentem {} // namespace Qentem
+} // namespace Qentem
 
 #endif
