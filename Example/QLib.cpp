@@ -9,7 +9,7 @@ using Qentem::Template;
 using Qentem::UNumber;
 
 extern "C" {
-const wchar_t *renderTemplate_w(const wchar_t *temp, const wchar_t *json, bool comments) {
+wchar_t *renderTemplate_w(wchar_t const *temp, wchar_t const *json, bool comments) {
     Document &&data     = Document::FromJSON(json, comments);
     String &&  rendered = Template::Render(temp, &data);
     data.Reset();
@@ -23,7 +23,7 @@ extern "C" {
 EMSCRIPTEN_KEEPALIVE
 #endif
 
-const char *renderTemplate(const char *temp, const char *json, bool comments) {
+char *renderTemplate(char const *temp, char const *json, bool comments) {
     String &&  S_json = String(json);
     Document &&data   = Document::FromJSON(S_json, comments);
     String &&  rend   = Template::Render(temp, &data);

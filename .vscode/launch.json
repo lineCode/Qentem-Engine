@@ -25,13 +25,13 @@
       ],
       "miDebuggerPath": "/usr/bin/gdb"
     },
-    // {
-    //   "name": "Python (console)",
-    //   "type": "python",
-    //   "request": "launch",
-    //   "program": "${workspaceFolder}/Example/Python/QPie.py",
-    //   "console": "integratedTerminal"
-    // },
+    {
+      "name": "Python (console)",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/Example/Python/QPie.py",
+      "console": "integratedTerminal"
+    },
     {
       "name": "Windows (console)",
       "type": "cppvsdbg",

@@ -36,17 +36,17 @@ struct Entry {
 };
 
 struct JsonFixedString {
-    const String fss1  = L'{';
-    const String fss2  = L'}';
-    const String fss3  = L',';
-    const String fss4  = L'[';
-    const String fss5  = L']';
-    const String fss6  = L'"';
-    const String fss7  = L"\":null";
-    const String fss8  = L"\":true";
-    const String fss9  = L"\":false";
-    const String fss10 = L"\":\"";
-    const String fss11 = L"\":";
+    String const fss1  = L'{';
+    String const fss2  = L'}';
+    String const fss3  = L',';
+    String const fss4  = L'[';
+    String const fss5  = L']';
+    String const fss6  = L'"';
+    String const fss7  = L"\":null";
+    String const fss8  = L"\":true";
+    String const fss9  = L"\":false";
+    String const fss10 = L"\":\"";
+    String const fss11 = L"\":";
 };
 
 struct Document;
@@ -57,7 +57,7 @@ struct Field {
 
     Field &operator=(UNumber value) noexcept;
     Field &operator=(double value) noexcept;
-    Field &operator=(const wchar_t *value) noexcept;
+    Field &operator=(wchar_t const *value) noexcept;
     Field &operator=(String &value) noexcept;
     Field &operator=(Document &value) noexcept;
     Field &operator=(Document &&value) noexcept;
@@ -66,7 +66,9 @@ struct Field {
     Field &operator=(Array<Document> &value) noexcept;
     Field &operator=(bool value) noexcept;
 
-    Field operator[](const String &key) noexcept;
+    // TODO: Add String(); to get string and Number to get a number and toJson for document
+
+    Field operator[](String const &key) noexcept;
 };
 
 struct Document {
@@ -81,21 +83,21 @@ struct Document {
     Array<String>   Keys;
     Array<Document> Documents;
 
-    static const Expressions json_expres;
-    static const Expressions to_json_expres;
+    static Expressions const json_expres;
+    static Expressions const to_json_expres;
 
-    static const JsonFixedString fxs;
+    static JsonFixedString const fxs;
 
     Document() = default;
 
-    Field operator[](const String &key) noexcept {
+    Field operator[](String const &key) noexcept {
         Field _field;
         _field.Key     = key;
         _field.Storage = this;
         return _field;
     }
 
-    Field operator[](const UNumber &id) noexcept {
+    Field operator[](UNumber const &id) noexcept {
         Field _field;
 
         if (id < Keys.Size) {
@@ -125,7 +127,7 @@ struct Document {
         }
     }
 
-    void Drop(const String &key, UNumber offset, UNumber limit) noexcept {
+    void Drop(String const &key, UNumber offset, UNumber limit) noexcept {
         Entry *   _entry;
         Document *storage = GetSource(&_entry, key, offset, limit);
 
@@ -134,16 +136,16 @@ struct Document {
         }
     }
 
-    static bool ExtractID(UNumber &id, const String &key, UNumber offset, UNumber limit) noexcept;
+    static bool ExtractID(UNumber &id, String const &key, UNumber offset, UNumber limit) noexcept;
 
-    Document *GetSource(Entry **_entry, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
-    bool      GetString(String &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
-    bool      GetNumber(UNumber &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
-    bool      GetDouble(double &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
-    bool      GetBool(bool &value, const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
-    Document *GetDocument(const String &key, UNumber offset = 0, UNumber limit = 0) noexcept;
+    Document *GetSource(Entry **_entry, String const &key, UNumber offset = 0, UNumber limit = 0) noexcept;
+    bool      GetString(String &value, String const &key, UNumber offset = 0, UNumber limit = 0) noexcept;
+    bool      GetNumber(UNumber &value, String const &key, UNumber offset = 0, UNumber limit = 0) noexcept;
+    bool      GetDouble(double &value, String const &key, UNumber offset = 0, UNumber limit = 0) noexcept;
+    bool      GetBool(bool &value, String const &key, UNumber offset = 0, UNumber limit = 0) noexcept;
+    Document *GetDocument(String const &key, UNumber offset = 0, UNumber limit = 0) noexcept;
 
-    Entry *Exist(const UNumber hash, const UNumber level, const Array<Index> &_table) const noexcept {
+    Entry *Exist(UNumber const hash, UNumber const level, Array<Index> const &_table) const noexcept {
         UNumber id = ((hash + level) % HashBase);
 
         if ((_table.Size > id) && (_table[id].Hash != 0)) {
@@ -157,7 +159,7 @@ struct Document {
         return nullptr;
     }
 
-    void InsertIndex(const Index &_index, const UNumber level, Array<Index> &_table) noexcept {
+    void InsertIndex(Index const &_index, UNumber const level, Array<Index> &_table) noexcept {
         UNumber id = ((_index.Hash + level) % HashBase);
 
         if (_table.Size <= id) {
@@ -349,7 +351,7 @@ struct Document {
         return ss.Eject();
     }
 
-    static void _makeListNumber(Array<double> &_numbers, const String &content, const Match &item) noexcept {
+    static void _makeListNumber(Array<double> &_numbers, String const &content, Match const &item) noexcept {
         double  tn;
         UNumber end;
         UNumber i;
@@ -382,10 +384,10 @@ struct Document {
         }
     }
 
-    void Insert(const String &key, UNumber offset, UNumber limit, const VType type, void *ptr, const bool move,
-                const bool check = true) noexcept {
+    void Insert(String const &key, UNumber offset, UNumber limit, VType const type, void *ptr, bool const move,
+                bool const check = true) noexcept {
         UNumber       id    = 0;
-        const UNumber _hash = String::Hash(key, offset, (offset + limit));
+        UNumber const _hash = String::Hash(key, offset, (offset + limit));
         Entry *       _ent  = (!check) ? nullptr : Exist(_hash, 0, Table);
 
         if ((_ent == nullptr) || (_ent->Type != type)) {
@@ -493,7 +495,7 @@ struct Document {
         }
     }
 
-    static void _makeDocument(Document &document, const String &content, Array<Match> &items) noexcept {
+    static void _makeDocument(Document &document, String const &content, Array<Match> &items) noexcept {
         if (!document.Ordered) {
             Match *  key;
             Match *  data;
@@ -646,7 +648,7 @@ struct Document {
         items.Reset();
     }
 
-    static Document FromJSON(const String &content, bool comments = false) noexcept;
+    static Document FromJSON(String const &content, bool comments = false) noexcept;
 
     void Reset() noexcept {
         Entries.Reset();
@@ -658,11 +660,11 @@ struct Document {
     }
 };
 
-const Expressions     Document::json_expres    = Document::_getJsonExpres();
-const Expressions     Document::to_json_expres = Document::_getToJsonExpres();
-const JsonFixedString Document::fxs            = JsonFixedString();
+Expressions const     Document::json_expres    = Document::_getJsonExpres();
+Expressions const     Document::to_json_expres = Document::_getToJsonExpres();
+JsonFixedString const Document::fxs            = JsonFixedString();
 
-Document Document::FromJSON(const String &content, bool comments) noexcept {
+Document Document::FromJSON(String const &content, bool comments) noexcept {
     Document     document;
     Array<Match> items;
 
@@ -720,7 +722,7 @@ Document Document::FromJSON(const String &content, bool comments) noexcept {
     return document;
 }
 
-bool Document::ExtractID(UNumber &id, const String &key, UNumber offset, UNumber limit) noexcept {
+bool Document::ExtractID(UNumber &id, String const &key, UNumber offset, UNumber limit) noexcept {
     UNumber end = (offset + (limit - 1));
 
     while ((end > offset) && (key[--end] != L'[')) {
@@ -732,7 +734,7 @@ bool Document::ExtractID(UNumber &id, const String &key, UNumber offset, UNumber
 }
 
 // Key form can be: name, name[id1], name[id1][sub-id2], name[id1][sub-id2][sub-sub-idx]...
-Document *Document::GetSource(Entry **_entry, const String &key, UNumber offset, UNumber limit) noexcept {
+Document *Document::GetSource(Entry **_entry, String const &key, UNumber offset, UNumber limit) noexcept {
     if (limit == 0) {
         limit = key.Length - offset;
     }
@@ -789,11 +791,13 @@ Document *Document::GetSource(Entry **_entry, const String &key, UNumber offset,
     return nullptr;
 }
 
-bool Document::GetString(String &value, const String &key, UNumber offset, UNumber limit) noexcept {
+bool Document::GetString(String &value, String const &key, UNumber offset, UNumber limit) noexcept {
     value = L"";
 
     Entry *         _entry;
-    const Document *storage = GetSource(&_entry, key, offset, limit);
+    Document const *storage = GetSource(&_entry, key, offset, limit);
+
+    // TODO: return a JSON string if it's a Document of ordered or not ordered
 
     if (storage != nullptr) {
         if (!storage->Ordered) {
@@ -830,11 +834,11 @@ bool Document::GetString(String &value, const String &key, UNumber offset, UNumb
     return false;
 }
 
-bool Document::GetNumber(UNumber &value, const String &key, UNumber offset, UNumber limit) noexcept {
+bool Document::GetNumber(UNumber &value, String const &key, UNumber offset, UNumber limit) noexcept {
     value = 0;
 
     Entry *         _entry;
-    const Document *storage = GetSource(&_entry, key, offset, limit);
+    Document const *storage = GetSource(&_entry, key, offset, limit);
 
     if (storage != nullptr) {
         if (!storage->Ordered) {
@@ -869,11 +873,11 @@ bool Document::GetNumber(UNumber &value, const String &key, UNumber offset, UNum
     return false;
 }
 
-bool Document::GetDouble(double &value, const String &key, UNumber offset, UNumber limit) noexcept {
+bool Document::GetDouble(double &value, String const &key, UNumber offset, UNumber limit) noexcept {
     value = 0.0;
 
     Entry *         _entry;
-    const Document *storage = GetSource(&_entry, key, offset, limit);
+    Document const *storage = GetSource(&_entry, key, offset, limit);
 
     if (storage != nullptr) {
         if (!storage->Ordered) {
@@ -908,9 +912,9 @@ bool Document::GetDouble(double &value, const String &key, UNumber offset, UNumb
     return false;
 }
 
-bool Document::GetBool(bool &value, const String &key, UNumber offset, UNumber limit) noexcept {
+bool Document::GetBool(bool &value, String const &key, UNumber offset, UNumber limit) noexcept {
     Entry *         _entry;
-    const Document *storage = GetSource(&_entry, key, offset, limit);
+    Document const *storage = GetSource(&_entry, key, offset, limit);
 
     if (storage != nullptr) {
         if (!storage->Ordered) {
@@ -942,7 +946,7 @@ bool Document::GetBool(bool &value, const String &key, UNumber offset, UNumber l
     return false;
 }
 
-Document *Document::GetDocument(const String &key, UNumber offset, UNumber limit) noexcept {
+Document *Document::GetDocument(String const &key, UNumber offset, UNumber limit) noexcept {
     Entry *   _entry;
     Document *storage = GetSource(&_entry, key, offset, limit);
 
@@ -968,7 +972,7 @@ Field &Field::operator=(double value) noexcept {
     return *this;
 }
 
-Field &Field::operator=(const wchar_t *value) noexcept {
+Field &Field::operator=(wchar_t const *value) noexcept {
     if (Storage != nullptr) {
         if (value != nullptr) {
             String _s = value;
@@ -1039,7 +1043,7 @@ Field &Field::operator=(bool value) noexcept {
     return *this;
 }
 
-Field Field::operator[](const String &key) noexcept {
+Field Field::operator[](String const &key) noexcept {
     if (Storage != nullptr) {
         Document *document = Storage->GetDocument(Key, 0, Key.Length);
 

@@ -24,25 +24,25 @@ struct Expression;
 // Expressions def
 using Expressions = Array<Expression *>;
 // Parse Callback
-using _PARSECB = String(const String &, const Match &);
+using _PARSECB = String(String const &, Match const &);
 
-static void Split(Array<Match> &items, const String &content, UNumber index, UNumber to) noexcept;
+static void Split(Array<Match> &items, String const &content, UNumber index, UNumber to) noexcept;
 /////////////////////////////////
 // Expressions flags
 struct Flags {
-    static const unsigned short NOTHING       = 0;    // ... NAN.
-    static const unsigned short COMPACT       = 1;    // Processing only the content inside Keywords Parse().
-    static const unsigned short NOPARSE       = 2;    // Match a Keyword but don't process it inside Parse().
-    static const unsigned short IGNORE        = 4;    // Match a Keyword but don't add it.
-    static const unsigned short TRIM          = 8;    // Trim the match before adding it.
-    static const unsigned short ONCE          = 16;   // Will stop searching after the first match.
-    static const unsigned short POP           = 32;   // Search again with NestExprs if the match fails (See ALU.cpp).
-    static const unsigned short BUBBLE        = 64;   // Parse nested matches.
-    static const unsigned short SPLIT         = 128;  // Split a match at a keyword.
-    static const unsigned short SPLITNEST     = 256;  // Split a Nested match.
-    static const unsigned short GROUPSPLIT    = 512;  // Puts split matches into NestMatch, for one callback execution.
-    static const unsigned short SPLITROOTONLY = 1024; // e.g. IF-ELSE (Template.cpp)
-    static const unsigned short DROPEMPTY     = 2048; // Trim the match before adding it (spaces and newlines).
+    static unsigned const short NOTHING       = 0;    // ... NAN.
+    static unsigned const short COMPACT       = 1;    // Processing only the content inside Keywords Parse().
+    static unsigned const short NOPARSE       = 2;    // Match a Keyword but don't process it inside Parse().
+    static unsigned const short IGNORE        = 4;    // Match a Keyword but don't add it.
+    static unsigned const short TRIM          = 8;    // Trim the match before adding it.
+    static unsigned const short ONCE          = 16;   // Will stop searching after the first match.
+    static unsigned const short POP           = 32;   // Search again with NestExprs if the match fails (See ALU.cpp).
+    static unsigned const short BUBBLE        = 64;   // Parse nested matches.
+    static unsigned const short SPLIT         = 128;  // Split a match at a keyword.
+    static unsigned const short SPLITNEST     = 256;  // Split a Nested match.
+    static unsigned const short GROUPSPLIT    = 512;  // Puts split matches into NestMatch, for one callback execution.
+    static unsigned const short SPLITROOTONLY = 1024; // e.g. IF-ELSE (Template.cpp)
+    static unsigned const short DROPEMPTY     = 2048; // Trim the match before adding it (spaces and newlines).
 
     // TODO: Add Flag resume
 };
@@ -70,8 +70,8 @@ struct Match {
     Array<Match> NestMatch; // To hold sub matches inside a match.
 };
 /////////////////////////////////
-static void _search(Array<Match> &items, const String &content, const Expressions &exprs, UNumber index, UNumber limit,
-                    const UNumber max, const UNumber level) noexcept {
+static void _search(Array<Match> &items, String const &content, Expressions const &exprs, UNumber index, UNumber limit,
+                    UNumber const max, UNumber const level) noexcept {
     bool        LOCKED      = false; // To keep matching the end of the current expression.
     bool        SPLIT_IT    = false; // To keep tracking a split match.
     bool        OVERDRIVE   = false; // To achieving nesting.
@@ -82,7 +82,7 @@ static void _search(Array<Match> &items, const String &content, const Expression
     UNumber     end_at; // Temp offset.
     Match       _item;  // Temp match
 
-    const UNumber started = index;
+    UNumber const started = index;
 
     for (;;) {
         if (content[index] == ce->Keyword[0]) {
@@ -127,7 +127,7 @@ static void _search(Array<Match> &items, const String &content, const Expression
                     if ((ce->NestExprs.Size != 0) && (nest_offset != index)) {
 
                         // Start a new search inside the current match.
-                        const UNumber _size = _item.NestMatch.Size;
+                        UNumber const _size = _item.NestMatch.Size;
                         _search(_item.NestMatch, content, ce->NestExprs, nest_offset, index, ((max == 0) ? limit : max),
                                 (level + 1));
 
@@ -283,7 +283,7 @@ static void _search(Array<Match> &items, const String &content, const Expression
     // Friday, January 18, 2019
 }
 /////////////////////////////////
-inline static Array<Match> Search(const String &content, const Expressions &exprs, UNumber index = 0, UNumber length = 0,
+inline static Array<Match> Search(String const &content, Expressions const &exprs, UNumber index = 0, UNumber length = 0,
                                   UNumber max = 0) noexcept {
     Array<Match> items;
 
@@ -300,7 +300,7 @@ inline static Array<Match> Search(const String &content, const Expressions &expr
     return items;
 }
 /////////////////////////////////
-static String Parse(const String &content, const Array<Match> &items, UNumber index = 0, UNumber length = 0) noexcept {
+static String Parse(String const &content, Array<Match> const &items, UNumber index = 0, UNumber length = 0) noexcept {
     if (length == 0) {
         length = (content.Length - index);
     }
@@ -370,7 +370,7 @@ static String Parse(const String &content, const Array<Match> &items, UNumber in
 } // namespace Engine
 
 /////////////////////////////////
-static void Engine::Split(Array<Match> &items, const String &content, const UNumber index, const UNumber to) noexcept {
+static void Engine::Split(Array<Match> &items, String const &content, UNumber const index, UNumber const to) noexcept {
     Match *tmp = nullptr;
 
     if (items.Size == 1) {

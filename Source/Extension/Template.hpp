@@ -2,7 +2,7 @@
 /**
  * Qentem Template
  *
- * @brief     Generate dynamic HTML code from a template.
+ * @brief     Generates dynamic HTML code from a template.
  *
  * @author    Hani Ammar <hani.code@outlook.com>
  * @copyright 2019 Hani Ammar
@@ -20,11 +20,11 @@ namespace Qentem {
 struct Template {
     static Document *Data;
 
-    static const Expressions TagsVars;
-    static const Expressions TagsQuotes;
-    static const Expressions TagsHead;
+    static Expressions const TagsVars;
+    static Expressions const TagsQuotes;
+    static Expressions const TagsHead;
 
-    static const Expressions TagsAll; // All
+    static Expressions const TagsAll; // All
 
     static Expressions _getTagsVara() noexcept {
         static Expression TagVar;
@@ -131,7 +131,7 @@ struct Template {
         return Expressions().Add(TagsVars).Add(&TagIif).Add(&TagIf).Add(&TagLoop);
     }
 
-    static String Render(const String &content, Document *data) noexcept {
+    static String Render(String const &content, Document *data) noexcept {
         Template::Data = data;
         return Engine::Parse(content, Engine::Search(content, Template::TagsAll));
     }
@@ -139,7 +139,7 @@ struct Template {
     // e.g. {v:var_name}
     // e.g. {v:var_name[id]}
     // Nest: {v:var_{v:var2_{v:var3_id}}}
-    static String RenderVar(const String &block, const Match &item) noexcept {
+    static String RenderVar(String const &block, Match const &item) noexcept {
         String value;
         if (Template::Data->GetString(value, block, (item.Offset + item.OLength),
                                       (item.Length - (item.CLength + item.OLength)))) {
@@ -154,8 +154,8 @@ struct Template {
     // {iif case="{v:var_five} == 5" true="5" false="no"}
     // {iif case="{v:var_five} == 5" true="{v:var_five} is equal to 5" false="no"}
     // {iif case="3 == 3" true="Yes" false="No"}
-    static String RenderIIF(const String &block, const Match &item) noexcept {
-        const Array<Match> &&items = Engine::Search(block, Template::TagsQuotes);
+    static String RenderIIF(String const &block, Match const &item) noexcept {
+        Array<Match> const &&items = Engine::Search(block, Template::TagsQuotes);
         if (items.Size == 0) {
             return L"";
         }
@@ -208,9 +208,9 @@ struct Template {
     // <if case="{case}">html code1 <else /> html code2</if>
     // <if case="{case1}">html code1 <elseif case={case2} /> html code2</if>
     // <if case="{case}">html code <if case="{case2}" />additional html code</if></if>
-    static bool EvaluateIF(const String &block, const Match &if_case) noexcept {
-        const UNumber offset = (if_case.Offset + if_case.OLength);
-        const UNumber length = (if_case.Length - (if_case.OLength + if_case.CLength));
+    static bool EvaluateIF(String const &block, Match const &if_case) noexcept {
+        UNumber const offset = (if_case.Offset + if_case.OLength);
+        UNumber const length = (if_case.Length - (if_case.OLength + if_case.CLength));
 
         String statement = Engine::Parse(block, Engine::Search(block, Template::TagsVars, offset, (offset + length)),
                                          offset, (offset + length));
@@ -218,11 +218,11 @@ struct Template {
         return (ALU::Evaluate(statement) != 0.0);
     }
 
-    static String RenderIF(const String &block, const Match &item) noexcept {
+    static String RenderIF(String const &block, Match const &item) noexcept {
         // Nothing is processed inside the match before checking if the condition is TRUE.
         bool _true = false;
 
-        const Array<Match> &&_subMatch =
+        Array<Match> const &&_subMatch =
             Engine::Search(block, Template::TagsHead, item.Offset, (item.Offset + item.Length));
 
         if (_subMatch.Size != 0) {
@@ -275,15 +275,15 @@ struct Template {
     // <loop set="abc2" var="loopId">
     //     <span>loopId): -{v:abc2[loopId]}</span>
     // </loop>
-    static String RenderLoop(const String &block, const Match &item) noexcept {
+    static String RenderLoop(String const &block, Match const &item) noexcept {
         // To match: <loop (set="abc2" var="loopId")>
-        const Array<Match> &&_subMatch =
+        Array<Match> const &&_subMatch =
             Engine::Search(block, Template::TagsHead, item.Offset, (item.Offset + item.Length));
 
         if ((_subMatch.Size != 0) && (_subMatch[0].NestMatch.Size != 0)) {
             String       name;
             String       var_id;
-            const Match *sm = &(_subMatch[0]);
+            Match const *sm = &(_subMatch[0]);
 
             // set="(Array_name)" var="(var_id)"
             Match * m;
@@ -326,9 +326,9 @@ struct Template {
         return L"";
     }
 
-    static String Repeat(const String &content, const String &name, const String &var_name, Document *storage) noexcept {
+    static String Repeat(String const &content, String const &name, String const &var_name, Document *storage) noexcept {
         Entry *         _entry;
-        const Document *_storage = storage->GetSource(&_entry, name, 0, name.Length);
+        Document const *_storage = storage->GetSource(&_entry, name, 0, name.Length);
 
         if (_storage == nullptr) {
             return L"";
@@ -345,7 +345,7 @@ struct Template {
         Expressions ser;
         ser.Add(&ex);
 
-        const Array<Match> &&items = Engine::Search(content, ser);
+        Array<Match> const &&items = Engine::Search(content, ser);
 
         if (_entry->Type == VType::DocumentT) {
             if (_storage->Ordered) {
@@ -383,10 +383,10 @@ struct Template {
 
 Document *Template::Data = nullptr;
 
-const Expressions Template::TagsVars   = Template::_getTagsVara();
-const Expressions Template::TagsQuotes = Template::_getTagsQuotes();
-const Expressions Template::TagsHead   = Template::_getTagsHead();
-const Expressions Template::TagsAll    = Template::_getTagsAll();
+Expressions const Template::TagsVars   = Template::_getTagsVara();
+Expressions const Template::TagsQuotes = Template::_getTagsQuotes();
+Expressions const Template::TagsHead   = Template::_getTagsHead();
+Expressions const Template::TagsAll    = Template::_getTagsAll();
 
 } // namespace Qentem
 #endif

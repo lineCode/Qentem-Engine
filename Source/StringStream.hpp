@@ -1,6 +1,6 @@
 
 /**
- * Qentem String
+ * Qentem String Stream
  *
  * @brief     String Stream object for Qentem Engine.
  *
@@ -27,7 +27,7 @@ struct StringBit {
 class StringStream {
   public:
     Array<String>         _strings;
-    Array<const String *> p_strings;
+    Array<String const *> p_strings;
     Array<StringStream>   collections;
 
     Array<StringBit> bits;
@@ -64,7 +64,7 @@ class StringStream {
         }
     }
 
-    void operator+=(const String &src) noexcept {
+    void operator+=(String const &src) noexcept {
         if (src.Length != 0) {
             Length += src.Length;
 
@@ -78,7 +78,7 @@ class StringStream {
         }
     }
 
-    void Share(const String *src) noexcept {
+    void Share(String const *src) noexcept {
         if (src->Length != 0) {
             Length += src->Length;
 
@@ -93,7 +93,7 @@ class StringStream {
     }
 
     static void _pack(StringStream &_ss, String &buk) noexcept {
-        const String *sstr;
+        String const *sstr;
         UNumber       j = 0;
 
         for (UNumber i = 0; i < _ss.bits.Size; i++) {

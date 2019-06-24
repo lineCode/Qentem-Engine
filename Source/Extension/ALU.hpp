@@ -22,8 +22,8 @@ using Qentem::Engine::Flags;
 using Qentem::Engine::Match;
 
 struct ALU {
-    static const Expressions ParensExprs;
-    static const Expressions MathExprs;
+    static Expressions const ParensExprs;
+    static Expressions const MathExprs;
 
     static Expressions getMathExprs() noexcept {
         static Expression MathExp; // 1
@@ -126,25 +126,27 @@ struct ALU {
     }
 
     // e.g. ( 4 + 3 ), ( 2 + ( 4 + ( 1 + 2 ) + 1 ) * 5 - 3 - 2 )
-    static String ParenthesisCallback(const String &block, const Match &item) noexcept {
+    static String ParenthesisCallback(String const &block, Match const &item) noexcept {
         return Engine::Parse(block, Engine::Search(block, ALU::MathExprs, item.OLength, (block.Length - item.CLength)),
                              item.OLength, (block.Length - item.CLength));
     }
 
-    static void NestNumber(const String &block, const Match &item, double &number) noexcept {
+    static void NestNumber(String const &block, Match const &item, double &number) noexcept {
         String r = Engine::Parse(block, item.NestMatch, item.Offset, (item.Offset + item.Length));
         if (r.Length != 0) {
             String::ToNumber(r, number);
         }
     }
 
-    static String EqualCallback(const String &block, const Match &item) noexcept {
+    static String EqualCallback(String const &block, Match const &item) noexcept {
         double number1 = 0.0;
         double number2 = 0.0;
 
         Match *m2;
 
-        const Match *m1    = &(item.NestMatch[0]);
+        // TODO: add _string.Compare(src, index, limit);
+
+        Match const *m1    = &(item.NestMatch[0]);
         UNumber      op_id = m1->Expr->ID;
 
         if (m1->Length != 0) {
@@ -188,13 +190,13 @@ struct ALU {
         return String::FromNumber(number1);
     }
 
-    static String MultiplicationCallback(const String &block, const Match &item) noexcept {
+    static String MultiplicationCallback(String const &block, Match const &item) noexcept {
         double number1 = 0.0;
         double number2 = 0.0;
 
         Match *m2;
 
-        const Match *m1    = &(item.NestMatch[0]);
+        Match const *m1    = &(item.NestMatch[0]);
         UNumber      op_id = m1->Expr->ID;
 
         if (m1->Length != 0) {
@@ -212,7 +214,7 @@ struct ALU {
                     case 1:
                         if (number2 != 0.0) {
                             // if (number2 > 1) {
-                            const UNumber times = static_cast<UNumber>(number2);
+                            UNumber const times = static_cast<UNumber>(number2);
                             for (UNumber k = 1; k < times; k++) {
                                 number1 *= number1;
                                 // }
@@ -245,13 +247,13 @@ struct ALU {
         return String::FromNumber(number1);
     }
 
-    static String AdditionCallback(const String &block, const Match &item) noexcept {
+    static String AdditionCallback(String const &block, Match const &item) noexcept {
         double number1 = 0.0;
         double number2 = 0.0;
 
         Match *m2;
 
-        const Match *m1    = &(item.NestMatch[0]);
+        Match const *m1    = &(item.NestMatch[0]);
         UNumber      op_id = m1->Expr->ID;
 
         if (m1->Length != 0) {
@@ -326,8 +328,8 @@ struct ALU {
     }
 };
 
-const Expressions ALU::ParensExprs = ALU::getParensExprs();
-const Expressions ALU::MathExprs   = ALU::getMathExprs();
+Expressions const ALU::ParensExprs = ALU::getParensExprs();
+Expressions const ALU::MathExprs   = ALU::getMathExprs();
 
 } // namespace Qentem
 

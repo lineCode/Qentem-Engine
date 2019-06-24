@@ -9,54 +9,66 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include <Extension/ALU.hpp>
-#include <Extension/Test.hpp>
+#include "Test.hpp"
 #include <ctime>
+#include <fstream>
 #include <iostream>
 
 using Qentem::Array;
+using Qentem::Document;
 using Qentem::String;
 using Qentem::StringStream;
 using Qentem::UNumber;
 using Qentem::Engine::Match;
 using Qentem::Test::TestBit;
 
-static bool TestNumbersConv() noexcept;
-static bool run_tests(const String &name, const Array<TestBit> &bits, const bool Dump_express,
-                      const bool break_on_err) noexcept;
+static UNumber const TimesToRun = 1;
+static bool const    StreasTest = false;
+// static bool const StreasTest = true;
+
+static String   read_file(char const *fullpath) noexcept;
+static Document get_document() noexcept;
+static bool     run_tests(String const &name, Array<TestBit> const &bits, bool dump_express, bool break_on_err) noexcept;
+static bool     NumbersConvTest() noexcept;
+static bool     JSONTest() noexcept;
 
 int main() {
-    bool          pass  = false;
-    const UNumber times = 1;
+    bool pass         = false;
+    bool TestEngine   = false;
+    bool NumbersConv  = false;
+    bool TestALU      = false;
+    bool TestTemplate = false;
+    bool TestJSON     = false;
 
-    const bool TestEngine   = true;
-    const bool NumbersConv  = true;
-    const bool TestALU      = true;
-    const bool TestTemplate = true;
+    // This way is faster just to comment out the line instead of changing the value
+    TestEngine   = true;
+    NumbersConv  = true;
+    TestALU      = true;
+    TestTemplate = true;
+    TestJSON     = true;
 
-    Array<TestBit> bits = Array<TestBit>();
-    for (UNumber i = 0; i < times; i++) {
+    Array<TestBit> bits;
+
+    UNumber total = static_cast<UNumber>(clock());
+
+    for (UNumber i = 0; i < TimesToRun; i++) {
         if (TestEngine) {
             // Core Engine Tests
             bits = Qentem::Test::GetEngineBits();
             pass = run_tests(L"Engine", bits, false, true);
             Qentem::Test::CleanBits(bits); // TODO: Implement a destructor
-
             if (!pass) {
                 break;
             }
-
             std::wcout << "\n///////////////////////////////////////////////\n";
         }
 
         if (NumbersConv) {
             // Number Conversion Tests
-            pass = TestNumbersConv();
-
+            pass = NumbersConvTest();
             if (!pass) {
                 break;
             }
-
             std::wcout << "\n///////////////////////////////////////////////\n";
         }
 
@@ -64,11 +76,9 @@ int main() {
             // Arithmetic & logic Evaluation Tests
             bits = Qentem::Test::GetALUBits();
             pass = run_tests(L"Arithmetic & Logic Evaluation", bits, false, true);
-
             if (!pass) {
                 break;
             }
-
             std::wcout << "\n///////////////////////////////////////////////\n";
         }
 
@@ -76,11 +86,27 @@ int main() {
             // Template Tests
             bits = Qentem::Test::GetTemplateBits();
             pass = run_tests(L"Template", bits, false, true);
+            if (!pass) {
+                break;
+            }
+            std::wcout << "\n///////////////////////////////////////////////\n";
+        }
+
+        if (TestJSON) {
+            // JSON Tests
+            pass = JSONTest();
+            if (!pass) {
+                break;
+            }
+            std::wcout << "\n///////////////////////////////////////////////\n";
         }
     }
 
+    total            = (static_cast<UNumber>(clock()) - total);
+    String time_took = String::FromNumber((static_cast<double>(total) / CLOCKS_PER_SEC), 1, 3, 3);
+
     if (pass) {
-        std::wcout << L"\n ALL GOOD!\n\n";
+        std::wcout << L"\n ALL GOOD. Took: " << time_took.Str << L"s\n\n";
     }
 
     // std::getwchar();
@@ -88,11 +114,10 @@ int main() {
     return 10;
 }
 
-static bool run_tests(const String &name, const Array<TestBit> &bits, const bool Dump_express,
-                      const bool break_on_err) noexcept {
+static bool run_tests(String const &name, Array<TestBit> const &bits, bool dump_express, bool break_on_err) noexcept {
 
-    const UNumber times        = 1; // 10000 To slow it down!
-    const UNumber start_at     = 0;
+    UNumber const times        = StreasTest ? 10000 : 1;
+    UNumber const start_at     = 0;
     UNumber       counter      = 0;
     UNumber       errors       = 0;
     UNumber       total        = 0;
@@ -125,7 +150,6 @@ static bool run_tests(const String &name, const Array<TestBit> &bits, const bool
         ++count;
 
         if (bits[i].Expected.Size != bits[i].Content.Size) {
-
             std::wcout << L"Check Expected & Content Size @" << String::FromNumber(bits[i].Line).Str << L'\n';
             return false;
         }
@@ -187,7 +211,7 @@ static bool run_tests(const String &name, const Array<TestBit> &bits, const bool
                 ss += L"  Matches:\n";
                 ss += Qentem::Test::DumpMatches(bits[i].Content[t], matches, L"    ");
 
-                if (Dump_express) {
+                if (dump_express) {
                     ss += L"  Expressions: ";
                     ss += Qentem::Test::DumpExpressions(bits[i].Exprs, L"    ");
                 }
@@ -232,17 +256,20 @@ static bool run_tests(const String &name, const Array<TestBit> &bits, const bool
     return (errors == 0);
 }
 
-static bool TestNumbersConv() noexcept {
-    struct N_test {
-        double num;
-        String result;
-    };
+struct NC_test {
+    double num    = 0;
+    String result = L"";
 
-    Array<N_test> test;
-    const UNumber times       = 1; // 100000 To slow it down!
-    UNumber       ticks       = 0;
-    UNumber       total_ticks = 0;
-    bool          pass        = false;
+    NC_test() = default;
+    NC_test(double n, String r) : num(n), result(static_cast<String &&>(r)){};
+};
+
+static bool NumbersConvTest() noexcept {
+    Array<NC_test> test;
+    UNumber const  times       = StreasTest ? 100000 : 1;
+    UNumber        ticks       = 0;
+    UNumber        total_ticks = 0;
+    bool           pass        = false;
     ////////////////////////////////
 
     test.Add({2.0000000000009, L"2.0000000000009"});
@@ -331,4 +358,124 @@ static bool TestNumbersConv() noexcept {
 
     ////////////////////////////////
     return true;
+}
+
+static bool JSONTest() noexcept {
+    UNumber const times = StreasTest ? 1000 : 1;
+    UNumber       took  = 0;
+    String        final = L"";
+
+    std::wcout << L"\n #JSON Tests:\n";
+
+    String   json_content = read_file("./Tests/temp.json");
+    Document data         = get_document();
+
+    for (UNumber i = 0; i < 10; i++) {
+        std::wcout << " Importing... ";
+        took = static_cast<UNumber>(clock());
+        for (UNumber y = 1; y <= times; y++) {
+            data = Document::FromJSON(json_content);
+            // Qentem::Engine::Search(read_file("./Tests/bigjson.json"), Document::json_expres);
+        }
+        took = (static_cast<UNumber>(clock()) - took);
+        std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << ' ';
+
+        std::wcout << " Exporting... ";
+        took = static_cast<UNumber>(clock());
+        for (UNumber y = 1; y <= times; y++) {
+            final = data.ToJSON();
+        }
+        took = (static_cast<UNumber>(clock()) - took);
+        std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << '\n';
+    }
+
+    if ((json_content.Length - 1) == final.Length) {
+        --json_content.Length; // A new line mark at the end of the file \n
+    }
+
+    if (final == json_content) {
+        std::wcout << "\n JSON looks good!\n";
+        return true;
+    }
+
+    std::wcout << "\n JSON is borken!\n\n";
+    std::wcout << json_content.Str;
+    std::wcout << "\n-End-\n";
+    std::wcout << "\n-Returned-\n\n";
+    std::wcout << final.Str;
+    std::wcout << "\n\n-End-\n";
+
+    return false;
+}
+
+static Document get_document() noexcept {
+    Document data = Document();
+
+    data[L"var1"] = L"\"1\"";
+    // data[0]        = 44.0;
+    data[L"PP"] = L"gg";
+    // String sss     = data[L"PP"].GetString();
+    data[L"nu"]    = nullptr;
+    data[L"bool"]  = false;
+    data[L"bool2"] = true;
+    data[L"&&"]    = 1000.0;
+
+    data[L"var2"]       = L"11";
+    data[L"var2"]       = L"2"; // Testing override .
+    data[L"var3"]       = L"3";
+    data[L"var4"]       = L"4";
+    data[L"var5"]       = L"5";
+    data[L"num34"]      = Array<String>().Add(L'3').Add(L'4');
+    data[L"var_string"] = L"image";
+    data[L"engine"]     = L"Qentem";
+    data[L"abc1"]       = Array<String>().Add(L'B').Add(L'C').Add(L'D').Add(L'A');
+    data[L"abc2"]       = Array<String>().Add(L'E').Add(L'F').Add(L'A');
+    data[L"numbers"]    = Array<double>().Add(0).Add(1).Add(2).Add(3).Add(4).Add(5);
+    data[L"empty"]      = L"";
+    data[L"math"] = L"((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) - (-1) + 2";
+
+    data[L"abc"]         = Document();
+    data[L"abc"][L'B']   = L"b";
+    data[L"abc"][L"@@"]  = 100.0;
+    data[L"abc"][L'A']   = L"a";
+    data[L"abc"][L'C']   = L"c";
+    data[L"abc"][L'D']   = L"d";
+    data[L"abc"][L'E']   = Array<String>().Add(L'O').Add(L"K!");
+    data[L"abc"][L"A-Z"] = L"ABCDEFGHIGKLMNOBQRST.....";
+
+    data[L"multi"]                = Document();
+    data[L"multi"][L"arr1"]       = Document();
+    data[L"multi"][L"arr1"][L'E'] = Array<String>().Add(L'O').Add(L"K!");
+    data[L"multi"][L"arr2"]       = Array<String>().Add(L'B').Add(L'C').Add(L'D').Add(L'A');
+    data[L"multi"][L'C']          = L"cool";
+
+    return data;
+}
+
+static String read_file(char const *fullpath) noexcept {
+    String content = L"";
+
+    std::ifstream file(fullpath, std::ios::ate | std::ios::out);
+    if (file.is_open()) {
+        std::streampos size = file.tellg();
+        file.seekg(0, std::ios::beg);
+        UNumber u_size = (UNumber(size) + 1);
+
+        if (u_size != 0) {
+            char *_tmp;
+            Qentem::Memory<char>::Allocate(&_tmp, u_size);
+
+            file.read(_tmp, size);
+            _tmp[(u_size - 1)] = L'\0';
+
+            content = String(_tmp);
+            Qentem::Memory<char>::Deallocate(&_tmp);
+        }
+
+        file.close();
+    } else {
+        std::wcout << '\n' << fullpath << L" does not exist!\n";
+    }
+
+    return content;
 }

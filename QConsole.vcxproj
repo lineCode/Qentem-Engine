@@ -174,7 +174,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tests\Test.cpp" />
-    <!-- <ClCompile Include="Tests\JSONTest.cpp" /> -->
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

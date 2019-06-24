@@ -24,14 +24,14 @@ struct String {
 
     String() = default;
 
-    static void Copy(String &des, const wchar_t *src_p, UNumber start_at, const UNumber ln) noexcept {
+    static void Copy(String &des, wchar_t const *src_p, UNumber start_at, UNumber const ln) noexcept {
         // Copy any existing characters
         UNumber j = 0;
         if ((des.Capacity == 0) || (ln > (des.Capacity - des.Length))) {
             des.Capacity = (ln + des.Length);
 
             wchar_t *_tmp = des.Str;
-            Memory::Allocate<wchar_t>(&des.Str, (des.Capacity + 1));
+            Memory<wchar_t>::Allocate(&des.Str, (des.Capacity + 1));
 
             for (UNumber i = 0; i < des.Length;) {
                 des[i] = _tmp[j];
@@ -39,7 +39,7 @@ struct String {
                 ++i;
             }
 
-            Memory::Deallocate<wchar_t>(&_tmp);
+            Memory<wchar_t>::Deallocate(&_tmp);
         }
 
         // Add the new characters
@@ -55,60 +55,62 @@ struct String {
         des.Length = (ln + des.Length);
     }
 
-    String(const wchar_t str) noexcept { // one wchar
+    String(wchar_t const str) noexcept { // one wchar
+        Capacity = 1;
+
+        Memory<wchar_t>::Allocate(&Str, 2); // 1 for /0
+
         if (str != L'\0') {
-            Length = Capacity = 1;
-
-            Memory::Allocate<wchar_t>(&Str, 2); // 1 for /0
-
-            Str[0] = str;
-            Str[1] = L'\0';
+            Str[Length++] = str;
         }
+
+        Str[Length] = L'\0';
     }
 
-    String(const char str) noexcept { // one char
-        if (str != '\0') {
-            Length = Capacity = 1;
+    String(char const str) noexcept { // one char
+        Length = Capacity = 1;
 
-            Memory::Allocate<wchar_t>(&Str, 2);
+        Memory<wchar_t>::Allocate(&Str, 2);
 
-            Str[0] = static_cast<wchar_t>(str);
-            Str[1] = L'\0';
+        if (str != L'\0') {
+            Str[Length++] = static_cast<wchar_t>(str);
         }
+
+        Str[Length] = L'\0';
     }
 
-    String(const wchar_t *str) noexcept {
+    String(wchar_t const *str) noexcept {
         UNumber _length = 0;
         while (str[_length] != L'\0') {
             ++_length;
         };
 
-        if (_length != 0) {
-            Length = Capacity = _length;
+        Capacity = _length;
 
-            Memory::Allocate<wchar_t>(&Str, (_length + 1));
+        Memory<wchar_t>::Allocate(&Str, (_length + 1));
 
-            for (UNumber j = 0; j <= _length; j++) {
-                Str[j] = str[j];
-            }
+        for (; Length < _length; Length++) {
+            Str[Length] = str[Length];
         }
+
+        Str[Length] = L'\0';
     }
 
-    String(const char *str) noexcept {
+    String(char const *str) noexcept {
         UNumber _length = 0;
         while (str[_length] != L'\0') {
             ++_length;
         };
 
-        if (_length != 0) {
-            Length = Capacity = _length;
+        Capacity = _length;
 
-            Memory::Allocate<wchar_t>(&Str, (_length + 1)); // 1 for /0
+        Memory<wchar_t>::Allocate(&Str, (_length + 1));
 
-            for (UNumber j = 0; j <= _length; j++) {
-                Str[j] = static_cast<wchar_t>(str[j]);
-            }
+        for (; Length < _length; Length++) {
+            Str[Length] = static_cast<wchar_t>(str[Length]);
         }
+
+        Str[Length] = L'\0';
     }
 
     String(String &&src) noexcept { // Move
@@ -120,19 +122,25 @@ struct String {
             src.Capacity = 0;
             src.Length   = 0;
             src.Str      = nullptr;
+
+            return;
         }
+
+        Capacity = 1;
+        Memory<wchar_t>::Allocate(&Str, 1); // 1 for /0
+        Str[Length] = L'\0';
     }
 
-    String(const String &src) noexcept { // Copy
-        if (src.Length != 0) {
-            Length = Capacity = src.Length;
+    String(String const &src) noexcept { // Copy
+        Capacity = src.Length;
 
-            Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
+        Memory<wchar_t>::Allocate(&Str, (Capacity + 1));
 
-            for (UNumber j = 0; j <= Capacity; j++) {
-                Str[j] = src[j];
-            }
+        for (; Length < src.Length; Length++) {
+            Str[Length] = static_cast<wchar_t>(src[Length]);
         }
+
+        Str[Length] = L'\0';
     }
 
     ~String() noexcept {
@@ -150,7 +158,7 @@ struct String {
     }
 
     inline void Reset() noexcept {
-        Memory::Deallocate<wchar_t>(&Str);
+        Memory<wchar_t>::Deallocate(&Str);
 
         Capacity = 0;
         Length   = 0;
@@ -164,36 +172,36 @@ struct String {
         return _str;
     }
 
-    String &operator=(const wchar_t src) noexcept { // Copy
-        if (src != L'\0') {
-            if (Capacity == 0) {
-                Resize(1);
-            }
+    String &operator=(wchar_t const str) noexcept { // Copy
+        Length = 0;
 
-            Length = 1;
-            Str[0] = src;
-            Str[1] = L'\0';
-        };
+        if (Capacity == 0) {
+            Resize(1);
+        }
+
+        if (str != L'\0') {
+            Str[Length++] = str;
+        }
+
+        Str[Length] = L'\0';
 
         return *this;
     }
 
-    String &operator=(const wchar_t *src) noexcept { // Copy
+    String &operator=(wchar_t const *src) noexcept { // Copy
         UNumber _length = 0;
         while (src[_length] != L'\0') {
             ++_length;
         };
 
-        if (_length != 0) {
-            Copy(*this, src, 0, _length);
-        }
+        Copy(*this, src, 0, _length);
 
         return *this;
     }
 
     String &operator=(String &&src) noexcept { // Move
         if (this != &src) {
-            Memory::Deallocate<wchar_t>(&Str);
+            Memory<wchar_t>::Deallocate(&Str);
 
             Str      = src.Str;
             Capacity = src.Capacity;
@@ -207,11 +215,11 @@ struct String {
         return *this;
     }
 
-    String &operator=(const String &src) noexcept { // Copy
+    String &operator=(String const &src) noexcept { // Copy
         if (this != &src) {
             if (Capacity < src.Length) {
-                Memory::Deallocate<wchar_t>(&Str);
-                Memory::Allocate<wchar_t>(&Str, (src.Length + 1));
+                Memory<wchar_t>::Deallocate(&Str);
+                Memory<wchar_t>::Allocate(&Str, (src.Length + 1));
 
                 Length   = src.Length;
                 Capacity = src.Length;
@@ -229,7 +237,7 @@ struct String {
         return *this;
     }
 
-    String &operator+=(const wchar_t src) noexcept { // Appand a string
+    String &operator+=(wchar_t const src) noexcept { // Appand a string
         if (Length == Capacity) {
             Resize((Length + 1) * 3);
         }
@@ -240,49 +248,41 @@ struct String {
         return *this;
     }
 
-    String &operator+=(const wchar_t *src) noexcept { // Appand a string
+    String &operator+=(wchar_t const *src) noexcept { // Appand a string
         UNumber _length = 0;
         while (src[_length] != L'\0') {
             ++_length;
         };
 
-        if (_length != 0) {
-            Copy(*this, src, this->Length, _length);
-        }
+        Copy(*this, src, this->Length, _length);
 
         return *this;
     }
 
     String &operator+=(String &&src) noexcept { // Move
-        if (src.Length != 0) {
-            Copy(*this, src.Str, Length, src.Length);
+        Copy(*this, src.Str, Length, src.Length);
 
-            Memory::Deallocate<wchar_t>(&src.Str);
+        Memory<wchar_t>::Deallocate(&src.Str);
 
-            src.Str = nullptr;
+        src.Str = nullptr;
 
-            src.Capacity = 0;
-            src.Length   = 0;
-        }
+        src.Capacity = 0;
+        src.Length   = 0;
 
         return *this;
     }
 
-    inline String &operator+=(const String &src) noexcept { // Appand a string
-        if (src.Length != 0) {
-            Copy(*this, src.Str, Length, src.Length);
-        }
+    inline String &operator+=(String const &src) noexcept { // Appand a string
+        Copy(*this, src.Str, Length, src.Length);
 
         return *this;
     }
 
-    String operator+(const wchar_t src) const noexcept {
+    String operator+(wchar_t const src) const noexcept {
         String ns;
         ns.SetLength(Length + 1);
 
-        if (Length != 0) {
-            Copy(ns, Str, 0, Length);
-        }
+        Copy(ns, Str, 0, Length);
 
         ns[ns.Length++] = src;
         ns[ns.Length]   = L'\0';
@@ -290,7 +290,7 @@ struct String {
         return ns;
     }
 
-    String operator+(const wchar_t *src) const noexcept {
+    String operator+(wchar_t const *src) const noexcept {
         String ns;
 
         UNumber _length = 0;
@@ -298,15 +298,9 @@ struct String {
             ++_length;
         };
 
-        if (_length != 0) {
-            ns.SetLength(Length + _length);
-
-            if (Length != 0) {
-                Copy(ns, Str, 0, Length);
-            }
-
-            Copy(ns, src, ns.Length, _length);
-        }
+        ns.SetLength(Length + _length);
+        Copy(ns, Str, 0, Length);
+        Copy(ns, src, ns.Length, _length);
 
         return ns;
     }
@@ -314,17 +308,12 @@ struct String {
     // Appand a string by moving another into it
     String operator+(String &&src) const noexcept {
         String ns;
+
         ns.SetLength(Length + src.Length);
+        Copy(ns, Str, 0, Length);
+        Copy(ns, src.Str, ns.Length, src.Length);
 
-        if (Length != 0) {
-            Copy(ns, Str, 0, Length);
-        }
-
-        if (src.Length != 0) {
-            Copy(ns, src.Str, ns.Length, src.Length);
-        }
-
-        Memory::Deallocate<wchar_t>(&src.Str);
+        Memory<wchar_t>::Deallocate(&src.Str);
 
         src.Capacity = 0;
         src.Length   = 0;
@@ -332,22 +321,17 @@ struct String {
         return ns;
     }
 
-    String operator+(const String &src) const noexcept { // Appand a string and return a new one
+    String operator+(String const &src) const noexcept { // Appand a string and return a new one
         String ns;
+
         ns.SetLength(Length + src.Length);
-
-        if (Length != 0) {
-            Copy(ns, Str, 0, Length);
-        }
-
-        if (src.Length != 0) {
-            Copy(ns, src.Str, ns.Length, src.Length);
-        }
+        Copy(ns, Str, 0, Length);
+        Copy(ns, src.Str, ns.Length, src.Length);
 
         return ns;
     }
 
-    bool operator==(const String &src) const noexcept { // Compare
+    bool operator==(String const &src) const noexcept { // Compare
         if (Length != src.Length) {
             return false;
         }
@@ -360,7 +344,7 @@ struct String {
         return (i == Length);
     }
 
-    bool operator!=(const String &src) const noexcept { // Compare
+    bool operator!=(String const &src) const noexcept { // Compare
         if (Length != src.Length) {
             return true;
         }
@@ -373,25 +357,25 @@ struct String {
         return (i != Length);
     }
 
-    inline wchar_t &operator[](const UNumber __index) const noexcept { // Compare
+    inline wchar_t &operator[](UNumber const __index) const noexcept { // Compare
         return Str[__index];
     }
 
-    inline void SetLength(const UNumber size) noexcept {
+    inline void SetLength(UNumber const size) noexcept {
         Length   = 0;
         Capacity = size;
 
-        Memory::Deallocate<wchar_t>(&Str);
-        Memory::Allocate<wchar_t>(&Str, (size + 1));
+        Memory<wchar_t>::Deallocate(&Str);
+        Memory<wchar_t>::Allocate(&Str, (size + 1));
 
         Str[0] = L'\0';
     }
 
-    inline void Resize(const UNumber size) noexcept {
+    inline void Resize(UNumber const size) noexcept {
         Capacity     = size;
         wchar_t *tmp = Str;
 
-        Memory::Allocate<wchar_t>(&Str, (size + 1));
+        Memory<wchar_t>::Allocate(&Str, (size + 1));
 
         if (size < Length) {
             Length = size;
@@ -403,13 +387,13 @@ struct String {
 
         Str[Length] = L'\0';
 
-        Memory::Deallocate<wchar_t>(&tmp);
+        Memory<wchar_t>::Deallocate(&tmp);
     }
 
-    inline static String Part(const String &src, UNumber offset, const UNumber limit) noexcept {
+    inline static String Part(String const &src, UNumber offset, UNumber const limit) noexcept {
         String bit;
 
-        Memory::Allocate<wchar_t>(&bit.Str, (limit + 1));
+        Memory<wchar_t>::Allocate(&bit.Str, (limit + 1));
 
         bit.Capacity = limit;
 
@@ -422,7 +406,7 @@ struct String {
         return bit;
     }
 
-    inline static UNumber Hash(const String &src, UNumber start, const UNumber end_offset) noexcept {
+    inline static UNumber Hash(String const &src, UNumber start, UNumber const end_offset) noexcept {
         UNumber j    = 1;
         UNumber hash = 0;
         bool    fl   = false;
@@ -443,7 +427,7 @@ struct String {
     }
 
     // Update the starting index and the ending one to be at the actual characters
-    inline static void SoftTrim(const String &str, UNumber &start, UNumber &end) noexcept {
+    inline static void SoftTrim(String const &str, UNumber &start, UNumber &end) noexcept {
         --end;
 
         while ((str[start] == L' ') || (str[start] == L'\n')) {
@@ -456,7 +440,7 @@ struct String {
     }
 
     // Remove empty spaces
-    static String Trim(const String &str) noexcept {
+    static String Trim(String const &str) noexcept {
         UNumber start = 0;
         UNumber end   = (str.Length - start);
 
@@ -479,12 +463,12 @@ struct String {
         }
     }
 
-    static String FromNumber(UNumber number, const UNumber min = 1) noexcept {
+    static String FromNumber(UNumber number, UNumber const min = 1) noexcept {
         String tnm;
 
         // Local cache.
         wchar_t p_str[30];
-        tnm.Str      = p_str;
+        tnm.Str      = &p_str[0];
         tnm.Capacity = 30; // TODO: Choose the right size
         tnm.Shared   = true;
 
@@ -506,22 +490,22 @@ struct String {
         return String(tnm.Str);
     }
 
-    static String FromNumber(double number, const UNumber min = 1, UNumber r_min = 0, UNumber r_max = 0) noexcept {
+    static String FromNumber(double number, UNumber const min = 1, UNumber r_min = 0, UNumber r_max = 0) noexcept {
         String tnm;
         String tnm2;
 
         // Local cache.
         wchar_t p_str[20];
-        tnm.Str      = p_str;
+        tnm.Str      = &p_str[0];
         tnm.Capacity = 20; // TODO: Choose the right size
         tnm.Shared   = true;
 
         wchar_t p_str2[30];
-        tnm2.Str      = p_str2;
+        tnm2.Str      = &p_str2[0];
         tnm2.Capacity = 30; // TODO: Choose the right size
         tnm2.Shared   = true;
 
-        const bool negative = (number < 0);
+        bool const negative = (number < 0);
         if (negative) {
             number *= -1;
         }
@@ -653,7 +637,7 @@ struct String {
         return String(tnm.Str);
     }
 
-    static bool ToNumber(const String &str, UNumber &number, const UNumber offset = 0, UNumber limit = 0) noexcept {
+    static bool ToNumber(String const &str, UNumber &number, UNumber const offset = 0, UNumber limit = 0) noexcept {
         limit += offset;
         if (limit == offset) {
             limit = str.Length - offset;
@@ -683,7 +667,7 @@ struct String {
         return true;
     }
 
-    inline static bool ToNumber(const String &str, double &number, const UNumber offset = 0,
+    inline static bool ToNumber(String const &str, double &number, UNumber const offset = 0,
                                 UNumber limit = 0) noexcept {
         limit += offset;
         if (limit == offset) {

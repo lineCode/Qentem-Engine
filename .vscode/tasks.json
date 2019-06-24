@@ -10,7 +10,7 @@
             "command": "g++",
             "args": [
                 "-g",
-                // "-O3",
+                // "-O1",
                 "-std=c++11",
                 "-Wall",
                 "-Wunused",
@@ -25,7 +25,6 @@
                 "-Wformat=2",
                 "-I",
                 "./Source",
-                // "./Tests/JSONTest.cpp",
                 "./Tests/Test.cpp",
                 "-o",
                 "./Build/QConsole.bin"
@@ -77,6 +76,16 @@
             "args": [
                 "-O3",
                 "-Wall",
+                "-Wunused",
+                "-Wcast-align",
+                "-Wold-style-cast",
+                "-Wshadow",
+                "-Wconversion",
+                "-Wsign-conversion",
+                "-Wpedantic",
+                "-Wnull-dereference",
+                "-Wdouble-promotion",
+                "-Wformat=2",
                 "-std=c++11",
                 "-shared",
                 "-fPIC",
@@ -102,13 +111,11 @@
             "command": "clang-tidy",
             "args": [
                 "./Tests/Test.cpp",
-                "./Tests/JSONTest.cpp",
                 "'-header-filter=.*'",
-                "-checks='*,-modernize-avoid-c-arrays,-cppcoreguidelines-avoid-c-arrays,-modernize-use-auto,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-non-private-member-variables-in-classes,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-readability-magic-numbers,-hicpp*,-fuchs*,-llvm-header-guard,-misc-non-private-*,-googl*,-misc-unused-parameters'",
+                "-checks='*,-misc-definitions-in-headers,-modernize-avoid-c-arrays,-cppcoreguidelines-avoid-c-arrays,-modernize-use-auto,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-non-private-member-variables-in-classes,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-readability-magic-numbers,-hicpp*,-fuchs*,-llvm-header-guard,-misc-non-private-*,-googl*,-misc-unused-parameters'",
                 "--",
                 "-I",
                 "./Source",
-                "c++11",
             ],
             "group": {
                 "kind": "build",

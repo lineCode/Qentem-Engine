@@ -2,7 +2,7 @@
 /**
  * Qentem Array
  *
- * @brief     Unordered Array
+ * @brief     Ordered Array
  *
  * @author    Hani Ammar <hani.code@outlook.com>
  * @copyright 2019 Hani Ammar
@@ -39,10 +39,10 @@ struct Array {
         Add(src, false);
     }
 
-    Array<T> &operator=(const Array<T> &src) noexcept {
+    Array<T> &operator=(Array<T> const &src) noexcept {
         if (this != &src) {
             if (src.Size == 0) {
-                Memory::Deallocate<T>(&Storage);
+                Memory<T>::Deallocate(&Storage);
                 Size     = 0;
                 Capacity = 0;
 
@@ -52,8 +52,8 @@ struct Array {
             Size = src.Size;
 
             if (Capacity < src.Size) {
-                Memory::Deallocate<T>(&Storage);
-                Memory::Allocate<T>(&Storage, Size);
+                Memory<T>::Deallocate(&Storage);
+                Memory<T>::Allocate(&Storage, Size);
 
                 Capacity = src.Size;
 
@@ -74,7 +74,7 @@ struct Array {
 
     Array<T> &operator=(Array<T> &&src) noexcept {
         if (this != &src) {
-            Memory::Deallocate<T>(&Storage);
+            Memory<T>::Deallocate(&Storage);
 
             Storage  = src.Storage;
             Capacity = src.Capacity;
@@ -94,7 +94,7 @@ struct Array {
 
                 if (Size == 0) {
                     if (!move) {
-                        Memory::Allocate<T>(&Storage, Capacity);
+                        Memory<T>::Allocate(&Storage, Capacity);
                     } else {
                         Storage  = src.Storage;
                         Capacity = src.Capacity;
@@ -108,13 +108,13 @@ struct Array {
                     }
                 } else {
                     T *tmp = Storage;
-                    Memory::Allocate<T>(&Storage, Capacity);
+                    Memory<T>::Allocate(&Storage, Capacity);
 
                     for (UNumber n = 0; n < Size; n++) {
                         Storage[n] = static_cast<T &&>(tmp[n]);
                     }
 
-                    Memory::Deallocate<T>(&tmp);
+                    Memory<T>::Deallocate(&tmp);
                 }
             }
 
@@ -123,7 +123,7 @@ struct Array {
                     Storage[Size++] = static_cast<T &&>(src[i]);
                 }
 
-                Memory::Deallocate<T>(&src.Storage);
+                Memory<T>::Deallocate(&src.Storage);
                 src.Storage  = nullptr;
                 src.Capacity = 0;
                 src.Size     = 0;
@@ -137,22 +137,22 @@ struct Array {
         return *this;
     }
 
-    Array<T> &Add(const Array<T> &src) noexcept {
+    Array<T> &Add(Array<T> const &src) noexcept {
         if (src.Size != 0) {
             if ((src.Size + Size) > Capacity) {
                 Capacity += src.Size;
 
                 if (Size == 0) {
-                    Memory::Allocate<T>(&Storage, Capacity);
+                    Memory<T>::Allocate(&Storage, Capacity);
                 } else {
                     T *tmp = Storage;
-                    Memory::Allocate<T>(&Storage, Capacity);
+                    Memory<T>::Allocate(&Storage, Capacity);
 
                     for (UNumber n = 0; n < Size; n++) {
                         Storage[n] = static_cast<T &&>(tmp[n]);
                     }
 
-                    Memory::Deallocate<T>(&tmp);
+                    Memory<T>::Deallocate(&tmp);
                 }
             }
 
@@ -164,7 +164,7 @@ struct Array {
         return *this;
     }
 
-    inline Array<T> &Add(const T &item) noexcept { // Copy
+    inline Array<T> &Add(T const &item) noexcept { // Copy
         if (Size == Capacity) {
             Resize((Capacity + 1) * 4);
         }
@@ -186,33 +186,34 @@ struct Array {
         return *this;
     }
 
-    inline void SetCapacity(const UNumber _size) noexcept {
-        Memory::Deallocate<T>(&Storage);
+    inline void SetCapacity(UNumber const _size) noexcept {
+        Memory<T>::Deallocate(&Storage);
 
         Size     = 0;
         Capacity = _size;
 
-        Memory::Allocate<T>(&Storage, _size);
+        Memory<T>::Allocate(&Storage, _size);
     }
 
-    inline void Resize(const UNumber _size) noexcept {
+    inline void Resize(UNumber const _size) noexcept {
         Capacity = _size;
         T *tmp   = Storage;
 
-        Memory::Allocate<T>(&Storage, Capacity);
+        Memory<T>::Allocate(&Storage, Capacity);
 
         if (_size < Size) {
             Size = _size;
         }
 
-        for (UNumber n = 0; n < Size; n++) {
+        for (UNumber n = 0; n < Size;) {
             Storage[n] = static_cast<T &&>(tmp[n]);
+            ++n;
         }
 
-        Memory::Deallocate<T>(&tmp);
+        Memory<T>::Deallocate(&tmp);
     }
 
-    inline T &operator[](const UNumber __index) const noexcept { // Compare
+    inline T &operator[](UNumber const __index) const noexcept { // Compare
         return Storage[__index];
     }
 
@@ -225,7 +226,7 @@ struct Array {
     }
 
     inline void Reset() noexcept {
-        Memory::Deallocate<T>(&Storage);
+        Memory<T>::Deallocate(&Storage);
 
         Capacity = 0;
         Size     = 0;
