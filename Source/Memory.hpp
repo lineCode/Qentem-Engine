@@ -23,8 +23,10 @@ struct Memory {
     }
 
     static void Deallocate(T **_p) noexcept {
-        delete[] * _p;
-        *_p = nullptr;
+        if (*_p != nullptr) { // This is important to not jump
+            delete[] * _p;
+            *_p = nullptr;
+        }
     }
 
     static void AllocateBit(T **_p) noexcept {
@@ -32,8 +34,10 @@ struct Memory {
     }
 
     static void DeallocateBit(T **_p) noexcept {
-        delete *_p;
-        *_p = nullptr;
+        if (*_p != nullptr) {
+            delete *_p;
+            *_p = nullptr;
+        }
     }
 };
 

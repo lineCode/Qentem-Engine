@@ -320,9 +320,9 @@ struct Document {
         opened_square_bracket.Connected = &closed_square_bracket;
 
         static Expression *_bracket[3];
-        _bracket[0] = &quotation_start;
-        _bracket[1] = &opened_square_bracket;
-        _bracket[2] = &opened_curly_bracket;
+        _bracket[0] = &opened_square_bracket;
+        _bracket[1] = &opened_curly_bracket;
+        _bracket[2] = &quotation_start;
 
         closed_square_bracket.NestExprs.Share(&_bracket[0], 3);
 

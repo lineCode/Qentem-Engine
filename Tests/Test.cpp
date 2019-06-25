@@ -110,6 +110,8 @@ int main() {
 
     if (pass) {
         std::wcout << L"\n ALL GOOD. Took: " << time_took.Str << L"s\n\n";
+    } else {
+        std::wcout << L"\n Something is wrong!" << L"s\n\n";
     }
 
     // std::getwchar();
@@ -118,7 +120,6 @@ int main() {
 }
 
 static bool run_tests(String const &name, Array<TestBit> const &bits, bool dump_express, bool break_on_err) noexcept {
-
     UNumber const times        = StreasTest ? 10000 : 1;
     UNumber const start_at     = 0;
     UNumber       counter      = 0;

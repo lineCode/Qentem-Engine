@@ -197,10 +197,10 @@ struct ALU {
 
                 switch (op_id) {
                     case 1:
-                        number1 = (number1 && number2) ? 1.0 : 0.0;
+                        number1 = ((number1 > 0) && (number2 > 0)) ? 1.0 : 0.0;
                         break;
                     case 2:
-                        number1 = (number1 || number2) ? 1.0 : 0.0;
+                        number1 = ((number1 > 0) || (number2 > 0)) ? 1.0 : 0.0;
                         break;
                     default:
                         number1 = 0.0;

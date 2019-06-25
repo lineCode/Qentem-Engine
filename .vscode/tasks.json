@@ -10,7 +10,7 @@
             "command": "g++",
             "args": [
                 "-g",
-                // "-O3",
+                "-Og",
                 "-std=c++11",
                 "-Wall",
                 "-Wunused",
@@ -135,7 +135,7 @@
                 "${cwd}/QConsole.sln",
                 "/m",
                 "/t:build",
-                "/p:configuration=Debug",
+                "/p:configuration=Release", //Debug //Release
                 "/p:Platform=x64"
             ],
             "group": {
