@@ -144,7 +144,7 @@ static bool run_tests(String const &name, Array<TestBit> const &bits, bool dump_
     }
 
     if (counter != 0) {
-        ss += L"\n Counter at ";
+        ss += L"\n Counter is set to ";
         ss += String::FromNumber(counter, 2);
         ss += L"\n\n";
     }
@@ -173,10 +173,10 @@ static bool run_tests(String const &name, Array<TestBit> const &bits, bool dump_
             parse_ticks = (static_cast<UNumber>(clock()) - parse_ticks);
             total_parse += parse_ticks;
 
-            pass = (rendered == bits[i].Expected[t]);
             ++counter;
             ++total;
 
+            pass = rendered.Compare(bits[i].Expected[t], 0, bits[i].Expected[t].Length);
             if (pass) {
                 ss += L' ';
             } else {

@@ -26,19 +26,24 @@ struct ALU {
     static Expressions const MathExprs;
 
     static Expressions getMathExprs() noexcept {
-        static Expression MathExp; // 1
-        static Expression MathRem; // 2
-        static Expression MathDiv; // 3
-        static Expression MathMul; // 4
+        static Expression MathExp;
+        static Expression MathRem;
+        static Expression MathDiv;
+        static Expression MathMul;
 
-        static Expression MathAdd; // 1
-        static Expression MathSub; // 2
+        static Expression MathAdd;
+        static Expression MathSub;
 
-        static Expression MathEqu2; // 1
-        static Expression MathEqu;  // 2
-        static Expression MathNEqu; // 3
-        static Expression MathLEqu; // 4
-        static Expression MathBEqu; // 5
+        static Expression MathEqu2;
+        static Expression MathEqu;
+        static Expression MathNEqu;
+        static Expression MathLEqu;
+        static Expression MathLess;
+        static Expression MathBEqu;
+        static Expression MathBig;
+
+        static Expression LogicAnd;
+        static Expression LogicOr;
 
         constexpr UNumber flags_ops    = Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP | Flags::TRIM;
         constexpr UNumber flags_no_pop = Flags::SPLIT | Flags::GROUPSPLIT | Flags::TRIM;
@@ -49,31 +54,31 @@ struct ALU {
         MathAdd.ParseCB = &(AdditionCallback);
         MathAdd.NestExprs.Add(&MathExp).Add(&MathRem).Add(&MathDiv).Add(&MathMul);
 
-        MathSub.Keyword = L'-';
-        MathSub.ID      = 2;
-        MathSub.Flag    = flags_no_pop;
-        MathSub.ParseCB = &(AdditionCallback);
-        MathSub.NestExprs.Add(&MathExp).Add(&MathRem).Add(&MathDiv).Add(&MathMul);
+        MathSub.Keyword   = L'-';
+        MathSub.ID        = 2;
+        MathSub.Flag      = flags_no_pop;
+        MathSub.ParseCB   = &(AdditionCallback);
+        MathSub.NestExprs = MathAdd.NestExprs;
         ///////////////////////////////////////////
+        MathMul.Keyword = L"*";
+        MathMul.ID      = 1;
+        MathMul.Flag    = flags_no_pop;
+        MathMul.ParseCB = &(MultiplicationCallback);
+
+        MathDiv.Keyword = L'/';
+        MathDiv.ID      = 2;
+        MathDiv.Flag    = flags_no_pop;
+        MathDiv.ParseCB = &(MultiplicationCallback);
+
         MathExp.Keyword = L"^";
-        MathExp.ID      = 1;
+        MathExp.ID      = 3;
         MathExp.Flag    = flags_no_pop;
         MathExp.ParseCB = &(MultiplicationCallback);
 
         MathRem.Keyword = L'%';
-        MathRem.ID      = 2;
+        MathRem.ID      = 4;
         MathRem.Flag    = flags_no_pop;
         MathRem.ParseCB = &(MultiplicationCallback);
-
-        MathDiv.Keyword = L'/';
-        MathDiv.ID      = 3;
-        MathDiv.Flag    = flags_no_pop;
-        MathDiv.ParseCB = &(MultiplicationCallback);
-
-        MathMul.Keyword = L"*";
-        MathMul.ID      = 4;
-        MathMul.Flag    = flags_no_pop;
-        MathMul.ParseCB = &(MultiplicationCallback);
         ///////////////////////////////////////////
         MathEqu2.Keyword = L"==";
         MathEqu2.ID      = 1;
@@ -81,33 +86,57 @@ struct ALU {
         MathEqu2.ParseCB = &(EqualCallback);
         MathEqu2.NestExprs.Add(&MathAdd).Add(&MathSub);
 
-        MathEqu.Keyword = L"=";
-        MathEqu.ID      = 2;
-        MathEqu.Flag    = flags_ops;
-        MathEqu.ParseCB = &(EqualCallback);
-        MathEqu.NestExprs.Add(&MathAdd).Add(&MathSub);
+        MathEqu.Keyword   = L"=";
+        MathEqu.ID        = 2;
+        MathEqu.Flag      = flags_ops;
+        MathEqu.ParseCB   = &(EqualCallback);
+        MathEqu.NestExprs = MathEqu2.NestExprs;
 
-        MathNEqu.Keyword = L"!=";
-        MathNEqu.ID      = 3;
-        MathNEqu.Flag    = flags_no_pop;
-        MathNEqu.ParseCB = &(EqualCallback);
-        MathNEqu.NestExprs.Add(&MathAdd).Add(&MathSub);
+        MathNEqu.Keyword   = L"!=";
+        MathNEqu.ID        = 3;
+        MathNEqu.Flag      = flags_no_pop;
+        MathNEqu.ParseCB   = &(EqualCallback);
+        MathNEqu.NestExprs = MathEqu2.NestExprs;
 
-        MathLEqu.Keyword = L"<=";
-        MathLEqu.ID      = 4;
-        MathLEqu.Flag    = flags_no_pop;
-        MathLEqu.ParseCB = &(EqualCallback);
-        MathLEqu.NestExprs.Add(&MathAdd).Add(&MathSub);
+        MathLEqu.Keyword   = L"<=";
+        MathLEqu.ID        = 4;
+        MathLEqu.Flag      = flags_no_pop;
+        MathLEqu.ParseCB   = &(EqualCallback);
+        MathLEqu.NestExprs = MathEqu2.NestExprs;
 
-        MathBEqu.Keyword = L">=";
-        MathBEqu.ID      = 5;
-        MathBEqu.Flag    = flags_no_pop;
-        MathBEqu.ParseCB = &(EqualCallback);
-        MathBEqu.NestExprs.Add(&MathAdd).Add(&MathSub);
+        MathLess.Keyword   = L"<";
+        MathLess.ID        = 5;
+        MathLess.Flag      = flags_no_pop;
+        MathLess.ParseCB   = &(EqualCallback);
+        MathLess.NestExprs = MathEqu2.NestExprs;
 
-        return Expressions().Add(&MathEqu2).Add(&MathEqu).Add(&MathNEqu).Add(&MathLEqu).Add(&MathBEqu);
+        MathBEqu.Keyword   = L">=";
+        MathBEqu.ID        = 6;
+        MathBEqu.Flag      = flags_no_pop;
+        MathBEqu.ParseCB   = &(EqualCallback);
+        MathBEqu.NestExprs = MathEqu2.NestExprs;
 
-        // TODO: Implement && 'AND' 1=1&&1>3
+        MathBig.Keyword   = L">";
+        MathBig.ID        = 7;
+        MathBig.Flag      = flags_no_pop;
+        MathBig.ParseCB   = &(EqualCallback);
+        MathBig.NestExprs = MathEqu2.NestExprs;
+        ///////////////////////////////////////////
+        LogicAnd.Keyword = L"&&";
+        LogicAnd.ID      = 1;
+        LogicAnd.Flag    = flags_ops;
+        LogicAnd.ParseCB = &(LogicCallback);
+        LogicAnd.NestExprs.Add(&MathEqu2).Add(&MathEqu).Add(&MathNEqu).Add(&MathLEqu).Add(&MathLess).Add(&MathBEqu).Add(
+            &MathBig);
+
+        LogicOr.Keyword   = L"||";
+        LogicOr.ID        = 2;
+        LogicOr.Flag      = flags_no_pop;
+        LogicOr.ParseCB   = &(LogicCallback);
+        LogicOr.NestExprs = LogicAnd.NestExprs;
+        ///////////////////////////////////////////
+
+        return Expressions().Add(&LogicAnd).Add(&LogicOr);
     }
 
     static Expressions getParensExprs() noexcept {
@@ -138,13 +167,11 @@ struct ALU {
         }
     }
 
-    static String EqualCallback(String const &block, Match const &item) noexcept {
+    static String LogicCallback(String const &block, Match const &item) noexcept {
         double number1 = 0.0;
         double number2 = 0.0;
 
         Match *m2;
-
-        // TODO: add _string.Compare(src, index, limit);
 
         Match const *m1    = &(item.NestMatch[0]);
         UNumber      op_id = m1->Expr->ID;
@@ -169,6 +196,64 @@ struct ALU {
                 }
 
                 switch (op_id) {
+                    case 1:
+                        number1 = (number1 && number2) ? 1.0 : 0.0;
+                        break;
+                    case 2:
+                        number1 = (number1 || number2) ? 1.0 : 0.0;
+                        break;
+                    default:
+                        number1 = 0.0;
+                        break;
+                }
+            }
+
+            op_id = m2->Expr->ID;
+        }
+
+        return String::FromNumber(number1);
+    }
+
+    static String EqualCallback(String const &block, Match const &item) noexcept {
+        double number1 = 0.0;
+        double number2 = 0.0;
+
+        Match *m2;
+
+        Match const *m1    = &(item.NestMatch[0]);
+        UNumber      op_id = m1->Expr->ID;
+
+        if (m1->Length != 0) {
+            if (m1->NestMatch.Size != 0) {
+                NestNumber(block, *m1, number1);
+            } else {
+                wchar_t const c = block[m1->Offset];
+                if (((c <= 57) && (c >= 48)) || ((c == L'+') || (c == L'-'))) {
+                    String::ToNumber(block, number1, m1->Offset, m1->Length);
+                } else if (item.NestMatch.Size == 2) { // String
+                    bool const r = String::Part(block, m1->Offset, m1->Length)
+                                       .Compare(block, item.NestMatch[1].Offset, item.NestMatch[1].Length);
+                    return (r ? L'1' : L'0');
+                }
+            }
+        }
+
+        for (UNumber i = 1; i < item.NestMatch.Size; i++) {
+            m2 = &(item.NestMatch[i]);
+
+            if (m2->Length != 0) {
+
+                if (m2->NestMatch.Size != 0) {
+                    NestNumber(block, *m2, number2);
+                } else {
+                    String::ToNumber(block, number2, m2->Offset, m2->Length);
+                }
+
+                switch (op_id) {
+                    case 1:
+                    case 2:
+                        number1 = (number1 == number2) ? 1.0 : 0.0;
+                        break;
                     case 3:
                         number1 = (number1 != number2) ? 1.0 : 0.0;
                         break;
@@ -176,10 +261,16 @@ struct ALU {
                         number1 = (number1 <= number2) ? 1.0 : 0.0;
                         break;
                     case 5:
+                        number1 = (number1 < number2) ? 1.0 : 0.0;
+                        break;
+                    case 6:
                         number1 = (number1 >= number2) ? 1.0 : 0.0;
                         break;
+                    case 7:
+                        number1 = (number1 > number2) ? 1.0 : 0.0;
+                        break;
                     default:
-                        number1 = (number1 == number2) ? 1.0 : 0.0;
+                        number1 = 0.0;
                         break;
                 }
             }
@@ -211,7 +302,17 @@ struct ALU {
                 String::ToNumber(block, number2, m2->Offset, m2->Length);
 
                 switch (op_id) {
-                    case 1: // ^
+                    case 1: // *
+                        number1 *= number2;
+                        break;
+                    case 2: // /
+                        if (number2 == 0) {
+                            return L"0";
+                        }
+
+                        number1 /= number2;
+                        break;
+                    case 3: // ^
                         if (number2 != 0.0) {
                             UNumber const times = static_cast<UNumber>(number2);
                             for (UNumber k = 1; k < times; k++) {
@@ -227,18 +328,11 @@ struct ALU {
 
                         number1 = 1;
                         break;
-                    case 2: // &
+                    case 4: // &
                         number1 = static_cast<double>(static_cast<UNumber>(number1) % static_cast<UNumber>(number2));
                         break;
-                    case 3: // /
-                        if (number2 == 0) {
-                            return L"0";
-                        }
-
-                        number1 /= number2;
-                        break;
-                    default: // *
-                        number1 *= number2;
+                    default:
+                        number1 = 0.0;
                         break;
                 }
             } else {
@@ -280,11 +374,14 @@ struct ALU {
                 }
 
                 switch (op_id) {
+                    case 1:
+                        number1 += number2;
+                        break;
                     case 2:
                         number1 -= number2;
                         break;
                     default:
-                        number1 += number2;
+                        number1 = 0.0;
                         break;
                 }
 

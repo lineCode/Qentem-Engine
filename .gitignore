@@ -8,3 +8,4 @@ x32/*
 .vscode/ipch
 Tests/bigjson*
 *vcxproj.user
+clean.sh

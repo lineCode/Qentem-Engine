@@ -23,37 +23,6 @@ struct String {
 
     String() = default;
 
-    static void Copy(String &des, wchar_t const *src_p, UNumber start_at, UNumber const ln) noexcept {
-        // Copy any existing characters
-        UNumber j = 0;
-        if ((des.Capacity == 0) || (ln > (des.Capacity - des.Length))) {
-            des.Capacity = (ln + des.Length);
-
-            wchar_t *_tmp = des.Str;
-            Memory<wchar_t>::Allocate(&des.Str, (des.Capacity + 1));
-
-            for (UNumber i = 0; i < des.Length;) {
-                des[i] = _tmp[j];
-                ++j;
-                ++i;
-            }
-
-            Memory<wchar_t>::Deallocate(&_tmp);
-        }
-
-        // Add the new characters
-        for (j = 0; j < ln;) {
-            des[start_at] = src_p[j];
-            ++start_at;
-            ++j;
-        }
-
-        des[start_at] = L'\0'; // Null ending.
-
-        // Update the index to be at the last character
-        des.Length = (ln + des.Length);
-    }
-
     String(wchar_t const str) noexcept { // one wchar
         Capacity = 1;
 
@@ -333,21 +302,53 @@ struct String {
         return (i == Length);
     }
 
-    bool operator!=(String const &src) const noexcept { // Compare
-        if (Length != src.Length) {
-            return true;
+    inline wchar_t &operator[](UNumber const __index) const noexcept {
+        return Str[__index];
+    }
+
+    bool Compare(String const &text, UNumber index, UNumber const length) const noexcept {
+        if (Length != length) {
+            return false;
         }
 
         UNumber i = 0;
-        while ((i < Length) && (Str[i] == src[i])) {
-            ++i;
+        while ((i < length) && (Str[i] == text[index])) {
+            ++i; // Only increment when there is a match
+            ++index;
         }
 
-        return (i != Length);
+        return (i == Length);
     }
 
-    inline wchar_t &operator[](UNumber const __index) const noexcept { // Compare
-        return Str[__index];
+    static void Copy(String &des, wchar_t const *src_p, UNumber start_at, UNumber const ln) noexcept {
+        // Copy any existing characters
+        UNumber j = 0;
+        if ((des.Capacity == 0) || (ln > (des.Capacity - des.Length))) {
+            des.Capacity = (ln + des.Length);
+
+            wchar_t *_tmp = des.Str;
+            Memory<wchar_t>::Allocate(&des.Str, (des.Capacity + 1));
+
+            for (UNumber i = 0; i < des.Length;) {
+                des[i] = _tmp[j];
+                ++j;
+                ++i;
+            }
+
+            Memory<wchar_t>::Deallocate(&_tmp);
+        }
+
+        // Add the new characters
+        for (j = 0; j < ln;) {
+            des[start_at] = src_p[j];
+            ++start_at;
+            ++j;
+        }
+
+        des[start_at] = L'\0'; // Null ending.
+
+        // Update the index to be at the last character
+        des.Length = (ln + des.Length);
     }
 
     inline void SetLength(UNumber const size) noexcept {

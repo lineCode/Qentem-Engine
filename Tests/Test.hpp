@@ -266,9 +266,10 @@ static Array<TestBit> GetTemplateBits() noexcept {
 
     static Qentem::Document data = Qentem::Document();
 
-    data[L"r1"] = L"Familly";
-    data[L"e1"] = L"";
-    data[L"e2"] = L" ";
+    data[L"foo"] = L"FOO";
+    data[L"r1"]  = L"Familly";
+    data[L"e1"]  = L"";
+    data[L"e2"]  = L" ";
 
     data[L"lvl2"] = Qentem::Document();
 
@@ -299,7 +300,7 @@ static Array<TestBit> GetTemplateBits() noexcept {
 
     ////
 
-    bit.Content.Add(L"{iif case=\"10\" true =\"{iif case =\"1\" true=\"5\"}\"}");
+    bit.Content.Add(L"{iif case=\"987\" true =\"{iif case =\"1\" true=\"5\"}\"}");
     bit.Expected.Add(L"5");
 
     bit.Content.Add(L"{iif case=\"1\" false=\"10\"}");
@@ -326,6 +327,37 @@ static Array<TestBit> GetTemplateBits() noexcept {
 
     bit.Content.Add(L"{iif case=\"0\" false=\"{iif case=\"1\" true=\"35.5\"}\"}");
     bit.Expected.Add(L"35.5");
+
+    bit.Content.Add(L"{iif case = \"5<1\" true = \"1\" false = \"0\"}");
+    bit.Expected.Add(L"0");
+
+    bit.Content.Add(L"{iif case=\"1<2\" false=\"No\"}");
+    bit.Expected.Add(L"");
+
+    bit.Content.Add(L"{iif case=\"5<10\" true=\"1\" false=\"0\"}");
+    bit.Expected.Add(L"1");
+
+    bit.Content.Add(L"{iif case=\"0&&3\" true=\"1\" false=\"0\"}");
+    bit.Expected.Add(L"0");
+
+    bit.Content.Add(L"{iif case=\"5&&10\" true=\"1\" false=\"0\"}");
+    bit.Expected.Add(L"1");
+
+    bit.Content.Add(L"{iif case=\"7&&0\" true=\"1\" false=\"0\"}");
+    bit.Expected.Add(L"0");
+
+    bit.Content.Add(L"{iif case=\"0||10\" true=\"1\" false=\"0\"}");
+    bit.Expected.Add(L"1");
+
+    bit.Content.Add(L"{iif case=\"10||0\" true=\"1\" false=\"0\"}");
+    bit.Expected.Add(L"1");
+
+    bit.Content.Add(L"{iif case=\"0||0\" true=\"1\" false=\"0\"}");
+    bit.Expected.Add(L"0");
+
+    // Text compare
+    bit.Content.Add(L"{iif case=\"  {v:foo} == FOO  \" true =\"It's {v:foo}.\" false=\"Not {v:foo}!\"}");
+    bit.Expected.Add(L"It's FOO.");
 
     ////
 

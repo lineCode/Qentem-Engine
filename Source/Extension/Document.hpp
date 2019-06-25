@@ -276,10 +276,10 @@ struct Document {
         static Expression *jq[1];
         jq[0] = &_JsonQuot;
 
-        static Expressions iqes;
-        iqes.Share(&jq[0], 1);
+        static Expressions qs;
+        qs.Share(&jq[0], 1);
 
-        return iqes;
+        return qs;
     }
 
     static Expressions _getJsonExpres() noexcept {
@@ -330,10 +330,10 @@ struct Document {
         _all[0] = &opened_curly_bracket;
         _all[1] = &opened_square_bracket;
 
-        static Expressions jyones;
-        jyones.Share(&_all[0], 2);
+        static Expressions js;
+        js.Share(&_all[0], 2);
 
-        return jyones;
+        return js;
     }
 
     inline String ToJSON() const noexcept {

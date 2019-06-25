@@ -30,21 +30,19 @@ static void Split(Array<Match> &items, String const &content, UNumber index, UNu
 /////////////////////////////////
 // Expressions flags
 struct Flags {
-    static unsigned const short NOTHING       = 0;    // ... NAN.
-    static unsigned const short COMPACT       = 1;    // Processing only the content inside Keywords Parse().
-    static unsigned const short NOPARSE       = 2;    // Match a Keyword but don't process it inside Parse().
-    static unsigned const short IGNORE        = 4;    // Match a Keyword but don't add it.
-    static unsigned const short TRIM          = 8;    // Trim the match before adding it.
-    static unsigned const short ONCE          = 16;   // Will stop searching after the first match.
-    static unsigned const short POP           = 32;   // Search again with NestExprs if the match fails (See ALU.cpp).
-    static unsigned const short BUBBLE        = 64;   // Parse nested matches.
-    static unsigned const short SPLIT         = 128;  // Split a match at a keyword.
-    static unsigned const short SPLITNEST     = 256;  // Split a Nested match.
-    static unsigned const short GROUPSPLIT    = 512;  // Puts split matches into NestMatch, for one callback execution.
-    static unsigned const short SPLITROOTONLY = 1024; // e.g. IF-ELSE (Template.cpp)
-    static unsigned const short DROPEMPTY     = 2048; // Trim the match before adding it (spaces and newlines).
-
-    // TODO: Add Flag resume
+    static unsigned const short NOTHING    = 0;    // ... NAN.
+    static unsigned const short COMPACT    = 1;    // Processing only the content inside Keywords Parse().
+    static unsigned const short NOPARSE    = 2;    // Match a Keyword but don't process it inside Parse().
+    static unsigned const short IGNORE     = 4;    // Match a Keyword but don't add it.
+    static unsigned const short TRIM       = 8;    // Trim the match before adding it.
+    static unsigned const short ONCE       = 16;   // Will stop searching after the first match.
+    static unsigned const short POP        = 32;   // Search again with NestExprs if the match fails (See ALU.cpp).
+    static unsigned const short BUBBLE     = 64;   // Parse nested matches.
+    static unsigned const short SPLIT      = 128;  // Split a match at a keyword.
+    static unsigned const short SPLITNEST  = 256;  // Split a Nested match.
+    static unsigned const short GROUPSPLIT = 512;  // Puts split matches into NestMatch, for one callback execution.
+    static unsigned const short NOTBROKEN  = 1024; // To Prevent the engine from assuming the match is broking.
+    static unsigned const short DROPEMPTY  = 2048; // Trim the match before adding it (spaces and newlines).
 };
 /////////////////////////////////
 struct Expression {
@@ -233,9 +231,11 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
                 continue;
             }
 
-            // Take this path If it has gone too far (the other keyword is unmatched).
+            if ((Flags::NOTBROKEN & ce->Flag) != 0) {
+                return;
+            }
 
-            // TODO: Implement resume to preserve matches and complete matching later (Multi threading)
+            // Take this path If it has gone too far (the other keyword is unmatched).
             if (_item.NestMatch.Size == 0) {
                 // If it is a missmatch, go back to where it started and continue with the next expression if
                 // possible.
@@ -503,12 +503,11 @@ static void Engine::Split(Array<Match> &items, String const &content, UNumber co
     } else {
         items.SetCapacity(1);
         items.Size = 1;
-        tmp        = &items[0];
 
-        tmp->Offset    = index;
-        tmp->Length    = (to - index);
-        tmp->Expr      = master;
-        tmp->NestMatch = static_cast<Array<Match> &&>(splitted);
+        items[0].Offset    = index;
+        items[0].Length    = (to - index);
+        items[0].Expr      = master;
+        items[0].NestMatch = static_cast<Array<Match> &&>(splitted);
     }
 }
 
