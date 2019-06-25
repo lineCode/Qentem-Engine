@@ -66,7 +66,7 @@ struct Field {
     Field &operator=(Array<Document> &value) noexcept;
     Field &operator=(bool value) noexcept;
 
-    // TODO: Add String(); to get string and Number to get a number and toJson for document
+    // TODO: Add String(); to get string and Number to get a number
 
     Field operator[](String const &key) noexcept;
 };
@@ -132,18 +132,9 @@ struct Document {
         Document *storage = GetSource(&_entry, key, offset, limit);
 
         if (_entry != nullptr) {
-            Document::Drop(*_entry, *storage);
+            Drop(*_entry, *storage);
         }
     }
-
-    static bool ExtractID(UNumber &id, String const &key, UNumber offset, UNumber limit) noexcept;
-
-    Document *GetSource(Entry **_entry, String const &key, UNumber offset = 0, UNumber limit = 0) noexcept;
-    bool      GetString(String &value, String const &key, UNumber offset = 0, UNumber limit = 0) noexcept;
-    bool      GetNumber(UNumber &value, String const &key, UNumber offset = 0, UNumber limit = 0) noexcept;
-    bool      GetDouble(double &value, String const &key, UNumber offset = 0, UNumber limit = 0) noexcept;
-    bool      GetBool(bool &value, String const &key, UNumber offset = 0, UNumber limit = 0) noexcept;
-    Document *GetDocument(String const &key, UNumber offset = 0, UNumber limit = 0) noexcept;
 
     Entry *Exist(UNumber const hash, UNumber const level, Array<Index> const &_table) const noexcept {
         UNumber id = ((hash + level) % HashBase);
@@ -534,7 +525,7 @@ struct Document {
                             ++i;
 
                             uno_document = Document();
-                            Document::_makeDocument(uno_document, content, items[i].NestMatch);
+                            _makeDocument(uno_document, content, items[i].NestMatch);
                             document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::DocumentT,
                                             &uno_document, true, false);
 
@@ -547,9 +538,9 @@ struct Document {
                             o_document.Ordered = true;
 
                             if (items[i].NestMatch.Size > 0) {
-                                Document::_makeDocument(o_document, content, items[i].NestMatch);
+                                _makeDocument(o_document, content, items[i].NestMatch);
                             } else {
-                                Document::_makeListNumber(o_document.Numbers, content, items[i]);
+                                _makeListNumber(o_document.Numbers, content, items[i]);
                             }
 
                             document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::DocumentT, &o_document,
@@ -634,21 +625,19 @@ struct Document {
                         te->Ordered = true;
 
                         if (items[i].NestMatch.Size > 0) {
-                            Document::_makeDocument(*te, content, items[i].NestMatch);
+                            _makeDocument(*te, content, items[i].NestMatch);
                         } else {
-                            Document::_makeListNumber(te->Numbers, content, items[i]);
+                            _makeListNumber(te->Numbers, content, items[i]);
                         }
                     }
                 }
             } else {
-                Document::_makeListNumber(document.Numbers, content, items[0]);
+                _makeListNumber(document.Numbers, content, items[0]);
             }
         }
 
         items.Reset();
     }
-
-    static Document FromJSON(String const &content, bool comments = false) noexcept;
 
     void Reset() noexcept {
         Entries.Reset();
@@ -658,305 +647,302 @@ struct Document {
         Keys.Reset();
         Documents.Reset();
     }
+
+    static Document FromJSON(String const &content, bool comments = false) noexcept {
+        Document     document;
+        Array<Match> items;
+
+        String n_content;
+
+        static Expressions __comments;
+
+        // C style comments
+        if (!comments) {
+            items = Engine::Search(content, json_expres);
+        } else {
+            if (__comments.Size == 0) {
+                static Expression comment1      = Expression();
+                static Expression comment_next1 = Expression();
+                comment1.Keyword                = L"/*";
+                comment_next1.Keyword           = L"*/";
+                comment_next1.Replace           = L'\n';
+                comment1.Connected              = &comment_next1;
+
+                static Expression comment2      = Expression();
+                static Expression comment_next2 = Expression();
+                comment2.Keyword                = L"//";
+                comment_next2.Keyword           = L'\n';
+                comment_next2.Replace           = L'\n';
+                comment2.Connected              = &comment_next2;
+
+                __comments.Add(&comment1);
+                __comments.Add(&comment2);
+            }
+
+            n_content = Engine::Parse(content, Engine::Search(content, __comments));
+            items     = Engine::Search(n_content, json_expres);
+        }
+
+        if (items.Size != 0) {
+            Match *_item = &(items[0]);
+
+            document.Ordered = (_item->Expr->Keyword == L']');
+
+            if (n_content.Length == 0) {
+                if (_item->NestMatch.Size != 0) {
+                    _makeDocument(document, content, _item->NestMatch);
+                } else if (document.Ordered) {
+                    _makeListNumber(document.Numbers, content, *_item);
+                }
+            } else {
+                if (_item->NestMatch.Size != 0) {
+                    _makeDocument(document, n_content, _item->NestMatch);
+                } else if (document.Ordered) {
+                    _makeListNumber(document.Numbers, n_content, *_item);
+                }
+            }
+        }
+
+        return document;
+    }
+
+    static bool ExtractID(UNumber &id, String const &key, UNumber offset, UNumber limit) noexcept {
+        UNumber end = (offset + (limit - 1));
+
+        while ((end > offset) && (key[--end] != L'[')) {
+        }
+        ++end;
+        --limit;
+
+        return String::ToNumber(key, id, end, (limit - (end - offset)));
+    }
+
+    // Key form can be: name, name[id1], name[id1][sub-id2], name[id1][sub-id2][sub-sub-idx]...
+    Document *GetSource(Entry **_entry, String const &key, UNumber offset, UNumber limit) noexcept {
+        if (limit == 0) {
+            limit = key.Length - offset;
+        }
+
+        UNumber end_offset = (offset + limit);
+        UNumber _hash;
+
+        if (key[offset] == L'[') {
+            ++offset;
+            end_offset = offset;
+
+            while (key[end_offset] != L']') {
+                ++end_offset;
+
+                if (end_offset > (offset + limit)) {
+                    return nullptr;
+                }
+            }
+
+            _hash = String::Hash(key, offset, end_offset);
+            ++end_offset;
+            --offset;
+        } else if (key[(end_offset - 1)] == L']') {
+            end_offset = offset;
+
+            while (key[end_offset] != L'[') {
+                ++end_offset;
+
+                if (end_offset > (offset + limit)) {
+                    return nullptr;
+                }
+            }
+            _hash = String::Hash(key, offset, end_offset);
+        } else {
+            _hash = String::Hash(key, offset, end_offset);
+        }
+
+        *_entry = Exist(_hash, 0, Table);
+        if (*_entry != nullptr) {
+            if ((*_entry)->Type == VType::DocumentT) {
+                limit -= (end_offset - offset);
+                Document *tmp = &(Documents[(*_entry)->ID]);
+
+                if ((limit != 0) && !tmp->Ordered) {
+                    return tmp->GetSource(_entry, key, end_offset, limit);
+                }
+
+                return tmp;
+            }
+
+            return this;
+        }
+
+        return nullptr;
+    }
+
+    bool GetString(String &value, String const &key, UNumber offset = 0, UNumber limit = 0) noexcept {
+        value = L"";
+
+        Entry *         _entry;
+        Document const *storage = GetSource(&_entry, key, offset, limit);
+
+        if (storage != nullptr) {
+            if (!storage->Ordered) {
+                if (_entry->Type == VType::StringT) {
+                    value = storage->Strings[_entry->ID];
+                    return true;
+                }
+
+                if (_entry->Type == VType::BooleanT) {
+                    value = ((storage->Numbers[_entry->ID] == 1.0) ? L"true" : L"false");
+                    return true;
+                }
+
+                if (_entry->Type == VType::NumberT) {
+                    value = String::FromNumber(storage->Numbers[_entry->ID], 1, 0, 3);
+                    return true;
+                }
+            } else {
+                UNumber id = 0;
+                Document::ExtractID(id, key, offset, limit);
+
+                if (storage->Strings.Size > id) {
+                    value = storage->Strings[id];
+                    return true;
+                }
+
+                if (storage->Numbers.Size > id) {
+                    value = String::FromNumber(storage->Numbers[id], 1, 0, 3);
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    bool GetNumber(UNumber &value, String const &key, UNumber offset = 0, UNumber limit = 0) noexcept {
+        value = 0;
+
+        Entry *         _entry;
+        Document const *storage = GetSource(&_entry, key, offset, limit);
+
+        if (storage != nullptr) {
+            if (!storage->Ordered) {
+                if (_entry->Type == VType::StringT) {
+                    return String::ToNumber(storage->Strings[_entry->ID], value);
+                }
+
+                if (_entry->Type == VType::BooleanT) {
+                    value = ((storage->Numbers[_entry->ID] == 1.0) ? 1 : 0);
+                    return true;
+                }
+
+                if (_entry->Type == VType::NumberT) {
+                    value = static_cast<UNumber>(storage->Numbers[_entry->ID]);
+                    return true;
+                }
+            } else {
+                UNumber id = 0;
+                Document::ExtractID(id, key, offset, limit);
+
+                if (storage->Numbers.Size > id) {
+                    value = static_cast<UNumber>(storage->Numbers[id]);
+                    return true;
+                }
+
+                if (storage->Strings.Size > id) {
+                    return String::ToNumber(storage->Strings[id], value);
+                }
+            }
+        }
+
+        return false;
+    }
+
+    bool GetDouble(double &value, String const &key, UNumber offset = 0, UNumber limit = 0) noexcept {
+        value = 0.0;
+
+        Entry *         _entry;
+        Document const *storage = GetSource(&_entry, key, offset, limit);
+
+        if (storage != nullptr) {
+            if (!storage->Ordered) {
+                if (_entry->Type == VType::StringT) {
+                    return String::ToNumber(storage->Strings[_entry->ID], value);
+                }
+
+                if (_entry->Type == VType::BooleanT) {
+                    value = ((storage->Numbers[_entry->ID] == 1.0) ? 1.0 : 0.0);
+                    return true;
+                }
+
+                if (_entry->Type == VType::NumberT) {
+                    value = storage->Numbers[_entry->ID];
+                    return true;
+                }
+            } else {
+                UNumber id = 0;
+                Document::ExtractID(id, key, offset, limit);
+
+                if (storage->Numbers.Size > id) {
+                    value = storage->Numbers[id];
+                    return true;
+                }
+
+                if (storage->Strings.Size > id) {
+                    return String::ToNumber(storage->Strings[id], value);
+                }
+            }
+        }
+
+        return false;
+    }
+
+    bool GetBool(bool &value, String const &key, UNumber offset = 0, UNumber limit = 0) noexcept {
+        Entry *         _entry;
+        Document const *storage = GetSource(&_entry, key, offset, limit);
+
+        if (storage != nullptr) {
+            if (!storage->Ordered) {
+                if ((_entry->Type == VType::BooleanT) || (_entry->Type == VType::NumberT)) {
+                    value = (storage->Numbers[_entry->ID] == 1);
+                    return true;
+                }
+
+                if (_entry->Type == VType::StringT) {
+                    value = (storage->Strings[_entry->ID] == L"true");
+                    return true;
+                }
+            } else {
+                UNumber id = 0;
+                Document::ExtractID(id, key, offset, limit);
+
+                if (storage->Strings.Size > id) {
+                    value = (storage->Strings[id] == L"true");
+                    return true;
+                }
+
+                if (storage->Numbers.Size > id) {
+                    value = (storage->Numbers[id] == 1);
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    Document *GetDocument(String const &key, UNumber offset = 0, UNumber limit = 0) noexcept {
+        Entry *   _entry;
+        Document *storage = GetSource(&_entry, key, offset, limit);
+
+        if ((storage != nullptr) && (_entry->Type == VType::DocumentT)) {
+            return storage;
+        }
+
+        return nullptr;
+    }
 };
 
 Expressions const     Document::json_expres    = Document::_getJsonExpres();
 Expressions const     Document::to_json_expres = Document::_getToJsonExpres();
 JsonFixedString const Document::fxs            = JsonFixedString();
-
-Document Document::FromJSON(String const &content, bool comments) noexcept {
-    Document     document;
-    Array<Match> items;
-
-    String n_content;
-
-    static Expressions __comments;
-
-    // C style comments
-    if (!comments) {
-        items = Engine::Search(content, Document::json_expres);
-    } else {
-        if (__comments.Size == 0) {
-            static Expression comment1      = Expression();
-            static Expression comment_next1 = Expression();
-            comment1.Keyword                = L"/*";
-            comment_next1.Keyword           = L"*/";
-            comment_next1.Replace           = L'\n';
-            comment1.Connected              = &comment_next1;
-
-            static Expression comment2      = Expression();
-            static Expression comment_next2 = Expression();
-            comment2.Keyword                = L"//";
-            comment_next2.Keyword           = L'\n';
-            comment_next2.Replace           = L'\n';
-            comment2.Connected              = &comment_next2;
-
-            __comments.Add(&comment1);
-            __comments.Add(&comment2);
-        }
-
-        n_content = Engine::Parse(content, Engine::Search(content, __comments));
-        items     = Engine::Search(n_content, json_expres);
-    }
-
-    if (items.Size != 0) {
-        Match *_item = &(items[0]);
-
-        document.Ordered = (_item->Expr->Keyword == L']');
-
-        if (n_content.Length == 0) {
-            if (_item->NestMatch.Size != 0) {
-                Document::_makeDocument(document, content, _item->NestMatch);
-            } else if (document.Ordered) {
-                Document::_makeListNumber(document.Numbers, content, *_item);
-            }
-        } else {
-            if (_item->NestMatch.Size != 0) {
-                Document::_makeDocument(document, n_content, _item->NestMatch);
-            } else if (document.Ordered) {
-                Document::_makeListNumber(document.Numbers, n_content, *_item);
-            }
-        }
-    }
-
-    return document;
-}
-
-bool Document::ExtractID(UNumber &id, String const &key, UNumber offset, UNumber limit) noexcept {
-    UNumber end = (offset + (limit - 1));
-
-    while ((end > offset) && (key[--end] != L'[')) {
-    }
-    ++end;
-    --limit;
-
-    return String::ToNumber(key, id, end, (limit - (end - offset)));
-}
-
-// Key form can be: name, name[id1], name[id1][sub-id2], name[id1][sub-id2][sub-sub-idx]...
-Document *Document::GetSource(Entry **_entry, String const &key, UNumber offset, UNumber limit) noexcept {
-    if (limit == 0) {
-        limit = key.Length - offset;
-    }
-
-    UNumber end_offset = (offset + limit);
-    UNumber _hash;
-
-    if (key[offset] == L'[') {
-        ++offset;
-        end_offset = offset;
-
-        while (key[end_offset] != L']') {
-            ++end_offset;
-
-            if (end_offset > (offset + limit)) {
-                return nullptr;
-            }
-        }
-
-        _hash = String::Hash(key, offset, end_offset);
-        ++end_offset;
-        --offset;
-    } else if (key[(end_offset - 1)] == L']') {
-        end_offset = offset;
-
-        while (key[end_offset] != L'[') {
-            ++end_offset;
-
-            if (end_offset > (offset + limit)) {
-                return nullptr;
-            }
-        }
-        _hash = String::Hash(key, offset, end_offset);
-    } else {
-        _hash = String::Hash(key, offset, end_offset);
-    }
-
-    *_entry = Exist(_hash, 0, Table);
-    if (*_entry != nullptr) {
-        if ((*_entry)->Type == VType::DocumentT) {
-            limit -= (end_offset - offset);
-            Document *tmp = &(Documents[(*_entry)->ID]);
-
-            if ((limit != 0) && !tmp->Ordered) {
-                return tmp->GetSource(_entry, key, end_offset, limit);
-            }
-
-            return tmp;
-        }
-
-        return this;
-    }
-
-    return nullptr;
-}
-
-bool Document::GetString(String &value, String const &key, UNumber offset, UNumber limit) noexcept {
-    value = L"";
-
-    Entry *         _entry;
-    Document const *storage = GetSource(&_entry, key, offset, limit);
-
-    // TODO: return a JSON string if it's a Document of ordered or not ordered
-
-    if (storage != nullptr) {
-        if (!storage->Ordered) {
-            if (_entry->Type == VType::StringT) {
-                value = storage->Strings[_entry->ID];
-                return true;
-            }
-
-            if (_entry->Type == VType::BooleanT) {
-                value = ((storage->Numbers[_entry->ID] == 1.0) ? L"true" : L"false");
-                return true;
-            }
-
-            if (_entry->Type == VType::NumberT) {
-                value = String::FromNumber(storage->Numbers[_entry->ID], 1, 0, 3);
-                return true;
-            }
-        } else {
-            UNumber id = 0;
-            storage->ExtractID(id, key, offset, limit);
-
-            if (storage->Strings.Size > id) {
-                value = storage->Strings[id];
-                return true;
-            }
-
-            if (storage->Numbers.Size > id) {
-                value = String::FromNumber(storage->Numbers[id], 1, 0, 3);
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
-bool Document::GetNumber(UNumber &value, String const &key, UNumber offset, UNumber limit) noexcept {
-    value = 0;
-
-    Entry *         _entry;
-    Document const *storage = GetSource(&_entry, key, offset, limit);
-
-    if (storage != nullptr) {
-        if (!storage->Ordered) {
-            if (_entry->Type == VType::StringT) {
-                return String::ToNumber(storage->Strings[_entry->ID], value);
-            }
-
-            if (_entry->Type == VType::BooleanT) {
-                value = ((storage->Numbers[_entry->ID] == 1.0) ? 1 : 0);
-                return true;
-            }
-
-            if (_entry->Type == VType::NumberT) {
-                value = static_cast<UNumber>(storage->Numbers[_entry->ID]);
-                return true;
-            }
-        } else {
-            UNumber id = 0;
-            storage->ExtractID(id, key, offset, limit);
-
-            if (storage->Numbers.Size > id) {
-                value = static_cast<UNumber>(storage->Numbers[id]);
-                return true;
-            }
-
-            if (storage->Strings.Size > id) {
-                return String::ToNumber(storage->Strings[id], value);
-            }
-        }
-    }
-
-    return false;
-}
-
-bool Document::GetDouble(double &value, String const &key, UNumber offset, UNumber limit) noexcept {
-    value = 0.0;
-
-    Entry *         _entry;
-    Document const *storage = GetSource(&_entry, key, offset, limit);
-
-    if (storage != nullptr) {
-        if (!storage->Ordered) {
-            if (_entry->Type == VType::StringT) {
-                return String::ToNumber(storage->Strings[_entry->ID], value);
-            }
-
-            if (_entry->Type == VType::BooleanT) {
-                value = ((storage->Numbers[_entry->ID] == 1.0) ? 1.0 : 0.0);
-                return true;
-            }
-
-            if (_entry->Type == VType::NumberT) {
-                value = storage->Numbers[_entry->ID];
-                return true;
-            }
-        } else {
-            UNumber id = 0;
-            storage->ExtractID(id, key, offset, limit);
-
-            if (storage->Numbers.Size > id) {
-                value = storage->Numbers[id];
-                return true;
-            }
-
-            if (storage->Strings.Size > id) {
-                return String::ToNumber(storage->Strings[id], value);
-            }
-        }
-    }
-
-    return false;
-}
-
-bool Document::GetBool(bool &value, String const &key, UNumber offset, UNumber limit) noexcept {
-    Entry *         _entry;
-    Document const *storage = GetSource(&_entry, key, offset, limit);
-
-    if (storage != nullptr) {
-        if (!storage->Ordered) {
-            if ((_entry->Type == VType::BooleanT) || (_entry->Type == VType::NumberT)) {
-                value = (storage->Numbers[_entry->ID] == 1);
-                return true;
-            }
-
-            if (_entry->Type == VType::StringT) {
-                value = (storage->Strings[_entry->ID] == L"true");
-                return true;
-            }
-        } else {
-            UNumber id = 0;
-            storage->ExtractID(id, key, offset, limit);
-
-            if (storage->Strings.Size > id) {
-                value = (storage->Strings[id] == L"true");
-                return true;
-            }
-
-            if (storage->Numbers.Size > id) {
-                value = (storage->Numbers[id] == 1);
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
-Document *Document::GetDocument(String const &key, UNumber offset, UNumber limit) noexcept {
-    Entry *   _entry;
-    Document *storage = GetSource(&_entry, key, offset, limit);
-
-    if ((storage != nullptr) && (_entry->Type == VType::DocumentT)) {
-        return storage;
-    }
-
-    return nullptr;
-}
-
 //////////// Fields' Operators
 Field &Field::operator=(UNumber value) noexcept {
     if (Storage != nullptr) {

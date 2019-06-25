@@ -211,29 +211,33 @@ struct ALU {
                 String::ToNumber(block, number2, m2->Offset, m2->Length);
 
                 switch (op_id) {
-                    case 1:
+                    case 1: // ^
                         if (number2 != 0.0) {
-                            // if (number2 > 1) {
                             UNumber const times = static_cast<UNumber>(number2);
                             for (UNumber k = 1; k < times; k++) {
                                 number1 *= number1;
-                                // }
                             }
-                        } else {
-                            number1 = 1;
+
+                            if (number2 < 0) {
+                                number1 = 1 / number1;
+                            }
+
+                            break;
                         }
+
+                        number1 = 1;
                         break;
-                    case 2:
+                    case 2: // &
                         number1 = static_cast<double>(static_cast<UNumber>(number1) % static_cast<UNumber>(number2));
                         break;
-                    case 3:
+                    case 3: // /
                         if (number2 == 0) {
                             return L"0";
                         }
 
                         number1 /= number2;
                         break;
-                    default:
+                    default: // *
                         number1 *= number2;
                         break;
                 }

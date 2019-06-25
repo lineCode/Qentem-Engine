@@ -128,6 +128,8 @@ struct Template {
         LoopTail.NestExprs.Add(&TagLoop); // Nested by itself
         /////////////////////////////////
 
+        // TODO: Add {math: $1} tag for math that nest with vars
+
         return Expressions().Add(TagsVars).Add(&TagIif).Add(&TagIf).Add(&TagLoop);
     }
 

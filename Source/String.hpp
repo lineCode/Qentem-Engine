@@ -20,7 +20,6 @@ struct String {
     wchar_t *Str      = nullptr; // NULL terminated wchar_t
     UNumber  Length   = 0;
     UNumber  Capacity = 0;
-    bool     Shared   = false;
 
     String() = default;
 
@@ -144,17 +143,7 @@ struct String {
     }
 
     ~String() noexcept {
-        if (!Shared) {
-            Reset();
-        }
-    }
-
-    inline void Share(wchar_t *_str, UNumber _size) noexcept {
-        Str = _str;
-
-        Capacity = _size;
-        Length   = _size;
-        Shared   = true;
+        Reset();
     }
 
     inline void Reset() noexcept {
@@ -450,60 +439,42 @@ struct String {
     }
 
     // Revers a string
-    inline static void Revers(String &str) noexcept {
+    inline static void Revers(wchar_t *str, UNumber index, UNumber limit) noexcept {
         wchar_t ch;
-        UNumber x = (str.Length - 1);
 
-        for (UNumber i = 0; i < x;) {
-            ch     = str[x];
-            str[x] = str[i];
-            str[i] = ch;
-            --x;
+        for (UNumber i = index; i < limit;) {
+            ch         = str[limit];
+            str[limit] = str[i];
+            str[i]     = ch;
+            --limit;
             ++i;
         }
     }
 
     static String FromNumber(UNumber number, UNumber const min = 1) noexcept {
-        String tnm;
+        wchar_t p1_str[41]; // 39 + "sign" + "\0"
+        UNumber str1_len = 0;
 
-        // Local cache.
-        wchar_t p_str[30];
-        tnm.Str      = &p_str[0];
-        tnm.Capacity = 30; // TODO: Choose the right size
-        tnm.Shared   = true;
-
-        while (number > 0) {
-            tnm[tnm.Length] = wchar_t((number % 10) + 48);
-            ++tnm.Length;
-
+        while (number != 0) {
+            p1_str[str1_len++] = wchar_t((number % 10) + 48);
             number /= 10;
         }
 
-        while (tnm.Length < min) {
-            tnm[tnm.Length] = L'0';
-            ++tnm.Length;
+        while (str1_len < min) {
+            p1_str[str1_len++] = L'0';
         }
 
-        tnm[tnm.Length] = L'\0';
-
-        Revers(tnm);
-        return String(tnm.Str);
+        p1_str[str1_len] = L'\0';
+        Revers(p1_str, 0, (str1_len - 1));
+        return &p1_str[0];
     }
 
     static String FromNumber(double number, UNumber const min = 1, UNumber r_min = 0, UNumber r_max = 0) noexcept {
-        String tnm;
-        String tnm2;
+        UNumber str1_len = 0;
+        UNumber str2_len = 0;
 
-        // Local cache.
-        wchar_t p_str[20];
-        tnm.Str      = &p_str[0];
-        tnm.Capacity = 20; // TODO: Choose the right size
-        tnm.Shared   = true;
-
-        wchar_t p_str2[30];
-        tnm2.Str      = &p_str2[0];
-        tnm2.Capacity = 30; // TODO: Choose the right size
-        tnm2.Shared   = true;
+        wchar_t p2_str[41]; // 38 + "sign" + " . "+ "\0"
+        wchar_t p1_str[40]; // No "." needed.
 
         bool const negative = (number < 0);
         if (negative) {
@@ -516,9 +487,7 @@ struct String {
             UNumber num2    = num;
 
             while (num != 0) {
-                tnm[tnm.Length] = wchar_t((num % 10) + 48);
-                ++tnm.Length;
-
+                p1_str[str1_len++] = wchar_t((num % 10) + 48);
                 num /= 10;
                 ++counter;
             }
@@ -580,8 +549,7 @@ struct String {
 
                     if (num != 10) { // Means .00000000000
                         for (UNumber w = 0; w < len;) {
-                            tnm2[tnm2.Length] = wchar_t((num % 10) + 48);
-                            ++tnm2.Length;
+                            p2_str[str2_len++] = wchar_t((num % 10) + 48);
 
                             num /= 10;
                             if (num == 0) {
@@ -592,14 +560,14 @@ struct String {
                         }
 
                         if (num != 11) {
-                            tnm2 += wchar_t(((num - 1) % 10) + 48); // (num - 1) taking 0.1 back.
+                            p2_str[str2_len++] = wchar_t(((num - 1) % 10) + 48); // (num - 1) taking 0.1 back.
                         } else {
-                            tnm.Length  = 0;
-                            tnm2.Length = 0;
+                            str1_len = 0;
+                            str2_len = 0;
 
                             ++num2;
                             while (num2 != 0) {
-                                tnm += wchar_t((num2 % 10) + 48);
+                                p1_str[str1_len++] = wchar_t((num2 % 10) + 48);
                                 num2 /= 10;
                             }
                         }
@@ -608,33 +576,33 @@ struct String {
             }
         }
 
-        while (tnm.Length < min) {
-            tnm.Str[tnm.Length] = L'0';
-            ++tnm.Length;
+        while (str1_len < min) {
+            p1_str[str1_len++] = L'0';
         }
 
         if (negative) {
-            tnm.Str[tnm.Length] = L'-';
-            ++tnm.Length;
+            p1_str[str1_len++] = L'-';
         }
 
-        while (tnm2.Length < r_min) {
-            tnm2.Str[tnm2.Length] = L'0';
-            ++tnm2.Length;
+        while (str2_len < r_min) {
+            p2_str[str2_len++] = L'0';
         }
 
-        if (tnm2.Length != 0) {
-            tnm2.Str[tnm2.Length] = L'.';
-            ++tnm2.Length;
-            tnm2 += tnm;
+        if (str2_len != 0) {
+            p2_str[str2_len++] = L'.';
 
-            Revers(tnm2);
-            return String(tnm2.Str);
+            for (UNumber i = 0; i < str1_len; i++) {
+                p2_str[str2_len++] = p1_str[i];
+            }
+
+            p2_str[str2_len] = L'\0';
+            Revers(p2_str, 0, (str2_len - 1));
+            return &p2_str[0];
         }
 
-        tnm.Str[tnm.Length] = L'\0';
-        Revers(tnm);
-        return String(tnm.Str);
+        p1_str[str1_len] = L'\0';
+        Revers(p1_str, 0, (str1_len - 1));
+        return &p1_str[0];
     }
 
     static bool ToNumber(String const &str, UNumber &number, UNumber const offset = 0, UNumber limit = 0) noexcept {
@@ -644,13 +612,26 @@ struct String {
         }
 
         wchar_t c;
-        UNumber m = 1;
+        UNumber m        = 1;
+        UNumber exp      = 0;
+        bool    negative = false;
 
         number = 0;
         for (;;) {
             c = str[--limit];
 
             if ((c <= 47) || (c >= 58)) {
+                if ((c == L'e') || (c == L'E')) {
+                    exp    = number;
+                    number = 0;
+                    m      = 1;
+                    continue;
+                }
+
+                if ((c == L'+') || (negative = (c == L'-'))) {
+                    continue;
+                }
+
                 number = 0;
                 return false;
             }
@@ -664,6 +645,18 @@ struct String {
             m *= 10;
         }
 
+        if (exp != 0) {
+            if (!negative) {
+                for (UNumber i = 0; i < exp; i++) {
+                    number *= 10;
+                }
+            } else {
+                for (UNumber i = 0; i < exp; i++) {
+                    number /= 10;
+                }
+            }
+        }
+
         return true;
     }
 
@@ -675,16 +668,34 @@ struct String {
         }
 
         wchar_t c;
-        double  m = 1.0;
+        double  m        = 1.0;
+        UNumber exp      = 0;
+        bool    negative = false;
 
         number = 0.0;
         for (;;) {
             c = str[--limit];
 
             if ((c <= 47) || (c >= 58)) {
+                if (c == L'+') {
+                    continue;
+                }
+
                 if (c == L'-') {
+                    if (limit != offset) {
+                        negative = true;
+                        continue;
+                    }
+
                     number *= -1.0;
                     break;
+                }
+
+                if ((c == L'e') || (c == L'E')) {
+                    exp    = static_cast<UNumber>(number);
+                    number = 0.0;
+                    m      = 1.0;
+                    continue;
                 }
 
                 if (c == L'.') {
@@ -704,6 +715,18 @@ struct String {
             }
 
             m *= 10;
+        }
+
+        if (exp != 0) {
+            if (!negative) {
+                for (UNumber i = 0; i < exp; i++) {
+                    number *= 10;
+                }
+            } else {
+                for (UNumber i = 0; i < exp; i++) {
+                    number /= 10;
+                }
+            }
         }
 
         return true;

@@ -52,13 +52,13 @@ static Array<String> Extract(String const &content, Array<Match> const &items) n
     return matches;
 }
 
-static String ReplaceNewLine(String const &content) {
+static String ReplaceNewLine(String const &content, String const &_replace) {
     static Expressions find_keys;
     static Expression  find_key;
 
+    find_key.Replace = _replace;
     if (find_keys.Size == 0) { // Caching
         find_key.Keyword = L'\n';
-        find_key.Replace = L"\\n";
         find_keys.Add(&find_key);
     }
 
@@ -138,7 +138,7 @@ static String DumpExpressions(Expressions const &expres, String const &offset, U
         }
 
         if (expres[i]->Replace.Length != 0) {
-            ss += l_offset + L"Replace: " + ReplaceNewLine(expres[i]->Replace) + '\n';
+            ss += l_offset + L"Replace: " + ReplaceNewLine(expres[i]->Replace, L"\\n") + '\n';
         }
 
         if (expres[i]->ParseCB != nullptr) {
@@ -179,7 +179,7 @@ static String DumpMatches(String const &content, Array<Match> const &matches, St
     // It should be (matches.size) not (items.Size), but they should be the same size!
     for (UNumber i = index; i < items.Size; i++) {
         _array += innoffset + offset + L'[' + String::FromNumber(static_cast<double>(i)) + L"]: " +
-                  ReplaceNewLine(items[i]) + L'\n';
+                  ReplaceNewLine(items[i], L"\\n") + L'\n';
 
         if (matches[i].NestMatch.Size != 0) {
             _array += innoffset + offset + L"-NestMatch:\n";

@@ -20,11 +20,14 @@ using Qentem::String;
 using Qentem::StringStream;
 using Qentem::UNumber;
 using Qentem::Engine::Match;
+using Qentem::Test::ReplaceNewLine;
 using Qentem::Test::TestBit;
 
 static UNumber const TimesToRun = 1;
-static bool const    StreasTest = false;
-// static bool const StreasTest = true;
+// static bool const    StreasTest = true;
+static bool const StreasTest = false;
+// static bool const BigJSON    = true;
+static bool const BigJSON = false;
 
 static String   read_file(char const *fullpath) noexcept;
 static Document get_document() noexcept;
@@ -203,11 +206,11 @@ static bool run_tests(String const &name, Array<TestBit> const &bits, bool dump_
                 ss += L" -----\n  Line:      ";
                 ss += String::FromNumber(bits[i].Line) + L'\n';
                 ss += L"  Content:  ";
-                ss += Qentem::Test::ReplaceNewLine(bits[i].Content[t]) + L'\n';
+                ss += Qentem::Test::ReplaceNewLine(bits[i].Content[t], L"\\n") + L'\n';
                 ss += L"  Rendered: \"";
-                ss += Qentem::Test::ReplaceNewLine(rendered) + L"\"\n";
+                ss += Qentem::Test::ReplaceNewLine(rendered, L"\\n") + L"\"\n";
                 ss += L"  Expected: \"";
-                ss += Qentem::Test::ReplaceNewLine(bits[i].Expected[t]) + L"\"\n";
+                ss += Qentem::Test::ReplaceNewLine(bits[i].Expected[t], L"\\n") + L"\"\n";
                 ss += L"  Matches:\n";
                 ss += Qentem::Test::DumpMatches(bits[i].Content[t], matches, L"    ");
 
@@ -272,58 +275,29 @@ static bool NumbersConvTest() noexcept {
     bool           pass        = false;
     ////////////////////////////////
 
-    test.Add({2.0000000000009, L"2.0000000000009"});
-    test.Add({3.99999999999999, L"3.99999999999999"});
-    test.Add({99.1005099, L"99.1005099"});
-
-    test.Add({871.080055555, L"871.080055555"});
-    test.Add({999.1000099, L"999.1000099"});
-    test.Add({9.1000099, L"9.1000099"});
-    test.Add({2.30000000000001, L"2.30000000000001"});
-    test.Add({66666.30000400000001, L"66666.300004"});
-    test.Add({22.3000000000006, L"22.3000000000006"});
-    test.Add({22.30000000000006, L"22.30000000000006"});
-    test.Add({22.300000000000006, L"22.3"});
-
-    test.Add({9788871.080055555, L"9788871.080055555"});
-    test.Add({6666666.30000400000001, L"6666666.300004"});
-
-    test.Add({22.300000000000055, L"22.30000000000005"});
-    test.Add({22.300000000000059, L"22.30000000000006"});
-
-    test.Add({71.080055555, L"71.080055555"});
-    test.Add({1.000055555, L"1.000055555"});
-
-    test.Add({22.300000000000054, L"22.30000000000005"});
-    test.Add({2.00000000000001, L"2.00000000000001"});
-    test.Add({2.000000000000001, L"2.000000000000001"});
-
-    test.Add({222.300000000000055, L"222.3"});
-    test.Add({0.11111111111111, L"0.11111111111111"});
-    test.Add({2.00000000000001, L"2.00000000000001"});
-    test.Add({22.00000000000005, L"22.00000000000005"});
-    test.Add({22.300000000000055, L"22.30000000000005"});
-
-    test.Add({2.300000000000055, L"2.300000000000055"});
-    test.Add({2.000000000000015, L"2.000000000000015"});
-    test.Add({22.000055555, L"22.000055555"});
-    test.Add({2.00000000000051, L"2.00000000000051"});
-    test.Add({2222.000000000000055, L"2222"});
-    test.Add({2222.0000000000001, L"2222"});
-
-    test.Add({2.00000000000001, L"2.00000000000001"});
-
-    test.Add({222.00000000000001, L"222"});
-    test.Add({333.99999999999999, L"334"});
-    test.Add({22.87, L"22.87"});
-    test.Add({-0.788065000000079, L"-0.788065000000079"});
-    test.Add({9.99999999999901, L"9.99999999999901"});
-    test.Add({3.99999999999909, L"3.99999999999909"});
-    test.Add({55.0055, L"55.0055"});
-    test.Add({55.0000055, L"55.0000055"});
-    test.Add({0, L"0"}).Add({1, L"1"}).Add({-2, L"-2"}).Add({5, L"5"}).Add({9, L"9"}).Add({3.1, L"3.1"});  // 5
-    test.Add({1000000, L"1000000"}).Add({11, L"11"}).Add({22, L"22"}).Add({55, L"55"}).Add({199, L"199"}); // 5
-    test.Add({10.0, L"10"}).Add({11.00, L"11"}).Add({-22.87, L"-22.87"}).Add({55.0055, L"55.0055"});       // 4
+    test.Add({2.0000000000009, L"2.0000000000009"}).Add({3.99999999999999, L"3.99999999999999"});
+    test.Add({99.1005099, L"99.1005099"}).Add({871.080055555, L"871.080055555"});
+    test.Add({999.1000099, L"999.1000099"}).Add({9.1000099, L"9.1000099"});
+    test.Add({66666.30000400000001, L"66666.300004"}).Add({2.30000000000001, L"2.30000000000001"});
+    test.Add({22.3000000000006, L"22.3000000000006"}).Add({22.30000000000006, L"22.30000000000006"});
+    test.Add({22.300000000000006, L"22.3"}).Add({9788871.080055555, L"9788871.080055555"});
+    test.Add({6666666.30000400000001, L"6666666.300004"}).Add({22.300000000000055, L"22.30000000000005"});
+    test.Add({22.300000000000059, L"22.30000000000006"}).Add({71.080055555, L"71.080055555"});
+    test.Add({1.000055555, L"1.000055555"}).Add({22.300000000000054, L"22.30000000000005"});
+    test.Add({2.00000000000001, L"2.00000000000001"}).Add({2.000000000000001, L"2.000000000000001"});
+    test.Add({222.300000000000055, L"222.3"}).Add({0.11111111111111, L"0.11111111111111"});
+    test.Add({2.00000000000001, L"2.00000000000001"}).Add({22.00000000000005, L"22.00000000000005"});
+    test.Add({22.300000000000055, L"22.30000000000005"}).Add({2.300000000000055, L"2.300000000000055"});
+    test.Add({2.000000000000015, L"2.000000000000015"}).Add({22.000055555, L"22.000055555"});
+    test.Add({2.00000000000051, L"2.00000000000051"}).Add({2222.000000000000055, L"2222"});
+    test.Add({2222.0000000000001, L"2222"}).Add({2.00000000000001, L"2.00000000000001"});
+    test.Add({222.00000000000001, L"222"}).Add({333.99999999999999, L"334"});
+    test.Add({22.87, L"22.87"}).Add({-0.788065000000079, L"-0.788065000000079"});
+    test.Add({9.99999999999901, L"9.99999999999901"}).Add({3.99999999999909, L"3.99999999999909"});
+    test.Add({55.0055, L"55.0055"}).Add({55.0000055, L"55.0000055"});
+    test.Add({0, L"0"}).Add({1, L"1"}).Add({-2, L"-2"}).Add({5, L"5"}).Add({9, L"9"}).Add({-3.1, L"-3.1"});
+    test.Add({1000000, L"1000000"}).Add({11, L"11"}).Add({22, L"22"}).Add({55, L"55"}).Add({199, L"199"});
+    test.Add({10.0, L"10"}).Add({11.00, L"11"}).Add({-22.87, L"-22.87"}).Add({55.0055, L"55.0055"});
 
     ////////////////////////////////
 
@@ -367,7 +341,7 @@ static bool JSONTest() noexcept {
 
     std::wcout << L"\n #JSON Tests:\n";
 
-    String   json_content = read_file("./Tests/temp.json");
+    String   json_content = read_file(!BigJSON ? "./Tests/temp.json" : "./Tests/bigjson.json");
     Document data         = get_document();
 
     for (UNumber i = 0; i < 10; i++) {
@@ -389,9 +363,12 @@ static bool JSONTest() noexcept {
         std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << '\n';
     }
 
-    if ((json_content.Length - 1) == final.Length) {
-        --json_content.Length; // A new line mark at the end of the file \n
+    if (BigJSON) {
+        std::wcout << "\n Big JSON Run\n";
+        return true;
     }
+
+    json_content = Qentem::Test::ReplaceNewLine(json_content, L"");
 
     if (final == json_content) {
         std::wcout << "\n JSON looks good!\n";
