@@ -9,10 +9,10 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
+#include "Engine.hpp"
+
 #ifndef QENTEM_ALU_H
 #define QENTEM_ALU_H
-
-#include "Engine.hpp"
 
 namespace Qentem {
 

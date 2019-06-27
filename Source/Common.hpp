@@ -9,15 +9,16 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
+// #include <stddef.h>
+
 #ifndef QENTEM_COMMON_H
 #define QENTEM_COMMON_H
-
-// #include <stddef.h>
 
 namespace Qentem {
 
 // using UNumber = size_t;
-using UNumber = unsigned long long;
+using Number  = long;
+using UNumber = unsigned long;
 
 } // namespace Qentem
 

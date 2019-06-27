@@ -36,12 +36,14 @@ static bool     NumbersConvTest() noexcept;
 static bool     JSONTest() noexcept;
 
 int main() {
-    bool pass         = false;
+    bool Pass         = false;
     bool TestEngine   = false;
     bool NumbersConv  = false;
     bool TestALU      = false;
     bool TestTemplate = false;
     bool TestJSON     = false;
+
+    bool Pause = false;
 
     // This way is faster just to comment out the line instead of changing the value
     TestEngine   = true;
@@ -58,9 +60,9 @@ int main() {
         if (TestEngine) {
             // Core Engine Tests
             bits = Qentem::Test::GetEngineBits();
-            pass = run_tests(L"Engine", bits, false, true);
+            Pass = run_tests(L"Engine", bits, false, true);
             Qentem::Test::CleanBits(bits); // TODO: Implement a destructor
-            if (!pass) {
+            if (!Pass) {
                 break;
             }
             std::wcout << "\n///////////////////////////////////////////////\n";
@@ -68,8 +70,8 @@ int main() {
 
         if (NumbersConv) {
             // Number Conversion Tests
-            pass = NumbersConvTest();
-            if (!pass) {
+            Pass = NumbersConvTest();
+            if (!Pass) {
                 break;
             }
             std::wcout << "\n///////////////////////////////////////////////\n";
@@ -78,8 +80,8 @@ int main() {
         if (TestALU) {
             // Arithmetic & logic Evaluation Tests
             bits = Qentem::Test::GetALUBits();
-            pass = run_tests(L"Arithmetic & Logic Evaluation", bits, false, true);
-            if (!pass) {
+            Pass = run_tests(L"Arithmetic & Logic Evaluation", bits, false, true);
+            if (!Pass) {
                 break;
             }
             std::wcout << "\n///////////////////////////////////////////////\n";
@@ -88,8 +90,8 @@ int main() {
         if (TestTemplate) {
             // Template Tests
             bits = Qentem::Test::GetTemplateBits();
-            pass = run_tests(L"Template", bits, false, true);
-            if (!pass) {
+            Pass = run_tests(L"Template", bits, false, true);
+            if (!Pass) {
                 break;
             }
             std::wcout << "\n///////////////////////////////////////////////\n";
@@ -97,8 +99,8 @@ int main() {
 
         if (TestJSON) {
             // JSON Tests
-            pass = JSONTest();
-            if (!pass) {
+            Pass = JSONTest();
+            if (!Pass) {
                 break;
             }
             std::wcout << "\n///////////////////////////////////////////////\n";
@@ -108,13 +110,15 @@ int main() {
     total            = (static_cast<UNumber>(clock()) - total);
     String time_took = String::FromNumber((static_cast<double>(total) / CLOCKS_PER_SEC), 1, 3, 3);
 
-    if (pass) {
+    if (Pass) {
         std::wcout << L"\n ALL GOOD. Took: " << time_took.Str << L"s\n\n";
     } else {
         std::wcout << L"\n Something is wrong!" << L"s\n\n";
     }
 
-    // std::getwchar();
+    if (Pause) {
+        std::getwchar();
+    }
 
     return 10;
 }
@@ -130,7 +134,7 @@ static bool run_tests(String const &name, Array<TestBit> const &bits, bool dump_
     UNumber       total_parse  = 0;
     UNumber       parse_ticks  = 0;
     UNumber       count        = start_at;
-    bool          pass         = false;
+    bool          Pass         = false;
 
     StringStream ss;
     Array<Match> matches;
@@ -177,8 +181,8 @@ static bool run_tests(String const &name, Array<TestBit> const &bits, bool dump_
             ++counter;
             ++total;
 
-            pass = rendered.Compare(bits[i].Expected[t], 0, bits[i].Expected[t].Length);
-            if (pass) {
+            Pass = rendered.Compare(bits[i].Expected[t], 0, bits[i].Expected[t].Length);
+            if (Pass) {
                 ss += L' ';
             } else {
                 ss += L"\n ";
@@ -187,7 +191,7 @@ static bool run_tests(String const &name, Array<TestBit> const &bits, bool dump_
             ss += String::FromNumber(count, 2) + L'-';
             ss += String::FromNumber(counter, 2) + L": ";
 
-            if (pass) {
+            if (Pass) {
                 ss += L"Pass";
             } else {
                 ss += L"Fail";
@@ -198,7 +202,7 @@ static bool run_tests(String const &name, Array<TestBit> const &bits, bool dump_
             ss += L" (Parse: ";
             ss += String::FromNumber((static_cast<double>(parse_ticks) / CLOCKS_PER_SEC), 2, 3, 3) + L")\n";
 
-            if (!pass) {
+            if (!Pass) {
                 ++errors;
 
                 ss += L" ----------- Start debug ";
@@ -234,7 +238,7 @@ static bool run_tests(String const &name, Array<TestBit> const &bits, bool dump_
 
         counter = 0;
 
-        if (!pass && break_on_err) {
+        if (!Pass && break_on_err) {
             break;
         }
     }
@@ -273,7 +277,7 @@ static bool NumbersConvTest() noexcept {
     UNumber const  times       = StreasTest ? 100000 : 1;
     UNumber        ticks       = 0;
     UNumber        total_ticks = 0;
-    bool           pass        = false;
+    bool           Pass        = false;
     ////////////////////////////////
 
     test.Add({2.0000000000009, L"2.0000000000009"}).Add({3.99999999999999, L"3.99999999999999"});
@@ -310,13 +314,13 @@ static bool NumbersConvTest() noexcept {
         ticks = static_cast<UNumber>(clock());
 
         for (size_t k = 0; k < times; k++) {
-            pass = (test[i].result == String::FromNumber(test[i].num));
+            Pass = (test[i].result == String::FromNumber(test[i].num));
         }
 
         ticks = (static_cast<UNumber>(clock()) - ticks);
         total_ticks += ticks;
 
-        if (pass) {
+        if (Pass) {
             std::wcout << L"Pass " << String::FromNumber((static_cast<double>(ticks) / CLOCKS_PER_SEC), 2, 3, 3).Str
                        << L'\n';
         } else {

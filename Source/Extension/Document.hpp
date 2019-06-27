@@ -9,10 +9,10 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
+#include "Engine.hpp"
+
 #ifndef QENTEM_DOCUMENT_H
 #define QENTEM_DOCUMENT_H
-
-#include "Engine.hpp"
 
 using Qentem::Engine::Expression;
 using Qentem::Engine::Expressions;
@@ -387,7 +387,7 @@ struct Document {
                     id = Strings.Size;
 
                     if (Strings.Size == Strings.Capacity) {
-                        Strings.Resize((Strings.Size + 1) * 4);
+                        Strings.Resize((Strings.Size + 1) * 2);
                     }
 
                     if (move) {
@@ -402,7 +402,7 @@ struct Document {
                 case VType::BooleanT: {
                     id = Numbers.Size;
                     if (Numbers.Size == Numbers.Capacity) {
-                        Numbers.Resize((Numbers.Size + 1) * 4);
+                        Numbers.Resize((Numbers.Size + 1) * 2);
                     }
 
                     Numbers[Numbers.Size] = *(static_cast<double *>(ptr));
@@ -412,7 +412,7 @@ struct Document {
                     id = Documents.Size;
 
                     if (Documents.Size == Documents.Capacity) {
-                        Documents.Resize((Documents.Size + 1) * 4);
+                        Documents.Resize((Documents.Size + 1) * 2);
                     }
 
                     if (move) {

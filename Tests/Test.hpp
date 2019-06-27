@@ -9,13 +9,12 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-/////////////////////////////////////////////
-#ifndef TESTENGINE_H
-#define TESTENGINE_H
-
 #include <Extension/ALU.hpp>
 #include <Extension/Document.hpp>
 #include <Extension/Template.hpp>
+
+#ifndef TESTENGINE_H
+#define TESTENGINE_H
 
 namespace Qentem {
 namespace Test {

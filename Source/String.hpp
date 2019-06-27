@@ -9,10 +9,10 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
+#include "Memory.hpp"
+
 #ifndef QENTEM_STRING_H
 #define QENTEM_STRING_H
-
-#include "Memory.hpp"
 
 namespace Qentem {
 
@@ -197,7 +197,7 @@ struct String {
 
     String &operator+=(wchar_t const src) noexcept { // Appand a string
         if (Length == Capacity) {
-            Resize((Length + 1) * 3);
+            Resize((Length + 1) * 2);
         }
 
         Str[Length++] = src;
@@ -466,7 +466,7 @@ struct String {
         }
 
         p1_str[str1_len] = L'\0';
-        Revers(p1_str, 0, (str1_len - 1));
+        Revers(&p1_str[0], 0, (str1_len - 1));
         return &p1_str[0];
     }
 
@@ -597,12 +597,12 @@ struct String {
             }
 
             p2_str[str2_len] = L'\0';
-            Revers(p2_str, 0, (str2_len - 1));
+            Revers(&p2_str[0], 0, (str2_len - 1));
             return &p2_str[0];
         }
 
         p1_str[str1_len] = L'\0';
-        Revers(p1_str, 0, (str1_len - 1));
+        Revers(&p1_str[0], 0, (str1_len - 1));
         return &p1_str[0];
     }
 

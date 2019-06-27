@@ -34,7 +34,7 @@
                 "isDefault": true
             },
             "presentation": {
-                "reveal": "never",
+                "reveal": "silent",
                 "clear": true
             },
             "problemMatcher": "$gcc"
@@ -112,7 +112,7 @@
             "args": [
                 "./Tests/Test.cpp",
                 "'-header-filter=.*'",
-                "-checks='*,-modernize-avoid-c-arrays,-cppcoreguidelines-avoid-c-arrays,-modernize-use-auto,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-non-private-member-variables-in-classes,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-readability-magic-numbers,-hicpp*,-fuchs*,-llvm-header-guard,-misc-non-private-*,-googl*,-misc-unused-parameters'",
+                "-checks='*,-misc-definitions-in-headers,-cppcoreguidelines-pro-bounds-constant-array-index,-modernize-avoid-c-arrays,-cppcoreguidelines-avoid-c-arrays,-modernize-use-auto,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-non-private-member-variables-in-classes,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-readability-magic-numbers,-hicpp*,-fuchs*,-llvm-header-guard,-misc-non-private-*,-googl*,-misc-unused-parameters'",
                 "--",
                 "-I",
                 "./Source",

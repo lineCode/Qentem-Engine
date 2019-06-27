@@ -9,11 +9,11 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#ifndef QENTEM_TEMPLATE_H
-#define QENTEM_TEMPLATE_H
-
 #include "Extension/ALU.hpp"
 #include "Extension/Document.hpp"
+
+#ifndef QENTEM_TEMPLATE_H
+#define QENTEM_TEMPLATE_H
 
 namespace Qentem {
 

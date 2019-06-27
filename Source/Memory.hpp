@@ -9,10 +9,10 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
+#include "Common.hpp"
+
 #ifndef QENTEM_MEMORY_H
 #define QENTEM_MEMORY_H
-
-#include "Common.hpp"
 
 namespace Qentem {
 
@@ -23,10 +23,8 @@ struct Memory {
     }
 
     static void Deallocate(T **_p) noexcept {
-        if (*_p != nullptr) { // This is important to not jump
-            delete[] * _p;
-            *_p = nullptr;
-        }
+        delete[] * _p;
+        *_p = nullptr;
     }
 
     static void AllocateBit(T **_p) noexcept {
@@ -34,10 +32,8 @@ struct Memory {
     }
 
     static void DeallocateBit(T **_p) noexcept {
-        if (*_p != nullptr) {
-            delete *_p;
-            *_p = nullptr;
-        }
+        delete *_p;
+        *_p = nullptr;
     }
 };
 

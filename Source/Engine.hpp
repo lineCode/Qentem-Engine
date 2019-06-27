@@ -9,10 +9,10 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
+#include "StringStream.hpp"
+
 #ifndef QENTEM_ENGINE_H
 #define QENTEM_ENGINE_H
-
-#include "StringStream.hpp"
 
 namespace Qentem {
 namespace Engine {
@@ -72,7 +72,7 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
                     UNumber const max, UNumber const level) noexcept {
     bool        LOCKED      = false; // To keep matching the end of the current expression.
     bool        SPLIT_IT    = false; // To keep tracking a split match.
-    bool        OVERDRIVE   = false; // To achieving nesting.
+    bool        OVERDRIVE   = false; // For nesting.
     UNumber     counter     = 0;     // Index for counting.
     UNumber     nest_offset = 0;     // Temp variable for nested matches.
     UNumber     id          = 1;     // Expression's id.
@@ -177,7 +177,7 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
                             }
 
                             if (items.Size == items.Capacity) {
-                                items.Resize((items.Size + 1) * 4);
+                                items.Resize((items.Size + 1) * 2);
                             }
 
                             items[items.Size] = static_cast<Match &&>(_item);
@@ -248,7 +248,7 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
                 index = (_item.NestMatch[(_item.NestMatch.Size - 1)].Offset +
                          _item.NestMatch[(_item.NestMatch.Size - 1)].Length);
 
-                items.Add(_item.NestMatch, true);
+                items.Add(static_cast<Array<Match> &&>(_item.NestMatch));
 
                 if (index == limit) {
                     break;
@@ -287,7 +287,7 @@ inline static Array<Match> Search(String const &content, Expressions const &expr
                                   UNumber max = 0) noexcept {
     Array<Match> items;
 
-    if (length == 0) {
+    if ((length == 0) && (content.Length > index)) {
         length = (content.Length - index); // limit becomes the ending offset here.
     }
 
@@ -301,7 +301,7 @@ inline static Array<Match> Search(String const &content, Expressions const &expr
 }
 /////////////////////////////////
 static String Parse(String const &content, Array<Match> const &items, UNumber index = 0, UNumber length = 0) noexcept {
-    if (length == 0) {
+    if ((length == 0) && (content.Length > index)) {
         length = (content.Length - index);
     }
 
@@ -428,7 +428,7 @@ static void Engine::Split(Array<Match> &items, String const &content, UNumber co
 
             if (((Flags::DROPEMPTY & _item.Expr->Flag) == 0) || (_item.Length != 0)) {
                 if (splitted.Size == splitted.Capacity) {
-                    splitted.Resize((splitted.Size + 1) * 4);
+                    splitted.Resize((splitted.Size + 1) * 2);
                 }
 
                 tmp2 = &splitted[splitted.Size];
@@ -447,7 +447,7 @@ static void Engine::Split(Array<Match> &items, String const &content, UNumber co
             offset = (tmp->Offset + tmp->Length);
         } else {
             if (nesties.Size == nesties.Capacity) {
-                nesties.Resize((nesties.Size + 1) * 4);
+                nesties.Resize((nesties.Size + 1) * 2);
             }
 
             nesties[nesties.Size] = static_cast<Match &&>(*tmp);
@@ -476,7 +476,7 @@ static void Engine::Split(Array<Match> &items, String const &content, UNumber co
 
     if (((Flags::DROPEMPTY & _item.Expr->Flag) == 0) || (_item.Length != 0)) {
         if (splitted.Size == splitted.Capacity) {
-            splitted.Resize((items.Size + 1) * 4);
+            splitted.Resize((items.Size + 1) * 2);
         }
 
         tmp2 = &splitted[splitted.Size];

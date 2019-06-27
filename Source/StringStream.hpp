@@ -9,11 +9,11 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#ifndef QENTEM_STRINGSTREAM_H
-#define QENTEM_STRINGSTREAM_H
-
 #include "Array.hpp"
 #include "String.hpp"
+
+#ifndef QENTEM_STRINGSTREAM_H
+#define QENTEM_STRINGSTREAM_H
 
 namespace Qentem {
 
@@ -41,7 +41,7 @@ class StringStream {
             Length += col.Length;
 
             if (collections.Size == collections.Capacity) {
-                collections.Resize((collections.Size + 1) * 4);
+                collections.Resize((collections.Size + 1) * 2);
             }
 
             collections[collections.Size] = col;
@@ -55,7 +55,7 @@ class StringStream {
             Length += src.Length;
 
             if (_strings.Size == _strings.Capacity) {
-                _strings.Resize((_strings.Size + 1) * 4);
+                _strings.Resize((_strings.Size + 1) * 2);
             }
 
             _strings[_strings.Size] = src;
@@ -69,7 +69,7 @@ class StringStream {
             Length += src.Length;
 
             if (_strings.Size == _strings.Capacity) {
-                _strings.Resize((_strings.Size + 1) * 4);
+                _strings.Resize((_strings.Size + 1) * 2);
             }
 
             _strings[_strings.Size] = src;
@@ -83,7 +83,7 @@ class StringStream {
             Length += src->Length;
 
             if (p_strings.Size == p_strings.Capacity) {
-                p_strings.Resize((p_strings.Size + 1) * 4);
+                p_strings.Resize((p_strings.Size + 1) * 2);
             }
 
             p_strings[p_strings.Size] = src;
