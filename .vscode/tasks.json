@@ -10,7 +10,7 @@
             "command": "g++",
             "args": [
                 "-g",
-                "-Og",
+                // "-O3",
                 "-std=c++11",
                 "-Wall",
                 "-Wunused",
@@ -34,7 +34,7 @@
                 "isDefault": true
             },
             "presentation": {
-                "reveal": "silent",
+                "reveal": "never",
                 "clear": true
             },
             "problemMatcher": "$gcc"

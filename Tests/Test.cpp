@@ -113,7 +113,7 @@ int main() {
     if (Pass) {
         std::wcout << L"\n ALL GOOD. Took: " << time_took.Str << L"s\n\n";
     } else {
-        std::wcout << L"\n Something is wrong!" << L"s\n\n";
+        std::wcout << L"\n Something is wrong!" << L"\n\n";
     }
 
     if (Pause) {
@@ -154,15 +154,15 @@ static bool run_tests(String const &name, Array<TestBit> const &bits, bool dump_
         ss += L"\n\n";
     }
 
-    for (UNumber i = start_at; i < bits.Size; i++) {
+    for (UNumber i = start_at; i < bits.Index; i++) {
         ++count;
 
-        if (bits[i].Expected.Size != bits[i].Content.Size) {
+        if (bits[i].Expected.Index != bits[i].Content.Index) {
             std::wcout << L"Check Expected & Content Size @" << String::FromNumber(bits[i].Line).Str << L'\n';
             return false;
         }
 
-        for (UNumber t = counter; t < bits[i].Content.Size; t++) {
+        for (UNumber t = counter; t < bits[i].Content.Index; t++) {
             search_ticks = static_cast<UNumber>(clock());
             for (UNumber x = 0; x < times; x++) {
                 matches = Qentem::Engine::Search(bits[i].Content[t], bits[i].Exprs);
@@ -308,7 +308,7 @@ static bool NumbersConvTest() noexcept {
 
     std::wcout << L"\n #Number Conversion Tests:\n";
 
-    for (UNumber i = 0; i < test.Size; i++) {
+    for (UNumber i = 0; i < test.Index; i++) {
         std::wcout << L' ' << String::FromNumber((i + 1), 2).Str << L") ";
 
         ticks = static_cast<UNumber>(clock());

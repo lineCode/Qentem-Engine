@@ -31,8 +31,8 @@ struct TestBit {
 static String FlipSplit(String const &block, Match const &item) noexcept;
 
 static void CleanBits(Array<TestBit> &bits) noexcept {
-    for (UNumber i = 0; i < bits.Size; i++) {
-        for (UNumber j = 0; j < bits[i].Collect.Size; j++) {
+    for (UNumber i = 0; i < bits.Index; i++) {
+        for (UNumber j = 0; j < bits[i].Collect.Index; j++) {
             Qentem::Memory<Expression>::DeallocateBit(&bits[i].Collect[j]);
         }
     }
@@ -40,9 +40,9 @@ static void CleanBits(Array<TestBit> &bits) noexcept {
 
 static Array<String> Extract(String const &content, Array<Match> const &items) noexcept {
     Array<String> matches = Array<String>();
-    matches.SetCapacity(items.Size);
+    matches.SetCapacity(items.Index);
 
-    for (UNumber i = 0; i < items.Size; i++) {
+    for (UNumber i = 0; i < items.Index; i++) {
         matches.Add(String::Part(content, items[i].Offset, items[i].Length) + L" -> O:" +
                     String::FromNumber(items[i].Offset) + L" L:" + String::FromNumber(items[i].Length) + L" OL:" +
                     String::FromNumber(items[i].OLength) + L" CL:" + String::FromNumber(items[i].CLength));
@@ -56,7 +56,7 @@ static String ReplaceNewLine(String const &content, String const &_replace) {
     static Expression  find_key;
 
     find_key.Replace = _replace;
-    if (find_keys.Size == 0) { // Caching
+    if (find_keys.Index == 0) { // Caching
         find_key.Keyword = L'\n';
         find_keys.Add(&find_key);
     }
@@ -66,19 +66,19 @@ static String ReplaceNewLine(String const &content, String const &_replace) {
 
 static String DumpExpressions(Expressions const &expres, String const &offset, UNumber index = 0,
                               Engine::Expression *expr = nullptr) noexcept {
-    if (expres.Size == 0) {
+    if (expres.Index == 0) {
         return offset + L"No expressions!\n";
     }
 
     StringStream ss;
 
     ss += L'(';
-    ss += String::FromNumber(static_cast<double>(expres.Size)) + L") => [\n";
+    ss += String::FromNumber(static_cast<double>(expres.Index)) + L") => [\n";
 
     String innoffset = L"    ";
     String l_offset  = offset + innoffset + innoffset;
 
-    for (UNumber i = index; i < expres.Size; i++) {
+    for (UNumber i = index; i < expres.Index; i++) {
 
         if (expres[i] == expr) {
             ss += offset;
@@ -152,7 +152,7 @@ static String DumpExpressions(Expressions const &expres, String const &offset, U
             ss += Test::DumpExpressions(Expressions().Add(expres[i]->Connected), innoffset + l_offset, 0, expres[i]);
         }
 
-        if (expres[i]->NestExprs.Size != 0) {
+        if (expres[i]->NestExprs.Index != 0) {
             ss += l_offset + L"NestExprs: ";
             ss += Test::DumpExpressions(expres[i]->NestExprs, innoffset + l_offset, 0, expres[i]);
         }
@@ -166,21 +166,21 @@ static String DumpExpressions(Expressions const &expres, String const &offset, U
 
 static String DumpMatches(String const &content, Array<Match> const &matches, String const &offset,
                           UNumber index = 0) noexcept {
-    if (matches.Size == 0) {
+    if (matches.Index == 0) {
         return offset + L"No matches!\n";
     }
 
     Array<String> items = Test::Extract(content, matches);
 
     String innoffset = L"    ";
-    String _array    = offset + L'(' + String::FromNumber(static_cast<double>(matches.Size)) + L") => [\n";
+    String _array    = offset + L'(' + String::FromNumber(static_cast<double>(matches.Index)) + L") => [\n";
 
-    // It should be (matches.size) not (items.Size), but they should be the same size!
-    for (UNumber i = index; i < items.Size; i++) {
+    // It should be (matches.size) not (items.Index), but they should be the same size!
+    for (UNumber i = index; i < items.Index; i++) {
         _array += innoffset + offset + L'[' + String::FromNumber(static_cast<double>(i)) + L"]: " +
                   ReplaceNewLine(items[i], L"\\n") + L'\n';
 
-        if (matches[i].NestMatch.Size != 0) {
+        if (matches[i].NestMatch.Index != 0) {
             _array += innoffset + offset + L"-NestMatch:\n";
             _array += Test::DumpMatches(content, matches[i].NestMatch, innoffset + innoffset + offset, 0);
         }
@@ -937,7 +937,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     y2->ParseCB = ([](String const &block, Match const &item) noexcept->String {
         double number = 0.0;
 
-        if (item.NestMatch.Size != 0) {
+        if (item.NestMatch.Index != 0) {
             String  r      = L"";
             double  temnum = 0.0;
             UNumber i      = 0;
@@ -948,7 +948,7 @@ static Array<TestBit> GetEngineBits() noexcept {
             }
 
             Match *nm;
-            for (; i < item.NestMatch.Size; i++) {
+            for (; i < item.NestMatch.Index; i++) {
                 nm = &(item.NestMatch[i]);
                 if ((nm->Length == 0) || !String::ToNumber(block, temnum, nm->Offset, nm->Length)) {
                     return L'0';
@@ -988,10 +988,10 @@ static Array<TestBit> GetEngineBits() noexcept {
         String r      = L"";
 
         Match *nm;
-        for (UNumber i = 0; i < item.NestMatch.Size; i++) {
+        for (UNumber i = 0; i < item.NestMatch.Index; i++) {
             nm = &(item.NestMatch[i]);
 
-            if (nm->NestMatch.Size != 0) {
+            if (nm->NestMatch.Index != 0) {
                 r = Engine::Parse(block, nm->NestMatch, nm->Offset, nm->Offset + nm->Length);
             } else {
                 r = String::Part(block, nm->Offset, nm->Length);
@@ -1012,7 +1012,7 @@ static Array<TestBit> GetEngineBits() noexcept {
         String r      = L"";
 
         Match *nm;
-        for (UNumber i = 0; i < item.NestMatch.Size; i++) {
+        for (UNumber i = 0; i < item.NestMatch.Index; i++) {
             nm = &(item.NestMatch[i]);
             if ((nm->Length == 0) || !String::ToNumber(block, temnum, nm->Offset, nm->Length)) {
                 return L'0';
@@ -1053,7 +1053,7 @@ static Array<TestBit> GetEngineBits() noexcept {
         String r      = L"";
 
         Match *nm;
-        for (UNumber i = 0; i < item.NestMatch.Size; i++) {
+        for (UNumber i = 0; i < item.NestMatch.Index; i++) {
             nm = &(item.NestMatch[i]);
             if ((nm->Length == 0) || !String::ToNumber(block, temnum, nm->Offset, nm->Length)) {
                 return L'0';
@@ -1101,10 +1101,10 @@ static Array<TestBit> GetEngineBits() noexcept {
         String r      = L"";
 
         Match *nm;
-        for (UNumber i = 0; i < item.NestMatch.Size; i++) {
+        for (UNumber i = 0; i < item.NestMatch.Index; i++) {
             nm = &(item.NestMatch[i]);
 
-            if (nm->NestMatch.Size != 0) {
+            if (nm->NestMatch.Index != 0) {
                 r = Engine::Parse(block, nm->NestMatch, nm->Offset, nm->Offset + nm->Length);
             } else {
                 r = String::Part(block, nm->Offset, nm->Length);
@@ -1193,7 +1193,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     y1->ParseCB = ([](String const &block, Match const &item) noexcept->String {
         String nc = L"";
 
-        for (UNumber i = 0; i < item.NestMatch.Size; i++) {
+        for (UNumber i = 0; i < item.NestMatch.Index; i++) {
             nc += String::Part(block, item.NestMatch[i].Offset, item.NestMatch[i].Length);
         }
 
@@ -1229,7 +1229,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     y2->ParseCB = ([](String const &block, Match const &item) noexcept->String {
         String s = L"";
 
-        for (UNumber i = 0; i < item.NestMatch.Size; i++) {
+        for (UNumber i = 0; i < item.NestMatch.Index; i++) {
             s += L'H';
         }
 
@@ -1365,7 +1365,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     x2->ParseCB = ([](String const &block, Match const &item) noexcept->String {
         String nc = L"";
 
-        for (UNumber i = 0; i < item.NestMatch.Size; i++) {
+        for (UNumber i = 0; i < item.NestMatch.Index; i++) {
             nc += String::Part(block, item.NestMatch[i].Offset, item.NestMatch[i].Length);
         }
 
@@ -1406,12 +1406,12 @@ static Array<TestBit> GetEngineBits() noexcept {
 static String FlipSplit(String const &block, Match const &item) noexcept {
     String nc = L"";
 
-    if (item.NestMatch.Size != 0) {
-        for (UNumber i = 0; i < item.NestMatch.Size; i++) {
+    if (item.NestMatch.Index != 0) {
+        for (UNumber i = 0; i < item.NestMatch.Index; i++) {
             nc = Test::FlipSplit(block, item.NestMatch[i]) + nc;
         }
 
-        if (item.NestMatch.Size > 1) {
+        if (item.NestMatch.Index > 1) {
             nc = String(L'[') + nc + L']';
         }
     } else {

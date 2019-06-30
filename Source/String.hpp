@@ -197,7 +197,11 @@ struct String {
 
     String &operator+=(wchar_t const src) noexcept { // Appand a string
         if (Length == Capacity) {
-            Resize((Length + 1) * 2);
+            if (Capacity == 0) {
+                Capacity = 2;
+            }
+
+            Resize(Capacity * 2);
         }
 
         Str[Length++] = src;
@@ -351,24 +355,24 @@ struct String {
         des.Length = (ln + des.Length);
     }
 
-    inline void SetLength(UNumber const size) noexcept {
+    inline void SetLength(UNumber const _size) noexcept {
         Length   = 0;
-        Capacity = size;
+        Capacity = _size;
 
         Memory<wchar_t>::Deallocate(&Str);
-        Memory<wchar_t>::Allocate(&Str, (size + 1));
+        Memory<wchar_t>::Allocate(&Str, (_size + 1));
 
         Str[0] = L'\0';
     }
 
-    inline void Resize(UNumber const size) noexcept {
-        Capacity     = size;
+    inline void Resize(UNumber const _size) noexcept {
+        Capacity     = _size;
         wchar_t *tmp = Str;
 
-        Memory<wchar_t>::Allocate(&Str, (size + 1));
+        Memory<wchar_t>::Allocate(&Str, (_size + 1));
 
-        if (size < Length) {
-            Length = size;
+        if (_size < Length) {
+            Length = _size;
         }
 
         for (UNumber n = 0; n < Length; n++) {

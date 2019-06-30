@@ -1,0 +1,330 @@
+- Node is 0, After reserving size of 2:
+ Block[32], Used Size: 2, Nodes[2], Used Nodes: 1, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00------------------------------|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:0, After:0
+
+- Node is 1, After reserving size of 4:
+ Block[32], Used Size: 6, Nodes[2], Used Nodes: 2, Start Nodes: 0
+  ________________________________
+ |                                |
+ |001111--------------------------|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:1, After:1
+ NodeID:1, BlockIndex:2, Size:4, Before:0, After:0
+
+-After Droping 0
+ Block[32], Used Size: 4, Nodes[2], Used Nodes: 1, Start Nodes: 1
+  ________________________________
+ |                                |
+ |--1111--------------------------|
+ |________________________________|
+ NodeID:1, BlockIndex:2, Size:4, Before:1, After:1
+
+- Node is 0, After reserving size of 8:
+ Block[32], Used Size: 12, Nodes[2], Used Nodes: 2, Start Nodes: 1
+  ________________________________
+ |                                |
+ |--111100000000------------------|
+ |________________________________|
+ NodeID:1, BlockIndex:2, Size:4, Before:0, After:0
+ NodeID:0, BlockIndex:6, Size:8, Before:1, After:1
+
+-After Droping 1
+ Block[32], Used Size: 8, Nodes[2], Used Nodes: 1, Start Nodes: 0
+  ________________________________
+ |                                |
+ |------00000000------------------|
+ |________________________________|
+ NodeID:0, BlockIndex:6, Size:8, Before:0, After:0
+
+- Node is 1, After reserving size of 16:
+ Block[32], Used Size: 24, Nodes[2], Used Nodes: 2, Start Nodes: 0
+  ________________________________
+ |                                |
+ |------000000001111111111111111--|
+ |________________________________|
+ NodeID:0, BlockIndex:6, Size:8, Before:1, After:1
+ NodeID:1, BlockIndex:14, Size:16, Before:0, After:0
+
+-After Droping 0
+ Block[32], Used Size: 16, Nodes[2], Used Nodes: 1, Start Nodes: 1
+  ________________________________
+ |                                |
+ |--------------1111111111111111--|
+ |________________________________|
+ NodeID:1, BlockIndex:14, Size:16, Before:1, After:1
+
+- Node is 0, After reserving size of 2:
+ Block[32], Used Size: 18, Nodes[2], Used Nodes: 2, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00------------1111111111111111--|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:1, After:1
+ NodeID:1, BlockIndex:14, Size:16, Before:0, After:0
+
+- Node is 2, After reserving size of 2:
+ Block[32], Used Size: 20, Nodes[4], Used Nodes: 3, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00------------111111111111111122|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:2, After:1
+ NodeID:1, BlockIndex:14, Size:16, Before:0, After:2
+ NodeID:2, BlockIndex:30, Size:2, Before:1, After:0
+
+-After Droping 2
+ Block[32], Used Size: 18, Nodes[4], Used Nodes: 2, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00------------1111111111111111--|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:1, After:1
+ NodeID:1, BlockIndex:14, Size:16, Before:0, After:0
+
+- Node is 2, After reserving size of 2:
+ Block[32], Used Size: 20, Nodes[4], Used Nodes: 3, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00------------111111111111111122|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:2, After:1
+ NodeID:1, BlockIndex:14, Size:16, Before:0, After:2
+ NodeID:2, BlockIndex:30, Size:2, Before:1, After:0
+
+-After Droping 1
+ Block[32], Used Size: 4, Nodes[4], Used Nodes: 2, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00----------------------------22|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:2, After:2
+ NodeID:2, BlockIndex:30, Size:2, Before:0, After:0
+
+- Node is 1, After reserving size of 2:
+ Block[32], Used Size: 6, Nodes[4], Used Nodes: 3, Start Nodes: 0
+  ________________________________
+ |                                |
+ |0011--------------------------22|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:2, After:1
+ NodeID:1, BlockIndex:2, Size:2, Before:0, After:2
+ NodeID:2, BlockIndex:30, Size:2, Before:1, After:0
+
+- Node is 3, After reserving size of 4:
+ Block[32], Used Size: 10, Nodes[4], Used Nodes: 4, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00113333----------------------22|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:2, After:1
+ NodeID:1, BlockIndex:2, Size:2, Before:0, After:3
+ NodeID:3, BlockIndex:4, Size:4, Before:1, After:2
+ NodeID:2, BlockIndex:30, Size:2, Before:3, After:0
+
+-After Droping 1
+ Block[32], Used Size: 8, Nodes[4], Used Nodes: 3, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00--3333----------------------22|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:2, After:3
+ NodeID:3, BlockIndex:4, Size:4, Before:0, After:2
+ NodeID:2, BlockIndex:30, Size:2, Before:3, After:0
+
+- Node is 1, After reserving size of 8:
+ Block[32], Used Size: 16, Nodes[4], Used Nodes: 4, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00--333311111111--------------22|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:2, After:3
+ NodeID:3, BlockIndex:4, Size:4, Before:0, After:1
+ NodeID:1, BlockIndex:8, Size:8, Before:3, After:2
+ NodeID:2, BlockIndex:30, Size:2, Before:1, After:0
+
+-After Droping 3
+ Block[32], Used Size: 12, Nodes[4], Used Nodes: 3, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00------11111111--------------22|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:2, After:1
+ NodeID:1, BlockIndex:8, Size:8, Before:0, After:2
+ NodeID:2, BlockIndex:30, Size:2, Before:1, After:0
+
+-After Droping 2
+ Block[32], Used Size: 10, Nodes[4], Used Nodes: 2, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00------11111111----------------|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:1, After:1
+ NodeID:1, BlockIndex:8, Size:8, Before:0, After:0
+
+- Node is 2, After reserving size of 16:
+ Block[32], Used Size: 26, Nodes[4], Used Nodes: 3, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00------111111112222222222222222|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:2, After:1
+ NodeID:1, BlockIndex:8, Size:8, Before:0, After:2
+ NodeID:2, BlockIndex:16, Size:16, Before:1, After:0
+
+-After Droping 1
+ Block[32], Used Size: 18, Nodes[4], Used Nodes: 2, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00--------------2222222222222222|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:2, After:2
+ NodeID:2, BlockIndex:16, Size:16, Before:0, After:0
+
+- Node is 1, After reserving size of 2:
+ Block[32], Used Size: 20, Nodes[4], Used Nodes: 3, Start Nodes: 0
+  ________________________________
+ |                                |
+ |0011------------2222222222222222|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:2, After:1
+ NodeID:1, BlockIndex:2, Size:2, Before:0, After:2
+ NodeID:2, BlockIndex:16, Size:16, Before:1, After:0
+
+- Node is 3, After reserving size of 4:
+ Block[32], Used Size: 24, Nodes[4], Used Nodes: 4, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00113333--------2222222222222222|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:2, After:1
+ NodeID:1, BlockIndex:2, Size:2, Before:0, After:3
+ NodeID:3, BlockIndex:4, Size:4, Before:1, After:2
+ NodeID:2, BlockIndex:16, Size:16, Before:3, After:0
+
+-After Droping 1
+ Block[32], Used Size: 22, Nodes[4], Used Nodes: 3, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00--3333--------2222222222222222|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:2, After:3
+ NodeID:3, BlockIndex:4, Size:4, Before:0, After:2
+ NodeID:2, BlockIndex:16, Size:16, Before:3, After:0
+
+- Node is 1, After reserving size of 8:
+ Block[32], Used Size: 30, Nodes[4], Used Nodes: 4, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00--3333111111112222222222222222|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:2, After:3
+ NodeID:3, BlockIndex:4, Size:4, Before:0, After:1
+ NodeID:1, BlockIndex:8, Size:8, Before:3, After:2
+ NodeID:2, BlockIndex:16, Size:16, Before:1, After:0
+
+-After Droping 3
+ Block[32], Used Size: 26, Nodes[4], Used Nodes: 3, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00------111111112222222222222222|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:2, After:1
+ NodeID:1, BlockIndex:8, Size:8, Before:0, After:2
+ NodeID:2, BlockIndex:16, Size:16, Before:1, After:0
+
+- Node is 3, After reserving size of 2:
+ Block[32], Used Size: 28, Nodes[4], Used Nodes: 4, Start Nodes: 0
+  ________________________________
+ |                                |
+ |0033----111111112222222222222222|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:2, After:3
+ NodeID:3, BlockIndex:2, Size:2, Before:0, After:1
+ NodeID:1, BlockIndex:8, Size:8, Before:3, After:2
+ NodeID:2, BlockIndex:16, Size:16, Before:1, After:0
+
+- Node is 4, After reserving size of 4:
+ Block[32], Used Size: 32, Nodes[8], Used Nodes: 5, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00334444111111112222222222222222|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:2, After:3
+ NodeID:3, BlockIndex:2, Size:2, Before:0, After:4
+ NodeID:4, BlockIndex:4, Size:4, Before:3, After:1
+ NodeID:1, BlockIndex:8, Size:8, Before:4, After:2
+ NodeID:2, BlockIndex:16, Size:16, Before:1, After:0
+
+-After Droping 3
+ Block[32], Used Size: 30, Nodes[8], Used Nodes: 4, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00--4444111111112222222222222222|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:2, After:4
+ NodeID:4, BlockIndex:4, Size:4, Before:0, After:1
+ NodeID:1, BlockIndex:8, Size:8, Before:4, After:2
+ NodeID:2, BlockIndex:16, Size:16, Before:1, After:0
+
+- Node is 3, After reserving size of 2:
+ Block[32], Used Size: 32, Nodes[8], Used Nodes: 5, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00334444111111112222222222222222|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:2, After:3
+ NodeID:3, BlockIndex:2, Size:2, Before:0, After:4
+ NodeID:4, BlockIndex:4, Size:4, Before:3, After:1
+ NodeID:1, BlockIndex:8, Size:8, Before:4, After:2
+ NodeID:2, BlockIndex:16, Size:16, Before:1, After:0
+
+Out. 
+-After Droping 3
+ Block[32], Used Size: 30, Nodes[8], Used Nodes: 4, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00--4444111111112222222222222222|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:2, After:4
+ NodeID:4, BlockIndex:4, Size:4, Before:0, After:1
+ NodeID:1, BlockIndex:8, Size:8, Before:4, After:2
+ NodeID:2, BlockIndex:16, Size:16, Before:1, After:0
+
+-After Droping 2
+ Block[32], Used Size: 14, Nodes[8], Used Nodes: 3, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00--444411111111----------------|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:1, After:4
+ NodeID:4, BlockIndex:4, Size:4, Before:0, After:1
+ NodeID:1, BlockIndex:8, Size:8, Before:4, After:0
+
+-After Droping 4
+ Block[32], Used Size: 10, Nodes[8], Used Nodes: 2, Start Nodes: 0
+  ________________________________
+ |                                |
+ |00------11111111----------------|
+ |________________________________|
+ NodeID:0, BlockIndex:0, Size:2, Before:1, After:1
+ NodeID:1, BlockIndex:8, Size:8, Before:0, After:0
+
+-After Droping 0
+ Block[32], Used Size: 8, Nodes[8], Used Nodes: 1, Start Nodes: 1
+  ________________________________
+ |                                |
+ |--------11111111----------------|
+ |________________________________|
+ NodeID:1, BlockIndex:8, Size:8, Before:1, After:1
+
+-After Droping 1
+ Block[32], Used Size: 0, Nodes[8], Used Nodes: 0, Start Nodes: 0
+  ________________________________
+ |                                |
+ |--------------------------------|
+ |________________________________|
+

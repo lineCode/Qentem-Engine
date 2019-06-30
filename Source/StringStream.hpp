@@ -40,13 +40,13 @@ class StringStream {
         if (col.Length != 0) {
             Length += col.Length;
 
-            if (collections.Size == collections.Capacity) {
-                collections.Resize((collections.Size + 1) * 2);
+            if (collections.Index == collections.Capacity) {
+                collections.Resize(collections.Index * 2);
             }
 
-            collections[collections.Size] = col;
-            bits.Add({SType::Bits, collections.Size});
-            ++collections.Size;
+            collections[collections.Index] = col;
+            bits.Add({SType::Bits, collections.Index});
+            ++collections.Index;
         }
     }
 
@@ -54,13 +54,13 @@ class StringStream {
         if (src.Length != 0) {
             Length += src.Length;
 
-            if (_strings.Size == _strings.Capacity) {
-                _strings.Resize((_strings.Size + 1) * 2);
+            if (_strings.Index == _strings.Capacity) {
+                _strings.Resize(_strings.Index * 2);
             }
 
-            _strings[_strings.Size] = src;
-            bits.Add({SType::Bit, _strings.Size});
-            ++_strings.Size;
+            _strings[_strings.Index] = src;
+            bits.Add({SType::Bit, _strings.Index});
+            ++_strings.Index;
         }
     }
 
@@ -68,13 +68,13 @@ class StringStream {
         if (src.Length != 0) {
             Length += src.Length;
 
-            if (_strings.Size == _strings.Capacity) {
-                _strings.Resize((_strings.Size + 1) * 2);
+            if (_strings.Index == _strings.Capacity) {
+                _strings.Resize(_strings.Index * 2);
             }
 
-            _strings[_strings.Size] = src;
-            bits.Add({SType::Bit, _strings.Size});
-            ++_strings.Size;
+            _strings[_strings.Index] = src;
+            bits.Add({SType::Bit, _strings.Index});
+            ++_strings.Index;
         }
     }
 
@@ -82,13 +82,13 @@ class StringStream {
         if (src->Length != 0) {
             Length += src->Length;
 
-            if (p_strings.Size == p_strings.Capacity) {
-                p_strings.Resize((p_strings.Size + 1) * 2);
+            if (p_strings.Index == p_strings.Capacity) {
+                p_strings.Resize(p_strings.Index * 2);
             }
 
-            p_strings[p_strings.Size] = src;
-            bits.Add({SType::PBit, p_strings.Size});
-            ++p_strings.Size;
+            p_strings[p_strings.Index] = src;
+            bits.Add({SType::PBit, p_strings.Index});
+            ++p_strings.Index;
         }
     }
 
@@ -96,7 +96,7 @@ class StringStream {
         String const *sstr;
         UNumber       j = 0;
 
-        for (UNumber i = 0; i < _ss.bits.Size; i++) {
+        for (UNumber i = 0; i < _ss.bits.Index; i++) {
             if (_ss.bits[i].Type == SType::Bit) {
                 sstr = &(_ss._strings[_ss.bits[i].Index]);
                 for (j = 0; j < sstr->Length;) {
@@ -128,11 +128,11 @@ class StringStream {
         if (Length != 0) {
             _pack(*this, tmp);
             // To allow the reuse of this object
-            Length           = 0;
-            _strings.Size    = 0;
-            p_strings.Size   = 0;
-            collections.Size = 0;
-            bits.Size        = 0;
+            Length            = 0;
+            _strings.Index    = 0;
+            p_strings.Index   = 0;
+            collections.Index = 0;
+            bits.Index        = 0;
         }
 
         tmp[tmp.Length] = L'\0'; // Null trimmming

@@ -100,7 +100,7 @@ struct Document {
     Field operator[](UNumber const &id) noexcept {
         Field _field;
 
-        if (id < Keys.Size) {
+        if (id < Keys.Index) {
             _field.Key = Keys[id];
         }
 
@@ -139,7 +139,7 @@ struct Document {
     Entry *Exist(UNumber const hash, UNumber const level, Array<Index> const &_table) const noexcept {
         UNumber id = ((hash + level) % HashBase);
 
-        if ((_table.Size > id) && (_table[id].Hash != 0)) {
+        if ((_table.Index > id) && (_table[id].Hash != 0)) {
             if (_table[id].Hash == hash) {
                 return &(Entries[_table[id].ID]);
             }
@@ -153,10 +153,10 @@ struct Document {
     void InsertIndex(Index const &_index, UNumber const level, Array<Index> &_table) noexcept {
         UNumber id = ((_index.Hash + level) % HashBase);
 
-        if (_table.Size <= id) {
+        if (_table.Index <= id) {
             _table.Capacity = id + 1;
             _table.Resize(_table.Capacity);
-            _table.Size = _table.Capacity;
+            _table.Index = _table.Capacity;
         }
 
         if (_table[id].Hash == 0) {
@@ -175,7 +175,7 @@ struct Document {
 
             ss.Share(&fxs.fss1);
 
-            for (UNumber i = 0; i < Entries.Size; i++) {
+            for (UNumber i = 0; i < Entries.Index; i++) {
                 _ptr = &(Entries[i]);
 
                 if (ss.Length != 1) {
@@ -199,7 +199,7 @@ struct Document {
                         ss.Share(&fxs.fss10);
 
                         tmpMatchs = Engine::Search(Strings[_ptr->ID], to_json_expres);
-                        if (tmpMatchs.Size == 0) {
+                        if (tmpMatchs.Index == 0) {
                             ss.Share(&Strings[_ptr->ID]);
                         } else {
                             ss += Engine::Parse(Strings[_ptr->ID], tmpMatchs);
@@ -230,8 +230,8 @@ struct Document {
 
         ss.Share(&fxs.fss4);
 
-        if (Strings.Size != 0) {
-            for (UNumber i = 0; i < Strings.Size; i++) {
+        if (Strings.Index != 0) {
+            for (UNumber i = 0; i < Strings.Index; i++) {
                 if (ss.Length != 1) {
                     ss.Share(&fxs.fss3);
                 }
@@ -239,7 +239,7 @@ struct Document {
                 ss.Share(&fxs.fss6);
 
                 tmpMatchs = Engine::Search(Strings[i], to_json_expres);
-                if (tmpMatchs.Size == 0) {
+                if (tmpMatchs.Index == 0) {
                     ss.Share(&Strings[i]);
                 } else {
                     ss += Engine::Parse(Strings[i], tmpMatchs);
@@ -247,16 +247,16 @@ struct Document {
 
                 ss.Share(&fxs.fss6);
             }
-        } else if (Numbers.Size != 0) {
-            for (UNumber i = 0; i < Numbers.Size; i++) {
+        } else if (Numbers.Index != 0) {
+            for (UNumber i = 0; i < Numbers.Index; i++) {
                 if (ss.Length != 1) {
                     ss.Share(&fxs.fss3);
                 }
 
                 ss += String::FromNumber(Numbers[i]);
             }
-        } else if (Documents.Size != 0) {
-            for (UNumber i = 0; i < Documents.Size; i++) {
+        } else if (Documents.Index != 0) {
+            for (UNumber i = 0; i < Documents.Index; i++) {
                 if (ss.Length != 1) {
                     ss.Share(&fxs.fss3);
                 }
@@ -273,13 +273,7 @@ struct Document {
         _JsonQuot.Keyword = L'"';
         _JsonQuot.Replace = L"\\\"";
 
-        static Expression *jq[1];
-        jq[0] = &_JsonQuot;
-
-        static Expressions qs;
-        qs.Share(&jq[0], 1);
-
-        return qs;
+        return Expressions().Add(&_JsonQuot);
     }
 
     static Expressions _getJsonExpres() noexcept {
@@ -306,34 +300,16 @@ struct Document {
         closed_curly_bracket.ID        = 1;
         opened_curly_bracket.Connected = &closed_curly_bracket;
 
-        // Memory locality
-        static Expression *_curly[3];
-        _curly[0] = &quotation_start;
-        _curly[1] = &opened_curly_bracket;
-        _curly[2] = &opened_square_bracket;
-
-        closed_curly_bracket.NestExprs.Share(&_curly[0], 3);
+        closed_curly_bracket.NestExprs.Add(&quotation_start).Add(&opened_curly_bracket).Add(&opened_square_bracket);
 
         opened_square_bracket.Keyword   = L'[';
         closed_square_bracket.Keyword   = L']';
         closed_square_bracket.ID        = 2;
         opened_square_bracket.Connected = &closed_square_bracket;
 
-        static Expression *_bracket[3];
-        _bracket[0] = &opened_square_bracket;
-        _bracket[1] = &opened_curly_bracket;
-        _bracket[2] = &quotation_start;
+        closed_square_bracket.NestExprs.Add(&opened_square_bracket).Add(&opened_curly_bracket).Add(&quotation_start);
 
-        closed_square_bracket.NestExprs.Share(&_bracket[0], 3);
-
-        static Expression *_all[2];
-        _all[0] = &opened_curly_bracket;
-        _all[1] = &opened_square_bracket;
-
-        static Expressions js;
-        js.Share(&_all[0], 2);
-
-        return js;
+        return Expressions().Add(&opened_curly_bracket).Add(&opened_square_bracket);
     }
 
     inline String ToJSON() const noexcept {
@@ -384,44 +360,44 @@ struct Document {
         if ((_ent == nullptr) || (_ent->Type != type)) {
             switch (type) {
                 case VType::StringT: {
-                    id = Strings.Size;
+                    id = Strings.Index;
 
-                    if (Strings.Size == Strings.Capacity) {
-                        Strings.Resize((Strings.Size + 1) * 2);
+                    if (Strings.Index == Strings.Capacity) {
+                        Strings.Resize(Strings.Index * 2);
                     }
 
                     if (move) {
-                        Strings[Strings.Size] = static_cast<String &&>(*(static_cast<String *>(ptr)));
+                        Strings[Strings.Index] = static_cast<String &&>(*(static_cast<String *>(ptr)));
                     } else {
-                        Strings[Strings.Size] = *(static_cast<String *>(ptr));
+                        Strings[Strings.Index] = *(static_cast<String *>(ptr));
                     }
 
-                    ++Strings.Size;
+                    ++Strings.Index;
                 } break;
                 case VType::NumberT:
                 case VType::BooleanT: {
-                    id = Numbers.Size;
-                    if (Numbers.Size == Numbers.Capacity) {
-                        Numbers.Resize((Numbers.Size + 1) * 2);
+                    id = Numbers.Index;
+                    if (Numbers.Index == Numbers.Capacity) {
+                        Numbers.Resize(Numbers.Index * 2);
                     }
 
-                    Numbers[Numbers.Size] = *(static_cast<double *>(ptr));
-                    ++Numbers.Size;
+                    Numbers[Numbers.Index] = *(static_cast<double *>(ptr));
+                    ++Numbers.Index;
                 } break;
                 case VType::DocumentT: {
-                    id = Documents.Size;
+                    id = Documents.Index;
 
-                    if (Documents.Size == Documents.Capacity) {
-                        Documents.Resize((Documents.Size + 1) * 2);
+                    if (Documents.Index == Documents.Capacity) {
+                        Documents.Resize(Documents.Index * 2);
                     }
 
                     if (move) {
-                        Documents[Documents.Size] = static_cast<Document &&>(*(static_cast<Document *>(ptr)));
+                        Documents[Documents.Index] = static_cast<Document &&>(*(static_cast<Document *>(ptr)));
                     } else {
-                        Documents[Documents.Size] = *(static_cast<Document *>(ptr));
+                        Documents[Documents.Index] = *(static_cast<Document *>(ptr));
                     }
 
-                    ++Documents.Size;
+                    ++Documents.Index;
                 } break;
                 default:
                     break;
@@ -472,12 +448,12 @@ struct Document {
         } else {
             Index _index;
             _index.Hash = _hash;
-            _index.ID   = Entries.Size;
+            _index.ID   = Entries.Index;
 
             Entry _entry;
             _entry.Type  = type;
             _entry.ID    = id;
-            _entry.KeyID = Keys.Size;
+            _entry.KeyID = Keys.Index;
 
             Keys.Add(String::Part(key, offset, limit));
             Entries.Add(_entry);
@@ -497,7 +473,7 @@ struct Document {
             Document o_document;
             Document uno_document;
 
-            for (UNumber i = 0; i < items.Size; i++) {
+            for (UNumber i = 0; i < items.Index; i++) {
                 key   = &(items[i]);
                 start = 0;
                 done  = false;
@@ -509,7 +485,7 @@ struct Document {
                             ++i;
 
                             data = &(items[i]);
-                            if (data->NestMatch.Size != 0) {
+                            if (data->NestMatch.Index != 0) {
                                 ts = Engine::Parse(content, data->NestMatch, (data->Offset + 1),
                                                    ((data->Offset + data->Length) - 1));
                             } else {
@@ -537,7 +513,7 @@ struct Document {
                             o_document         = Document();
                             o_document.Ordered = true;
 
-                            if (items[i].NestMatch.Size > 0) {
+                            if (items[i].NestMatch.Index > 0) {
                                 _makeDocument(o_document, content, items[i].NestMatch);
                             } else {
                                 _makeListNumber(o_document.Numbers, content, items[i]);
@@ -597,34 +573,34 @@ struct Document {
                 }
             }
         } else {
-            if (items.Size > 0) {
+            if (items.Index > 0) {
                 if (items[0].Expr->ID == 3) { // " Strings
-                    document.Strings.SetCapacity(items.Size);
+                    document.Strings.SetCapacity(items.Index);
 
-                    for (UNumber i = 0; i < items.Size; i++) {
-                        if (items[i].NestMatch.Size == 0) {
+                    for (UNumber i = 0; i < items.Index; i++) {
+                        if (items[i].NestMatch.Index == 0) {
                             document.Strings[i] = String::Part(content, (items[i].Offset + 1), (items[i].Length - 2));
                         } else {
                             document.Strings[i] = Engine::Parse(content, items[i].NestMatch, (items[i].Offset + 1),
                                                                 ((items[i].Length + items[i].Offset) - 1));
                         }
-                        ++document.Strings.Size;
+                        ++document.Strings.Index;
                     }
                 } else if (items[0].Expr->ID == 1) { // } Unordered arrays
-                    document.Documents.SetCapacity(items.Size);
+                    document.Documents.SetCapacity(items.Index);
 
-                    for (UNumber i = 0; i < items.Size; i++) {
-                        _makeDocument((document.Documents[document.Documents.Size++]), content, items[i].NestMatch);
+                    for (UNumber i = 0; i < items.Index; i++) {
+                        _makeDocument((document.Documents[document.Documents.Index++]), content, items[i].NestMatch);
                     }
                 } else if (items[0].Expr->ID == 2) { // ] Ordered arrays
-                    document.Documents.SetCapacity(items.Size);
+                    document.Documents.SetCapacity(items.Index);
 
-                    for (UNumber i = 0; i < items.Size; i++) {
-                        Document *te = &(document.Documents[document.Documents.Size]);
-                        ++document.Documents.Size;
+                    for (UNumber i = 0; i < items.Index; i++) {
+                        Document *te = &(document.Documents[document.Documents.Index]);
+                        ++document.Documents.Index;
                         te->Ordered = true;
 
-                        if (items[i].NestMatch.Size > 0) {
+                        if (items[i].NestMatch.Index > 0) {
                             _makeDocument(*te, content, items[i].NestMatch);
                         } else {
                             _makeListNumber(te->Numbers, content, items[i]);
@@ -660,7 +636,7 @@ struct Document {
         if (!comments) {
             items = Engine::Search(content, json_expres);
         } else {
-            if (__comments.Size == 0) {
+            if (__comments.Index == 0) {
                 static Expression comment1      = Expression();
                 static Expression comment_next1 = Expression();
                 comment1.Keyword                = L"/*";
@@ -683,19 +659,19 @@ struct Document {
             items     = Engine::Search(n_content, json_expres);
         }
 
-        if (items.Size != 0) {
+        if (items.Index != 0) {
             Match *_item = &(items[0]);
 
             document.Ordered = (_item->Expr->Keyword == L']');
 
             if (n_content.Length == 0) {
-                if (_item->NestMatch.Size != 0) {
+                if (_item->NestMatch.Index != 0) {
                     _makeDocument(document, content, _item->NestMatch);
                 } else if (document.Ordered) {
                     _makeListNumber(document.Numbers, content, *_item);
                 }
             } else {
-                if (_item->NestMatch.Size != 0) {
+                if (_item->NestMatch.Index != 0) {
                     _makeDocument(document, n_content, _item->NestMatch);
                 } else if (document.Ordered) {
                     _makeListNumber(document.Numbers, n_content, *_item);
@@ -801,12 +777,12 @@ struct Document {
                 UNumber id = 0;
                 Document::ExtractID(id, key, offset, limit);
 
-                if (storage->Strings.Size > id) {
+                if (storage->Strings.Index > id) {
                     value = storage->Strings[id];
                     return true;
                 }
 
-                if (storage->Numbers.Size > id) {
+                if (storage->Numbers.Index > id) {
                     value = String::FromNumber(storage->Numbers[id], 1, 0, 3);
                     return true;
                 }
@@ -841,12 +817,12 @@ struct Document {
                 UNumber id = 0;
                 Document::ExtractID(id, key, offset, limit);
 
-                if (storage->Numbers.Size > id) {
+                if (storage->Numbers.Index > id) {
                     value = static_cast<UNumber>(storage->Numbers[id]);
                     return true;
                 }
 
-                if (storage->Strings.Size > id) {
+                if (storage->Strings.Index > id) {
                     return String::ToNumber(storage->Strings[id], value);
                 }
             }
@@ -880,12 +856,12 @@ struct Document {
                 UNumber id = 0;
                 Document::ExtractID(id, key, offset, limit);
 
-                if (storage->Numbers.Size > id) {
+                if (storage->Numbers.Index > id) {
                     value = storage->Numbers[id];
                     return true;
                 }
 
-                if (storage->Strings.Size > id) {
+                if (storage->Strings.Index > id) {
                     return String::ToNumber(storage->Strings[id], value);
                 }
             }
@@ -913,12 +889,12 @@ struct Document {
                 UNumber id = 0;
                 Document::ExtractID(id, key, offset, limit);
 
-                if (storage->Strings.Size > id) {
+                if (storage->Strings.Index > id) {
                     value = (storage->Strings[id] == L"true");
                     return true;
                 }
 
-                if (storage->Numbers.Size > id) {
+                if (storage->Numbers.Index > id) {
                     value = (storage->Numbers[id] == 1);
                     return true;
                 }
