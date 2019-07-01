@@ -82,6 +82,9 @@ struct Template {
         static Expression TagLoop;
         static Expression LoopTail;
 
+        static Expression TagMath;
+        static Expression MathTail;
+
         // Inline if evaluation.
         IifTail.ParseCB = &(Template::RenderIIF);
         //{iif case="3 == 3" true="Yes" false="No"}
@@ -128,9 +131,18 @@ struct Template {
         LoopTail.NestExprs.Add(&TagLoop); // Nested by itself
         /////////////////////////////////
 
-        // TODO: Add {math: $1} tag for math that nest with vars
+        // Math Tag.
+        MathTail.ParseCB = &(Template::RenderMath);
+        // {math:5+6*8*(8+3)}
+        TagMath.Keyword   = L"{math:";
+        MathTail.Keyword  = L'}';
+        TagMath.Connected = &MathTail;
+        MathTail.Flag     = Flags::TRIM;
 
-        return Expressions().Add(TagsVars).Add(&TagIif).Add(&TagIf).Add(&TagLoop);
+        Expressions TagsMath = Expressions().Add(&TagMath);
+        /////////////////////////////////
+
+        return Expressions().Add(TagsVars).Add(TagsMath).Add(&TagIif).Add(&TagIf).Add(&TagLoop);
     }
 
     static String Render(String const &content, Document *data) noexcept {
@@ -150,6 +162,11 @@ struct Template {
 
         return String::Part(block, (item.Offset + item.OLength), (item.Length - (item.CLength + item.OLength)));
         // return String::Part(block, item.OLength, (block.Length - (item.OLength + item.CLength))); // if Bubbling
+    }
+
+    static String RenderMath(String const &block, Match const &item) noexcept {
+        String value = String::Part(block, (item.Offset + item.OLength), (item.Length - (item.CLength + item.OLength)));
+        return String::FromNumber(ALU::Evaluate(value), 1, 0, 3);
     }
 
     // {iif case="3 == 3" true="Yes" false="No"}

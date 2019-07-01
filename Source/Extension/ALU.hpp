@@ -211,7 +211,7 @@ struct ALU {
             op_id = m2->Expr->ID;
         }
 
-        return String::FromNumber(number1);
+        return String::FromNumber(number1, 1, 0, 3);
     }
 
     static String EqualCallback(String const &block, Match const &item) noexcept {
@@ -278,7 +278,7 @@ struct ALU {
             op_id = m2->Expr->ID;
         }
 
-        return String::FromNumber(number1);
+        return String::FromNumber(number1, 1, 0, 3);
     }
 
     static String MultiplicationCallback(String const &block, Match const &item) noexcept {
@@ -342,7 +342,7 @@ struct ALU {
             op_id = m2->Expr->ID;
         }
 
-        return String::FromNumber(number1);
+        return String::FromNumber(number1, 1, 0, 3);
     }
 
     static String AdditionCallback(String const &block, Match const &item) noexcept {
@@ -393,7 +393,7 @@ struct ALU {
             }
         }
 
-        return String::FromNumber(number1);
+        return String::FromNumber(number1, 1, 0, 3);
     }
 
     static double Evaluate(String &content) noexcept {

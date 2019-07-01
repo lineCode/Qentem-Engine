@@ -299,6 +299,11 @@ static Array<TestBit> GetTemplateBits() noexcept {
 
     ////
 
+    bit.Content.Add(L"{math:  ((5^2) * 2) + 3  }");
+    bit.Expected.Add(L"53");
+
+    ////
+
     bit.Content.Add(L"{iif case=\"987\" true =\"{iif case =\"1\" true=\"5\"}\"}");
     bit.Expected.Add(L"5");
 

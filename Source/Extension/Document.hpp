@@ -49,27 +49,7 @@ struct JsonFixedString {
     String const fss11 = L"\":";
 };
 
-struct Document;
-
-struct Field {
-    String    Key     = L"";
-    Document *Storage = nullptr;
-
-    Field &operator=(UNumber value) noexcept;
-    Field &operator=(double value) noexcept;
-    Field &operator=(wchar_t const *value) noexcept;
-    Field &operator=(String &value) noexcept;
-    Field &operator=(Document &value) noexcept;
-    Field &operator=(Document &&value) noexcept;
-    Field &operator=(Array<double> &value) noexcept;
-    Field &operator=(Array<String> &value) noexcept;
-    Field &operator=(Array<Document> &value) noexcept;
-    Field &operator=(bool value) noexcept;
-
-    // TODO: Add String(); to get string and Number to get a number
-
-    Field operator[](String const &key) noexcept;
-};
+struct Field;
 
 struct Document {
     UNumber HashBase = 17; // Or 97. Choose prime numbers only!
@@ -90,23 +70,8 @@ struct Document {
 
     Document() = default;
 
-    Field operator[](String const &key) noexcept {
-        Field _field;
-        _field.Key     = key;
-        _field.Storage = this;
-        return _field;
-    }
-
-    Field operator[](UNumber const &id) noexcept {
-        Field _field;
-
-        if (id < Keys.Index) {
-            _field.Key = Keys[id];
-        }
-
-        _field.Storage = this;
-        return _field;
-    }
+    Field operator[](UNumber const &id) noexcept;
+    Field operator[](String const &key) noexcept;
 
     static void Drop(Entry &_entry, Document &storage) noexcept {
         _entry.Type = VType::UndefinedT;
@@ -920,101 +885,127 @@ Expressions const     Document::json_expres    = Document::_getJsonExpres();
 Expressions const     Document::to_json_expres = Document::_getToJsonExpres();
 JsonFixedString const Document::fxs            = JsonFixedString();
 //////////// Fields' Operators
-Field &Field::operator=(UNumber value) noexcept {
-    if (Storage != nullptr) {
-        Storage->Insert(Key, 0, Key.Length, VType::NumberT, &value, false);
-    }
-    return *this;
-}
 
-Field &Field::operator=(double value) noexcept {
-    if (Storage != nullptr) {
-        Storage->Insert(Key, 0, Key.Length, VType::NumberT, &value, false);
-    }
-    return *this;
-}
+struct Field {
+    String    Key     = L"";
+    Document *Storage = nullptr;
 
-Field &Field::operator=(wchar_t const *value) noexcept {
-    if (Storage != nullptr) {
-        if (value != nullptr) {
-            String _s = value;
-            Storage->Insert(Key, 0, Key.Length, VType::StringT, &_s, true);
-        } else {
-            Storage->Insert(Key, 0, Key.Length, VType::NullT, nullptr, false);
+    Field &operator=(UNumber value) noexcept {
+        if (Storage != nullptr) {
+            Storage->Insert(Key, 0, Key.Length, VType::NumberT, &value, false);
         }
+        return *this;
     }
-    return *this;
-}
 
-Field &Field::operator=(String &value) noexcept {
-    if (Storage != nullptr) {
-        Storage->Insert(Key, 0, Key.Length, VType::StringT, &value, false);
-    }
-    return *this;
-}
-
-Field &Field::operator=(Document &value) noexcept {
-    if (Storage != nullptr) {
-        Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &value, false);
-    }
-    return *this;
-}
-
-Field &Field::operator=(Document &&value) noexcept {
-    if (Storage != nullptr) {
-        Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &value, true);
-    }
-    return *this;
-}
-
-Field &Field::operator=(Array<double> &value) noexcept {
-    if (Storage != nullptr) {
-        Document tmp;
-        tmp.Ordered = true;
-        tmp.Numbers = value;
-        Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &tmp, true);
-    }
-    return *this;
-}
-
-Field &Field::operator=(Array<String> &value) noexcept {
-    if (Storage != nullptr) {
-        Document tmp;
-        tmp.Ordered = true;
-        tmp.Strings = value;
-        Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &tmp, true);
-    }
-    return *this;
-}
-
-Field &Field::operator=(Array<Document> &value) noexcept {
-    if (Storage != nullptr) {
-        Document tmp;
-        tmp.Ordered   = true;
-        tmp.Documents = value;
-        Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &tmp, true);
-    }
-    return *this;
-}
-
-Field &Field::operator=(bool value) noexcept {
-    if (Storage != nullptr) {
-        double num = value ? 1.0 : 0.0;
-        Storage->Insert(Key, 0, Key.Length, VType::BooleanT, &num, false);
-    }
-    return *this;
-}
-
-Field Field::operator[](String const &key) noexcept {
-    if (Storage != nullptr) {
-        Document *document = Storage->GetDocument(Key, 0, Key.Length);
-
-        if (document != nullptr) {
-            return (*document)[key];
+    Field &operator=(double value) noexcept {
+        if (Storage != nullptr) {
+            Storage->Insert(Key, 0, Key.Length, VType::NumberT, &value, false);
         }
+        return *this;
     }
 
-    return Field();
+    Field &operator=(wchar_t const *value) noexcept {
+        if (Storage != nullptr) {
+            if (value != nullptr) {
+                String _s = value;
+                Storage->Insert(Key, 0, Key.Length, VType::StringT, &_s, true);
+            } else {
+                Storage->Insert(Key, 0, Key.Length, VType::NullT, nullptr, false);
+            }
+        }
+        return *this;
+    }
+
+    Field &operator=(String &value) noexcept {
+        if (Storage != nullptr) {
+            Storage->Insert(Key, 0, Key.Length, VType::StringT, &value, false);
+        }
+        return *this;
+    }
+
+    Field &operator=(Document &value) noexcept {
+        if (Storage != nullptr) {
+            Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &value, false);
+        }
+        return *this;
+    }
+
+    Field &operator=(Document &&value) noexcept {
+        if (Storage != nullptr) {
+            Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &value, true);
+        }
+        return *this;
+    }
+
+    Field &operator=(Array<double> &value) noexcept {
+        if (Storage != nullptr) {
+            Document tmp;
+            tmp.Ordered = true;
+            tmp.Numbers = value;
+            Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &tmp, true);
+        }
+        return *this;
+    }
+
+    Field &operator=(Array<String> &value) noexcept {
+        if (Storage != nullptr) {
+            Document tmp;
+            tmp.Ordered = true;
+            tmp.Strings = value;
+            Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &tmp, true);
+        }
+        return *this;
+    }
+
+    Field &operator=(Array<Document> &value) noexcept {
+        if (Storage != nullptr) {
+            Document tmp;
+            tmp.Ordered   = true;
+            tmp.Documents = value;
+            Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &tmp, true);
+        }
+        return *this;
+    }
+
+    Field &operator=(bool value) noexcept {
+        if (Storage != nullptr) {
+            double num = value ? 1.0 : 0.0;
+            Storage->Insert(Key, 0, Key.Length, VType::BooleanT, &num, false);
+        }
+        return *this;
+    }
+
+    Field operator[](String const &key) noexcept {
+        if (Storage != nullptr) {
+            Document *document = Storage->GetDocument(Key, 0, Key.Length);
+
+            if (document != nullptr) {
+                return (*document)[key];
+            }
+        }
+
+        return Field();
+    }
+
+    // TODO: Add String(); to get string and Number to get a number
+};
+
+Field Document::operator[](String const &key) noexcept {
+    Field _field;
+    _field.Key     = key;
+    _field.Storage = this;
+    return _field;
+}
+
+Field Document::operator[](UNumber const &id) noexcept {
+    Field _field;
+
+    if (id < Keys.Index) {
+        _field.Key = Keys[id];
+    }
+
+    _field.Storage = this;
+    return _field;
 }
 
 } // namespace Qentem
