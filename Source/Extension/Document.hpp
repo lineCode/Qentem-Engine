@@ -35,7 +35,7 @@ struct Entry {
     VType   Type  = VType::UndefinedT;
 };
 
-struct JsonFixedString {
+struct _JsonFixedString {
     String const fss1  = L'{';
     String const fss2  = L'}';
     String const fss3  = L',';
@@ -47,7 +47,7 @@ struct JsonFixedString {
     String const fss9  = L"\":false";
     String const fss10 = L"\":\"";
     String const fss11 = L"\":";
-};
+} static JFX;
 
 struct Field;
 
@@ -63,15 +63,7 @@ struct Document {
     Array<String>   Keys;
     Array<Document> Documents;
 
-    static Expressions const json_expres;
-    static Expressions const to_json_expres;
-
-    static JsonFixedString const fxs;
-
     Document() = default;
-
-    Field operator[](UNumber const &id) noexcept;
-    Field operator[](String const &key) noexcept;
 
     static void Drop(Entry &_entry, Document &storage) noexcept {
         _entry.Type = VType::UndefinedT;
@@ -133,35 +125,37 @@ struct Document {
     }
 
     void _toJSON(StringStream &ss) const noexcept {
+        static Expressions const &to_json_expres = _getToJsonExpres();
+
         Array<Match> tmpMatchs;
 
         if (!Ordered) {
             Entry *_ptr;
 
-            ss.Share(&fxs.fss1);
+            ss.Share(&JFX.fss1);
 
             for (UNumber i = 0; i < Entries.Index; i++) {
                 _ptr = &(Entries[i]);
 
                 if (ss.Length != 1) {
-                    ss.Share(&fxs.fss3);
+                    ss.Share(&JFX.fss3);
                 }
 
                 switch (_ptr->Type) {
                     case VType::NullT: {
-                        ss.Share(&fxs.fss6);
+                        ss.Share(&JFX.fss6);
                         ss += Keys[_ptr->KeyID];
-                        ss.Share(&fxs.fss7);
+                        ss.Share(&JFX.fss7);
                     } break;
                     case VType::BooleanT: {
-                        ss.Share(&fxs.fss6);
+                        ss.Share(&JFX.fss6);
                         ss += Keys[_ptr->KeyID];
-                        ss.Share((Numbers[_ptr->ID] != 0) ? &fxs.fss8 : &fxs.fss9);
+                        ss.Share((Numbers[_ptr->ID] != 0) ? &JFX.fss8 : &JFX.fss9);
                     } break;
                     case VType::StringT: {
-                        ss.Share(&fxs.fss6);
+                        ss.Share(&JFX.fss6);
                         ss += Keys[_ptr->KeyID];
-                        ss.Share(&fxs.fss10);
+                        ss.Share(&JFX.fss10);
 
                         tmpMatchs = Engine::Search(Strings[_ptr->ID], to_json_expres);
                         if (tmpMatchs.Index == 0) {
@@ -170,18 +164,18 @@ struct Document {
                             ss += Engine::Parse(Strings[_ptr->ID], tmpMatchs);
                         }
 
-                        ss.Share(&fxs.fss6);
+                        ss.Share(&JFX.fss6);
                     } break;
                     case VType::NumberT: {
-                        ss.Share(&fxs.fss6);
+                        ss.Share(&JFX.fss6);
                         ss += Keys[_ptr->KeyID];
-                        ss.Share(&fxs.fss11);
+                        ss.Share(&JFX.fss11);
                         ss += String::FromNumber(Numbers[_ptr->ID]);
                     } break;
                     case VType::DocumentT: {
-                        ss.Share(&fxs.fss6);
+                        ss.Share(&JFX.fss6);
                         ss += Keys[_ptr->KeyID];
-                        ss.Share(&fxs.fss11);
+                        ss.Share(&JFX.fss11);
                         ss += Documents[_ptr->ID].ToJSON();
                     } break;
                     default:
@@ -189,19 +183,19 @@ struct Document {
                 }
             }
 
-            ss.Share(&fxs.fss2);
+            ss.Share(&JFX.fss2);
             return;
         }
 
-        ss.Share(&fxs.fss4);
+        ss.Share(&JFX.fss4);
 
         if (Strings.Index != 0) {
             for (UNumber i = 0; i < Strings.Index; i++) {
                 if (ss.Length != 1) {
-                    ss.Share(&fxs.fss3);
+                    ss.Share(&JFX.fss3);
                 }
 
-                ss.Share(&fxs.fss6);
+                ss.Share(&JFX.fss6);
 
                 tmpMatchs = Engine::Search(Strings[i], to_json_expres);
                 if (tmpMatchs.Index == 0) {
@@ -210,12 +204,12 @@ struct Document {
                     ss += Engine::Parse(Strings[i], tmpMatchs);
                 }
 
-                ss.Share(&fxs.fss6);
+                ss.Share(&JFX.fss6);
             }
         } else if (Numbers.Index != 0) {
             for (UNumber i = 0; i < Numbers.Index; i++) {
                 if (ss.Length != 1) {
-                    ss.Share(&fxs.fss3);
+                    ss.Share(&JFX.fss3);
                 }
 
                 ss += String::FromNumber(Numbers[i]);
@@ -223,36 +217,35 @@ struct Document {
         } else if (Documents.Index != 0) {
             for (UNumber i = 0; i < Documents.Index; i++) {
                 if (ss.Length != 1) {
-                    ss.Share(&fxs.fss3);
+                    ss.Share(&JFX.fss3);
                 }
 
                 ss += Documents[i].ToJSON();
             }
         }
 
-        ss.Share(&fxs.fss5);
+        ss.Share(&JFX.fss5);
     }
 
-    static Expressions _getToJsonExpres() noexcept {
-        static Expression _JsonQuot;
-        _JsonQuot.Keyword = L'"';
-        _JsonQuot.Replace = L"\\\"";
+    static Expressions const &_getToJsonExpres() noexcept {
+        static Expression  _JsonQuot;
+        static Expressions tags;
 
-        return Expressions().Add(&_JsonQuot);
+        if (tags.Index == 0) {
+            _JsonQuot.Keyword = L'"';
+            _JsonQuot.Replace = L"\\\"";
+
+            tags = Expressions().Add(&_JsonQuot);
+        }
+
+        return tags;
     }
 
-    static Expressions _getJsonExpres() noexcept {
+    static Expressions const &_getJsonExpres() noexcept {
         static Expression esc_quotation = Expression();
-        esc_quotation.Keyword           = L"\\\"";
-        esc_quotation.Replace           = L'"';
 
         static Expression quotation_start = Expression();
         static Expression quotation_end   = Expression();
-        quotation_start.Keyword           = L'"';
-        quotation_end.Keyword             = L'"';
-        quotation_end.ID                  = 3;
-        quotation_start.Connected         = &quotation_end;
-        quotation_end.NestExprs.Add(&esc_quotation);
 
         static Expression opened_square_bracket = Expression();
         static Expression closed_square_bracket = Expression();
@@ -260,21 +253,38 @@ struct Document {
         static Expression opened_curly_bracket = Expression();
         static Expression closed_curly_bracket = Expression();
 
-        opened_curly_bracket.Keyword   = L'{';
-        closed_curly_bracket.Keyword   = L'}';
-        closed_curly_bracket.ID        = 1;
-        opened_curly_bracket.Connected = &closed_curly_bracket;
+        static Expressions tags;
 
-        closed_curly_bracket.NestExprs.Add(&quotation_start).Add(&opened_curly_bracket).Add(&opened_square_bracket);
+        if (tags.Index == 0) {
+            esc_quotation.Keyword = L"\\\"";
+            esc_quotation.Replace = L'"';
 
-        opened_square_bracket.Keyword   = L'[';
-        closed_square_bracket.Keyword   = L']';
-        closed_square_bracket.ID        = 2;
-        opened_square_bracket.Connected = &closed_square_bracket;
+            quotation_start.Keyword   = L'"';
+            quotation_end.Keyword     = L'"';
+            quotation_end.ID          = 3;
+            quotation_start.Connected = &quotation_end;
+            quotation_end.NestExprs   = Expressions().Add(&esc_quotation);
 
-        closed_square_bracket.NestExprs.Add(&opened_square_bracket).Add(&opened_curly_bracket).Add(&quotation_start);
+            opened_curly_bracket.Keyword   = L'{';
+            closed_curly_bracket.Keyword   = L'}';
+            closed_curly_bracket.ID        = 1;
+            opened_curly_bracket.Connected = &closed_curly_bracket;
 
-        return Expressions().Add(&opened_curly_bracket).Add(&opened_square_bracket);
+            closed_curly_bracket.NestExprs =
+                Expressions().Add(&quotation_start).Add(&opened_curly_bracket).Add(&opened_square_bracket);
+
+            opened_square_bracket.Keyword   = L'[';
+            closed_square_bracket.Keyword   = L']';
+            closed_square_bracket.ID        = 2;
+            opened_square_bracket.Connected = &closed_square_bracket;
+
+            closed_square_bracket.NestExprs =
+                Expressions().Add(&opened_square_bracket).Add(&opened_curly_bracket).Add(&quotation_start);
+
+            tags = Expressions().Add(&opened_curly_bracket).Add(&opened_square_bracket);
+        }
+
+        return tags;
     }
 
     inline String ToJSON() const noexcept {
@@ -293,7 +303,7 @@ struct Document {
         for (i = start; i < to; i++) {
             if (content[i] == L',') {
                 end = i;
-                String::SoftTrim(content, start, end);
+                String::SoftTrim(content.Str, start, end);
 
                 if (String::ToNumber(content, tn, start, ((end + 1) - start))) {
                     _numbers.Add(tn);
@@ -305,7 +315,7 @@ struct Document {
 
             if (content[i] == L']') {
                 end = i;
-                String::SoftTrim(content, start, end);
+                String::SoftTrim(content.Str, start, end);
 
                 if (String::ToNumber(content, tn, start, ((end + 1) - start))) {
                     _numbers.Add(tn);
@@ -319,50 +329,31 @@ struct Document {
     void Insert(String const &key, UNumber offset, UNumber limit, VType const type, void *ptr, bool const move,
                 bool const check = true) noexcept {
         UNumber       id    = 0;
-        UNumber const _hash = String::Hash(key, offset, (offset + limit));
+        UNumber const _hash = String::Hash(key.Str, offset, (offset + limit));
         Entry *       _ent  = (!check) ? nullptr : Exist(_hash, 0, Table);
 
         if ((_ent == nullptr) || (_ent->Type != type)) {
             switch (type) {
                 case VType::StringT: {
                     id = Strings.Index;
-
-                    if (Strings.Index == Strings.Capacity) {
-                        Strings.Resize(Strings.Index * 2);
-                    }
-
                     if (move) {
-                        Strings[Strings.Index] = static_cast<String &&>(*(static_cast<String *>(ptr)));
+                        Strings.Add(static_cast<String &&>(*(static_cast<String *>(ptr))));
                     } else {
-                        Strings[Strings.Index] = *(static_cast<String *>(ptr));
+                        Strings.Add(*(static_cast<String *>(ptr)));
                     }
-
-                    ++Strings.Index;
                 } break;
                 case VType::NumberT:
                 case VType::BooleanT: {
                     id = Numbers.Index;
-                    if (Numbers.Index == Numbers.Capacity) {
-                        Numbers.Resize(Numbers.Index * 2);
-                    }
-
-                    Numbers[Numbers.Index] = *(static_cast<double *>(ptr));
-                    ++Numbers.Index;
+                    Numbers.Add(*(static_cast<double *>(ptr)));
                 } break;
                 case VType::DocumentT: {
                     id = Documents.Index;
-
-                    if (Documents.Index == Documents.Capacity) {
-                        Documents.Resize(Documents.Index * 2);
-                    }
-
                     if (move) {
-                        Documents[Documents.Index] = static_cast<Document &&>(*(static_cast<Document *>(ptr)));
+                        Documents.Add(static_cast<Document &&>(*(static_cast<Document *>(ptr))));
                     } else {
-                        Documents[Documents.Index] = *(static_cast<Document *>(ptr));
+                        Documents.Add(*(static_cast<Document *>(ptr)));
                     }
-
-                    ++Documents.Index;
                 } break;
                 default:
                     break;
@@ -420,7 +411,7 @@ struct Document {
             _entry.ID    = id;
             _entry.KeyID = Keys.Index;
 
-            Keys.Add(String::Part(key, offset, limit));
+            Keys.Add(String::Part(key.Str, offset, limit));
             Entries.Add(_entry);
 
             InsertIndex(_index, 0, Table);
@@ -454,7 +445,7 @@ struct Document {
                                 ts = Engine::Parse(content, data->NestMatch, (data->Offset + 1),
                                                    ((data->Offset + data->Length) - 1));
                             } else {
-                                ts = String::Part(content, (data->Offset + 1), (data->Length - 2));
+                                ts = String::Part(content.Str, (data->Offset + 1), (data->Length - 2));
                             }
 
                             document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::StringT, &ts, true,
@@ -499,7 +490,7 @@ struct Document {
                             // true, false, null or a number
                             double  tn;
                             UNumber end = j;
-                            String::SoftTrim(content, start, end);
+                            String::SoftTrim(content.Str, start, end);
 
                             switch (content[start]) {
                                 case L't': {
@@ -544,7 +535,8 @@ struct Document {
 
                     for (UNumber i = 0; i < items.Index; i++) {
                         if (items[i].NestMatch.Index == 0) {
-                            document.Strings[i] = String::Part(content, (items[i].Offset + 1), (items[i].Length - 2));
+                            document.Strings[i] =
+                                String::Part(content.Str, (items[i].Offset + 1), (items[i].Length - 2));
                         } else {
                             document.Strings[i] = Engine::Parse(content, items[i].NestMatch, (items[i].Offset + 1),
                                                                 ((items[i].Length + items[i].Offset) - 1));
@@ -595,12 +587,13 @@ struct Document {
 
         String n_content;
 
-        static Expressions __comments;
+        static Expressions const &json_expres = _getJsonExpres();
 
         // C style comments
         if (!comments) {
             items = Engine::Search(content, json_expres);
         } else {
+            static Expressions __comments;
             if (__comments.Index == 0) {
                 static Expression comment1      = Expression();
                 static Expression comment_next1 = Expression();
@@ -616,8 +609,7 @@ struct Document {
                 comment_next2.Replace           = L'\n';
                 comment2.Connected              = &comment_next2;
 
-                __comments.Add(&comment1);
-                __comments.Add(&comment2);
+                __comments = Expressions().Add(&comment1).Add(&comment2);
             }
 
             n_content = Engine::Parse(content, Engine::Search(content, __comments));
@@ -679,7 +671,7 @@ struct Document {
                 }
             }
 
-            _hash = String::Hash(key, offset, end_offset);
+            _hash = String::Hash(key.Str, offset, end_offset);
             ++end_offset;
             --offset;
         } else if (key[(end_offset - 1)] == L']') {
@@ -692,9 +684,9 @@ struct Document {
                     return nullptr;
                 }
             }
-            _hash = String::Hash(key, offset, end_offset);
+            _hash = String::Hash(key.Str, offset, end_offset);
         } else {
-            _hash = String::Hash(key, offset, end_offset);
+            _hash = String::Hash(key.Str, offset, end_offset);
         }
 
         *_entry = Exist(_hash, 0, Table);
@@ -879,134 +871,129 @@ struct Document {
 
         return nullptr;
     }
-};
 
-Expressions const     Document::json_expres    = Document::_getJsonExpres();
-Expressions const     Document::to_json_expres = Document::_getToJsonExpres();
-JsonFixedString const Document::fxs            = JsonFixedString();
-//////////// Fields' Operators
+    //////////// Fields' Operators
 
-struct Field {
-    String    Key     = L"";
-    Document *Storage = nullptr;
+    struct Field {
+        String    Key     = L"";
+        Document *Storage = nullptr;
 
-    Field &operator=(UNumber value) noexcept {
-        if (Storage != nullptr) {
-            Storage->Insert(Key, 0, Key.Length, VType::NumberT, &value, false);
-        }
-        return *this;
-    }
-
-    Field &operator=(double value) noexcept {
-        if (Storage != nullptr) {
-            Storage->Insert(Key, 0, Key.Length, VType::NumberT, &value, false);
-        }
-        return *this;
-    }
-
-    Field &operator=(wchar_t const *value) noexcept {
-        if (Storage != nullptr) {
-            if (value != nullptr) {
-                String _s = value;
-                Storage->Insert(Key, 0, Key.Length, VType::StringT, &_s, true);
-            } else {
-                Storage->Insert(Key, 0, Key.Length, VType::NullT, nullptr, false);
+        Field &operator=(UNumber value) noexcept {
+            if (Storage != nullptr) {
+                Storage->Insert(Key, 0, Key.Length, VType::NumberT, &value, false);
             }
+            return *this;
         }
-        return *this;
-    }
 
-    Field &operator=(String &value) noexcept {
-        if (Storage != nullptr) {
-            Storage->Insert(Key, 0, Key.Length, VType::StringT, &value, false);
+        Field &operator=(double value) noexcept {
+            if (Storage != nullptr) {
+                Storage->Insert(Key, 0, Key.Length, VType::NumberT, &value, false);
+            }
+            return *this;
         }
-        return *this;
-    }
 
-    Field &operator=(Document &value) noexcept {
-        if (Storage != nullptr) {
-            Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &value, false);
+        Field &operator=(wchar_t const *value) noexcept {
+            if (Storage != nullptr) {
+                if (value != nullptr) {
+                    String _s = value;
+                    Storage->Insert(Key, 0, Key.Length, VType::StringT, &_s, true);
+                } else {
+                    Storage->Insert(Key, 0, Key.Length, VType::NullT, nullptr, false);
+                }
+            }
+            return *this;
         }
-        return *this;
-    }
 
-    Field &operator=(Document &&value) noexcept {
-        if (Storage != nullptr) {
-            Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &value, true);
+        Field &operator=(String &value) noexcept {
+            if (Storage != nullptr) {
+                Storage->Insert(Key, 0, Key.Length, VType::StringT, &value, false);
+            }
+            return *this;
         }
-        return *this;
-    }
 
-    Field &operator=(Array<double> &value) noexcept {
-        if (Storage != nullptr) {
-            Document tmp;
-            tmp.Ordered = true;
-            tmp.Numbers = value;
-            Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &tmp, true);
+        Field &operator=(Document &value) noexcept {
+            if (Storage != nullptr) {
+                Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &value, false);
+            }
+            return *this;
         }
-        return *this;
-    }
 
-    Field &operator=(Array<String> &value) noexcept {
-        if (Storage != nullptr) {
-            Document tmp;
-            tmp.Ordered = true;
-            tmp.Strings = value;
-            Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &tmp, true);
+        Field &operator=(Document &&value) noexcept {
+            if (Storage != nullptr) {
+                Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &value, true);
+            }
+            return *this;
         }
-        return *this;
-    }
 
-    Field &operator=(Array<Document> &value) noexcept {
-        if (Storage != nullptr) {
-            Document tmp;
-            tmp.Ordered   = true;
-            tmp.Documents = value;
-            Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &tmp, true);
+        Field &operator=(Array<double> &value) noexcept {
+            if (Storage != nullptr) {
+                Document tmp;
+                tmp.Ordered = true;
+                tmp.Numbers = value;
+                Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &tmp, true);
+            }
+            return *this;
         }
-        return *this;
-    }
 
-    Field &operator=(bool value) noexcept {
-        if (Storage != nullptr) {
-            double num = value ? 1.0 : 0.0;
-            Storage->Insert(Key, 0, Key.Length, VType::BooleanT, &num, false);
+        Field &operator=(Array<String> &value) noexcept {
+            if (Storage != nullptr) {
+                Document tmp;
+                tmp.Ordered = true;
+                tmp.Strings = value;
+                Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &tmp, true);
+            }
+            return *this;
         }
-        return *this;
-    }
+
+        Field &operator=(Array<Document> &value) noexcept {
+            if (Storage != nullptr) {
+                Document tmp;
+                tmp.Ordered   = true;
+                tmp.Documents = value;
+                Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &tmp, true);
+            }
+            return *this;
+        }
+
+        Field &operator=(bool value) noexcept {
+            if (Storage != nullptr) {
+                double num = value ? 1.0 : 0.0;
+                Storage->Insert(Key, 0, Key.Length, VType::BooleanT, &num, false);
+            }
+            return *this;
+        }
+
+        Field operator[](String const &key) noexcept {
+            if (Storage != nullptr) {
+                Document *document = Storage->GetDocument(Key, 0, Key.Length);
+
+                if (document != nullptr) {
+                    return (*document)[key];
+                }
+            }
+
+            return Field();
+        }
+    };
 
     Field operator[](String const &key) noexcept {
-        if (Storage != nullptr) {
-            Document *document = Storage->GetDocument(Key, 0, Key.Length);
+        Field _field;
+        _field.Key     = key;
+        _field.Storage = this;
+        return _field;
+    }
 
-            if (document != nullptr) {
-                return (*document)[key];
-            }
+    Field operator[](UNumber const &id) noexcept {
+        Field _field;
+
+        if (id < Keys.Index) {
+            _field.Key = Keys[id];
         }
 
-        return Field();
+        _field.Storage = this;
+        return _field;
     }
-
-    // TODO: Add String(); to get string and Number to get a number
 };
-
-Field Document::operator[](String const &key) noexcept {
-    Field _field;
-    _field.Key     = key;
-    _field.Storage = this;
-    return _field;
-}
-
-Field Document::operator[](UNumber const &id) noexcept {
-    Field _field;
-
-    if (id < Keys.Index) {
-        _field.Key = Keys[id];
-    }
-
-    _field.Storage = this;
-    return _field;
-}
 
 } // namespace Qentem
 #endif

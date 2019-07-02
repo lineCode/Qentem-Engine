@@ -48,10 +48,7 @@ struct String {
     }
 
     String(wchar_t const *str) noexcept {
-        UNumber _length = 0;
-        while (str[_length] != L'\0') {
-            ++_length;
-        };
+        UNumber _length = Count(str);
 
         Capacity = _length;
 
@@ -115,6 +112,15 @@ struct String {
         Reset();
     }
 
+    inline static UNumber Count(wchar_t const *str) {
+        UNumber _length = 0;
+        while (str[_length] != L'\0') {
+            ++_length;
+        };
+
+        return _length;
+    }
+
     inline void Reset() noexcept {
         Memory<wchar_t>::Deallocate(&Str);
 
@@ -146,13 +152,10 @@ struct String {
         return *this;
     }
 
-    String &operator=(wchar_t const *src) noexcept { // Copy
-        UNumber _length = 0;
-        while (src[_length] != L'\0') {
-            ++_length;
-        };
+    String &operator=(wchar_t const *str) noexcept { // Copy
+        UNumber _length = Count(str);
 
-        Copy(*this, src, 0, _length);
+        Copy(*this, str, 0, _length);
 
         return *this;
     }
@@ -210,13 +213,10 @@ struct String {
         return *this;
     }
 
-    String &operator+=(wchar_t const *src) noexcept { // Appand a string
-        UNumber _length = 0;
-        while (src[_length] != L'\0') {
-            ++_length;
-        };
+    String &operator+=(wchar_t const *str) noexcept { // Appand a string
+        UNumber _length = Count(str);
 
-        Copy(*this, src, this->Length, _length);
+        Copy(*this, str, this->Length, _length);
 
         return *this;
     }
@@ -252,17 +252,14 @@ struct String {
         return ns;
     }
 
-    String operator+(wchar_t const *src) const noexcept {
+    String operator+(wchar_t const *str) const noexcept {
         String ns;
 
-        UNumber _length = 0;
-        while (src[_length] != L'\0') {
-            ++_length;
-        };
+        UNumber _length = Count(str);
 
         ns.SetLength(Length + _length);
         Copy(ns, Str, 0, Length);
-        Copy(ns, src, ns.Length, _length);
+        Copy(ns, str, ns.Length, _length);
 
         return ns;
     }
@@ -384,7 +381,7 @@ struct String {
         Memory<wchar_t>::Deallocate(&tmp);
     }
 
-    inline static String Part(String const &src, UNumber offset, UNumber const limit) noexcept {
+    inline static String Part(wchar_t const *str, UNumber offset, UNumber const limit) noexcept {
         String bit;
 
         Memory<wchar_t>::Allocate(&bit.Str, (limit + 1));
@@ -392,7 +389,7 @@ struct String {
         bit.Capacity = limit;
 
         while (bit.Length < limit) {
-            bit[bit.Length++] = src[offset++];
+            bit[bit.Length++] = str[offset++];
         }
 
         bit[bit.Length] = L'\0'; // To mark the end of a string.
@@ -400,7 +397,7 @@ struct String {
         return bit;
     }
 
-    inline static UNumber Hash(String const &src, UNumber start, UNumber const end_offset) noexcept {
+    inline static UNumber Hash(wchar_t const *str, UNumber start, UNumber const end_offset) noexcept {
         UNumber j    = 1;
         UNumber hash = 0;
         bool    fl   = false;
@@ -414,21 +411,21 @@ struct String {
 
             fl = !fl;
 
-            hash += (((static_cast<UNumber>(src[start++]))) * j++);
+            hash += (((static_cast<UNumber>(str[start++]))) * j++);
         }
 
         return hash;
     }
 
     // Update the starting index and the ending one to be at the actual characters
-    inline static void SoftTrim(String const &str, UNumber &start, UNumber &end) noexcept {
+    inline static void SoftTrim(wchar_t const *str, UNumber &start, UNumber &end) noexcept {
         --end;
 
-        while ((str[start] == L' ') || (str[start] == L'\n')) {
+        while ((str[start] == L' ') || (str[start] == L'\n') || (str[start] == L'\r')) {
             ++start;
         }
 
-        while ((end > start) && ((str[end] == L' ') || (str[end] == L'\n'))) {
+        while ((end > start) && ((str[end] == L' ') || (str[end] == L'\n') || (str[end] == L'\r'))) {
             --end;
         }
     }
@@ -438,9 +435,9 @@ struct String {
         UNumber start = 0;
         UNumber end   = (str.Length - start);
 
-        SoftTrim(str, start, end);
+        SoftTrim(str.Str, start, end);
 
-        return Part(str, start, ((end + 1) - start));
+        return Part(str.Str, start, ((end + 1) - start));
     }
 
     // Revers a string

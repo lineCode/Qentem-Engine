@@ -39,56 +39,32 @@ class StringStream {
     void operator+=(StringStream &&col) noexcept {
         if (col.Length != 0) {
             Length += col.Length;
-
-            if (collections.Index == collections.Capacity) {
-                collections.Resize(collections.Index * 2);
-            }
-
-            collections[collections.Index] = col;
             bits.Add({SType::Bits, collections.Index});
-            ++collections.Index;
+            collections.Add(static_cast<StringStream &&>(col));
         }
     }
 
     void operator+=(String &&src) noexcept {
         if (src.Length != 0) {
             Length += src.Length;
-
-            if (_strings.Index == _strings.Capacity) {
-                _strings.Resize(_strings.Index * 2);
-            }
-
-            _strings[_strings.Index] = src;
             bits.Add({SType::Bit, _strings.Index});
-            ++_strings.Index;
+            _strings.Add(static_cast<String &&>(src));
         }
     }
 
     void operator+=(String const &src) noexcept {
         if (src.Length != 0) {
             Length += src.Length;
-
-            if (_strings.Index == _strings.Capacity) {
-                _strings.Resize(_strings.Index * 2);
-            }
-
-            _strings[_strings.Index] = src;
             bits.Add({SType::Bit, _strings.Index});
-            ++_strings.Index;
+            _strings.Add(src);
         }
     }
 
     void Share(String const *src) noexcept {
         if (src->Length != 0) {
             Length += src->Length;
-
-            if (p_strings.Index == p_strings.Capacity) {
-                p_strings.Resize(p_strings.Index * 2);
-            }
-
-            p_strings[p_strings.Index] = src;
             bits.Add({SType::PBit, p_strings.Index});
-            ++p_strings.Index;
+            p_strings.Add(src);
         }
     }
 
@@ -101,8 +77,8 @@ class StringStream {
                 sstr = &(_ss._strings[_ss.bits[i].Index]);
                 for (j = 0; j < sstr->Length;) {
                     buk[buk.Length] = sstr->operator[](j);
-                    ++j;
                     ++buk.Length;
+                    ++j;
                 }
                 continue;
             }
@@ -111,8 +87,8 @@ class StringStream {
                 sstr = _ss.p_strings[_ss.bits[i].Index];
                 for (j = 0; j < sstr->Length;) {
                     buk[buk.Length] = sstr->operator[](j);
-                    ++j;
                     ++buk.Length;
+                    ++j;
                 }
                 continue;
             }

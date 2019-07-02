@@ -31,7 +31,8 @@ static bool const BigJSON = false;
 
 static String   read_file(char const *fullpath) noexcept;
 static Document get_document() noexcept;
-static bool     run_tests(String const &name, Array<TestBit> const &bits, bool dump_express, bool break_on_err) noexcept;
+static bool     run_tests(String const &name, Array<TestBit> const &bits, bool dump_express, bool break_on_err,
+                          Document *other = nullptr) noexcept;
 static bool     NumbersConvTest() noexcept;
 static bool     JSONTest() noexcept;
 
@@ -61,7 +62,7 @@ int main() {
             // Core Engine Tests
             bits = Qentem::Test::GetEngineBits();
             Pass = run_tests(L"Engine", bits, false, true);
-            Qentem::Test::CleanBits(bits); // TODO: Implement a destructor
+            Qentem::Test::CleanBits(bits);
             if (!Pass) {
                 break;
             }
@@ -89,8 +90,9 @@ int main() {
 
         if (TestTemplate) {
             // Template Tests
-            bits = Qentem::Test::GetTemplateBits();
-            Pass = run_tests(L"Template", bits, false, true);
+            Document data;
+            bits = Qentem::Test::GetTemplateBits(data);
+            Pass = run_tests(L"Template", bits, false, true, &data);
             if (!Pass) {
                 break;
             }
@@ -123,7 +125,8 @@ int main() {
     return 10;
 }
 
-static bool run_tests(String const &name, Array<TestBit> const &bits, bool dump_express, bool break_on_err) noexcept {
+static bool run_tests(String const &name, Array<TestBit> const &bits, bool dump_express, bool break_on_err,
+                      Document *other) noexcept {
     UNumber const times        = StreasTest ? 10000 : 1;
     UNumber const start_at     = 0;
     UNumber       counter      = 0;
@@ -173,7 +176,7 @@ static bool run_tests(String const &name, Array<TestBit> const &bits, bool dump_
             String rendered;
             parse_ticks = static_cast<UNumber>(clock());
             for (UNumber y = 0; y < times; y++) {
-                rendered = Qentem::Engine::Parse(bits[i].Content[t], matches);
+                rendered = Qentem::Engine::Parse(bits[i].Content[t], matches, 0, 0, other);
             }
             parse_ticks = (static_cast<UNumber>(clock()) - parse_ticks);
             total_parse += parse_ticks;

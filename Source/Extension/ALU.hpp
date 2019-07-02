@@ -22,10 +22,7 @@ using Qentem::Engine::Flags;
 using Qentem::Engine::Match;
 
 struct ALU {
-    static Expressions const ParensExprs;
-    static Expressions const MathExprs;
-
-    static Expressions getMathExprs() noexcept {
+    static Expressions const &getMathExprs() noexcept {
         static Expression MathExp;
         static Expression MathRem;
         static Expression MathDiv;
@@ -45,118 +42,134 @@ struct ALU {
         static Expression LogicAnd;
         static Expression LogicOr;
 
-        constexpr UNumber flags_ops    = Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP | Flags::TRIM;
-        constexpr UNumber flags_no_pop = Flags::SPLIT | Flags::GROUPSPLIT | Flags::TRIM;
-        ///////////////////////////////////////////
-        MathAdd.Keyword = L'+';
-        MathAdd.ID      = 1;
-        MathAdd.Flag    = flags_ops;
-        MathAdd.ParseCB = &(AdditionCallback);
-        MathAdd.NestExprs.Add(&MathExp).Add(&MathRem).Add(&MathDiv).Add(&MathMul);
+        static constexpr UNumber flags_ops    = Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP | Flags::TRIM;
+        static constexpr UNumber flags_no_pop = Flags::SPLIT | Flags::GROUPSPLIT | Flags::TRIM;
 
-        MathSub.Keyword   = L'-';
-        MathSub.ID        = 2;
-        MathSub.Flag      = flags_no_pop;
-        MathSub.ParseCB   = &(AdditionCallback);
-        MathSub.NestExprs = MathAdd.NestExprs;
-        ///////////////////////////////////////////
-        MathMul.Keyword = L"*";
-        MathMul.ID      = 1;
-        MathMul.Flag    = flags_no_pop;
-        MathMul.ParseCB = &(MultiplicationCallback);
+        static Expressions tags;
 
-        MathDiv.Keyword = L'/';
-        MathDiv.ID      = 2;
-        MathDiv.Flag    = flags_no_pop;
-        MathDiv.ParseCB = &(MultiplicationCallback);
+        if (tags.Index == 0) {
+            MathMul.Keyword = L"*";
+            MathMul.ID      = 1;
+            MathMul.Flag    = flags_no_pop;
+            MathMul.ParseCB = &(MultiplicationCallback);
 
-        MathExp.Keyword = L"^";
-        MathExp.ID      = 3;
-        MathExp.Flag    = flags_no_pop;
-        MathExp.ParseCB = &(MultiplicationCallback);
+            MathDiv.Keyword = L'/';
+            MathDiv.ID      = 2;
+            MathDiv.Flag    = flags_no_pop;
+            MathDiv.ParseCB = &(MultiplicationCallback);
 
-        MathRem.Keyword = L'%';
-        MathRem.ID      = 4;
-        MathRem.Flag    = flags_no_pop;
-        MathRem.ParseCB = &(MultiplicationCallback);
-        ///////////////////////////////////////////
-        MathEqu2.Keyword = L"==";
-        MathEqu2.ID      = 1;
-        MathEqu2.Flag    = flags_ops;
-        MathEqu2.ParseCB = &(EqualCallback);
-        MathEqu2.NestExprs.Add(&MathAdd).Add(&MathSub);
+            MathExp.Keyword = L"^";
+            MathExp.ID      = 3;
+            MathExp.Flag    = flags_no_pop;
+            MathExp.ParseCB = &(MultiplicationCallback);
 
-        MathEqu.Keyword   = L"=";
-        MathEqu.ID        = 2;
-        MathEqu.Flag      = flags_ops;
-        MathEqu.ParseCB   = &(EqualCallback);
-        MathEqu.NestExprs = MathEqu2.NestExprs;
+            MathRem.Keyword = L'%';
+            MathRem.ID      = 4;
+            MathRem.Flag    = flags_no_pop;
+            MathRem.ParseCB = &(MultiplicationCallback);
+            ///////////////////////////////////////////
+            MathAdd.Keyword   = L'+';
+            MathAdd.ID        = 1;
+            MathAdd.Flag      = flags_ops;
+            MathAdd.ParseCB   = &(AdditionCallback);
+            MathAdd.NestExprs = Expressions().Add(&MathExp).Add(&MathRem).Add(&MathDiv).Add(&MathMul);
 
-        MathNEqu.Keyword   = L"!=";
-        MathNEqu.ID        = 3;
-        MathNEqu.Flag      = flags_no_pop;
-        MathNEqu.ParseCB   = &(EqualCallback);
-        MathNEqu.NestExprs = MathEqu2.NestExprs;
+            MathSub.Keyword   = L'-';
+            MathSub.ID        = 2;
+            MathSub.Flag      = flags_no_pop;
+            MathSub.ParseCB   = &(AdditionCallback);
+            MathSub.NestExprs = MathAdd.NestExprs;
+            ///////////////////////////////////////////
+            MathEqu2.Keyword   = L"==";
+            MathEqu2.ID        = 1;
+            MathEqu2.Flag      = flags_ops;
+            MathEqu2.ParseCB   = &(EqualCallback);
+            MathEqu2.NestExprs = Expressions().Add(&MathAdd).Add(&MathSub);
 
-        MathLEqu.Keyword   = L"<=";
-        MathLEqu.ID        = 4;
-        MathLEqu.Flag      = flags_no_pop;
-        MathLEqu.ParseCB   = &(EqualCallback);
-        MathLEqu.NestExprs = MathEqu2.NestExprs;
+            MathEqu.Keyword   = L"=";
+            MathEqu.ID        = 2;
+            MathEqu.Flag      = flags_ops;
+            MathEqu.ParseCB   = &(EqualCallback);
+            MathEqu.NestExprs = MathEqu2.NestExprs;
 
-        MathLess.Keyword   = L"<";
-        MathLess.ID        = 5;
-        MathLess.Flag      = flags_no_pop;
-        MathLess.ParseCB   = &(EqualCallback);
-        MathLess.NestExprs = MathEqu2.NestExprs;
+            MathNEqu.Keyword   = L"!=";
+            MathNEqu.ID        = 3;
+            MathNEqu.Flag      = flags_no_pop;
+            MathNEqu.ParseCB   = &(EqualCallback);
+            MathNEqu.NestExprs = MathEqu2.NestExprs;
 
-        MathBEqu.Keyword   = L">=";
-        MathBEqu.ID        = 6;
-        MathBEqu.Flag      = flags_no_pop;
-        MathBEqu.ParseCB   = &(EqualCallback);
-        MathBEqu.NestExprs = MathEqu2.NestExprs;
+            MathLEqu.Keyword   = L"<=";
+            MathLEqu.ID        = 4;
+            MathLEqu.Flag      = flags_no_pop;
+            MathLEqu.ParseCB   = &(EqualCallback);
+            MathLEqu.NestExprs = MathEqu2.NestExprs;
 
-        MathBig.Keyword   = L">";
-        MathBig.ID        = 7;
-        MathBig.Flag      = flags_no_pop;
-        MathBig.ParseCB   = &(EqualCallback);
-        MathBig.NestExprs = MathEqu2.NestExprs;
-        ///////////////////////////////////////////
-        LogicAnd.Keyword = L"&&";
-        LogicAnd.ID      = 1;
-        LogicAnd.Flag    = flags_ops;
-        LogicAnd.ParseCB = &(LogicCallback);
-        LogicAnd.NestExprs.Add(&MathEqu2).Add(&MathEqu).Add(&MathNEqu).Add(&MathLEqu).Add(&MathLess).Add(&MathBEqu).Add(
-            &MathBig);
+            MathLess.Keyword   = L"<";
+            MathLess.ID        = 5;
+            MathLess.Flag      = flags_no_pop;
+            MathLess.ParseCB   = &(EqualCallback);
+            MathLess.NestExprs = MathEqu2.NestExprs;
 
-        LogicOr.Keyword   = L"||";
-        LogicOr.ID        = 2;
-        LogicOr.Flag      = flags_no_pop;
-        LogicOr.ParseCB   = &(LogicCallback);
-        LogicOr.NestExprs = LogicAnd.NestExprs;
-        ///////////////////////////////////////////
+            MathBEqu.Keyword   = L">=";
+            MathBEqu.ID        = 6;
+            MathBEqu.Flag      = flags_no_pop;
+            MathBEqu.ParseCB   = &(EqualCallback);
+            MathBEqu.NestExprs = MathEqu2.NestExprs;
 
-        return Expressions().Add(&LogicAnd).Add(&LogicOr);
+            MathBig.Keyword   = L">";
+            MathBig.ID        = 7;
+            MathBig.Flag      = flags_no_pop;
+            MathBig.ParseCB   = &(EqualCallback);
+            MathBig.NestExprs = MathEqu2.NestExprs;
+            ///////////////////////////////////////////
+            LogicAnd.Keyword   = L"&&";
+            LogicAnd.ID        = 1;
+            LogicAnd.Flag      = flags_ops;
+            LogicAnd.ParseCB   = &(LogicCallback);
+            LogicAnd.NestExprs = Expressions()
+                                     .Add(&MathEqu2)
+                                     .Add(&MathEqu)
+                                     .Add(&MathNEqu)
+                                     .Add(&MathLEqu)
+                                     .Add(&MathLess)
+                                     .Add(&MathBEqu)
+                                     .Add(&MathBig);
+
+            LogicOr.Keyword   = L"||";
+            LogicOr.ID        = 2;
+            LogicOr.Flag      = flags_no_pop;
+            LogicOr.ParseCB   = &(LogicCallback);
+            LogicOr.NestExprs = LogicAnd.NestExprs;
+            ///////////////////////////////////////////
+
+            tags = Expressions().Add(&LogicAnd).Add(&LogicOr);
+        }
+
+        return tags;
     }
 
-    static Expressions getParensExprs() noexcept {
-        static Expression ParensExpr;
-        static Expression ParensNext;
+    static Expressions const &getParensExprs() noexcept {
+        static Expression  ParensExpr;
+        static Expression  ParensNext;
+        static Expressions tags;
 
-        ParensExpr.Keyword   = L'(';
-        ParensNext.Keyword   = L')';
-        ParensExpr.Connected = &ParensNext;
-        ParensNext.Flag      = Flags::BUBBLE | Flags::TRIM;
-        ParensNext.ParseCB   = &(ParenthesisCallback);
-        ParensNext.NestExprs.Add(&ParensExpr);
-        ///////////////////////////////////////////
+        if (tags.Index == 0) {
+            ParensExpr.Keyword   = L'(';
+            ParensNext.Keyword   = L')';
+            ParensExpr.Connected = &ParensNext;
+            ParensNext.Flag      = Flags::BUBBLE | Flags::TRIM;
+            ParensNext.ParseCB   = &(ParenthesisCallback);
+            ParensNext.NestExprs.Add(&ParensExpr);
+            tags = Expressions().Add(&ParensExpr);
+        }
 
-        return Expressions().Add(&ParensExpr);
+        return tags;
     }
 
     // e.g. ( 4 + 3 ), ( 2 + ( 4 + ( 1 + 2 ) + 1 ) * 5 - 3 - 2 )
-    static String ParenthesisCallback(String const &block, Match const &item) noexcept {
-        return Engine::Parse(block, Engine::Search(block, ALU::MathExprs, item.OLength, (block.Length - item.CLength)),
+    static String ParenthesisCallback(String const &block, Match const &item, void *other) noexcept {
+        static Expressions const _mathExprs = getMathExprs();
+        return Engine::Parse(block, Engine::Search(block, _mathExprs, item.OLength, (block.Length - item.CLength)),
                              item.OLength, (block.Length - item.CLength));
     }
 
@@ -167,7 +180,7 @@ struct ALU {
         }
     }
 
-    static String LogicCallback(String const &block, Match const &item) noexcept {
+    static String LogicCallback(String const &block, Match const &item, void *other) noexcept {
         double number1 = 0.0;
         double number2 = 0.0;
 
@@ -214,7 +227,7 @@ struct ALU {
         return String::FromNumber(number1, 1, 0, 3);
     }
 
-    static String EqualCallback(String const &block, Match const &item) noexcept {
+    static String EqualCallback(String const &block, Match const &item, void *other) noexcept {
         double number1 = 0.0;
         double number2 = 0.0;
 
@@ -231,7 +244,7 @@ struct ALU {
                 if (((c <= 57) && (c >= 48)) || ((c == L'+') || (c == L'-'))) {
                     String::ToNumber(block, number1, m1->Offset, m1->Length);
                 } else if (item.NestMatch.Index == 2) { // String
-                    bool const r = String::Part(block, m1->Offset, m1->Length)
+                    bool const r = String::Part(block.Str, m1->Offset, m1->Length)
                                        .Compare(block, item.NestMatch[1].Offset, item.NestMatch[1].Length);
                     return (r ? L'1' : L'0');
                 }
@@ -281,7 +294,7 @@ struct ALU {
         return String::FromNumber(number1, 1, 0, 3);
     }
 
-    static String MultiplicationCallback(String const &block, Match const &item) noexcept {
+    static String MultiplicationCallback(String const &block, Match const &item, void *other) noexcept {
         double number1 = 0.0;
         double number2 = 0.0;
 
@@ -345,7 +358,7 @@ struct ALU {
         return String::FromNumber(number1, 1, 0, 3);
     }
 
-    static String AdditionCallback(String const &block, Match const &item) noexcept {
+    static String AdditionCallback(String const &block, Match const &item, void *other) noexcept {
         double number1 = 0.0;
         double number2 = 0.0;
 
@@ -397,6 +410,9 @@ struct ALU {
     }
 
     static double Evaluate(String &content) noexcept {
+        static Expressions const _parensExprs = getParensExprs();
+        static Expressions const _mathExprs   = getMathExprs();
+
         /**
          *
          * e.g. ((2* (1 * 3)) + 1 - 4) + ((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1) - (1) - (-1) + 2 = 14
@@ -413,14 +429,14 @@ struct ALU {
          */
 
         // Stage one:
-        content = Engine::Parse(content, Engine::Search(content, ParensExprs));
+        content = Engine::Parse(content, Engine::Search(content, _parensExprs));
         if ((content.Length == 0) || (content == L'0')) {
             return 0.0;
         }
 
         // Stage two:
         double num = 0.0;
-        content    = Engine::Parse(content, Engine::Search(content, MathExprs));
+        content    = Engine::Parse(content, Engine::Search(content, _mathExprs));
         if ((content.Length != 0) && String::ToNumber(content, num)) {
             return num;
         }
@@ -428,9 +444,6 @@ struct ALU {
         return 0.0;
     }
 };
-
-Expressions const ALU::ParensExprs = ALU::getParensExprs();
-Expressions const ALU::MathExprs   = ALU::getMathExprs();
 
 } // namespace Qentem
 

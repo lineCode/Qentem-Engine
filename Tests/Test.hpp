@@ -28,7 +28,7 @@ struct TestBit {
 };
 
 /////////////////////////////////////////////
-static String FlipSplit(String const &block, Match const &item) noexcept;
+static String FlipSplit(String const &block, Match const &item, void *ptr) noexcept;
 
 static void CleanBits(Array<TestBit> &bits) noexcept {
     for (UNumber i = 0; i < bits.Index; i++) {
@@ -43,7 +43,7 @@ static Array<String> Extract(String const &content, Array<Match> const &items) n
     matches.SetCapacity(items.Index);
 
     for (UNumber i = 0; i < items.Index; i++) {
-        matches.Add(String::Part(content, items[i].Offset, items[i].Length) + L" -> O:" +
+        matches.Add(String::Part(content.Str, items[i].Offset, items[i].Length) + L" -> O:" +
                     String::FromNumber(items[i].Offset) + L" L:" + String::FromNumber(items[i].Length) + L" OL:" +
                     String::FromNumber(items[i].OLength) + L" CL:" + String::FromNumber(items[i].CLength));
     }
@@ -53,12 +53,16 @@ static Array<String> Extract(String const &content, Array<Match> const &items) n
 
 static String ReplaceNewLine(String const &content, String const &_replace) {
     static Expressions find_keys;
-    static Expression  find_key;
+    static Expression  find_key1;
+    static Expression  find_key2;
 
-    find_key.Replace = _replace;
+    find_key1.Replace = _replace;
+    find_key2.Replace = _replace;
+
     if (find_keys.Index == 0) { // Caching
-        find_key.Keyword = L'\n';
-        find_keys.Add(&find_key);
+        find_key1.Keyword = L'\n';
+        find_key2.Keyword = L'\r';
+        find_keys.Add(&find_key1).Add(&find_key2);
     }
 
     return Engine::Parse(content, Engine::Search(content, find_keys));
@@ -193,6 +197,8 @@ static Array<TestBit> GetALUBits() noexcept {
     Array<TestBit> bits = Array<TestBit>();
     TestBit        bit;
 
+    static Expressions const &_parensExprs = Qentem::ALU::getParensExprs();
+    static Expressions const &_mathExprs   = Qentem::ALU::getMathExprs();
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -240,7 +246,7 @@ static Array<TestBit> GetALUBits() noexcept {
     bit.Content.Add(L"3 + 9 - 1 - -1 + 2 == 14");
     bit.Expected.Add(L"1");
     ////
-    bit.Exprs = Qentem::ALU::MathExprs;
+    bit.Exprs = _mathExprs;
     bits.Add(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -253,17 +259,17 @@ static Array<TestBit> GetALUBits() noexcept {
         L"(((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) + (1) + 2 = 14)");
     bit.Expected.Add(L"1");
 
-    bit.Exprs = Qentem::ALU::ParensExprs;
+    bit.Exprs = _parensExprs;
     bits.Add(bit);
     ///////////////////////////////////////////
     return bits;
 }
 
-static Array<TestBit> GetTemplateBits() noexcept {
+static Array<TestBit> GetTemplateBits(Qentem::Document &data) noexcept {
     Array<TestBit> bits = Array<TestBit>();
     TestBit        bit;
 
-    static Qentem::Document data = Qentem::Document();
+    static Expressions const &_tagsAll = Qentem::Template::_getTagsAll();
 
     data[L"foo"] = L"FOO";
     data[L"r1"]  = L"Familly";
@@ -278,8 +284,6 @@ static Array<TestBit> GetTemplateBits() noexcept {
 
     data[L"lvl2"][L"numbers"] = Array<double>().Add(1).Add(2);
     data[L"lvl2"][L"strings"] = Array<String>().Add(L"N1").Add(L"N2").Add(L"N3");
-
-    Template::Data = &data;
 
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -410,7 +414,7 @@ static Array<TestBit> GetTemplateBits() noexcept {
 
     ////
 
-    bit.Exprs = Template::TagsAll;
+    bit.Exprs = _tagsAll;
     bits.Add(bit);
     ///////////////////////////////////////////
 
@@ -452,7 +456,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     Memory<Expression>::AllocateBit(&x2);
     x2->Keyword = L"--";
 
-    x1->ParseCB = ([](String const &block, Match const &item) noexcept->String { return L'*'; });
+    x1->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String { return L'*'; });
 
     bit.Exprs.Add(x1).Add(x2);
     bit.Collect.Add(x1).Add(x2);
@@ -476,7 +480,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     y3->Keyword   = L"}}";
     x3->Connected = y3;
 
-    x1->ParseCB = x2->ParseCB = y3->ParseCB = ([](String const &block, Match const &item) noexcept->String {
+    x1->ParseCB = x2->ParseCB = y3->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         return String::FromNumber(item.OLength) + L'-' + String::FromNumber(item.CLength);
     });
 
@@ -807,9 +811,9 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Collect.Add(x1).Add(y1);
     bits.Add(bit);
 
-    y1->ParseCB = ([](String const &block, Match const &item) noexcept->String {
+    y1->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         String nc = L'(';
-        nc += String::Part(block, item.OLength, block.Length - (item.OLength + item.CLength));
+        nc += String::Part(block.Str, item.OLength, block.Length - (item.OLength + item.CLength));
         nc += L')';
         return nc;
     });
@@ -843,14 +847,14 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Collect.Add(x1).Add(x2).Add(y1).Add(y2);
     bits.Add(bit);
 
-    y1->ParseCB = ([](String const &block, Match const &item) noexcept->String {
+    y1->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         String nc = L'=';
         nc += block;
         nc += L'=';
         return nc;
     });
 
-    y2->ParseCB = ([](String const &block, Match const &item) noexcept->String {
+    y2->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         if (block == L"<3-U>") {
             return L'A';
         }
@@ -939,7 +943,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Collect.Add(x1).Add(y1).Add(y2);
     bits.Add(bit);
 
-    y2->ParseCB = ([](String const &block, Match const &item) noexcept->String {
+    y2->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         double number = 0.0;
 
         if (item.NestMatch.Index != 0) {
@@ -987,7 +991,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Collect.Add(x1).Add(x2);
     bits.Add(bit);
 
-    x1->ParseCB = ([](String const &block, Match const &item) noexcept->String {
+    x1->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         double number = 0.0;
         double temnum = 0.0;
         String r      = L"";
@@ -999,7 +1003,7 @@ static Array<TestBit> GetEngineBits() noexcept {
             if (nm->NestMatch.Index != 0) {
                 r = Engine::Parse(block, nm->NestMatch, nm->Offset, nm->Offset + nm->Length);
             } else {
-                r = String::Part(block, nm->Offset, nm->Length);
+                r = String::Part(block.Str, nm->Offset, nm->Length);
             }
 
             if ((r.Length == 0) || !String::ToNumber(r, temnum, 0, 0)) {
@@ -1011,7 +1015,7 @@ static Array<TestBit> GetEngineBits() noexcept {
         return String::FromNumber(number);
     });
 
-    x2->ParseCB = ([](String const &block, Match const &item) noexcept->String {
+    x2->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         double number = 1.0;
         double temnum = 1.0;
         String r      = L"";
@@ -1052,7 +1056,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Collect.Add(x1).Add(y1).Add(y2);
     bits.Add(bit);
 
-    y2->ParseCB = ([](String const &block, Match const &item) noexcept->String {
+    y2->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         double number = 0.0;
         double temnum = 0.0;
         String r      = L"";
@@ -1084,14 +1088,14 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     Memory<Expression>::AllocateBit(&x2);
     x2->Keyword = L'x';
-    x2->ParseCB = ([](String const &block, Match const &item) noexcept->String {
+    x2->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         //
         return L'3';
     });
 
     Memory<Expression>::AllocateBit(&x3);
     x3->Keyword = L'y';
-    x3->ParseCB = ([](String const &block, Match const &item) noexcept->String {
+    x3->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         //
         return L'7';
     });
@@ -1100,7 +1104,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Collect.Add(x1).Add(x2).Add(x3);
     bits.Add(bit);
 
-    x1->ParseCB = ([](String const &block, Match const &item) noexcept->String {
+    x1->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         double number = 0.0;
         double temnum = 0.0;
         String r      = L"";
@@ -1112,7 +1116,7 @@ static Array<TestBit> GetEngineBits() noexcept {
             if (nm->NestMatch.Index != 0) {
                 r = Engine::Parse(block, nm->NestMatch, nm->Offset, nm->Offset + nm->Length);
             } else {
-                r = String::Part(block, nm->Offset, nm->Length);
+                r = String::Part(block.Str, nm->Offset, nm->Length);
             }
 
             if ((r.Length == 0) || !String::ToNumber(String::Trim(r), temnum, 0, 0)) {
@@ -1137,7 +1141,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     x1->Connected = y1;
     x1->Flag      = Flags::POP;
     y1->Flag      = Flags::BUBBLE;
-    y1->ParseCB   = ([](String const &block, Match const &item) noexcept->String {
+    y1->ParseCB   = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         //
         return block;
     });
@@ -1149,7 +1153,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     x2->Flag      = Flags::POP;
     y2->Flag      = Flags::BUBBLE;
     x2->Connected = y2;
-    y2->ParseCB   = ([](String const &block, Match const &item) noexcept->String {
+    y2->ParseCB   = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         //
         return block;
     });
@@ -1195,11 +1199,11 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Collect.Add(x1).Add(x2).Add(y1).Add(y2);
     bits.Add(bit);
 
-    y1->ParseCB = ([](String const &block, Match const &item) noexcept->String {
+    y1->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         String nc = L"";
 
         for (UNumber i = 0; i < item.NestMatch.Index; i++) {
-            nc += String::Part(block, item.NestMatch[i].Offset, item.NestMatch[i].Length);
+            nc += String::Part(block.Str, item.NestMatch[i].Offset, item.NestMatch[i].Length);
         }
 
         return nc;
@@ -1231,7 +1235,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     y2->Flag = Flags::SPLITNEST;
     y2->NestExprs.Add(y1);
 
-    y2->ParseCB = ([](String const &block, Match const &item) noexcept->String {
+    y2->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         String s = L"";
 
         for (UNumber i = 0; i < item.NestMatch.Index; i++) {
@@ -1359,19 +1363,19 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Collect.Add(x1).Add(x2).Add(y1);
     bits.Add(bit);
 
-    y1->ParseCB = ([](String const &block, Match const &item) noexcept->String {
+    y1->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         if (block.Length > (item.OLength + item.CLength)) {
-            return String::Part(block, item.OLength, block.Length - (item.OLength + item.CLength));
+            return String::Part(block.Str, item.OLength, block.Length - (item.OLength + item.CLength));
         }
 
         return L'0';
     });
 
-    x2->ParseCB = ([](String const &block, Match const &item) noexcept->String {
+    x2->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         String nc = L"";
 
         for (UNumber i = 0; i < item.NestMatch.Index; i++) {
-            nc += String::Part(block, item.NestMatch[i].Offset, item.NestMatch[i].Length);
+            nc += String::Part(block.Str, item.NestMatch[i].Offset, item.NestMatch[i].Length);
         }
 
         return nc;
@@ -1398,9 +1402,9 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Collect.Add(x1).Add(y1);
     bits.Add(bit);
 
-    y1->ParseCB = ([](String const &block, Match const &item) noexcept->String {
+    y1->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         String nc = L'(';
-        nc += String::Part(block, item.OLength, block.Length - (item.OLength + item.CLength));
+        nc += String::Part(block.Str, item.OLength, block.Length - (item.OLength + item.CLength));
         nc += L')';
         return nc;
     });
@@ -1408,19 +1412,19 @@ static Array<TestBit> GetEngineBits() noexcept {
     return bits;
 }
 
-static String FlipSplit(String const &block, Match const &item) noexcept {
+static String FlipSplit(String const &block, Match const &item, void *ptr) noexcept {
     String nc = L"";
 
     if (item.NestMatch.Index != 0) {
         for (UNumber i = 0; i < item.NestMatch.Index; i++) {
-            nc = Test::FlipSplit(block, item.NestMatch[i]) + nc;
+            nc = Test::FlipSplit(block, item.NestMatch[i], nullptr) + nc;
         }
 
         if (item.NestMatch.Index > 1) {
             nc = String(L'[') + nc + L']';
         }
     } else {
-        nc = String::Part(block, item.Offset, item.Length);
+        nc = String::Part(block.Str, item.Offset, item.Length);
     }
 
     return nc;

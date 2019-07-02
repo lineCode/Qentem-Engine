@@ -17,8 +17,7 @@
 namespace Qentem {
 
 // using UNumber = size_t;
-using Number  = long;
-using UNumber = unsigned long;
+using UNumber = unsigned long long;
 
 } // namespace Qentem
 

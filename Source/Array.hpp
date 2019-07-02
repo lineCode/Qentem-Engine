@@ -97,7 +97,7 @@ struct Array {
             Resize(Capacity * 2);
         }
 
-        Storage[Index] = item;
+        Storage[Index] = static_cast<T &&>(item);
         ++Index;
 
         return *this;
@@ -132,13 +132,14 @@ struct Array {
             _size = 2;
         }
 
+        // if (_size <= Index) {
+        //     Index = _size;
+        //     return;
+        // }
+
         T *tmp   = Storage;
         Storage  = nullptr;
         Capacity = _size;
-
-        if (_size < Index) {
-            Index = _size;
-        }
 
         Memory<T>::Allocate(&Storage, _size);
 

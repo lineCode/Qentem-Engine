@@ -112,7 +112,7 @@
             "args": [
                 "./Tests/Test.cpp",
                 "'-header-filter=.*'",
-                "-checks='*,-misc-definitions-in-headers,-cppcoreguidelines-pro-bounds-constant-array-index,-modernize-avoid-c-arrays,-cppcoreguidelines-avoid-c-arrays,-modernize-use-auto,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-non-private-member-variables-in-classes,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-readability-magic-numbers,-hicpp*,-fuchs*,-llvm-header-guard,-misc-non-private-*,-googl*,-misc-unused-parameters'",
+                "-checks='*,-cppcoreguidelines-pro-bounds-constant-array-index,-modernize-avoid-c-arrays,-cppcoreguidelines-avoid-c-arrays,-modernize-use-auto,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-non-private-member-variables-in-classes,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-readability-magic-numbers,-hicpp*,-fuchs*,-llvm-header-guard,-misc-non-private-*,-googl*,-misc-unused-parameters'",
                 "--",
                 "-I",
                 "./Source",
@@ -133,6 +133,27 @@
             "command": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin/MSBuild.exe",
             "args": [
                 "${cwd}/QConsole.sln",
+                "/m",
+                "/t:build",
+                "/p:configuration=Release", //Debug //Release
+                "/p:Platform=x64"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "silent",
+                "clear": true
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Build .dll",
+            "type": "shell",
+            "command": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin/MSBuild.exe",
+            "args": [
+                "${cwd}/QDLL.sln",
                 "/m",
                 "/t:build",
                 "/p:configuration=Release", //Debug //Release
