@@ -34,12 +34,10 @@ struct Template {
         }
 
         return String::Part(block.Str, (item.Offset + item.OLength), (item.Length - (item.CLength + item.OLength)));
-        // return String::Part(block.Str, item.OLength, (block.Length - (item.OLength + item.CLength))); // if Bubbling
     }
 
     static String RenderMath(String const &block, Match const &item, void *other) noexcept {
-        String value =
-            String::Part(block.Str, (item.Offset + item.OLength), (item.Length - (item.CLength + item.OLength)));
+        String value = String::Part(block.Str, item.OLength, (block.Length - (item.OLength + item.CLength)));
         return String::FromNumber(ALU::Evaluate(value), 1, 0, 3);
     }
 
@@ -407,10 +405,11 @@ struct Template {
             // Math Tag.
             MathTail.ParseCB = &(Template::RenderMath);
             // {math:5+6*8*(8+3)}
-            TagMath.Keyword   = L"{math:";
-            MathTail.Keyword  = L'}';
-            TagMath.Connected = &MathTail;
-            MathTail.Flag     = Flags::TRIM;
+            TagMath.Keyword    = L"{math:";
+            MathTail.Keyword   = L'}';
+            TagMath.Connected  = &MathTail;
+            MathTail.Flag      = Flags::TRIM | Flags::BUBBLE;
+            MathTail.NestExprs = Expressions().Add(_tagsVars);
             /////////////////////////////////
 
             tags = Expressions().Add(_tagsVars).Add(&TagMath).Add(&TagIif).Add(&TagIf).Add(&TagLoop);

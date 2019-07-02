@@ -6,6 +6,7 @@
 <div>{v:multi[arr1][E][0]}{v:multi[arr1][E][1]}</div>
 <div>Does not exist: {v:abc1[1234567890]}</div>
 <div>Empty var: {v:empty}</div>
+<div>{math:{v:math}}</div>
 
 <!--- Simple inline condition -->
 <div>{iif case="{v:var2} = 2" true="2 == 2" false="2 != 1"}</div>
@@ -17,7 +18,7 @@
 <div>{iif case="({v:numbers[2]} + 3) = 5" true="eq 5" false="({v:numbers[2]} + 3) != 5"}</div>
 
 <!--- Inline condition with math operations -->
-<div>{iif case="{v:math} = 14" true="eq 14" false="{v:math} != 14"}</div>
+<div>{iif case="14 == 14" true="eq 14" false="14 != 14"}</div>
 
 <!--- If conditions -->
 <div>

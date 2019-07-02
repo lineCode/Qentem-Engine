@@ -275,6 +275,7 @@ static Array<TestBit> GetTemplateBits(Qentem::Document &data) noexcept {
     data[L"r1"]  = L"Familly";
     data[L"e1"]  = L"";
     data[L"e2"]  = L" ";
+    data[L"m"]   = L"  ((5^2) * 2) + 13 ";
 
     data[L"lvl2"] = Qentem::Document();
 
@@ -305,7 +306,8 @@ static Array<TestBit> GetTemplateBits(Qentem::Document &data) noexcept {
 
     bit.Content.Add(L"{math:  ((5^2) * 2) + 3  }");
     bit.Expected.Add(L"53");
-
+    bit.Content.Add(L"{math: {v:m}  }");
+    bit.Expected.Add(L"63");
     ////
 
     bit.Content.Add(L"{iif case=\"987\" true =\"{iif case =\"1\" true=\"5\"}\"}");
