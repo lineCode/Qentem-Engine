@@ -7,5 +7,7 @@ x32/*
 .vscode/settings.json
 .vscode/ipch
 Tests/bigjson*
+Tests/*.bin
+Tests/*.exe
 *vcxproj.user
 clean.sh

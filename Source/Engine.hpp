@@ -187,7 +187,6 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
 
                             // items.Add(static_cast<Match &&>(_item));
 
-                            // TODO: If it's a resumed match, return
                             if ((Flags::ONCE & ce->Flag) != 0) {
                                 return;
                             }
@@ -273,14 +272,14 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
 
     /////////////////////////////////
     if (items.Index == 0) {
-		if ((Flags::POP & ce->Flag) != 0) {
-			_search(items, content, ce->NestExprs, started, limit, 0, 0);
-		}
-        
-		return;
+        if ((Flags::POP & ce->Flag) != 0) {
+            _search(items, content, ce->NestExprs, started, limit, 0, 0);
+        }
+
+        return;
     }
 
-	if (SPLIT_IT) {
+    if (SPLIT_IT) {
         Split(items, content, started, limit);
     }
     //////////////// Hani ///////////////////
@@ -506,7 +505,5 @@ static void Engine::Split(Array<Match> &items, String const &content, UNumber co
         items[0].NestMatch = static_cast<Array<Match> &&>(splitted);
     }
 }
-
 } // namespace Qentem
-
 #endif

@@ -33,6 +33,10 @@ struct Entry {
     UNumber ID    = 0;
     UNumber KeyID = 0;
     VType   Type  = VType::UndefinedT;
+
+    Entry() = default;
+    Entry(UNumber d, UNumber k, VType t) : ID(d), KeyID(k), Type(t) {
+    }
 };
 
 struct _JsonFixedString {
@@ -49,8 +53,6 @@ struct _JsonFixedString {
     String const fss11 = L"\":";
 } static JFX;
 
-struct Field;
-
 struct Document {
     UNumber HashBase = 17; // Or 97. Choose prime numbers only!
     bool    Ordered  = false;
@@ -63,7 +65,110 @@ struct Document {
     Array<String>   Keys;
     Array<Document> Documents;
 
-    Document() = default;
+    String lastKey;
+    Document()  = default;
+    ~Document() = default;
+
+    Document(Document &&doc) noexcept {
+        HashBase  = doc.HashBase;
+        Ordered   = doc.Ordered;
+        Entries   = static_cast<Array<Entry> &&>(doc.Entries);
+        Table     = static_cast<Array<Index> &&>(doc.Table);
+        Numbers   = static_cast<Array<double> &&>(doc.Numbers);
+        Strings   = static_cast<Array<String> &&>(doc.Strings);
+        Keys      = static_cast<Array<String> &&>(doc.Keys);
+        Documents = static_cast<Array<Document> &&>(doc.Documents);
+    }
+
+    Document(Document const &doc) noexcept {
+        HashBase  = doc.HashBase;
+        Ordered   = doc.Ordered;
+        Entries   = doc.Entries;
+        Table     = doc.Table;
+        Numbers   = doc.Numbers;
+        Strings   = doc.Strings;
+        Keys      = doc.Keys;
+        Documents = doc.Documents;
+    }
+
+    Document(Array<double> const &_numbers) noexcept {
+        Numbers = _numbers;
+        Ordered = true;
+    }
+
+    Document(Array<String> const &_strings) noexcept {
+        Strings = _strings;
+        Ordered = true;
+    }
+
+    Document(Array<Document> const &_documents) noexcept {
+        Documents = _documents;
+        Ordered   = true;
+    }
+
+    Document(Array<double> &&_numbers) noexcept {
+        Numbers = static_cast<Array<double> &&>(_numbers);
+        Ordered = true;
+    }
+
+    Document(Array<String> &&_strings) noexcept {
+        Strings = static_cast<Array<String> &&>(_strings);
+        Ordered = true;
+    }
+
+    Document(Array<Document> &&_documents) noexcept {
+        Documents = static_cast<Array<Document> &&>(_documents);
+        Ordered   = true;
+    }
+
+    Document(String const &json) noexcept {
+        *this = FromJSON(json);
+    }
+
+    Document(wchar_t const *json) noexcept {
+        *this = FromJSON(json);
+    }
+
+    Document &operator=(Document &&doc) noexcept {
+        if (lastKey.Length == 0) {
+            HashBase  = doc.HashBase;
+            Ordered   = doc.Ordered;
+            Entries   = static_cast<Array<Entry> &&>(doc.Entries);
+            Table     = static_cast<Array<Index> &&>(doc.Table);
+            Numbers   = static_cast<Array<double> &&>(doc.Numbers);
+            Strings   = static_cast<Array<String> &&>(doc.Strings);
+            Keys      = static_cast<Array<String> &&>(doc.Keys);
+            Documents = static_cast<Array<Document> &&>(doc.Documents);
+            return *this;
+        }
+
+        Insert(lastKey, 0, lastKey.Length, VType::DocumentT, &doc, true, true);
+        Entry *   _entry;
+        Document *storage = GetSource(&_entry, lastKey, 0, lastKey.Length);
+        lastKey.Reset();
+        return *storage;
+    }
+
+    Document &operator=(Document const &doc) noexcept {
+        if (lastKey.Length == 0) {
+            HashBase  = doc.HashBase;
+            Ordered   = doc.Ordered;
+            Entries   = doc.Entries;
+            Table     = doc.Table;
+            Numbers   = doc.Numbers;
+            Strings   = doc.Strings;
+            Keys      = doc.Keys;
+            Documents = doc.Documents;
+            return *this;
+        }
+
+        Document in = doc;
+        Entry *  _entry;
+        Insert(lastKey, 0, lastKey.Length, VType::DocumentT, &in, true, true);
+        Document *storage = GetSource(&_entry, lastKey, 0, lastKey.Length);
+        lastKey.Reset();
+        return *storage;
+    }
 
     static void Drop(Entry &_entry, Document &storage) noexcept {
         _entry.Type = VType::UndefinedT;
@@ -71,7 +176,7 @@ struct Document {
 
         switch (_entry.Type) {
             // case VType::NumberT:
-            //     storage.Numbers[_hash.ID] = 0; // Waste of time
+            //     storage.Numbers[_hash.ID] = 0; // Waste of time.
             //     break;
             case VType::StringT:
                 storage.Strings[_entry.ID].Reset();
@@ -93,7 +198,7 @@ struct Document {
         }
     }
 
-    Entry *Exist(UNumber const hash, UNumber const level, Array<Index> const &_table) const noexcept {
+    Entry *Exist(UNumber hash, UNumber level, Array<Index> const &_table) const noexcept {
         UNumber id = ((hash + level) % HashBase);
 
         if ((_table.Index > id) && (_table[id].Hash != 0)) {
@@ -101,18 +206,17 @@ struct Document {
                 return &(Entries[_table[id].ID]);
             }
 
-            return Exist(hash, (level + 3), _table[id].Table);
+            return Exist(hash, (level + 2), _table[id].Table);
         }
 
         return nullptr;
     }
 
-    void InsertIndex(Index const &_index, UNumber const level, Array<Index> &_table) noexcept {
+    void InsertIndex(Index const &_index, UNumber level, Array<Index> &_table) noexcept {
         UNumber id = ((_index.Hash + level) % HashBase);
 
-        if (_table.Index <= id) {
-            _table.Capacity = id + 1;
-            _table.Resize(_table.Capacity);
+        if (_table.Capacity <= id) {
+            _table.Resize(id + 1);
             _table.Index = _table.Capacity;
         }
 
@@ -121,7 +225,27 @@ struct Document {
             return;
         }
 
-        InsertIndex(_index, (level + 3), _table[id].Table);
+        InsertIndex(_index, (level + 2), _table[id].Table);
+    }
+
+    void Rehash(UNumber newBase, bool const children = false) noexcept {
+        Table.Reset();
+        HashBase = newBase;
+
+        Index   _index;
+        String *key;
+
+        for (UNumber i = 0; i < Entries.Index; i++) {
+            key         = &(Keys[Entries[i].KeyID]);
+            _index.Hash = String::Hash(key->Str, 0, key->Length);
+            _index.ID   = i;
+
+            InsertIndex(_index, 0, Table);
+
+            if (children && (Entries[i].Type == VType::DocumentT)) {
+                Documents[Entries[i].ID].Rehash(HashBase, true);
+            }
+        }
     }
 
     void _toJSON(StringStream &ss) const noexcept {
@@ -130,53 +254,53 @@ struct Document {
         Array<Match> tmpMatchs;
 
         if (!Ordered) {
-            Entry *_ptr;
+            Entry *_entry;
 
             ss.Share(&JFX.fss1);
 
             for (UNumber i = 0; i < Entries.Index; i++) {
-                _ptr = &(Entries[i]);
+                _entry = &(Entries[i]);
 
                 if (ss.Length != 1) {
                     ss.Share(&JFX.fss3);
                 }
 
-                switch (_ptr->Type) {
+                switch (_entry->Type) {
                     case VType::NullT: {
                         ss.Share(&JFX.fss6);
-                        ss += Keys[_ptr->KeyID];
+                        ss += Keys[_entry->KeyID];
                         ss.Share(&JFX.fss7);
                     } break;
                     case VType::BooleanT: {
                         ss.Share(&JFX.fss6);
-                        ss += Keys[_ptr->KeyID];
-                        ss.Share((Numbers[_ptr->ID] != 0) ? &JFX.fss8 : &JFX.fss9);
+                        ss += Keys[_entry->KeyID];
+                        ss.Share((Numbers[_entry->ID] != 0) ? &JFX.fss8 : &JFX.fss9);
                     } break;
                     case VType::StringT: {
                         ss.Share(&JFX.fss6);
-                        ss += Keys[_ptr->KeyID];
+                        ss += Keys[_entry->KeyID];
                         ss.Share(&JFX.fss10);
 
-                        tmpMatchs = Engine::Search(Strings[_ptr->ID], to_json_expres);
+                        tmpMatchs = Engine::Search(Strings[_entry->ID], to_json_expres);
                         if (tmpMatchs.Index == 0) {
-                            ss.Share(&Strings[_ptr->ID]);
+                            ss.Share(&Strings[_entry->ID]);
                         } else {
-                            ss += Engine::Parse(Strings[_ptr->ID], tmpMatchs);
+                            ss += Engine::Parse(Strings[_entry->ID], tmpMatchs);
                         }
 
                         ss.Share(&JFX.fss6);
                     } break;
                     case VType::NumberT: {
                         ss.Share(&JFX.fss6);
-                        ss += Keys[_ptr->KeyID];
+                        ss += Keys[_entry->KeyID];
                         ss.Share(&JFX.fss11);
-                        ss += String::FromNumber(Numbers[_ptr->ID]);
+                        ss += String::FromNumber(Numbers[_entry->ID]);
                     } break;
                     case VType::DocumentT: {
                         ss.Share(&JFX.fss6);
-                        ss += Keys[_ptr->KeyID];
+                        ss += Keys[_entry->KeyID];
                         ss.Share(&JFX.fss11);
-                        ss += Documents[_ptr->ID].ToJSON();
+                        ss += Documents[_entry->ID].ToJSON();
                     } break;
                     default:
                         break;
@@ -225,66 +349,6 @@ struct Document {
         }
 
         ss.Share(&JFX.fss5);
-    }
-
-    static Expressions const &_getToJsonExpres() noexcept {
-        static Expression  _JsonQuot;
-        static Expressions tags;
-
-        if (tags.Index == 0) {
-            _JsonQuot.Keyword = L'"';
-            _JsonQuot.Replace = L"\\\"";
-
-            tags = Expressions().Add(&_JsonQuot);
-        }
-
-        return tags;
-    }
-
-    static Expressions const &_getJsonExpres() noexcept {
-        static Expression esc_quotation = Expression();
-
-        static Expression quotation_start = Expression();
-        static Expression quotation_end   = Expression();
-
-        static Expression opened_square_bracket = Expression();
-        static Expression closed_square_bracket = Expression();
-
-        static Expression opened_curly_bracket = Expression();
-        static Expression closed_curly_bracket = Expression();
-
-        static Expressions tags;
-
-        if (tags.Index == 0) {
-            esc_quotation.Keyword = L"\\\"";
-            esc_quotation.Replace = L'"';
-
-            quotation_start.Keyword   = L'"';
-            quotation_end.Keyword     = L'"';
-            quotation_end.ID          = 3;
-            quotation_start.Connected = &quotation_end;
-            quotation_end.NestExprs   = Expressions().Add(&esc_quotation);
-
-            opened_curly_bracket.Keyword   = L'{';
-            closed_curly_bracket.Keyword   = L'}';
-            closed_curly_bracket.ID        = 1;
-            opened_curly_bracket.Connected = &closed_curly_bracket;
-
-            closed_curly_bracket.NestExprs =
-                Expressions().Add(&quotation_start).Add(&opened_curly_bracket).Add(&opened_square_bracket);
-
-            opened_square_bracket.Keyword   = L'[';
-            closed_square_bracket.Keyword   = L']';
-            closed_square_bracket.ID        = 2;
-            opened_square_bracket.Connected = &closed_square_bracket;
-
-            closed_square_bracket.NestExprs =
-                Expressions().Add(&opened_square_bracket).Add(&opened_curly_bracket).Add(&quotation_start);
-
-            tags = Expressions().Add(&opened_curly_bracket).Add(&opened_square_bracket);
-        }
-
-        return tags;
     }
 
     inline String ToJSON() const noexcept {
@@ -352,7 +416,7 @@ struct Document {
                     if (move) {
                         Documents.Add(static_cast<Document &&>(*(static_cast<Document *>(ptr))));
                     } else {
-                        Documents.Add(*(static_cast<Document *>(ptr)));
+                        Documents.Add(static_cast<Document const &>(*(static_cast<Document *>(ptr))));
                     }
                 } break;
                 default:
@@ -401,136 +465,24 @@ struct Document {
                 _ent->ID   = id;
                 _ent->Type = type;
             }
-        } else {
-            Index _index;
-            _index.Hash = _hash;
-            _index.ID   = Entries.Index;
 
-            Entry _entry;
-            _entry.Type  = type;
-            _entry.ID    = id;
-            _entry.KeyID = Keys.Index;
-
-            Keys.Add(String::Part(key.Str, offset, limit));
-            Entries.Add(_entry);
-
-            InsertIndex(_index, 0, Table);
+            return;
         }
+
+        Index _index;
+        _index.Hash = _hash;
+        _index.ID   = Entries.Index;
+        Entries.Add(Entry(id, Keys.Index, type));
+
+        Keys.Add(String::Part(key.Str, offset, limit));
+
+        InsertIndex(_index, 0, Table);
     }
 
     static void _makeDocument(Document &document, String const &content, Array<Match> &items) noexcept {
-        if (!document.Ordered) {
-            Match *  key;
-            Match *  data;
-            UNumber  start;
-            UNumber  j;
-            bool     done;
-            String   ts;
-            Document o_document;
-            Document uno_document;
-
-            for (UNumber i = 0; i < items.Index; i++) {
-                key   = &(items[i]);
-                start = 0;
-                done  = false;
-                j     = (key->Offset + key->Length);
-
-                for (; j < content.Length; j++) {
-                    switch (content[j]) {
-                        case L'"': {
-                            ++i;
-
-                            data = &(items[i]);
-                            if (data->NestMatch.Index != 0) {
-                                ts = Engine::Parse(content, data->NestMatch, (data->Offset + 1),
-                                                   ((data->Offset + data->Length) - 1));
-                            } else {
-                                ts = String::Part(content.Str, (data->Offset + 1), (data->Length - 2));
-                            }
-
-                            document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::StringT, &ts, true,
-                                            false);
-
-                            done = true;
-                        } break;
-                        case L'{': {
-                            ++i;
-
-                            uno_document = Document();
-                            _makeDocument(uno_document, content, items[i].NestMatch);
-                            document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::DocumentT,
-                                            &uno_document, true, false);
-
-                            done = true;
-                        } break;
-                        case L'[': {
-                            ++i;
-
-                            o_document         = Document();
-                            o_document.Ordered = true;
-
-                            if (items[i].NestMatch.Index > 0) {
-                                _makeDocument(o_document, content, items[i].NestMatch);
-                            } else {
-                                _makeListNumber(o_document.Numbers, content, items[i]);
-                            }
-
-                            document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::DocumentT, &o_document,
-                                            true, false);
-
-                            done = true;
-                        } break;
-                        case L':': {
-                            start = j + 1;
-                            continue;
-                        }
-                        case L',':
-                        case L'}':
-                        case L']': {
-                            // true, false, null or a number
-                            double  tn;
-                            UNumber end = j;
-                            String::SoftTrim(content.Str, start, end);
-
-                            switch (content[start]) {
-                                case L't': {
-                                    // True
-                                    tn = 1;
-                                    document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::BooleanT, &tn,
-                                                    false, false);
-                                } break;
-                                case L'f': {
-                                    // False
-                                    tn = 0;
-                                    document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::BooleanT, &tn,
-                                                    false, false);
-                                } break;
-                                case L'n': {
-                                    // Null
-                                    document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::NullT, nullptr,
-                                                    false, false);
-                                } break;
-                                default: {
-                                    if (String::ToNumber(content, tn, start, ((end + 1) - start))) {
-                                        // Number
-                                        document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::NumberT,
-                                                        &tn, false, false);
-                                    }
-                                } break;
-                            }
-
-                            done = true;
-                        } break;
-                    }
-
-                    if (done) {
-                        break;
-                    }
-                }
-            }
-        } else {
-            if (items.Index > 0) {
-                if (items[0].Expr->ID == 3) { // " Strings
+        if (document.Ordered) {
+            switch (items[0].Expr->ID) {
+                case 3: {
                     document.Strings.SetCapacity(items.Index);
 
                     for (UNumber i = 0; i < items.Index; i++) {
@@ -543,13 +495,17 @@ struct Document {
                         }
                         ++document.Strings.Index;
                     }
-                } else if (items[0].Expr->ID == 1) { // } Unordered arrays
+                    break;
+                }
+                case 1: {
                     document.Documents.SetCapacity(items.Index);
 
                     for (UNumber i = 0; i < items.Index; i++) {
                         _makeDocument((document.Documents[document.Documents.Index++]), content, items[i].NestMatch);
                     }
-                } else if (items[0].Expr->ID == 2) { // ] Ordered arrays
+                    break;
+                }
+                case 2: {
                     document.Documents.SetCapacity(items.Index);
 
                     for (UNumber i = 0; i < items.Index; i++) {
@@ -563,9 +519,118 @@ struct Document {
                             _makeListNumber(te->Numbers, content, items[i]);
                         }
                     }
+                    break;
                 }
-            } else {
-                _makeListNumber(document.Numbers, content, items[0]);
+                default:
+                    return;
+            }
+
+            return;
+        }
+
+        Match * key;
+        Match * data;
+        UNumber start;
+        UNumber j;
+        bool    done;
+
+        for (UNumber i = 0; i < items.Index; i++) {
+            key   = &(items[i]);
+            start = 0;
+            done  = false;
+            j     = (key->Offset + key->Length);
+
+            for (; j < content.Length; j++) {
+                switch (content[j]) {
+                    case L'"': {
+                        ++i;
+
+                        String ts;
+                        data = &(items[i]);
+                        if (data->NestMatch.Index != 0) {
+                            ts = Engine::Parse(content, data->NestMatch, (data->Offset + 1),
+                                               ((data->Offset + data->Length) - 1));
+                        } else {
+                            ts = String::Part(content.Str, (data->Offset + 1), (data->Length - 2));
+                        }
+
+                        document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::StringT, &ts, true, false);
+
+                        done = true;
+                    } break;
+                    case L'{': {
+                        ++i;
+
+                        Document uno_document;
+                        _makeDocument(uno_document, content, items[i].NestMatch);
+                        document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::DocumentT, &uno_document,
+                                        true, false);
+
+                        done = true;
+                    } break;
+                    case L'[': {
+                        ++i;
+
+                        Document o_document;
+                        o_document.Ordered = true;
+
+                        if (items[i].NestMatch.Index > 0) {
+                            _makeDocument(o_document, content, items[i].NestMatch);
+                        } else {
+                            _makeListNumber(o_document.Numbers, content, items[i]);
+                        }
+
+                        document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::DocumentT, &o_document,
+                                        true, false);
+
+                        done = true;
+                    } break;
+                    case L':': {
+                        start = j + 1;
+                        continue;
+                    }
+                    case L',':
+                    case L'}':
+                    case L']': {
+                        // true, false, null or a number
+                        double  tn;
+                        UNumber end = j;
+                        String::SoftTrim(content.Str, start, end);
+
+                        switch (content[start]) {
+                            case L't': {
+                                // True
+                                tn = 1;
+                                document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::BooleanT, &tn,
+                                                false, false);
+                            } break;
+                            case L'f': {
+                                // False
+                                tn = 0;
+                                document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::BooleanT, &tn,
+                                                false, false);
+                            } break;
+                            case L'n': {
+                                // Null
+                                document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::NullT, nullptr,
+                                                false, false);
+                            } break;
+                            default: {
+                                if (String::ToNumber(content, tn, start, ((end + 1) - start))) {
+                                    // Number
+                                    document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::NumberT, &tn,
+                                                    false, false);
+                                }
+                            } break;
+                        }
+
+                        done = true;
+                    } break;
+                }
+
+                if (done) {
+                    break;
+                }
             }
         }
 
@@ -872,128 +937,295 @@ struct Document {
         return nullptr;
     }
 
-    //////////// Fields' Operators
+    static Expressions const &_getToJsonExpres() noexcept {
+        static Expression  _JsonQuot;
+        static Expressions tags;
 
-    struct Field {
-        String    Key     = L"";
-        Document *Storage = nullptr;
+        if (tags.Index == 0) {
+            _JsonQuot.Keyword = L'"';
+            _JsonQuot.Replace = L"\\\"";
 
-        Field &operator=(UNumber value) noexcept {
-            if (Storage != nullptr) {
-                Storage->Insert(Key, 0, Key.Length, VType::NumberT, &value, false);
-            }
-            return *this;
+            tags = Expressions().Add(&_JsonQuot);
         }
 
-        Field &operator=(double value) noexcept {
-            if (Storage != nullptr) {
-                Storage->Insert(Key, 0, Key.Length, VType::NumberT, &value, false);
-            }
-            return *this;
-        }
-
-        Field &operator=(wchar_t const *value) noexcept {
-            if (Storage != nullptr) {
-                if (value != nullptr) {
-                    String _s = value;
-                    Storage->Insert(Key, 0, Key.Length, VType::StringT, &_s, true);
-                } else {
-                    Storage->Insert(Key, 0, Key.Length, VType::NullT, nullptr, false);
-                }
-            }
-            return *this;
-        }
-
-        Field &operator=(String &value) noexcept {
-            if (Storage != nullptr) {
-                Storage->Insert(Key, 0, Key.Length, VType::StringT, &value, false);
-            }
-            return *this;
-        }
-
-        Field &operator=(Document &value) noexcept {
-            if (Storage != nullptr) {
-                Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &value, false);
-            }
-            return *this;
-        }
-
-        Field &operator=(Document &&value) noexcept {
-            if (Storage != nullptr) {
-                Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &value, true);
-            }
-            return *this;
-        }
-
-        Field &operator=(Array<double> &value) noexcept {
-            if (Storage != nullptr) {
-                Document tmp;
-                tmp.Ordered = true;
-                tmp.Numbers = value;
-                Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &tmp, true);
-            }
-            return *this;
-        }
-
-        Field &operator=(Array<String> &value) noexcept {
-            if (Storage != nullptr) {
-                Document tmp;
-                tmp.Ordered = true;
-                tmp.Strings = value;
-                Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &tmp, true);
-            }
-            return *this;
-        }
-
-        Field &operator=(Array<Document> &value) noexcept {
-            if (Storage != nullptr) {
-                Document tmp;
-                tmp.Ordered   = true;
-                tmp.Documents = value;
-                Storage->Insert(Key, 0, Key.Length, VType::DocumentT, &tmp, true);
-            }
-            return *this;
-        }
-
-        Field &operator=(bool value) noexcept {
-            if (Storage != nullptr) {
-                double num = value ? 1.0 : 0.0;
-                Storage->Insert(Key, 0, Key.Length, VType::BooleanT, &num, false);
-            }
-            return *this;
-        }
-
-        Field operator[](String const &key) noexcept {
-            if (Storage != nullptr) {
-                Document *document = Storage->GetDocument(Key, 0, Key.Length);
-
-                if (document != nullptr) {
-                    return (*document)[key];
-                }
-            }
-
-            return Field();
-        }
-    };
-
-    Field operator[](String const &key) noexcept {
-        Field _field;
-        _field.Key     = key;
-        _field.Storage = this;
-        return _field;
+        return tags;
     }
 
-    Field operator[](UNumber const &id) noexcept {
-        Field _field;
+    static Expressions const &_getJsonExpres() noexcept {
+        static Expression esc_quotation = Expression();
 
-        if (id < Keys.Index) {
-            _field.Key = Keys[id];
+        static Expression quotation_start = Expression();
+        static Expression quotation_end   = Expression();
+
+        static Expression opened_square_bracket = Expression();
+        static Expression closed_square_bracket = Expression();
+
+        static Expression opened_curly_bracket = Expression();
+        static Expression closed_curly_bracket = Expression();
+
+        static Expressions tags;
+
+        if (tags.Index == 0) {
+            esc_quotation.Keyword = L"\\\"";
+            esc_quotation.Replace = L'"';
+
+            quotation_start.Keyword   = L'"';
+            quotation_end.Keyword     = L'"';
+            quotation_end.ID          = 3;
+            quotation_start.Connected = &quotation_end;
+            quotation_end.NestExprs   = Expressions().Add(&esc_quotation);
+
+            opened_curly_bracket.Keyword   = L'{';
+            closed_curly_bracket.Keyword   = L'}';
+            closed_curly_bracket.ID        = 1;
+            opened_curly_bracket.Connected = &closed_curly_bracket;
+
+            closed_curly_bracket.NestExprs =
+                Expressions().Add(&quotation_start).Add(&opened_curly_bracket).Add(&opened_square_bracket);
+
+            opened_square_bracket.Keyword   = L'[';
+            closed_square_bracket.Keyword   = L']';
+            closed_square_bracket.ID        = 2;
+            opened_square_bracket.Connected = &closed_square_bracket;
+
+            closed_square_bracket.NestExprs =
+                Expressions().Add(&opened_square_bracket).Add(&opened_curly_bracket).Add(&quotation_start);
+
+            tags = Expressions().Add(&opened_curly_bracket).Add(&opened_square_bracket);
         }
 
-        _field.Storage = this;
-        return _field;
+        return tags;
+    }
+
+    void operator+=(Document const &doc) noexcept {
+        if (Ordered != doc.Ordered) {
+            return;
+        }
+
+        if (!Ordered) {
+            Entry * _entry;
+            String *_key;
+
+            for (UNumber i = 0; i < doc.Entries.Index; i++) {
+                _entry = &(doc.Entries[i]);
+                _key   = &(doc.Keys[doc.Entries[i].KeyID]);
+
+                switch (_entry->Type) {
+                    case VType::NullT: {
+                        Insert(*_key, 0, _key->Length, _entry->Type, nullptr, false, true);
+                    } break;
+                    case VType::BooleanT: {
+                        Insert(*_key, 0, _key->Length, _entry->Type, &doc.Numbers[_entry->ID], false, true);
+                    } break;
+                    case VType::StringT: {
+                        Insert(*_key, 0, _key->Length, _entry->Type, &doc.Strings[_entry->ID], false, true);
+                    } break;
+                    case VType::NumberT: {
+                        Insert(*_key, 0, _key->Length, _entry->Type, &doc.Numbers[_entry->ID], false, true);
+                    } break;
+                    case VType::DocumentT: {
+                        Insert(*_key, 0, _key->Length, _entry->Type, &doc.Documents[_entry->ID], false, true);
+                    } break;
+                    default:
+                        break;
+                }
+            }
+
+            return;
+        }
+
+        if (doc.Numbers.Index != 0) {
+            Numbers.Add(doc.Numbers);
+        } else if (doc.Strings.Index != 0) {
+            Strings.Add(doc.Strings);
+        } else if (doc.Documents.Index != 0) {
+            Documents.Add(doc.Documents);
+        }
+    }
+
+    void operator+=(Document &&doc) noexcept {
+        if (Ordered != doc.Ordered) {
+            return;
+        }
+
+        if (!Ordered) {
+            Entry * _entry;
+            String *_key;
+
+            for (UNumber i = 0; i < doc.Entries.Index; i++) {
+                _entry = &(doc.Entries[i]);
+                _key   = &(doc.Keys[doc.Entries[i].KeyID]);
+
+                switch (_entry->Type) {
+                    case VType::NullT: {
+                        Insert(*_key, 0, _key->Length, _entry->Type, nullptr, true, true);
+                    } break;
+                    case VType::BooleanT: {
+                        Insert(*_key, 0, _key->Length, _entry->Type, &doc.Numbers[_entry->ID], true, true);
+                    } break;
+                    case VType::StringT: {
+                        Insert(*_key, 0, _key->Length, _entry->Type, &doc.Strings[_entry->ID], true, true);
+                    } break;
+                    case VType::NumberT: {
+                        Insert(*_key, 0, _key->Length, _entry->Type, &doc.Numbers[_entry->ID], true, true);
+                    } break;
+                    case VType::DocumentT: {
+                        Insert(*_key, 0, _key->Length, _entry->Type, &doc.Documents[_entry->ID], true, true);
+                    } break;
+                    default:
+                        break;
+                }
+            }
+
+            return;
+        }
+
+        if (doc.Numbers.Index != 0) {
+            Numbers.Add(static_cast<Array<double> &&>(doc.Numbers));
+        } else if (doc.Strings.Index != 0) {
+            Strings.Add(static_cast<Array<String> &&>(doc.Strings));
+        } else if (doc.Documents.Index != 0) {
+            Documents.Add(static_cast<Array<Document> &&>(doc.Documents));
+        }
+    }
+
+    Document &operator=(wchar_t const *value) noexcept {
+        if (lastKey.Length == 0) {
+            *this = Document::FromJSON(value);
+            return *this;
+        }
+
+        if (value != nullptr) {
+            String str = value;
+            Insert(lastKey, 0, lastKey.Length, VType::StringT, &str, true, true);
+        } else {
+            Insert(lastKey, 0, lastKey.Length, VType::NullT, nullptr, false, true);
+        }
+
+        lastKey.Reset();
+        return *this;
+    }
+
+    Document &operator=(String const &value) noexcept {
+        if (lastKey.Length == 0) {
+            *this = Document::FromJSON(value);
+            return *this;
+        }
+
+        String str = value;
+        Insert(lastKey, 0, lastKey.Length, VType::StringT, &str, true, true);
+        lastKey.Reset();
+        return *this;
+    }
+
+    Document &operator=(String &&value) noexcept {
+        if (lastKey.Length == 0) {
+            *this = Document::FromJSON(value);
+            return *this;
+        }
+
+        Insert(lastKey, 0, lastKey.Length, VType::StringT, &value, true, true);
+        lastKey.Reset();
+        return *this;
+    }
+
+    Document &operator=(double value) noexcept {
+        if (lastKey.Length != 0) {
+            Insert(lastKey, 0, lastKey.Length, VType::NumberT, &value, false, true);
+            lastKey.Reset();
+        }
+        return *this;
+    }
+
+    Document &operator=(int value) noexcept {
+        if (lastKey.Length != 0) {
+            double num = static_cast<double>(value);
+            Insert(lastKey, 0, lastKey.Length, VType::NumberT, &num, false, true);
+            lastKey.Reset();
+        }
+        return *this;
+    }
+
+    Document &operator=(long value) noexcept {
+        if (lastKey.Length != 0) {
+            double num = static_cast<double>(value);
+            Insert(lastKey, 0, lastKey.Length, VType::NumberT, &num, false, true);
+            lastKey.Reset();
+        }
+        return *this;
+    }
+
+    Document &operator=(bool value) noexcept {
+        if (lastKey.Length != 0) {
+            double num = value ? 1.0 : 0.0;
+            Insert(lastKey, 0, lastKey.Length, VType::BooleanT, &num, false, true);
+            lastKey.Reset();
+        }
+        return *this;
+    }
+
+    Document &operator[](String const &key) noexcept {
+        Entry *_entry;
+
+        Document *src = GetSource(&_entry, key, 0, key.Length);
+        if (src != nullptr) {
+            src->lastKey = key;
+            return *src;
+        }
+
+        lastKey = key;
+        return *this;
+    }
+
+    Document &operator[](wchar_t const &key) noexcept {
+        Entry *_entry;
+
+        Document *src = GetSource(&_entry, key, 0, 1);
+        if (src != nullptr) {
+            src->lastKey = key;
+            return *src;
+        }
+
+        lastKey = key;
+        return *this;
+    }
+
+    Document &operator[](UNumber const &id) noexcept {
+        lastKey = Keys[Entries[id].KeyID];
+        Entry *_entry;
+
+        Document *src = GetSource(&_entry, lastKey, 0, lastKey.Length);
+        if (src != nullptr) {
+            src->lastKey = lastKey;
+            return *src;
+        }
+
+        return *this;
+    }
+
+    void operator+=(Array<double> const &_numbers) noexcept {
+        Numbers.Add(_numbers);
+    }
+
+    void operator+=(Array<String> const &_strings) noexcept {
+        Strings.Add(_strings);
+    }
+
+    void operator+=(Array<Document> const &_documents) noexcept {
+        Documents.Add(_documents);
+    }
+
+    void operator+=(Array<double> &&_numbers) noexcept {
+        Numbers.Add(static_cast<Array<double> &&>(_numbers));
+    }
+
+    void operator+=(Array<String> &&_strings) noexcept {
+        Strings.Add(static_cast<Array<String> &&>(_strings));
+    }
+
+    void operator+=(Array<Document> &&_documents) noexcept {
+        Documents.Add(static_cast<Array<Document> &&>(_documents));
     }
 };
-
 } // namespace Qentem
 #endif

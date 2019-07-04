@@ -20,7 +20,6 @@ using Qentem::String;
 using Qentem::StringStream;
 using Qentem::UNumber;
 using Qentem::Engine::Match;
-using Qentem::Test::ReplaceNewLine;
 using Qentem::Test::TestBit;
 
 static UNumber const TimesToRun = 1;
@@ -43,8 +42,7 @@ int main() {
     bool TestALU      = false;
     bool TestTemplate = false;
     bool TestJSON     = false;
-
-    bool Pause = false;
+    bool Pause        = false;
 
     // This way is faster just to comment out the line instead of changing the value
     TestEngine   = true;
@@ -52,6 +50,7 @@ int main() {
     TestALU      = true;
     TestTemplate = true;
     TestJSON     = true;
+    // Pause        = true;
 
     Array<TestBit> bits;
 
@@ -272,7 +271,8 @@ struct NC_test {
     String result = L"";
 
     NC_test() = default;
-    NC_test(double n, String r) : num(n), result(static_cast<String &&>(r)){};
+    NC_test(double n, String r) : num(n), result(static_cast<String &&>(r)) {
+    }
 };
 
 static bool NumbersConvTest() noexcept {
@@ -283,7 +283,7 @@ static bool NumbersConvTest() noexcept {
     bool           Pass        = false;
     ////////////////////////////////
 
-    test.Add({2.0000000000009, L"2.0000000000009"}).Add({3.99999999999999, L"3.99999999999999"});
+    test.Add({-2.000000000000999, L"-2.000000000000999"}).Add({3.99999999999999, L"3.99999999999999"});
     test.Add({99.1005099, L"99.1005099"}).Add({871.080055555, L"871.080055555"});
     test.Add({999.1000099, L"999.1000099"}).Add({9.1000099, L"9.1000099"});
     test.Add({66666.30000400000001, L"66666.300004"}).Add({2.30000000000001, L"2.30000000000001"});
@@ -346,18 +346,30 @@ static bool JSONTest() noexcept {
     UNumber const times = StreasTest ? 1000 : 1;
     UNumber       took  = 0;
     String        final = L"";
-
+    Document      data;
     std::wcout << L"\n #JSON Tests:\n";
 
-    String   json_content = read_file(!BigJSON ? "./Tests/temp.json" : "./Tests/bigjson.json");
-    Document data         = get_document();
+    String json_content = read_file(!BigJSON ? "./Tests/temp.json" : "./Tests/bigjson.json");
+    if (json_content.Length == 0) {
+        json_content = read_file(!BigJSON ? "./temp.json" : "./bigjson.json");
+    }
+
+    if (!BigJSON) {
+        data = get_document();
+        if (data.ToJSON() != Qentem::Test::ReplaceNewLine(json_content, L"")) {
+            std::wcout << "\n Document() might be broken!\n";
+            std::wcout << "\n File:\n" << json_content.Str << "\n";
+            std::wcout << "\n ToJSON():\n" << data.ToJSON().Str << "\n";
+            return false;
+        }
+    }
 
     for (UNumber i = 0; i < 10; i++) {
         std::wcout << " Importing... ";
         took = static_cast<UNumber>(clock());
         for (UNumber y = 1; y <= times; y++) {
-            data = Document::FromJSON(json_content);
-            // Qentem::Engine::Search(read_file("./Tests/bigjson.json"), Document::json_expres);
+            data = json_content;
+            // Qentem::Engine::Search(json_content, Document::_getToJsonExpres());
         }
         took = (static_cast<UNumber>(clock()) - took);
         std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << ' ';
@@ -377,7 +389,6 @@ static bool JSONTest() noexcept {
     }
 
     json_content = Qentem::Test::ReplaceNewLine(json_content, L"");
-
     if (final == json_content) {
         std::wcout << "\n JSON looks good!\n";
         return true;
@@ -397,8 +408,7 @@ static Document get_document() noexcept {
     Document data = Document();
 
     data[L"var1"] = L"\"1\"";
-    // data[0]        = 44.0;
-    data[L"PP"] = L"gg";
+    data[L"PP"]   = L"gg";
     // String sss     = data[L"PP"].GetString();
     data[L"nu"]    = nullptr;
     data[L"bool"]  = false;

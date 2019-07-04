@@ -179,16 +179,16 @@ struct String {
     String &operator=(String const &src) noexcept { // Copy
         if (this != &src) {
             if (Capacity < src.Length) {
-                Memory<wchar_t>::Deallocate(&Str);
-                Memory<wchar_t>::Allocate(&Str, (src.Length + 1));
-
-                Length   = src.Length;
                 Capacity = src.Length;
+                Memory<wchar_t>::Deallocate(&Str);
+                Memory<wchar_t>::Allocate(&Str, (Capacity + 1));
 
-                for (UNumber j = 0; j <= src.Length;) { // <= to include \0
-                    Str[j] = src[j];
-                    ++j;
+                Length = 0;
+                for (; Length < src.Length;) {
+                    Str[Length] = src[Length];
+                    ++Length;
                 }
+                Str[Length] = L'\0';
             } else {
                 Length = 0;
                 Copy(*this, src.Str, Length, src.Length);
@@ -207,8 +207,8 @@ struct String {
             Resize(Capacity * 2);
         }
 
-        Str[Length++] = src;
-        Str[Length]   = L'\0';
+        Str[Length]   = src;
+        Str[++Length] = L'\0';
 
         return *this;
     }
@@ -246,8 +246,8 @@ struct String {
 
         Copy(ns, Str, 0, Length);
 
-        ns[ns.Length++] = src;
-        ns[ns.Length]   = L'\0';
+        ns[ns.Length]   = src;
+        ns[++ns.Length] = L'\0';
 
         return ns;
     }
@@ -301,6 +301,10 @@ struct String {
         }
 
         return (i == Length);
+    }
+
+    bool operator!=(String const &src) const noexcept { // Compare
+        return (!(*this == src));
     }
 
     inline wchar_t &operator[](UNumber const __index) const noexcept {
@@ -483,10 +487,11 @@ struct String {
             number *= -1;
         }
 
+        // number = 3.999999999999;
         if (number != 0) {
-            UNumber counter = 0;
-            UNumber num     = static_cast<UNumber>(number);
-            UNumber num2    = num;
+            UNumber            counter = 0;
+            unsigned long long num     = static_cast<unsigned long long>(number);
+            unsigned long long num2    = num;
 
             while (num != 0) {
                 p1_str[str1_len++] = wchar_t((num % 10) + 48);
@@ -533,23 +538,23 @@ struct String {
                 }
 
                 if (num != 1) {
-                    if (r_max != 0) {
-                        while (r_max < len) {
-                            --len;
-                            num /= 10;
-                        }
-
-                        if ((num % 10) >= 5) {
-                            num /= 10;
-                            ++num;
-                        } else {
-                            num /= 10;
-                        }
-
-                        --len;
-                    }
-
                     if (num != 10) { // Means .00000000000
+                        if (r_max != 0) {
+                            while (r_max < len) {
+                                --len;
+                                num /= 10;
+                            }
+
+                            if ((num % 10) >= 5) {
+                                num /= 10;
+                                ++num;
+                            } else {
+                                num /= 10;
+                            }
+
+                            --len;
+                        }
+
                         for (UNumber w = 0; w < len;) {
                             p2_str[str2_len++] = wchar_t((num % 10) + 48);
 
@@ -560,18 +565,18 @@ struct String {
 
                             ++w;
                         }
+                    }
 
-                        if (num != 11) {
-                            p2_str[str2_len++] = wchar_t(((num - 1) % 10) + 48); // (num - 1) taking 0.1 back.
-                        } else {
-                            str1_len = 0;
-                            str2_len = 0;
+                    if (num != 11) {
+                        p2_str[str2_len++] = wchar_t(((num - 1) % 10) + 48); // (num - 1) taking 0.1 back.
+                    } else {
+                        str1_len = 0;
+                        str2_len = 0;
 
-                            ++num2;
-                            while (num2 != 0) {
-                                p1_str[str1_len++] = wchar_t((num2 % 10) + 48);
-                                num2 /= 10;
-                            }
+                        ++num2;
+                        while (num2 != 0) {
+                            p1_str[str1_len++] = wchar_t((num2 % 10) + 48);
+                            num2 /= 10;
                         }
                     }
                 }

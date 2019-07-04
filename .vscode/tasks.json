@@ -27,7 +27,7 @@
                 "./Source",
                 "./Tests/Test.cpp",
                 "-o",
-                "./Build/QConsole.bin"
+                "./Tests/QTest.bin"
             ],
             "group": {
                 "kind": "build",
@@ -132,7 +132,7 @@
             "type": "shell",
             "command": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin/MSBuild.exe",
             "args": [
-                "${cwd}/QConsole.sln",
+                "${cwd}/QTest.sln",
                 "/m",
                 "/t:build",
                 "/p:configuration=Release", //Debug //Release

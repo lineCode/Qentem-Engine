@@ -32,8 +32,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 extern "C" {
 DllExport wchar_t *renderTemplate_w(wchar_t const *temp, wchar_t const *json, bool comments) {
-    Document &&data     = Document::FromJSON(json, comments);
-    String &&  rendered = Template::Render(temp, &data);
+    Document &&data = Document::FromJSON(json, comments);
+
+    String &&rendered = Template::Render(temp, &data);
     data.Reset();
 
     return rendered.Eject();
@@ -46,12 +47,11 @@ EMSCRIPTEN_KEEPALIVE
 #endif
 
 DllExport char *renderTemplate(char const *temp, char const *json, bool comments) {
-    String &&  S_json   = String(json);
-    Document &&data     = Document::FromJSON(S_json, comments);
-    String &&  rendered = Template::Render(temp, &data);
+    Document &&data = Document::FromJSON(String(json), comments);
+
+    String &&rendered = Template::Render(temp, &data);
 
     data.Reset();
-    S_json.Reset();
 
     if (rendered.Length == 0) {
         rendered = L"";

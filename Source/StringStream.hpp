@@ -44,6 +44,14 @@ class StringStream {
         }
     }
 
+    void operator+=(StringStream const &col) noexcept {
+        if (col.Length != 0) {
+            Length += col.Length;
+            bits.Add({SType::Bits, collections.Index});
+            collections.Add(col);
+        }
+    }
+
     void operator+=(String &&src) noexcept {
         if (src.Length != 0) {
             Length += src.Length;

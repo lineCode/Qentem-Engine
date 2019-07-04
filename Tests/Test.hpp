@@ -9,7 +9,6 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include <Extension/ALU.hpp>
 #include <Extension/Document.hpp>
 #include <Extension/Template.hpp>
 
@@ -265,7 +264,7 @@ static Array<TestBit> GetALUBits() noexcept {
     return bits;
 }
 
-static Array<TestBit> GetTemplateBits(Qentem::Document &data) noexcept {
+static Array<TestBit> GetTemplateBits(Document &data) noexcept {
     Array<TestBit> bits = Array<TestBit>();
     TestBit        bit;
 
@@ -277,21 +276,38 @@ static Array<TestBit> GetTemplateBits(Qentem::Document &data) noexcept {
     data[L"e2"]  = L" ";
     data[L"m"]   = L"  ((5^2) * 2) + 13 ";
 
-    data[L"lvl2"] = Qentem::Document();
+    data[L"lvl2"] = Document();
+
+    data[L"lvl2"][L"r1"] = L"l2";
 
     data[L"lvl2"][L"r1"] = L"l2";
     data[L"lvl2"][L"e1"] = L"";
     data[L"lvl2"][L"e2"] = L" ";
+    data[L"lvl2"][L"e3"] = 5;
 
-    data[L"lvl2"][L"numbers"] = Array<double>().Add(1).Add(2);
-    data[L"lvl2"][L"strings"] = Array<String>().Add(L"N1").Add(L"N2").Add(L"N3");
+    data[L"lvl2"][L"numbers"] = Array<double>().Add(1);
+    Document n2;
+    n2["the_rest"] = Array<double>().Add(2);
+    data[L"lvl2"][L"numbers"] += n2["the_rest"]; // Coping
 
+    Document strings = L"{\"strings\": [\"N1\"]}";
+    Document n3      = Array<String>().Add(L"N2").Add(L"N3");
+
+    data[L"lvl2"] += strings;
+    data[L"lvl2"][L"strings"] += static_cast<Document &&>(n3); // Moving
+
+    auto ddd = data.ToJSON();
+
+    data.Rehash(11, true);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
 
     bit.Content.Add(L"{v:r1}  ").Add(L" {v:r2}  ").Add(L"{v:e1} ").Add(L"{v:e2}");
     bit.Expected.Add(L"Familly  ").Add(L" r2  ").Add(L" ").Add(L" ");
+
+    bit.Content.Add(L"{v:lvl2[e3]}");
+    bit.Expected.Add(L"5");
 
     bit.Content.Add(L"{v:lvl2[r1]}").Add(L"{v:lvl2[r2]}").Add(L"{v:lvl2[e1]}").Add(L" {v:lvl2[e2]} ");
     bit.Expected.Add(L"l2").Add(L"lvl2[r2]").Add(L"").Add(L"   ");

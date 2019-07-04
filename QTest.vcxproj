@@ -70,24 +70,24 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <TargetName>QConsole</TargetName>
+    <TargetName>QTest</TargetName>
     <OutDir>$(SolutionDir)Build\</OutDir>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <TargetName>QConsole</TargetName>
+    <TargetName>QTest</TargetName>
     <OutDir>$(SolutionDir)Build\</OutDir>
     <LinkIncremental>true</LinkIncremental>
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <TargetName>QConsole</TargetName>
+    <TargetName>QTest</TargetName>
     <OutDir>$(SolutionDir)Build\</OutDir>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <TargetName>QConsole</TargetName>
+    <TargetName>QTest</TargetName>
     <OutDir>$(SolutionDir)Build\</OutDir>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
