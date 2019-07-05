@@ -39,40 +39,40 @@ class StringStream {
     void operator+=(StringStream &&col) noexcept {
         if (col.Length != 0) {
             Length += col.Length;
-            bits.Add({SType::Bits, collections.Index});
-            collections.Add(static_cast<StringStream &&>(col));
+            bits += {SType::Bits, collections.Index};
+            collections += static_cast<StringStream &&>(col);
         }
     }
 
     void operator+=(StringStream const &col) noexcept {
         if (col.Length != 0) {
             Length += col.Length;
-            bits.Add({SType::Bits, collections.Index});
-            collections.Add(col);
+            bits += {SType::Bits, collections.Index};
+            collections += col;
         }
     }
 
     void operator+=(String &&src) noexcept {
         if (src.Length != 0) {
             Length += src.Length;
-            bits.Add({SType::Bit, _strings.Index});
-            _strings.Add(static_cast<String &&>(src));
+            bits += {SType::Bit, _strings.Index};
+            _strings += static_cast<String &&>(src);
         }
     }
 
     void operator+=(String const &src) noexcept {
         if (src.Length != 0) {
             Length += src.Length;
-            bits.Add({SType::Bit, _strings.Index});
-            _strings.Add(src);
+            bits += {SType::Bit, _strings.Index};
+            _strings += src;
         }
     }
 
     void Share(String const *src) noexcept {
         if (src->Length != 0) {
             Length += src->Length;
-            bits.Add({SType::PBit, p_strings.Index});
-            p_strings.Add(src);
+            bits += {SType::PBit, p_strings.Index};
+            p_strings += src;
         }
     }
 

@@ -241,8 +241,7 @@ struct Template {
         ex.Keyword += var_name;
         ex.Keyword += L']';
 
-        Expressions ser;
-        ser.Add(&ex);
+        Expressions const ser = Expressions().Add(&ex);
 
         Array<Match> const &&items = Engine::Search(content, ser);
 

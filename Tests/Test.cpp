@@ -45,11 +45,14 @@ int main() {
     bool Pause        = false;
 
     // This way is faster just to comment out the line instead of changing the value
-    TestEngine   = true;
-    NumbersConv  = true;
-    TestALU      = true;
-    TestTemplate = true;
-    TestJSON     = true;
+    if (!BigJSON) {
+        TestEngine   = true;
+        NumbersConv  = true;
+        TestALU      = true;
+        TestTemplate = true;
+    }
+
+    TestJSON = true;
     // Pause        = true;
 
     Array<TestBit> bits;
@@ -129,7 +132,7 @@ static bool run_tests(String const &name, Array<TestBit> const &bits, bool dump_
     UNumber const times        = StreasTest ? 10000 : 1;
     UNumber const start_at     = 0;
     UNumber       counter      = 0;
-    UNumber       errors       = 0;
+    UNumber       fail         = 0;
     UNumber       total        = 0;
     UNumber       total_search = 0;
     UNumber       search_ticks = 0;
@@ -205,7 +208,7 @@ static bool run_tests(String const &name, Array<TestBit> const &bits, bool dump_
             ss += String::FromNumber((static_cast<double>(parse_ticks) / CLOCKS_PER_SEC), 2, 3, 3) + L")\n";
 
             if (!Pass) {
-                ++errors;
+                ++fail;
 
                 ss += L" ----------- Start debug ";
                 ss += String::FromNumber(count) + L'-';
@@ -247,12 +250,12 @@ static bool run_tests(String const &name, Array<TestBit> const &bits, bool dump_
 
     ss += "\n ";
     ss += name + L" is";
-    if (errors == 0) {
+    if (fail == 0) {
         ss += L" operational! (Total Tests: ";
         ss += String::FromNumber(total) + L')';
     } else {
         ss += L" broken! (Failed: ";
-        ss += String::FromNumber(errors) + L",  out of: ";
+        ss += String::FromNumber(fail) + L",  out of: ";
         ss += String::FromNumber(total) + L')';
     }
 
@@ -263,7 +266,7 @@ static bool run_tests(String const &name, Array<TestBit> const &bits, bool dump_
 
     std::wcout << ss.Eject().Str;
 
-    return (errors == 0);
+    return (fail == 0);
 }
 
 struct NC_test {
@@ -358,7 +361,7 @@ static bool JSONTest() noexcept {
         data = get_document();
         if (data.ToJSON() != Qentem::Test::ReplaceNewLine(json_content, L"")) {
             std::wcout << "\n Document() might be broken!\n";
-            std::wcout << "\n File:\n" << json_content.Str << "\n";
+            std::wcout << "\n File:\n" << Qentem::Test::ReplaceNewLine(json_content, L"").Str << "\n";
             std::wcout << "\n ToJSON():\n" << data.ToJSON().Str << "\n";
             return false;
         }
@@ -369,7 +372,7 @@ static bool JSONTest() noexcept {
         took = static_cast<UNumber>(clock());
         for (UNumber y = 1; y <= times; y++) {
             data = json_content;
-            // Qentem::Engine::Search(json_content, Document::_getToJsonExpres());
+            // Qentem::Engine::Search(json_content, Qentem::Document::_getJsonExpres());
         }
         took = (static_cast<UNumber>(clock()) - took);
         std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << ' ';
@@ -397,9 +400,9 @@ static bool JSONTest() noexcept {
     std::wcout << "\n JSON is borken!\n\n";
     std::wcout << json_content.Str;
     std::wcout << "\n-End-\n";
-    std::wcout << "\n-Returned-\n\n";
+    std::wcout << "\n-Returned:\n";
     std::wcout << final.Str;
-    std::wcout << "\n\n-End-\n";
+    std::wcout << "\n-End-\n";
 
     return false;
 }
@@ -407,6 +410,7 @@ static bool JSONTest() noexcept {
 static Document get_document() noexcept {
     Document data = Document();
 
+    data[L"w"]    = L"r\\\\";
     data[L"var1"] = L"\"1\"";
     data[L"PP"]   = L"gg";
     // String sss     = data[L"PP"].GetString();

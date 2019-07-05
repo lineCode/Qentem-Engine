@@ -68,6 +68,17 @@ struct Array {
 
     Array<T> &Add(Array<T> &&src) noexcept {
         if ((src.Index + Index) > Capacity) {
+            if (Capacity == 0) {
+                Storage  = src.Storage;
+                Capacity = src.Capacity;
+                Index    = src.Index;
+
+                src.Capacity = 0;
+                src.Index    = 0;
+                src.Storage  = nullptr;
+                return *this;
+            }
+
             Resize(src.Index + Index);
         }
 
@@ -153,6 +164,22 @@ struct Array {
 
     inline T &operator[](UNumber const __index) const noexcept { // Compare
         return Storage[__index];
+    }
+
+    inline void operator+=(T &&item) noexcept {
+        Add(static_cast<T &&>(item));
+    }
+
+    inline void operator+=(T const &item) noexcept {
+        Add(item);
+    }
+
+    inline void operator+=(Array<T> &&item) noexcept {
+        Add(static_cast<Array<T> &&>(item));
+    }
+
+    inline void operator+=(Array<T> const &item) noexcept {
+        Add(item);
     }
 
     inline void Reset() noexcept {

@@ -54,6 +54,7 @@ static String ReplaceNewLine(String const &content, String const &_replace) {
     static Expressions find_keys;
     static Expression  find_key1;
     static Expression  find_key2;
+    static Expression  find_key3;
 
     find_key1.Replace = _replace;
     find_key2.Replace = _replace;
@@ -61,7 +62,8 @@ static String ReplaceNewLine(String const &content, String const &_replace) {
     if (find_keys.Index == 0) { // Caching
         find_key1.Keyword = L'\n';
         find_key2.Keyword = L'\r';
-        find_keys.Add(&find_key1).Add(&find_key2);
+        find_key3.Keyword = L"    ";
+        find_keys.Add(&find_key1).Add(&find_key2).Add(&find_key3);
     }
 
     return Engine::Parse(content, Engine::Search(content, find_keys));
@@ -178,10 +180,8 @@ static String DumpMatches(String const &content, Array<Match> const &matches, St
     String innoffset = L"    ";
     String _array    = offset + L'(' + String::FromNumber(static_cast<double>(matches.Index)) + L") => [\n";
 
-    // It should be (matches.size) not (items.Index), but they should be the same size!
-    for (UNumber i = index; i < items.Index; i++) {
-        _array += innoffset + offset + L'[' + String::FromNumber(static_cast<double>(i)) + L"]: " +
-                  ReplaceNewLine(items[i], L"\\n") + L'\n';
+    for (UNumber i = index; i < matches.Index; i++) {
+        _array += innoffset + offset + L'[' + String::FromNumber(static_cast<double>(i)) + L"]: " + items[i] + L'\n';
 
         if (matches[i].NestMatch.Index != 0) {
             _array += innoffset + offset + L"-NestMatch:\n";
@@ -246,7 +246,7 @@ static Array<TestBit> GetALUBits() noexcept {
     bit.Expected.Add(L"1");
     ////
     bit.Exprs = _mathExprs;
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -259,7 +259,7 @@ static Array<TestBit> GetALUBits() noexcept {
     bit.Expected.Add(L"1");
 
     bit.Exprs = _parensExprs;
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     return bits;
 }
@@ -433,7 +433,7 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
     ////
 
     bit.Exprs = _tagsAll;
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
 
     return bits;
@@ -461,7 +461,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -478,7 +478,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1).Add(x2);
     bit.Collect.Add(x1).Add(x2);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -504,7 +504,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x2).Add(x1).Add(x3);
     bit.Collect.Add(x1).Add(x2).Add(x3).Add(y3);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -529,7 +529,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Exprs.Add(x1);
     bit.Exprs.Add(x2);
     bit.Collect.Add(x1).Add(x2).Add(y1).Add(y2);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -555,7 +555,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Exprs.Add(x1);
     bit.Exprs.Add(x2);
     bit.Collect.Add(x1).Add(x2).Add(y1).Add(y2);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -574,7 +574,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(y1);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -593,7 +593,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(y1);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -619,7 +619,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1).Add(x2);
     bit.Collect.Add(x1).Add(x2).Add(y1).Add(y2);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -638,7 +638,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(y1);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -655,7 +655,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(y1);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -673,7 +673,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(y1);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -701,7 +701,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(y1);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -722,7 +722,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(y1);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -739,7 +739,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(y1);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -762,7 +762,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(y1);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -783,7 +783,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(y1);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -807,7 +807,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(y1);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -827,7 +827,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(y1);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
 
     y1->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         String nc = L'(';
@@ -863,7 +863,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(x2).Add(y1).Add(y2);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
 
     y1->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         String nc = L'=';
@@ -911,7 +911,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(x2).Add(y1).Add(y2);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -935,7 +935,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(x2).Add(y1).Add(y2);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -959,7 +959,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(y1);
     bit.Collect.Add(x1).Add(y1).Add(y2);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
 
     y2->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         double number = 0.0;
@@ -1007,7 +1007,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     x1->NestExprs.Add(x2);
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(x2);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
 
     x1->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         double number = 0.0;
@@ -1072,7 +1072,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(y1);
     bit.Collect.Add(x1).Add(y1).Add(y2);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
 
     y2->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         double number = 0.0;
@@ -1120,7 +1120,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1).Add(x2).Add(x3);
     bit.Collect.Add(x1).Add(x2).Add(x3);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
 
     x1->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         double number = 0.0;
@@ -1190,7 +1190,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(x2).Add(x3).Add(y1).Add(y2).Add(y3);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -1215,7 +1215,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     y1->NestExprs.Add(x2);
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(x2).Add(y1).Add(y2);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
 
     y1->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         String nc = L"";
@@ -1265,7 +1265,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(x2).Add(x3).Add(y1).Add(y2);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -1292,7 +1292,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(x2).Add(x3).Add(y1).Add(y3);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -1322,7 +1322,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     y1->NestExprs.Add(x1).Add(x2);
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(x2).Add(y1);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -1351,7 +1351,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1).Add(x3);
     bit.Collect.Add(x1).Add(x2).Add(x3).Add(y1).Add(y2);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -1379,7 +1379,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1).Add(x2);
     bit.Collect.Add(x1).Add(x2).Add(y1);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
 
     y1->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         if (block.Length > (item.OLength + item.CLength)) {
@@ -1418,7 +1418,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(y1);
-    bits.Add(bit);
+    bits += static_cast<TestBit &&>(bit);
 
     y1->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
         String nc = L'(';

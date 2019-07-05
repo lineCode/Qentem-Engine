@@ -159,7 +159,7 @@ struct ALU {
             ParensExpr.Connected = &ParensNext;
             ParensNext.Flag      = Flags::BUBBLE | Flags::TRIM;
             ParensNext.ParseCB   = &(ParenthesisCallback);
-            ParensNext.NestExprs.Add(&ParensExpr);
+            ParensNext.NestExprs += &ParensExpr;
             tags = Expressions().Add(&ParensExpr);
         }
 

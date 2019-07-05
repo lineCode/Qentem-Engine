@@ -46,11 +46,11 @@ struct _JsonFixedString {
     String const fss4  = L'[';
     String const fss5  = L']';
     String const fss6  = L'"';
-    String const fss7  = L"\":null";
-    String const fss8  = L"\":true";
-    String const fss9  = L"\":false";
-    String const fss10 = L"\":\"";
-    String const fss11 = L"\":";
+    String const fss7  = L"\": null";
+    String const fss8  = L"\": true";
+    String const fss9  = L"\": false";
+    String const fss10 = L"\": \"";
+    String const fss11 = L"\": ";
 } static JFX;
 
 struct Document {
@@ -370,7 +370,7 @@ struct Document {
                 String::SoftTrim(content.Str, start, end);
 
                 if (String::ToNumber(content, tn, start, ((end + 1) - start))) {
-                    _numbers.Add(tn);
+                    _numbers += tn;
                 }
 
                 start = end + 2;
@@ -382,7 +382,7 @@ struct Document {
                 String::SoftTrim(content.Str, start, end);
 
                 if (String::ToNumber(content, tn, start, ((end + 1) - start))) {
-                    _numbers.Add(tn);
+                    _numbers += tn;
                 }
 
                 break;
@@ -401,22 +401,22 @@ struct Document {
                 case VType::StringT: {
                     id = Strings.Index;
                     if (move) {
-                        Strings.Add(static_cast<String &&>(*(static_cast<String *>(ptr))));
+                        Strings += static_cast<String &&>(*(static_cast<String *>(ptr)));
                     } else {
-                        Strings.Add(*(static_cast<String *>(ptr)));
+                        Strings += *(static_cast<String *>(ptr));
                     }
                 } break;
                 case VType::NumberT:
                 case VType::BooleanT: {
                     id = Numbers.Index;
-                    Numbers.Add(*(static_cast<double *>(ptr)));
+                    Numbers += *(static_cast<double *>(ptr));
                 } break;
                 case VType::DocumentT: {
                     id = Documents.Index;
                     if (move) {
-                        Documents.Add(static_cast<Document &&>(*(static_cast<Document *>(ptr))));
+                        Documents += static_cast<Document &&>(*(static_cast<Document *>(ptr)));
                     } else {
-                        Documents.Add(static_cast<Document const &>(*(static_cast<Document *>(ptr))));
+                        Documents += static_cast<Document const &>(*(static_cast<Document *>(ptr)));
                     }
                 } break;
                 default:
@@ -472,9 +472,9 @@ struct Document {
         Index _index;
         _index.Hash = _hash;
         _index.ID   = Entries.Index;
-        Entries.Add(Entry(id, Keys.Index, type));
+        Entries += Entry(id, Keys.Index, type);
 
-        Keys.Add(String::Part(key.Str, offset, limit));
+        Keys += String::Part(key.Str, offset, limit);
 
         InsertIndex(_index, 0, Table);
     }
@@ -684,7 +684,7 @@ struct Document {
         if (items.Index != 0) {
             Match *_item = &(items[0]);
 
-            document.Ordered = (_item->Expr->Keyword == L']');
+            document.Ordered = (_item->Expr->Keyword.Str[0] == L']');
 
             if (n_content.Length == 0) {
                 if (_item->NestMatch.Index != 0) {
@@ -938,14 +938,19 @@ struct Document {
     }
 
     static Expressions const &_getToJsonExpres() noexcept {
+        static Expression  _JsonEsc;
         static Expression  _JsonQuot;
         static Expressions tags;
 
         if (tags.Index == 0) {
+            _JsonEsc.Keyword = L'\\';
+            _JsonEsc.Replace = L"\\\\";
+
             _JsonQuot.Keyword = L'"';
             _JsonQuot.Replace = L"\\\"";
 
-            tags = Expressions().Add(&_JsonQuot);
+            tags += &_JsonEsc;
+            tags += &_JsonQuot;
         }
 
         return tags;
@@ -953,6 +958,7 @@ struct Document {
 
     static Expressions const &_getJsonExpres() noexcept {
         static Expression esc_quotation = Expression();
+        static Expression esc_esc       = Expression();
 
         static Expression quotation_start = Expression();
         static Expression quotation_end   = Expression();
@@ -966,6 +972,9 @@ struct Document {
         static Expressions tags;
 
         if (tags.Index == 0) {
+            esc_esc.Keyword = L"\\\\";
+            esc_esc.Replace = L"\\";
+
             esc_quotation.Keyword = L"\\\"";
             esc_quotation.Replace = L'"';
 
@@ -973,7 +982,8 @@ struct Document {
             quotation_end.Keyword     = L'"';
             quotation_end.ID          = 3;
             quotation_start.Connected = &quotation_end;
-            quotation_end.NestExprs   = Expressions().Add(&esc_quotation);
+            quotation_end.NestExprs += &esc_esc;
+            quotation_end.NestExprs += &esc_quotation;
 
             opened_curly_bracket.Keyword   = L'{';
             closed_curly_bracket.Keyword   = L'}';
@@ -1035,11 +1045,11 @@ struct Document {
         }
 
         if (doc.Numbers.Index != 0) {
-            Numbers.Add(doc.Numbers);
+            Numbers += doc.Numbers;
         } else if (doc.Strings.Index != 0) {
-            Strings.Add(doc.Strings);
+            Strings += doc.Strings;
         } else if (doc.Documents.Index != 0) {
-            Documents.Add(doc.Documents);
+            Documents += doc.Documents;
         }
     }
 
@@ -1081,11 +1091,11 @@ struct Document {
         }
 
         if (doc.Numbers.Index != 0) {
-            Numbers.Add(static_cast<Array<double> &&>(doc.Numbers));
+            Numbers += static_cast<Array<double> &&>(doc.Numbers);
         } else if (doc.Strings.Index != 0) {
-            Strings.Add(static_cast<Array<String> &&>(doc.Strings));
+            Strings += static_cast<Array<String> &&>(doc.Strings);
         } else if (doc.Documents.Index != 0) {
-            Documents.Add(static_cast<Array<Document> &&>(doc.Documents));
+            Documents += static_cast<Array<Document> &&>(doc.Documents);
         }
     }
 
@@ -1204,27 +1214,27 @@ struct Document {
     }
 
     void operator+=(Array<double> const &_numbers) noexcept {
-        Numbers.Add(_numbers);
+        Numbers += _numbers;
     }
 
     void operator+=(Array<String> const &_strings) noexcept {
-        Strings.Add(_strings);
+        Strings += _strings;
     }
 
     void operator+=(Array<Document> const &_documents) noexcept {
-        Documents.Add(_documents);
+        Documents += _documents;
     }
 
     void operator+=(Array<double> &&_numbers) noexcept {
-        Numbers.Add(static_cast<Array<double> &&>(_numbers));
+        Numbers += static_cast<Array<double> &&>(_numbers);
     }
 
     void operator+=(Array<String> &&_strings) noexcept {
-        Strings.Add(static_cast<Array<String> &&>(_strings));
+        Strings += static_cast<Array<String> &&>(_strings);
     }
 
     void operator+=(Array<Document> &&_documents) noexcept {
-        Documents.Add(static_cast<Array<Document> &&>(_documents));
+        Documents += static_cast<Array<Document> &&>(_documents);
     }
 };
 } // namespace Qentem
