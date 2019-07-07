@@ -4,7 +4,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build .bin", // executable
+            "label": "Build .bin",
             "promptOnClose": false,
             "type": "shell",
             "command": "g++",
@@ -128,7 +128,7 @@
             "problemMatcher": "$gcc"
         },
         {
-            "label": "Build .exe", // executable
+            "label": "Build .exe",
             "type": "shell",
             "command": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin/MSBuild.exe",
             "args": [

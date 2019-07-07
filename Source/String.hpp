@@ -425,11 +425,12 @@ struct String {
     inline static void SoftTrim(wchar_t const *str, UNumber &start, UNumber &end) noexcept {
         --end;
 
-        while ((str[start] == L' ') || (str[start] == L'\n') || (str[start] == L'\r')) {
+        while ((str[start] == L' ') || (str[start] == L'\n') || (str[start] == L'\r') || (str[start] == L'\t')) {
             ++start;
         }
 
-        while ((end > start) && ((str[end] == L' ') || (str[end] == L'\n') || (str[end] == L'\r'))) {
+        while ((end > start) &&
+               ((str[end] == L' ') || (str[end] == L'\n') || (str[end] == L'\r') || (str[end] == L'\t'))) {
             --end;
         }
     }
@@ -471,8 +472,8 @@ struct String {
         }
 
         p1_str[str1_len] = L'\0';
-        Revers(&p1_str[0], 0, (str1_len - 1));
-        return &p1_str[0];
+        Revers(&(p1_str[0]), 0, (str1_len - 1));
+        return &(p1_str[0]);
     }
 
     static String FromNumber(double number, UNumber const min = 1, UNumber r_min = 0, UNumber r_max = 0) noexcept {
@@ -487,7 +488,6 @@ struct String {
             number *= -1;
         }
 
-        // number = 3.999999999999;
         if (number != 0) {
             UNumber            counter = 0;
             unsigned long long num     = static_cast<unsigned long long>(number);
@@ -608,8 +608,8 @@ struct String {
         }
 
         p1_str[str1_len] = L'\0';
-        Revers(&p1_str[0], 0, (str1_len - 1));
-        return &p1_str[0];
+        Revers(&(p1_str[0]), 0, (str1_len - 1));
+        return &(p1_str[0]);
     }
 
     static bool ToNumber(String const &str, UNumber &number, UNumber const offset = 0, UNumber limit = 0) noexcept {

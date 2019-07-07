@@ -38,34 +38,6 @@ struct Array {
         Add(src);
     }
 
-    Array<T> &operator=(Array<T> &&src) noexcept {
-        if (this != &src) {
-            Memory<T>::Deallocate(&Storage);
-            Storage  = src.Storage;
-            Capacity = src.Capacity;
-            Index    = src.Index;
-
-            src.Capacity = 0;
-            src.Index    = 0;
-            src.Storage  = nullptr;
-        }
-        return *this;
-    }
-
-    Array<T> &operator=(Array<T> const &src) noexcept {
-        if (this != &src) {
-            if ((src.Index + Index) > Capacity) {
-                Resize(src.Index + Index);
-            }
-
-            for (UNumber i = 0; i < src.Index; i++) {
-                Storage[Index++] = src[i];
-            }
-        }
-
-        return *this;
-    }
-
     Array<T> &Add(Array<T> &&src) noexcept {
         if ((src.Index + Index) > Capacity) {
             if (Capacity == 0) {
@@ -162,8 +134,32 @@ struct Array {
         Memory<T>::Deallocate(&tmp);
     }
 
-    inline T &operator[](UNumber const __index) const noexcept { // Compare
-        return Storage[__index];
+    Array<T> &operator=(Array<T> &&src) noexcept {
+        if (this != &src) {
+            Memory<T>::Deallocate(&Storage);
+            Storage  = src.Storage;
+            Capacity = src.Capacity;
+            Index    = src.Index;
+
+            src.Capacity = 0;
+            src.Index    = 0;
+            src.Storage  = nullptr;
+        }
+        return *this;
+    }
+
+    Array<T> &operator=(Array<T> const &src) noexcept {
+        if (this != &src) {
+            if ((src.Index + Index) > Capacity) {
+                Resize(src.Index + Index);
+            }
+
+            for (UNumber i = 0; i < src.Index; i++) {
+                Storage[Index++] = src[i];
+            }
+        }
+
+        return *this;
     }
 
     inline void operator+=(T &&item) noexcept {
@@ -188,6 +184,10 @@ struct Array {
         Capacity = 0;
         Index    = 0;
         Storage  = nullptr;
+    }
+
+    inline T &operator[](UNumber const __index) const noexcept { // Compare
+        return Storage[__index];
     }
 
     virtual ~Array() noexcept {

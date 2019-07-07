@@ -104,7 +104,7 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
                     if (ce->Connected != nullptr) {
                         if ((Flags::TRIM & ce->Connected->Flag) != 0) {
                             while ((content[++end_at] == L' ') || (content[end_at] == L'\n') ||
-                                   (content[end_at] == L'\r')) {
+                                   (content[end_at] == L'\r') || (content[end_at] == L'\t')) {
                             }
                             --end_at;
                         }
@@ -155,8 +155,8 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
 
                         if (_item.OLength != 0) {
                             if (((Flags::TRIM & ce->Flag) != 0) && ((index - _item.Offset) != _item.OLength)) {
-                                while (((content[--index] == L' ') || (content[index] == L'\n') ||
-                                        (content[end_at] == L'\r'))) {
+                                while ((content[--index] == L' ') || (content[index] == L'\n') ||
+                                       (content[end_at] == L'\r') || (content[index] == L'\t')) {
                                 }
                                 ++index;
                             }
@@ -286,11 +286,10 @@ inline static Array<Match> Search(String const &content, Expressions const &expr
         length = (content.Length - index); // limit becomes the ending offset here.
     }
 
-    if ((content.Length == 0) || (exprs.Index == 0) || (index >= length)) {
-        return items;
+    if ((content.Length != 0) && (exprs.Index != 0) && (index < length)) {
+        _search(items, content, exprs, index, length, max, 0);
     }
 
-    _search(items, content, exprs, index, length, max, 0);
     return items;
 }
 /////////////////////////////////
@@ -301,10 +300,11 @@ static String Parse(String const &content, Array<Match> const &items, UNumber in
     }
 
     if (index >= length) {
+        // Note: Do not return on an content as it is, because content is limitted by "index" and length, and it should
+        // always return part of the string or a copy of it)
         return content;
     }
-    // Note: Do not return on an empty match as some content is limitted by "index" and length. It should always return
-    // part of the string or a copy of it)
+
     StringStream rendered; // Final content
     UNumber      offset;
     UNumber      end_offset;

@@ -1,13 +1,4 @@
 #include <Extension/Template.hpp>
-
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
-#include <windows.h>
-#define DllExport __declspec(dllexport)
-#else
-#define DllExport
-#endif
-
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 #endif
@@ -28,13 +19,17 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
     // }
     return TRUE;
 }
+#define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
+#include <windows.h>
+#define DllExport __declspec(dllexport)
+#else
+#define DllExport
 #endif
 
 extern "C" {
 DllExport wchar_t *renderTemplate_w(wchar_t const *temp, wchar_t const *json, bool comments) {
-    Document &&data = Document::FromJSON(json, comments);
-
-    String &&rendered = Template::Render(temp, &data);
+    Document data     = Document::FromJSON(json, comments);
+    String   rendered = Template::Render(temp, &data);
     data.Reset();
 
     return rendered.Eject();
@@ -47,10 +42,8 @@ EMSCRIPTEN_KEEPALIVE
 #endif
 
 DllExport char *renderTemplate(char const *temp, char const *json, bool comments) {
-    Document &&data = Document::FromJSON(String(json), comments);
-
-    String &&rendered = Template::Render(temp, &data);
-
+    Document data     = Document::FromJSON(String(json), comments);
+    String   rendered = Template::Render(temp, &data);
     data.Reset();
 
     if (rendered.Length == 0) {
@@ -59,7 +52,7 @@ DllExport char *renderTemplate(char const *temp, char const *json, bool comments
 
     char *tmp = new char[rendered.Length + 1]; // 1 for '\0'
     for (UNumber j = 0; j <= rendered.Length; j++) {
-        // It got it as a "char" type in the first place, so there wont be any above 255.
+        // It got it as a "char" type in the first place, so there won't be any above 255.
         tmp[j] = static_cast<char>(static_cast<unsigned int>(rendered[j]));
     }
 

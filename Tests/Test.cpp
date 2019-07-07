@@ -25,7 +25,7 @@ using Qentem::Test::TestBit;
 static UNumber const TimesToRun = 1;
 // static bool const    StreasTest = true;
 static bool const StreasTest = false;
-// static bool const BigJSON    = true;
+// static bool const BigJSON = true;
 static bool const BigJSON = false;
 
 static String   read_file(char const *fullpath) noexcept;
@@ -346,7 +346,7 @@ static bool NumbersConvTest() noexcept {
 }
 
 static bool JSONTest() noexcept {
-    UNumber const times = StreasTest ? 1000 : 1;
+    UNumber const times = ((StreasTest && !BigJSON) ? 1000 : 1);
     UNumber       took  = 0;
     String        final = L"";
     Document      data;
