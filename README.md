@@ -21,7 +21,7 @@ The library at the moment has String class (with number conversion), Array<Type>
 The project started as a template generator for JavaScript and PHP, and because of the performance impact of managed languages, it became a necessary to move it to a native one.  JSON was not planed for but it was implemented for the convenience of it, and because Document was implemented already. The template engine was the engine itself before it was rewritten for C++ and merged into one function (Search) to make it a general syntax parser.
 
 ## Template Demo:
-JavaScript and WebAssembly:
+JavaScript and WebAssembly: [JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/files/3366185/JQen.zip)
 
 ## Examples:
 ### Document and JSON:
@@ -123,4 +123,4 @@ for Windows, see .sln files.
 ```
 
 ### Engine:
-The usage of the engine can be found @ [Tests/Test.cpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/Test.cpp).
+The usage of the engine can be found @ [Tests/Test.cpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/Test.cpp) and [Tests/Test.hpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/Test.hpp).
