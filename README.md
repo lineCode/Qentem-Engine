@@ -11,17 +11,17 @@ The engine is build in modern C++ and uses wide character (wchar_t). It does not
 It can be used to render complex templates that contains nested loop, nested if-else, inline if, liner algebra math (+ * / - ^ %), logic (&& ||), and/or something simple; like text replacing/splitting. Most of that uses the engines search & parse functions, and booth of them support custom callbacks to extend their existing functions.
 
 ## Built-in:
-The library at the moment has String class (with number conversion), Array<Type>, String Stream, Document(Tree/map/hash-table), Template generator, Arithmetic and Logic Unit, and JSON parser (with C style comments).
+The library - at the moment - has String class (with number conversion), Array<Type>, String Stream, Document (Tree/map/hash-table), Template generator, Arithmetic and Logic Unit, and JSON parser (with C style comments).
 
 ## Requirements:
 * C++ 11 compiler.
-* (Optional) Emscripten: to compile into WebAssembly; to be used inside a web browser or with an independent JavaScript engine. This alow a web server to offload the rendering of an html/text to the client.
+* (Optional) Emscripten: to compile into WebAssembly; to be used inside a web browser or with an independent JavaScript engine. This allows a web server to offload the rendering of an html/text to its clients.
 
 ## The Project:
-The project started as a template generator for JavaScript and PHP, and because of the performance impact of managed languages, it became a necessary to move it to a native one.  JSON was not planed for but it was implemented for the convenience of it, and because Document was implemented already. The template engine was the engine itself before it was rewritten for C++ and merged into one function (Search) to make it a general syntax parser.
+This project started as a template generator for JavaScript and PHP, and because of the performance impact of managed languages, it became a necessary to move it to a native one.  JSON was not planed for but it was implemented for the convenience of it, and because Document was implemented already. The template engine was the engine itself before it was rewritten for C++ and merged into one function (Search) to make it a general syntax parser.
 
 ## Template Demo:
-JavaScript and WebAssembly: [JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/files/3366315/JQen.zip)
+HTML, JavaScript and WebAssembly: [JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/files/3366315/JQen.zip)
 
 ## Examples:
 ### Document and JSON:
@@ -119,8 +119,8 @@ CXX -I ./Source ./Example/Example1.cpp -o ./Tests/QTest.bin
 ```
 ```txt
 where "./" being the path to Qentem Engine, and "CXX" is either clang or gcc.
-for Windows, see .sln files.
+-For Windows, see .sln files.
 ```
 
 ### Engine:
-The usage of the engine can be found @ [Tests/Test.cpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/Test.cpp) and [Tests/Test.hpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/Test.hpp).
+The usage of the engine can be found @ [Tests/Test.hpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/Test.hpp)and [Tests/Test.cpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/Test.cpp).
