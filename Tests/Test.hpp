@@ -387,19 +387,19 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
 
     ////
 
-    bit.Content.Add(L"<loop set =\"lvl2[numbers]\" var =\"id\">l-[id]): {v:lvl2[numbers][id]}\n </loop>");
-    bit.Expected.Add(L"l-[0]): 1\n l-[1]): 2\n ");
+    bit.Content.Add(L"<loop set =\"lvl2[numbers]\" value =\"val\" key=\"id\">l-id): {v:lvl2[numbers][id]}\n </loop>");
+    bit.Expected.Add(L"l-0): 1\n l-1): 2\n ");
 
     bit.Content.Add(
-        L"<loop set=\"lvl2[numbers]\" var=\"id\"><loop set =\"lvl2[numbers]\" var =\"i2\">l-[id]-[i2]):{v:lvl2[numbers][i2]}\n </loop></loop>");
-    bit.Expected.Add(L"l-[0]-[0]):1\n l-[0]-[1]):2\n l-[1]-[0]):1\n l-[1]-[1]):2\n ");
+        L"<loop set=\"lvl2[numbers]\" value =\"val\" key=\"id\"><loop set =\"lvl2[numbers]\" value =\"val2\" key  =\"id2\">l-id-id2):val2\n </loop></loop>");
+    bit.Expected.Add(L"l-0-0):1\n l-0-1):2\n l-1-0):1\n l-1-1):2\n ");
 
-    bit.Content.Add("<loop set=\"lvl2[strings]\" var =\"sw\">l-[sw]): {v:lvl2[strings][sw]}\n</loop>");
-    bit.Expected.Add(L"l-[0]): N1\nl-[1]): N2\nl-[2]): N3\n");
+    bit.Content.Add("<loop set=\"lvl2[strings]\" value=\"val\" key=\"id\">l-id): val\n</loop>");
+    bit.Expected.Add(L"l-0): N1\nl-1): N2\nl-2): N3\n");
 
     bit.Content.Add(
-        L"Space <loop set=\"lvl2[strings]\" var=\"sw\">l-[sw]): {v:lvl2[strings][sw]}\n</loop><loop set =\"lvl2[numbers]\" var=\"id\">l-[id]): {v:lvl2[numbers][id]}\n </loop>");
-    bit.Expected.Add(L"Space l-[0]): N1\nl-[1]): N2\nl-[2]): N3\nl-[0]): 1\n l-[1]): 2\n ");
+        L"Space <loop set=\"lvl2[strings]\" value=\"val\" key=\"id\">l-id): val\n</loop><loop set =\"lvl2[numbers]\" value=\"val2\" key=\"id2\">l-id2): val2\n </loop>");
+    bit.Expected.Add(L"Space l-0): N1\nl-1): N2\nl-2): N3\nl-0): 1\n l-1): 2\n ");
 
     ////
 

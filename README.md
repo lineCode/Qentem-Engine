@@ -1,4 +1,4 @@
-# Qentem Engine (v0.9.8.0)
+# Qentem Engine (v0.9.8.2)
 Qentem is a stand-alone library built to provide a simple way to match existing syntaxes or new ones. It also provides call-backs for post or per-parsing. Built for templates, then rewritten for general-propose syntax matching.
 
 ## Introduction:
@@ -21,7 +21,7 @@ The library at the moment has String class (with number conversion), Array<Type>
 The project started as a template generator for JavaScript and PHP, and because of the performance impact of managed languages, it became a necessary to move it to a native one.  JSON was not planed for but it was implemented for the convenience of it, and because Document was implemented already. The template engine was the engine itself before it was rewritten for C++ and merged into one function (Search) to make it a general syntax parser.
 
 ## Template Demo:
-JavaScript and WebAssembly: [JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/files/3366185/JQen.zip)
+JavaScript and WebAssembly: [JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/files/3366315/JQen.zip)
 
 ## Examples:
 ### Document and JSON:
@@ -91,29 +91,29 @@ String JSON = doc.ToJSON(); // Exporting the document
 ```cpp
 #include <Extension/Template.hpp>
 // Based on the Document example
-String content = L"<loop set=\"strings\" var=\"s_id\">[s_id]: {v:strings[s_id]}\n</loop>--\n";
-content += L"<loop set=\"strings2\" var=\"s_id\">[s_id]: {v:strings2[s_id]}\n</loop>";
+String content = L"<loop set=\"strings\" value=\"s_value\" key=\"s_key\">s_key: s_value\n</loop>--\n";
+content += L"<loop set=\"strings2\" value=\"s_value\" key=\"s_key\">s_key: s_value\n</loop>";
 String rendered = Template::Render(content, &doc);
 ```
 #### Output:
 ```txt
-[a]: A
-[b]: B
-[c]: C
-[d]: D
+a: A
+b: B
+c: C
+d: D
 --
-[0]: E
-[1]: F
-[2]: G
-[3]: H
-[4]: I
+0: E
+1: F
+2: G
+3: H
+4: I
 ```
 
 ### Note:
 The complete example is located @ [Example/Example1.cpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Example/Example1.cpp). For more about template syntax, see [Tests/temp.qtml](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/temp.qtml).
 
 
-**To compile:**
+### Compiling:
 ```txt
 CXX -I ./Source ./Example/Example1.cpp -o ./Tests/QTest.bin
 ```

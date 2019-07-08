@@ -44,8 +44,8 @@ int main() {
     // }
 
     // Template
-    String content = L"<loop set=\"strings\" var=\"s_id\">[s_id]: {v:strings[s_id]}\n</loop>--\n";
-    content += L"<loop set=\"strings2\" var=\"s_id\">[s_id]: {v:strings2[s_id]}\n</loop>";
+    String content = L"<loop set=\"strings\" value=\"s_value\" key=\"s_key\">s_key: s_value\n</loop>--\n";
+    content += L"<loop set=\"strings2\" value=\"s_value\" key=\"s_key\">s_key: s_value\n</loop>";
     String rendered = Template::Render(content, &doc);
 
     std::wcout << rendered.Str << L'\n';

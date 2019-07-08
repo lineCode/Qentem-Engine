@@ -410,8 +410,8 @@ struct ALU {
     }
 
     static double Evaluate(String &content) noexcept {
-        static Expressions const _parensExprs = getParensExprs();
-        static Expressions const _mathExprs   = getMathExprs();
+        static Expressions const &_parensExprs = getParensExprs();
+        static Expressions const &_mathExprs   = getMathExprs();
 
         /**
          *

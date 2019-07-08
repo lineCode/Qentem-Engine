@@ -169,11 +169,11 @@ struct Template {
         return L"";
     }
 
-    // <loop set="abc2" var="loopId">
-    //     <span>loopId): -{v:abc2[loopId]}</span>
+    // <loop set="abc2" value="s_value" key="s_key">
+    //     <span>s_key: s_value</span>
     // </loop>
     static String RenderLoop(String const &block, Match const &item, void *other) noexcept {
-        // To match: <loop (set="abc2" var="loopId")>
+        // To match: <loop (set="abc2" value="s_value" key="s_key")>
         static Expressions const &_tagsAll  = _getTagsAll();
         static Expressions const &_tagsHead = _getTagsHead();
 
@@ -181,10 +181,11 @@ struct Template {
 
         if ((_subMatch.Index != 0) && (_subMatch[0].NestMatch.Index != 0)) {
             String       name;
-            String       var_id;
+            String       value_id;
+            String       key_id;
             Match const *sm = &(_subMatch[0]);
 
-            // set="(Array_name)" var="(var_id)"
+            // set="(Array_name)" value="s_value" key="s_key"
             Match * m;
             UNumber start_at;
 
@@ -202,8 +203,14 @@ struct Template {
                             break;
                         }
 
-                        if (block[start_at] == L'r') { // va[r]
-                            var_id = String::Part(block.Str, (m->Offset + m->OLength),
+                        if (block[start_at] == L'e') { // valu[e]
+                            value_id = String::Part(block.Str, (m->Offset + m->OLength),
+                                                    (m->Length - (m->CLength + m->OLength)));
+                            break;
+                        }
+
+                        if (block[start_at] == L'y') { // ke[y]
+                            key_id = String::Part(block.Str, (m->Offset + m->OLength),
                                                   (m->Length - (m->CLength + m->OLength)));
                             break;
                         }
@@ -211,10 +218,10 @@ struct Template {
                 }
             }
 
-            if ((name.Length != 0) && (var_id.Length != 0)) {
+            if ((name.Length != 0) && (value_id.Length != 0)) {
                 String &&_content = Template::Repeat(
                     String::Part(block.Str, (sm->Offset + sm->Length), (item.Length - (sm->Length + item.CLength))),
-                    name, var_id, other);
+                    name, value_id, key_id, other);
 
                 if (_content.Length != 0) {
                     return Engine::Parse(_content, Engine::Search(_content, _tagsAll), 0, 0, other);
@@ -225,50 +232,68 @@ struct Template {
         return L"";
     }
 
-    static String Repeat(String const &content, String const &name, String const &var_name, void *other) noexcept {
-        Entry *         _entry;
-        Document const *_storage = (static_cast<Document *>(other))->GetSource(&_entry, name, 0, name.Length);
+    static String Repeat(String const &content, String const &name, String const &value_id, String const &key_id,
+                         void *other) noexcept {
+        Entry *   _entry;
+        Document *_storage = (static_cast<Document *>(other))->GetSource(&_entry, name, 0, name.Length);
 
         if (_storage == nullptr) {
             return L"";
         }
 
         StringStream rendered;
-        Expression   ex;
-        ex.Keyword.SetLength(var_name.Length + 2);
+        Expressions  loop_exp;
+        String       num;
 
-        ex.Keyword = L'[';
-        ex.Keyword += var_name;
-        ex.Keyword += L']';
+        Expression value_ex;
+        value_ex.Keyword = value_id;
 
-        Expressions const ser = Expressions().Add(&ex);
+        Expression key_ex;
+        key_ex.Keyword = key_id;
 
-        Array<Match> const &&items = Engine::Search(content, ser);
+        loop_exp.Add(&value_ex);
 
+        if (key_id.Length != 0) {
+            loop_exp.Add(&key_ex);
+        }
+
+        Array<Match> const items = Engine::Search(content, loop_exp);
         if (_entry->Type == VType::DocumentT) {
             if (_storage->Ordered) {
                 if (_storage->Strings.Index != 0) {
                     for (UNumber i = 0; i < _storage->Strings.Index; i++) {
-                        ser[0]->Replace = L'[';
-                        ser[0]->Replace += String::FromNumber(i);
-                        ser[0]->Replace += L']';
+                        num = String::FromNumber(i);
+
+                        if (key_id.Length != 0) {
+                            loop_exp[1]->Replace = num;
+                        }
+
+                        loop_exp[0]->Replace = _storage->Strings[i];
 
                         rendered += Engine::Parse(content, items);
                     }
                 } else if (_storage->Numbers.Index != 0) {
                     for (UNumber i = 0; i < _storage->Numbers.Index; i++) {
-                        ser[0]->Replace = L'[';
-                        ser[0]->Replace += String::FromNumber(i);
-                        ser[0]->Replace += L']';
+                        num = String::FromNumber(i);
+
+                        if (key_id.Length != 0) {
+                            loop_exp[1]->Replace = num;
+                        }
+
+                        loop_exp[0]->Replace = String::FromNumber(_storage->Numbers[i], 1, 0, 3);
 
                         rendered += Engine::Parse(content, items, 0, 0, other);
                     }
                 }
             } else {
+                String value;
                 for (UNumber i = 0; i < _storage->Keys.Index; i++) {
-                    ser[0]->Replace = L'[';
-                    ser[0]->Replace += _storage->Keys[i];
-                    ser[0]->Replace += L']';
+                    if (key_id.Length != 0) {
+                        loop_exp[1]->Replace = _storage->Keys[i];
+                    }
+
+                    _storage->GetString(value, _storage->Keys[i]);
+                    loop_exp[0]->Replace = value;
 
                     rendered += Engine::Parse(content, items, 0, 0, other);
                 }
@@ -313,10 +338,10 @@ struct Template {
     }
 
     static Expressions const &_getTagsHead() noexcept {
-        static Expression        TagHead;
-        static Expression        TagHead_T;
-        static Expressions       tags;
-        static Expressions const _tagsQuotes = _getTagsQuotes();
+        static Expression         TagHead;
+        static Expression         TagHead_T;
+        static Expressions        tags;
+        static Expressions const &_tagsQuotes = _getTagsQuotes();
 
         if (tags.Index == 0) {
             TagHead.Keyword   = L"<";
@@ -350,7 +375,7 @@ struct Template {
         static Expression TagMath;
         static Expression MathTail;
 
-        static Expressions const _tagsVars = _getTagsVara();
+        static Expressions const &_tagsVars = _getTagsVara();
 
         static Expressions tags;
 

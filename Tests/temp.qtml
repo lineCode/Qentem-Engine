@@ -48,31 +48,32 @@
     </if>
 </div>
 
-<!--- Single loops
-    "set": is the name  of the Array (collocation).
-    "var": is for every item in "set" and it's value.
+<!--- loops
+    "set": is the name of the Array (collocation).
+    "value": for the value of the current item.
+    "key": for the id of the current item. Numbers will be used for orderd items.
 -->
 <div>
-    <loop set="abc1" var="loop-1">
-        <div>loop-1): {v:abc1[loop-1]}</div>
+    <loop set="abc1" value="loop-1" key="ID">
+        <div>ID: loop-1</div>
     </loop>
 
-    <loop set="abc2" var="loop-2">
-        <div>loop-2): {v:abc2[loop-2]}</div>
+    <loop set="abc2" value="loop-2" key="ID2">
+        <div>ID2: loop-2</div>
     </loop>
 </div>
 
 <!--- Nested loops -->
 <div>
-    <loop set="multi[arr1][E]" var="loop1">
-        <span>loop-loop1): {v:multi[arr1][E][loop1]}</span>
+    <loop set="multi[arr1][E]" value="loop1" key="ID">
+        <span>ID: loop1</span>
 
-        <loop set="multi[arr1][E]" var="loop2">
-            <span>loop-loop2): {v:multi[arr1][E][loop2]}</span>
+        <loop set="multi[arr1][E]" value="loop2" key="ID2">
+            <span>ID2: loop2</span>
         </loop>
 
-        <loop set="multi[arr1][E]" var="loop3">
-            <span>loop-loop3): {v:multi[arr1][E][loop3]}</span>
+        <loop set="multi[arr1][E]" value="loop3" key="ID3">
+            <span>ID3: loop3</span>
 
         </loop>
 
