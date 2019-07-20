@@ -24,13 +24,13 @@ int main() {
     doc += L"{\"strings\": { }}"; // Expanding the document with an unordered array
     doc["strings"][L"a"] = L"A";
     doc["strings"][L"b"] = L"O";
-    doc["strings"][1]    = L"B";
+    doc["strings"][1]    = L"B"; // Override
 
     // Importing JSON with comments
     doc["strings"] += Document::FromJSON(L"{\"c\": \"C\", \"d\": \"D\"  /* \"e\": \"E\" */}", true);
 
     doc += L"{\"strings2\": [\"E\", \"F\"]}"; // Ordered strings
-    doc["strings2"] += L"[\"G\"]";
+    doc["strings2"] += L"G";
     doc["strings2"] += Array<String>().Add(L"H").Add(L"I");
 
     String JSON = doc.ToJSON(); // Exporting the document

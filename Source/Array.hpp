@@ -16,15 +16,15 @@
 
 namespace Qentem {
 
-template <typename T>
+template <typename Type>
 struct Array {
     UNumber Index    = 0;
     UNumber Capacity = 0;
-    T *     Storage  = nullptr;
+    Type *  Storage  = nullptr;
 
     Array() = default;
 
-    Array(Array<T> &&src) noexcept {
+    Array(Array<Type> &&src) noexcept {
         Storage  = src.Storage;
         Capacity = src.Capacity;
         Index    = src.Index;
@@ -34,11 +34,11 @@ struct Array {
         src.Storage  = nullptr;
     }
 
-    Array(Array<T> const &src) noexcept {
+    Array(Array<Type> const &src) noexcept {
         Add(src);
     }
 
-    Array<T> &Add(Array<T> &&src) noexcept {
+    Array<Type> &Add(Array<Type> &&src) noexcept {
         if ((src.Index + Index) > Capacity) {
             if (Capacity == 0) {
                 Storage  = src.Storage;
@@ -55,7 +55,7 @@ struct Array {
         }
 
         for (UNumber i = 0; i < src.Index; i++) {
-            Storage[Index++] = static_cast<T &&>(src[i]);
+            Storage[Index++] = static_cast<Type &&>(src[i]);
         }
 
         src.Reset();
@@ -63,7 +63,7 @@ struct Array {
         return *this;
     }
 
-    Array<T> &Add(Array<T> const &src) noexcept {
+    Array<Type> &Add(Array<Type> const &src) noexcept {
         if ((src.Index + Index) > Capacity) {
             Resize(src.Index + Index);
         }
@@ -75,18 +75,18 @@ struct Array {
         return *this;
     }
 
-    inline Array<T> &Add(T &&item) noexcept { // Move
+    inline Array<Type> &Add(Type &&item) noexcept { // Move
         if (Index == Capacity) {
             Resize(Capacity * 2);
         }
 
-        Storage[Index] = static_cast<T &&>(item);
+        Storage[Index] = static_cast<Type &&>(item);
         ++Index;
 
         return *this;
     }
 
-    inline Array<T> &Add(T const &item) noexcept { // Copy
+    inline Array<Type> &Add(Type const &item) noexcept { // Copy
         if (Index == Capacity) {
             Resize(Capacity * 2);
         }
@@ -98,7 +98,7 @@ struct Array {
     }
 
     inline void SetCapacity(UNumber _size) noexcept {
-        Memory<T>::Deallocate(&Storage);
+        Memory<Type>::Deallocate(&Storage);
 
         if (_size == 0) {
             _size = 2;
@@ -107,7 +107,7 @@ struct Array {
         Index    = 0;
         Capacity = _size;
 
-        Memory<T>::Allocate(&Storage, _size);
+        Memory<Type>::Allocate(&Storage, _size);
     }
 
     inline void Resize(UNumber _size) noexcept {
@@ -120,23 +120,23 @@ struct Array {
         //     return;
         // }
 
-        T *tmp   = Storage;
-        Storage  = nullptr;
-        Capacity = _size;
+        Type *tmp = Storage;
+        Storage   = nullptr;
+        Capacity  = _size;
 
-        Memory<T>::Allocate(&Storage, _size);
+        Memory<Type>::Allocate(&Storage, _size);
 
         for (UNumber n = 0; n < Index;) {
-            Storage[n] = static_cast<T &&>(tmp[n]);
+            Storage[n] = static_cast<Type &&>(tmp[n]);
             ++n;
         }
 
-        Memory<T>::Deallocate(&tmp);
+        Memory<Type>::Deallocate(&tmp);
     }
 
-    Array<T> &operator=(Array<T> &&src) noexcept {
+    Array<Type> &operator=(Array<Type> &&src) noexcept {
         if (this != &src) {
-            Memory<T>::Deallocate(&Storage);
+            Memory<Type>::Deallocate(&Storage);
             Storage  = src.Storage;
             Capacity = src.Capacity;
             Index    = src.Index;
@@ -148,7 +148,7 @@ struct Array {
         return *this;
     }
 
-    Array<T> &operator=(Array<T> const &src) noexcept {
+    Array<Type> &operator=(Array<Type> const &src) noexcept {
         if (this != &src) {
             if ((src.Index + Index) > Capacity) {
                 Resize(src.Index + Index);
@@ -162,31 +162,31 @@ struct Array {
         return *this;
     }
 
-    inline void operator+=(T &&item) noexcept {
-        Add(static_cast<T &&>(item));
+    inline void operator+=(Type &&item) noexcept {
+        Add(static_cast<Type &&>(item));
     }
 
-    inline void operator+=(T const &item) noexcept {
+    inline void operator+=(Type const &item) noexcept {
         Add(item);
     }
 
-    inline void operator+=(Array<T> &&item) noexcept {
-        Add(static_cast<Array<T> &&>(item));
+    inline void operator+=(Array<Type> &&item) noexcept {
+        Add(static_cast<Array<Type> &&>(item));
     }
 
-    inline void operator+=(Array<T> const &item) noexcept {
+    inline void operator+=(Array<Type> const &item) noexcept {
         Add(item);
     }
 
     inline void Reset() noexcept {
-        Memory<T>::Deallocate(&Storage);
+        Memory<Type>::Deallocate(&Storage);
 
         Capacity = 0;
         Index    = 0;
         Storage  = nullptr;
     }
 
-    inline T &operator[](UNumber const __index) const noexcept { // Compare
+    inline Type &operator[](UNumber const __index) const noexcept { // Compare
         return Storage[__index];
     }
 

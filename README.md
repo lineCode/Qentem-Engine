@@ -1,24 +1,21 @@
-# Qentem Engine (v0.9.8.2)
-Qentem is a stand-alone library built to provide a simple way to match existing syntaxes or new ones. It also provides call-backs for post or per-parsing. Built for templates, then rewritten for general-propose syntax matching.
+# Qentem Engine (v0.9.8.3)
+Qentem is an independent library built to provide a simple way to match existing syntaxes or new ones. It also provides call-backs for post or per-parsing. Built for templates, then rewritten for general-propose syntax matching.
 
 ## Introduction:
-Qentem is a way of proforming nest-searching, and since regular expressions is limited to a basic matching, Qentem Engine was created to fill a gab and provide an easy way to deal with complex syntaxes, as efficient as possible.
-
-## The Engine:
-The engine is build in modern C++ and uses wide character (wchar_t). It does not depend on any external library. This makes it easy to be ported to other programing languages and be cross platform by default.
+Qentem is a way of proforming nest-searching, and since regular expressions is limited to a basic matching, Qentem Engine was created to fill a gab and provide an easy way to deal with complex syntaxes, as efficient as possible. Built in modern C++.
 
 ## Usage:
-It can be used to render complex templates that contains nested loop, nested if-else, inline if, liner algebra math (+ * / - ^ %), logic (&& ||), and/or something simple; like text replacing/splitting. Most of that uses the engines search & parse functions, and booth of them support custom callbacks to extend their existing functions.
+The engine can be used to render complex templates that contains nested loop, nested if-else (with evaluation: ALU), inline if, liner algebra math (+ * / - ^ %), logic (&& ||), and/or something simple; like text replacing/splitting. Most of that uses the engines search & parse functions, and booth of them support custom callbacks to extend their existing functions.
 
 ## Built-in:
 The library - at the moment - has String class (with number conversion), Array<Type>, String Stream, Document (Tree/map/hash-table), Template generator, Arithmetic and Logic Unit, and JSON parser (with C style comments).
 
 ## Requirements:
 * C++ 11 compiler.
-* (Optional) Emscripten: to compile into WebAssembly; to be used inside a web browser or with an independent JavaScript engine. This allows a web server to offload the rendering of an html/text to its clients.
+* (Optional) Emscripten: to compile into WebAssembly; to be used inside a web browser or with an independent JavaScript engine. This allows a web server to offload the rendering of an html/text to its clients. Also, I does intger calculations.
 
 ## The Project:
-This project started as a template generator for JavaScript and PHP, and because of the performance impact of managed languages, it became a necessary to move it to a native one.  JSON was not planed for but it was implemented for the convenience of it, and because Document was implemented already. The template engine was the engine itself before it was rewritten for C++ and merged into one function (Search) to make it a general syntax parser.
+This project started as a template generation library for JavaScript and PHP, and because of the performance impact of managed languages, it was necessary to move to a native language (C/C++).  JSON was not planed for but it was implemented for the convenience of it. The template engine was the engine itself before it was rewritten for C then C++ and merged into one function (Search) to make it a general syntax parser.
 
 ## Template Demo:
 HTML, JavaScript and WebAssembly: [JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/files/3366315/JQen.zip)
@@ -45,13 +42,13 @@ doc["numbers"][0] = 0;
 doc += L"{\"strings\": { }}"; // Expanding the document with an unordered array
 doc["strings"][L"a"] = L"A";
 doc["strings"][L"b"] = L"O";
-doc["strings"][1]    = L"B";
+doc["strings"][1]    = L"B"; // Override
 
 // Importing JSON with comments
 doc["strings"] += Document::FromJSON(L"{\"c\": \"C\", \"d\": \"D\"  /* \"e\": \"E\" */}", true);
 
 doc += L"{\"strings2\": [\"E\", \"F\"]}"; // Ordered strings
-doc["strings2"] += L"[\"G\"]";
+doc["strings2"] += L"G";
 doc["strings2"] += Array<String>().Add(L"H").Add(L"I");
 
 String JSON = doc.ToJSON(); // Exporting the document
@@ -123,4 +120,4 @@ where "./" being the path to Qentem Engine, and "CXX" is either clang or gcc.
 ```
 
 ### Engine:
-The usage of the engine can be found @ [Tests/Test.hpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/Test.hpp)and [Tests/Test.cpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/Test.cpp).
+The usage of the engine can be found @ [Tests/Test.hpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/Test.hpp) and [Tests/Test.cpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/Test.cpp).

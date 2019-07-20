@@ -121,12 +121,40 @@ struct Document {
         Ordered   = true;
     }
 
-    Document(String const &json) noexcept {
-        *this = FromJSON(json);
+    Document(String const &value) noexcept {
+        Array<Match> items = Engine::Search(value, _getJsonExpres());
+
+        if (items.Index == 0) {
+            Ordered = true;
+            Strings += value;
+        } else {
+            Match *_item = &(items[0]);
+
+            Ordered = (_item->Expr->Keyword.Str[0] == L']');
+            if (_item->NestMatch.Index != 0) {
+                _makeDocument(*this, value, _item->NestMatch);
+            } else if (Ordered) {
+                _makeListNumber(Numbers, value, *_item);
+            }
+        }
     }
 
-    Document(wchar_t const *json) noexcept {
-        *this = FromJSON(json);
+    Document(wchar_t const *value) noexcept {
+        Array<Match> items = Engine::Search(value, _getJsonExpres());
+
+        if (items.Index == 0) {
+            Ordered = true;
+            Strings += value;
+        } else {
+            Match *_item = &(items[0]);
+
+            Ordered = (_item->Expr->Keyword.Str[0] == L']');
+            if (_item->NestMatch.Index != 0) {
+                _makeDocument(*this, value, _item->NestMatch);
+            } else if (Ordered) {
+                _makeListNumber(Numbers, value, *_item);
+            }
+        }
     }
 
     void Reset() noexcept {
@@ -278,8 +306,8 @@ struct Document {
         Index _index;
         _index.Hash = _hash;
         _index.ID   = Entries.Index;
-        Entries += Entry(id, Keys.Index, type);
 
+        Entries += Entry(id, Keys.Index, type);
         Keys += String::Part(key.Str, offset, limit);
 
         InsertIndex(_index, 0, Table);
