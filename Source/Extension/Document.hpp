@@ -166,20 +166,6 @@ struct Document {
         Documents.Reset();
     }
 
-    Entry *Exist(UNumber hash, UNumber level, Array<Index> const &_table) const noexcept {
-        UNumber id = ((hash + level) % HashBase);
-
-        if ((_table.Index > id) && (_table[id].Hash != 0)) {
-            if (_table[id].Hash == hash) {
-                return &(Entries[_table[id].ID]);
-            }
-
-            return Exist(hash, (level + 2), _table[id].Table);
-        }
-
-        return nullptr;
-    }
-
     static void Drop(Entry &_entry, Document &storage) noexcept {
         _entry.Type = VType::UndefinedT;
         storage.Keys[_entry.KeyID].Reset();
@@ -221,7 +207,21 @@ struct Document {
             return;
         }
 
-        InsertIndex(_index, (level + 2), _table[id].Table);
+        InsertIndex(_index, (level + id), _table[id].Table);
+    }
+
+    Entry *Exist(UNumber hash, UNumber level, Array<Index> const &_table) const noexcept {
+        UNumber id = ((hash + level) % HashBase);
+
+        if ((_table.Index > id) && (_table[id].Hash != 0)) {
+            if (_table[id].Hash == hash) {
+                return &(Entries[_table[id].ID]);
+            }
+
+            return Exist(hash, (level + id), _table[id].Table);
+        }
+
+        return nullptr;
     }
 
     void Insert(String const &key, UNumber offset, UNumber limit, VType const type, void *ptr, bool const move,
