@@ -111,9 +111,16 @@ The complete example is located @ [Example/Example1.cpp](https://github.com/Hani
 
 
 ### Compiling:
+For the example:
 ```txt
 CXX -I ./Source ./Example/Example1.cpp -o ./Tests/QTest.bin
 ```
+
+For the template library:
+```txt
+CXX -O3 -std=c++11 -shared -fPIC -I ./Source ./Example/QLib.cpp -o ./Build/QLib.so
+```
+
 ```txt
 where "./" being the path to Qentem Engine, and "CXX" is either clang or gcc.
 -For Windows, see .sln files.
