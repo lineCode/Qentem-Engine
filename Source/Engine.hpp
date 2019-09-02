@@ -68,13 +68,14 @@ struct Match {
 /////////////////////////////////
 static void _search(Array<Match> &items, String const &content, Expressions const &exprs, UNumber index, UNumber limit,
                     UNumber const max, UNumber const level) noexcept {
-    bool        LOCKED      = false; // To keep matching the end of the current expression.
-    bool        SPLIT_IT    = false; // To keep tracking a split match.
-    bool        OVERDRIVE   = false; // For nesting.
-    UNumber     counter     = 0;     // Index for counting.
-    UNumber     nest_offset = 0;     // Temp variable for nested matches.
-    UNumber     id          = 1;     // Expression's id.
-    Expression *ce          = exprs[0];
+    bool    LOCKED      = false; // To keep matching the end of the current expression.
+    bool    SPLIT_IT    = false; // To keep tracking a split match.
+    bool    OVERDRIVE   = false; // For nesting.
+    UNumber counter     = 0;     // Index for counting.
+    UNumber nest_offset = 0;     // Temp variable for nested matches.
+    UNumber id          = 1;     // Expression's id.
+
+    Expression *ce = exprs[0];
     UNumber     end_at; // Temp offset.
     Match       _item;  // Temp match
 

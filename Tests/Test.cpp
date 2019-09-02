@@ -187,20 +187,12 @@ static bool run_tests(String const &name, Array<TestBit> const &bits, bool dump_
             ++total;
 
             Pass = rendered.Compare(bits[i].Expected[t], 0, bits[i].Expected[t].Length);
-            if (Pass) {
-                ss += L' ';
-            } else {
-                ss += L"\n ";
-            }
+            ss += Pass ? L" " : L"\n ";
 
             ss += String::FromNumber(count, 2) + L'-';
             ss += String::FromNumber(counter, 2) + L": ";
 
-            if (Pass) {
-                ss += L"Pass";
-            } else {
-                ss += L"Fail";
-            }
+            ss += Pass ? L"Pass" : L"Fail";
 
             ss += L" (Search: ";
             ss += String::FromNumber((static_cast<double>(search_ticks) / CLOCKS_PER_SEC), 2, 3, 3) + L')';
