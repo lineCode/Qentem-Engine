@@ -4,11 +4,21 @@
 Qentem Engine is an independent library that uses a fast algorithm for nest-searching and nest-matching. It can be used to match existing syntaxes or new ones, and with call-backs for post and per-parsing, It's posable to match almost any complex syntax. It's highly efficient and has small footprint on memory, and built using modern C++. It can be used to render complex templates that contains nested loop, nested if-else, inline if, math (+ * / - ^ %), logic (&& ||), and/or something simple; like text replacing/splitting. Also, it can be used for JSON, XML ,HTML... etc.
 
 ## Built-in:
-The library - at the moment - has String class (with number conversion), Array<Type>, String Stream, Document (Tree/Map/Hash-Table), Template generator, Arithmetic and Logic Unit, and JSON parser (with C style comments).
+The library - at the moment - has String class (with number conversion), Array<Type>, String Stream, Document (Tree/Map/Hash-Table), Template generator, Arithmetic and Logic Unit, and JSON parser (with C style comments). In addition
+
+## Tests:
+This library includes over 350 tests; to insure that it's stable and functional. to compile the tests, the fowlling command can be  used:
+```txt
+CXX -I ./Source ./Tests/Test.cpp -o ./Tests/QTest.bin
+```
+After That, ./Tests/QTest.bin can be run in a terminal.
 
 ## Requirements:
 * C++ 11 compiler.
 * (Optional) Emscripten: to compile into WebAssembly; to be used inside a web browser or with an independent JavaScript engine. This allows a web server to offload the rendering of an html/text to its clients. Also, I does intger calculations.
+
+## Preset editor:
+VS Code configrations are included for easer compiling and lunching tests.
 
 ## Template Demo:
 HTML, JavaScript and WebAssembly: [JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/files/3366315/JQen.zip)
