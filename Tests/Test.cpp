@@ -10,6 +10,7 @@
  */
 
 #include "Test.hpp"
+#include <Extension/XML.hpp>
 #include <ctime>
 #include <fstream>
 #include <iostream>
@@ -19,21 +20,33 @@ using Qentem::Document;
 using Qentem::String;
 using Qentem::StringStream;
 using Qentem::UNumber;
+using Qentem::XMLParser;
+using Qentem::XTag;
 using Qentem::Engine::Match;
 using Qentem::Test::TestBit;
 
 static UNumber const TimesToRun = 1;
 // static bool const    StreasTest = true;
 static bool const StreasTest = false;
-// static bool const BigJSON = true;
+// static bool const BigJSON    = true;
 static bool const BigJSON = false;
 
-static String   read_file(char const *fullpath) noexcept;
-static Document get_document() noexcept;
-static bool     run_tests(String const &name, Array<TestBit> const &bits, bool dump_express, bool break_on_err,
-                          Document *other = nullptr) noexcept;
+static String   readFile(char const *fullpath) noexcept;
+static Document getDocument() noexcept;
+static bool     runTests(String const &name, Array<TestBit> const &bits, bool dump_express, bool break_on_err,
+                         Document *other = nullptr) noexcept;
 static bool     NumbersConvTest() noexcept;
-static bool     JSONTest() noexcept;
+static bool     JSONTests() noexcept;
+static bool     XMLTests() noexcept;
+
+struct NCTest {
+    double num    = 0;
+    String result = L"";
+
+    NCTest() = default;
+    NCTest(double n, String r) : num(n), result(static_cast<String &&>(r)) {
+    }
+};
 
 int main() {
     bool Pass         = false;
@@ -41,15 +54,17 @@ int main() {
     bool NumbersConv  = false;
     bool TestALU      = false;
     bool TestTemplate = false;
+    bool TestXML      = false;
     bool TestJSON     = false;
     bool Pause        = false;
 
-    // This way is faster just to comment out the line instead of changing the value
+    // This way is faster; just comment out the line instead of changing the value.
     if (!BigJSON) {
         TestEngine   = true;
         NumbersConv  = true;
         TestALU      = true;
         TestTemplate = true;
+        TestXML      = true;
     }
 
     TestJSON = true;
@@ -63,7 +78,7 @@ int main() {
         if (TestEngine) {
             // Core Engine Tests
             bits = Qentem::Test::GetEngineBits();
-            Pass = run_tests(L"Engine", bits, false, true);
+            Pass = runTests(L"Engine", bits, false, true);
             Qentem::Test::CleanBits(bits);
             if (!Pass) {
                 break;
@@ -83,7 +98,7 @@ int main() {
         if (TestALU) {
             // Arithmetic & logic Evaluation Tests
             bits = Qentem::Test::GetALUBits();
-            Pass = run_tests(L"Arithmetic & Logic Evaluation", bits, false, true);
+            Pass = runTests(L"Arithmetic & Logic Evaluation", bits, false, true);
             if (!Pass) {
                 break;
             }
@@ -94,7 +109,16 @@ int main() {
             // Template Tests
             Document data;
             bits = Qentem::Test::GetTemplateBits(data);
-            Pass = run_tests(L"Template", bits, false, true, &data);
+            Pass = runTests(L"Template", bits, false, true, &data);
+            if (!Pass) {
+                break;
+            }
+            std::wcout << "\n///////////////////////////////////////////////\n";
+        }
+
+        if (TestXML) {
+            // JSON Tests
+            Pass = XMLTests();
             if (!Pass) {
                 break;
             }
@@ -103,7 +127,7 @@ int main() {
 
         if (TestJSON) {
             // JSON Tests
-            Pass = JSONTest();
+            Pass = JSONTests();
             if (!Pass) {
                 break;
             }
@@ -127,8 +151,8 @@ int main() {
     return 10;
 }
 
-static bool run_tests(String const &name, Array<TestBit> const &bits, bool dump_express, bool break_on_err,
-                      Document *other) noexcept {
+static bool runTests(String const &name, Array<TestBit> const &bits, bool dump_express, bool break_on_err,
+                     Document *other) noexcept {
     UNumber const times        = StreasTest ? 10000 : 1;
     UNumber const start_at     = 0;
     UNumber       counter      = 0;
@@ -261,21 +285,12 @@ static bool run_tests(String const &name, Array<TestBit> const &bits, bool dump_
     return (fail == 0);
 }
 
-struct NC_test {
-    double num    = 0;
-    String result = L"";
-
-    NC_test() = default;
-    NC_test(double n, String r) : num(n), result(static_cast<String &&>(r)) {
-    }
-};
-
 static bool NumbersConvTest() noexcept {
-    Array<NC_test> test;
-    UNumber const  times       = StreasTest ? 100000 : 1;
-    UNumber        ticks       = 0;
-    UNumber        total_ticks = 0;
-    bool           Pass        = false;
+    Array<NCTest> test;
+    UNumber const times       = StreasTest ? 100000 : 1;
+    UNumber       ticks       = 0;
+    UNumber       total_ticks = 0;
+    bool          Pass        = false;
     ////////////////////////////////
 
     test.Add({-2.000000000000999, L"-2.000000000000999"}).Add({3.99999999999999, L"3.99999999999999"});
@@ -311,7 +326,7 @@ static bool NumbersConvTest() noexcept {
 
         ticks = static_cast<UNumber>(clock());
 
-        for (size_t k = 0; k < times; k++) {
+        for (UNumber k = 0; k < times; k++) {
             Pass = (test[i].result == String::FromNumber(test[i].num));
         }
 
@@ -337,20 +352,124 @@ static bool NumbersConvTest() noexcept {
     return true;
 }
 
-static bool JSONTest() noexcept {
+static bool XMLTests() noexcept {
+    Array<XTag>   tags;
+    UNumber const times = StreasTest ? 30000 : 1;
+    UNumber       ticks = 0;
+    bool          Pass  = false;
+    std::wcout << L"\n #XML Tests:\n";
+
+    String XMLContent = readFile("./Tests/temp.html");
+    if (XMLContent.Length == 0) {
+        XMLContent = readFile("./temp.html");
+    }
+
+    ticks = static_cast<UNumber>(clock());
+    for (UNumber k = 0; k < times; k++) {
+        tags = XMLParser::Parse(XMLContent);
+    }
+    ticks = (static_cast<UNumber>(clock()) - ticks);
+
+    if (tags.Index > 0) {
+        Pass = true;
+
+        if (tags.Index == 4) {
+            std::wcout << L" Pass";
+        } else {
+            std::wcout << L" Fail";
+            Pass = false;
+        }
+        std::wcout << L" Tags' count: " << String::FromNumber(tags.Index).Str << L'\n';
+
+        UNumber id;
+        if (Pass) {
+            id = 0;
+            if (tags[id].Name == L"br") {
+                std::wcout << L" Pass";
+            } else {
+                std::wcout << L" Fail";
+                Pass = false;
+            }
+            std::wcout << L" Tag id:" << String::FromNumber(id).Str << L" (" << tags[id].Name.Str << L") inline tag\n";
+        }
+
+        if (Pass) {
+            id = 1;
+            if (tags[id].Name == L"img") {
+                std::wcout << L" Pass";
+            } else {
+                std::wcout << L" Fail";
+                Pass = false;
+            }
+            std::wcout << L" Tag id:" << String::FromNumber(id).Str << L" (" << tags[id].Name.Str << L") inline tag\n";
+        }
+
+        if (Pass) {
+            id = 1;
+            if ((tags[id].Properties.Index == 3) && (tags[id].Properties[0].Name == L"src") &&
+                (tags[id].Properties[1].Name == L"id") && (tags[id].Properties[2].Name == L"class") &&
+                (tags[id].Properties[0].Value == L"www") && (tags[id].Properties[1].Value == L"  m  ") &&
+                (tags[id].Properties[2].Value == L"y")) {
+                std::wcout << L" Pass";
+            } else {
+                std::wcout << L" Fail";
+                Pass = false;
+            }
+            std::wcout << L" Tag id:" << String::FromNumber(id).Str << L" (" << tags[id].Name.Str
+                       << L") properties count: " << String::FromNumber(tags[id].Properties.Index).Str << L'\n';
+        }
+
+        if (Pass) {
+            id = 2;
+            if ((tags[id].Name == L"div") && (tags[id].InnerNodes.Index == 2) &&
+                (tags[id].InnerNodes[0].InnerText == L"string")) {
+                std::wcout << L" Pass";
+            } else {
+                std::wcout << L" Fail";
+                Pass = false;
+            }
+            std::wcout << L" Tag id:" << String::FromNumber(id).Str << L" (" << tags[id].Name.Str
+                       << L") InnerNodes' count: " << String::FromNumber(tags[id].InnerNodes.Index).Str << L'\n';
+        }
+
+        if (Pass) {
+            id = 3;
+            if ((tags[id].Name == L"p") && tags[id].InnerText == L"para") {
+                std::wcout << L" Pass";
+            } else {
+                std::wcout << L" Fail";
+                Pass = false;
+            }
+            std::wcout << L" Tag id:" << String::FromNumber(id).Str << L" (" << tags[id].Name.Str << L") Inner text: "
+                       << tags[id].InnerText.Str << L'\n';
+        }
+    }
+
+    if (Pass) {
+        std::wcout << "\n XML looks good!";
+        std::wcout << L" Took: " << String::FromNumber((static_cast<double>(ticks) / CLOCKS_PER_SEC), 2, 3, 3).Str
+                   << L'\n';
+    } else {
+        std::wcout << "\n XML test failed!\n\n";
+    }
+
+    return Pass;
+}
+
+static bool JSONTests() noexcept {
     UNumber const times = ((StreasTest && !BigJSON) ? 1000 : 1);
     UNumber       took  = 0;
     String        final = L"";
     Document      data;
     std::wcout << L"\n #JSON Tests:\n";
 
-    String json_content = read_file(!BigJSON ? "./Tests/temp.json" : "./Tests/bigjson.json");
+    String json_content = readFile(!BigJSON ? "./Tests/temp.json" : "./Tests/bigjson.json");
     if (json_content.Length == 0) {
-        json_content = read_file(!BigJSON ? "./temp.json" : "./bigjson.json");
+        json_content = readFile(!BigJSON ? "./temp.json" : "./bigjson.json");
     }
 
     if (!BigJSON) {
-        data = get_document();
+        data = getDocument();
         if (data.ToJSON() != Qentem::Test::ReplaceNewLine(json_content, L"")) {
             std::wcout << "\n Document() might be broken!\n";
             std::wcout << "\n File:\n" << Qentem::Test::ReplaceNewLine(json_content, L"").Str << "\n";
@@ -399,7 +518,7 @@ static bool JSONTest() noexcept {
     return false;
 }
 
-static Document get_document() noexcept {
+static Document getDocument() noexcept {
     Document data = Document();
 
     data[L"w"]    = L"r\\\\";
@@ -443,7 +562,7 @@ static Document get_document() noexcept {
     return data;
 }
 
-static String read_file(char const *fullpath) noexcept {
+static String readFile(char const *fullpath) noexcept {
     String content = L"";
 
     std::ifstream file(fullpath, std::ios::ate | std::ios::out);

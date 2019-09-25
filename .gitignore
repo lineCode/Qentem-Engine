@@ -11,3 +11,4 @@ Tests/*.bin
 Tests/*.exe
 *vcxproj.user
 clean.sh
+ec.sh

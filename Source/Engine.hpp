@@ -21,9 +21,11 @@ struct Match;
 struct Expression;
 /////////////////////////////////
 static void Split(Array<Match> &items, String const &content, UNumber index, UNumber to) noexcept;
+using _ParseCB = String(String const &content, Match const &item, void *other);
+using _MatchCB = bool(String const &content, UNumber &endAt, Match &item, Array<Match> &items, Expression **expr,
+                      UNumber const level);
+
 using Expressions = Array<Expression *>;
-using _ParseCB    = String(String const &content, Match const &item, void *other);
-using _MatchCB    = bool(Match &item, Array<Match> &items, Expression **expr, UNumber const level);
 /////////////////////////////////
 // Expressions flags
 struct Flags {
@@ -38,14 +40,14 @@ struct Flags {
     static unsigned short const SPLIT      = 128;  // Split a match at a keyword.
     static unsigned short const SPLITNEST  = 256;  // Split a Nested match.
     static unsigned short const GROUPSPLIT = 512;  // Puts split matches into NestMatch, for one callback execution.
-    static unsigned short const NOTBROKEN  = 1024; // To Prevent the engine from assuming the match is broking.
+    static unsigned short const NOTBROKEN  = 1024; // To Prevent the engine index assuming the match is broking.
     static unsigned short const DROPEMPTY  = 2048; // Trim the match before adding it (spaces and newlines).
 };
 /////////////////////////////////
 struct Expression {
     String  Keyword = L""; // What to search for.
-    UNumber Flag    = 0;   // Flags for the expression
-    UNumber ID      = 0;   // Expression ID
+    UNumber Flag    = 0;   // Flags for the expression.
+    UNumber ID      = 0;   // Expression ID.
     String  Replace;       // A text to replace the match.
 
     Expression *Connected = nullptr; // The next part of the match (the next keyword).
@@ -57,16 +59,16 @@ struct Expression {
 /////////////////////////////////
 struct Match {
     UNumber Length = 0; // The length of the entire match.
-    UNumber Offset = 0; // The start position of the matched string
+    UNumber Offset = 0; // The start position of the matched string.
 
-    UNumber OLength = 0; // Length of opening keyword; For trim
-    UNumber CLength = 0; // Length of closing keyword
+    UNumber OLength = 0; // Length of opening keyword.
+    UNumber CLength = 0; // Length of closing keyword.
 
     Expression * Expr = nullptr;
     Array<Match> NestMatch; // To hold sub matches inside a match.
 };
 /////////////////////////////////
-static void _search(Array<Match> &items, String const &content, Expressions const &exprs, UNumber index, UNumber limit,
+static void _search(Array<Match> &items, String const &content, Expressions const &exprs, UNumber index, UNumber to,
                     UNumber const max, UNumber const level) noexcept {
     bool    LOCKED      = false; // To keep matching the end of the current expression.
     bool    SPLIT_IT    = false; // To keep tracking a split match.
@@ -77,7 +79,7 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
 
     Expression *ce = exprs[0];
     UNumber     end_at; // Temp offset.
-    Match       _item;  // Temp match
+    Match       _item;  // Temp match.
 
     UNumber const started = index;
 
@@ -100,15 +102,9 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
                     // If the match is on "OVERDRIVE", then slow down.
                     OVERDRIVE = false;
                     // Set the length of the nested match.
-                    limit = end_at;
+                    to = end_at;
                 } else if (!LOCKED) {
                     if (ce->Connected != nullptr) {
-                        if ((Flags::TRIM & ce->Connected->Flag) != 0) {
-                            while ((content[++end_at] == L' ') || (content[end_at] == L'\n') ||
-                                   (content[end_at] == L'\r') || (content[end_at] == L'\t')) {
-                            }
-                            --end_at;
-                        }
                         _item.OLength = ((end_at + 1) - index);
                     }
 
@@ -125,7 +121,7 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
                     // If it's a nesting expression, search again but inside the current match.
                     if (ce->NestExprs.Index != 0) { //  && (nest_offset != end_at)
                         // Start a new search inside the current match.
-                        _search(_item.NestMatch, content, ce->NestExprs, nest_offset, end_at, ((max == 0) ? limit : max),
+                        _search(_item.NestMatch, content, ce->NestExprs, nest_offset, end_at, ((max == 0) ? to : max),
                                 (level + 1));
 
                         if (_item.NestMatch.Index != 0) {
@@ -137,10 +133,10 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
                                 index = nest_offset;
 
                                 if (index > end_at) {
-                                    if (max > limit) {
+                                    if (max > to) {
                                         // This is important to have the search look ahead of the limited length
                                         // in order to find the entire currect match.
-                                        limit     = max; // TO THE MAX!
+                                        to        = max; // TO THE MAX!
                                         OVERDRIVE = true;
                                     }
                                 }
@@ -155,21 +151,32 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
                         _item.Length = (end_at - _item.Offset);
 
                         if (_item.OLength != 0) {
-                            if (((Flags::TRIM & ce->Flag) != 0) && ((index - _item.Offset) != _item.OLength)) {
-                                while ((content[--index] == L' ') || (content[index] == L'\n') ||
-                                       (content[end_at] == L'\r') || (content[index] == L'\t')) {
-                                }
-                                ++index;
-                            }
                             _item.CLength = (end_at - index);
+
+                            if ((Flags::TRIM & ce->Flag) != 0) {
+                                UNumber tmpIndex = (_item.Offset + _item.OLength);
+                                while ((content[tmpIndex] == L' ') || (content[tmpIndex] == L'\n') ||
+                                       (content[tmpIndex] == L'\r') || (content[tmpIndex] == L'\t')) {
+                                    ++_item.OLength;
+                                    ++tmpIndex;
+                                }
+
+                                tmpIndex = ((_item.Offset + _item.Length) - _item.CLength);
+                                if ((_item.OLength + _item.CLength) != _item.Length) {
+                                    while ((content[--tmpIndex] == L' ') || (content[tmpIndex] == L'\n') ||
+                                           (content[tmpIndex] == L'\r') || (content[tmpIndex] == L'\t')) {
+                                        ++_item.CLength;
+                                    }
+                                }
+                            }
                         }
 
                         if (((Flags::DROPEMPTY & ce->Flag) == 0) || (_item.Length != (_item.OLength + _item.CLength))) {
                             _item.Expr = ce;
 
                             if (level == 0) {
-                                if (!SPLIT_IT) {
-                                    SPLIT_IT = ((Flags::SPLIT & ce->Flag) != 0);
+                                if (!SPLIT_IT && ((Flags::SPLIT & ce->Flag) != 0)) {
+                                    SPLIT_IT = true;
                                 }
 
                                 if (((Flags::SPLITNEST & ce->Flag) != 0) && (_item.NestMatch.Index != 0)) {
@@ -178,9 +185,11 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
                                 }
                             }
 
+                            // Adding the match
                             if (ce->MatchCB == nullptr) {
                                 items += static_cast<Match &&>(_item);
-                            } else if (!ce->MatchCB(_item, items, &ce, level)) {
+                            } else if (!ce->MatchCB(content, index, _item, items, &ce, level)) {
+                                // Ingnoring the match if the callback returned "false"
                                 continue;
                             }
 
@@ -210,15 +219,15 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
         }
 
         /////////////////////////////////
-        if (index >= limit) {
+        if (index >= to) {
             if (!LOCKED) {
                 break;
             }
 
-            if (max > limit) {
+            if (max > to) {
                 // This is important to have the seearch look ahead of the limited length
                 // in order to find the entire currect match.
-                limit = max;
+                to = max;
 
                 OVERDRIVE = true;
                 continue;
@@ -245,7 +254,7 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
 
                 items += static_cast<Array<Match> &&>(_item.NestMatch);
 
-                if (index == limit) {
+                if (index == to) {
                     break;
                 }
             }
@@ -265,13 +274,13 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
     /////////////////////////////////
     if (items.Index == 0) {
         if ((Flags::POP & ce->Flag) != 0) {
-            _search(items, content, ce->NestExprs, started, limit, 0, 0);
+            _search(items, content, ce->NestExprs, started, to, 0, 0);
         }
         return;
     }
 
     if (SPLIT_IT) {
-        Split(items, content, started, limit);
+        Split(items, content, started, to);
     }
 
     //////////////// Hani ///////////////////
@@ -279,29 +288,29 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
     // Friday, January 18, 2019
 }
 /////////////////////////////////
-inline static Array<Match> Search(String const &content, Expressions const &exprs, UNumber index = 0, UNumber length = 0,
+inline static Array<Match> Search(String const &content, Expressions const &exprs, UNumber index = 0, UNumber to = 0,
                                   UNumber max = 0) noexcept {
     Array<Match> items;
 
-    if ((length == 0) && (content.Length > index)) {
-        length = (content.Length - index); // limit becomes the ending offset here.
+    if ((to == 0) && (content.Length > index)) {
+        to = (content.Length - index);
     }
 
-    if ((content.Length != 0) && (exprs.Index != 0) && (index < length)) {
-        _search(items, content, exprs, index, length, max, 0);
+    if ((content.Length != 0) && (exprs.Index != 0) && (index < to)) {
+        _search(items, content, exprs, index, to, max, 0);
     }
 
     return items;
 }
 /////////////////////////////////
-static String Parse(String const &content, Array<Match> const &items, UNumber index = 0, UNumber length = 0,
+static String Parse(String const &content, Array<Match> const &items, UNumber index = 0, UNumber to = 0,
                     void *other = nullptr) noexcept {
-    if ((length == 0) && (content.Length > index)) {
-        length = (content.Length - index);
+    if ((to == 0) && (content.Length > index)) {
+        to = (content.Length - index);
     }
 
-    if (index >= length) {
-        // Note: Do not return on an content as it is, because content is limitted by "index" and length, and it should
+    if (index >= to) {
+        // Note: Do not return on an content as it is, because content is limitted by "index" and to, and it should
         // always return part of the string or a copy of it)
         return content;
     }
@@ -352,9 +361,9 @@ static String Parse(String const &content, Array<Match> const &items, UNumber in
     }
 
     if (index != 0) {
-        if (index < length) {
+        if (index < to) {
             // Adding the remaining of the text to the final rendered content.
-            rendered += String::Part(content.Str, index, (length - index));
+            rendered += String::Part(content.Str, index, (to - index));
         }
         return rendered.Eject();
     }

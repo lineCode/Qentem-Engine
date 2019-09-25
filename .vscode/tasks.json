@@ -35,7 +35,8 @@
                 "isDefault": true
             },
             "presentation": {
-                "reveal": "never",
+                // "reveal": "never",
+                "reveal": "silent",
                 "clear": true
             },
             "problemMatcher": "$gcc"

@@ -111,7 +111,7 @@ class StringStream {
 
         if (Length != 0) {
             _pack(*this, tmp);
-            // To allow the reuse of this object
+            // To allow the reuse of the object
             Length            = 0;
             _strings.Index    = 0;
             p_strings.Index   = 0;

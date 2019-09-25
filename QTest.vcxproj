@@ -165,6 +165,7 @@
     <ClInclude Include="Source\StringStream.hpp" />
     <ClInclude Include="Source\Array.hpp" />
     <ClInclude Include="Source\Engine.hpp" />
+    <ClInclude Include="Source\Extension\XML.hpp" />
     <ClInclude Include="Source\Extension\Document.hpp" />
     <ClInclude Include="Source\Extension\ALU.hpp" />
     <ClInclude Include="Source\Extension\Template.hpp" />

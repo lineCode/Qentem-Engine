@@ -14,12 +14,11 @@
 #ifndef QENTEM_DOCUMENT_H
 #define QENTEM_DOCUMENT_H
 
-using Qentem::Engine::Expression;
-using Qentem::Engine::Expressions;
-using Qentem::Engine::Flags;
-using Qentem::Engine::Match;
-
 namespace Qentem {
+
+using Engine::Expression;
+using Engine::Expressions;
+using Engine::Match;
 
 enum VType { UndefinedT = 0, NullT, BooleanT, NumberT, StringT, DocumentT };
 

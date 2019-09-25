@@ -138,7 +138,7 @@ static String DumpExpressions(Expressions const &expres, String const &offset, U
         if (expres[i]->ID != 0) {
             ss += l_offset + L"ID: ";
             ss += String::FromNumber(expres[i]->ID);
-            ss += '\n';
+            ss += L'\n';
         }
 
         if (expres[i]->Replace.Length != 0) {
@@ -150,7 +150,7 @@ static String DumpExpressions(Expressions const &expres, String const &offset, U
         } else {
             ss += l_offset + L"ParseCB: No";
         }
-        ss += '\n';
+        ss += L'\n';
 
         if (expres[i]->Connected != nullptr) {
             ss += l_offset + L"Next: ";

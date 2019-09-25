@@ -16,10 +16,10 @@
 
 namespace Qentem {
 
-using Qentem::Engine::Expression;
-using Qentem::Engine::Expressions;
-using Qentem::Engine::Flags;
-using Qentem::Engine::Match;
+using Engine::Expression;
+using Engine::Expressions;
+using Engine::Flags;
+using Engine::Match;
 
 struct ALU {
     static Expressions const &getMathExprs() noexcept {
