@@ -523,7 +523,7 @@ struct String {
                 }
 
                 fnm = num3 = (num % 10);
-                while (num3 == 0) {
+                while ((num3 == 0) && (len > 0)) {
                     --len;
                     num /= 10;
                     num3 = (num % 10);

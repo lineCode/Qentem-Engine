@@ -23,7 +23,7 @@ struct Expression;
 static void Split(Array<Match> &items, String const &content, UNumber index, UNumber to) noexcept;
 using _ParseCB = String(String const &content, Match const &item, void *other);
 using _MatchCB = bool(String const &content, UNumber &endAt, Match &item, Array<Match> &items, Expression **expr,
-                      UNumber const level);
+                      UNumber const to);
 
 using Expressions = Array<Expression *>;
 /////////////////////////////////
@@ -188,7 +188,7 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
                             // Adding the match
                             if (ce->MatchCB == nullptr) {
                                 items += static_cast<Match &&>(_item);
-                            } else if (!ce->MatchCB(content, index, _item, items, &ce, level)) {
+                            } else if (!ce->MatchCB(content, index, _item, items, &ce, to)) {
                                 // Ingnoring the match if the callback returned "false"
                                 continue;
                             }

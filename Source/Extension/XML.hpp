@@ -35,7 +35,7 @@ struct XTag {
 
 struct XMLParser {
     static bool InfinitSpaceCallback(String const &content, UNumber &endAt, Match &item, Array<Match> &items,
-                                     Expression **expr, UNumber const level) noexcept {
+                                     Expression **expr, UNumber const to) noexcept {
 
         while (content[++endAt] == L' ') {
             ++item.Length;

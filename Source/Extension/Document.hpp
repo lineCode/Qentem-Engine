@@ -388,6 +388,7 @@ struct Document {
 
         UNumber limit;
         double  number;
+        bool    pass = false;
 
         for (; offset < end; offset++) {
             switch (content[offset]) {
@@ -402,8 +403,8 @@ struct Document {
                                                           ((subItem->Length + subItem->Offset) - 1));
                     }
 
-                    offset = (subItem->Offset + subItem->Length);
-                    start  = offset + 1;
+                    offset = (subItem->Offset + subItem->Length) - 1;
+                    pass   = true;
                     break;
                 }
                 case L'{': {
@@ -415,8 +416,8 @@ struct Document {
                     _makeList(doc, content, subItem->NestMatch);
                     document.Documents += static_cast<Document &&>(doc);
 
-                    offset = (subItem->Offset + subItem->Length);
-                    start  = offset + 1;
+                    offset = (subItem->Offset + subItem->Length) - 1;
+                    pass   = true;
                     break;
                 }
                 case L'[': {
@@ -429,47 +430,55 @@ struct Document {
                     _makeOrderedList(doc, content, *subItem);
                     document.Documents += static_cast<Document &&>(doc);
 
-                    offset = (subItem->Offset + subItem->Length);
-                    start  = offset + 1;
+                    offset = (subItem->Offset + subItem->Length) - 1;
+                    pass   = true;
                     break;
                 }
                 case L',':
                 case L']': {
-                    // A Number, true/false or null
-                    limit = (offset - start);
-                    String::SoftTrim(content.Str, start, limit);
+                    if (!pass) {
+                        // A Number, true/false or null
+                        limit = (offset - start);
+                        String::SoftTrim(content.Str, start, limit);
 
-                    switch (content.Str[start]) {
-                        case L't': {
-                            // True
-                            document.Entries += Entry(document.Numbers.Index, 0, VType::BooleanT);
-                            document.Numbers += 1;
-                        } break;
-                        case L'f': {
-                            // False
-                            document.Entries += Entry(document.Numbers.Index, 0, VType::BooleanT);
-                            document.Numbers += 0;
-                        } break;
-                        case L'n': {
-                            // Null
-                            document.Entries += Entry(0, 0, VType::NullT);
-                        } break;
-                        default: {
-                            // A number
-                            if (String::ToNumber(content, number, start, limit)) {
-                                document.Entries += Entry(document.Numbers.Index, 0, VType::NumberT);
-                                document.Numbers += number;
+                        switch (content.Str[start]) {
+                            case L't': {
+                                // True
+                                document.Entries += Entry(document.Numbers.Index, 0, VType::BooleanT);
+                                document.Numbers += 1;
+                                break;
                             }
-                        } break;
+                            case L'f': {
+                                // False
+                                document.Entries += Entry(document.Numbers.Index, 0, VType::BooleanT);
+                                document.Numbers += 0;
+                                break;
+                            }
+                            case L'n': {
+                                // Null
+                                document.Entries += Entry(0, 0, VType::NullT);
+                                break;
+                            }
+                            default: {
+                                // A number
+                                if (String::ToNumber(content, number, start, limit)) {
+                                    document.Entries += Entry(document.Numbers.Index, 0, VType::NumberT);
+                                    document.Numbers += number;
+                                }
+                                break;
+                            }
+                        }
                     }
 
                     start = (offset + 1);
+                    pass  = false;
                     break;
                 }
             }
         }
     }
 
+    // TODO: Preallocate
     static void _makeList(Document &document, String const &content, Array<Match> &items) noexcept {
         Match * key;
         Match * data;
@@ -479,6 +488,8 @@ struct Document {
 
         UNumber limit;
         double  number;
+
+        String tmpString;
 
         for (UNumber i = 0; i < items.Index; i++) {
             key   = &(items[i]);
@@ -491,19 +502,20 @@ struct Document {
                     case L'"': {
                         ++i;
 
-                        String ts;
                         data = &(items[i]);
                         if (data->NestMatch.Index != 0) {
-                            ts = Engine::Parse(content, data->NestMatch, (data->Offset + 1),
-                                               ((data->Offset + data->Length) - 1));
+                            tmpString = Engine::Parse(content, data->NestMatch, (data->Offset + 1),
+                                                      ((data->Offset + data->Length) - 1));
                         } else {
-                            ts = String::Part(content.Str, (data->Offset + 1), (data->Length - 2));
+                            tmpString = String::Part(content.Str, (data->Offset + 1), (data->Length - 2));
                         }
 
-                        document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::StringT, &ts, true, false);
+                        document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::StringT, &tmpString, true,
+                                        false);
 
                         done = true;
-                    } break;
+                        break;
+                    }
                     case L'{': {
                         ++i;
 
@@ -513,7 +525,8 @@ struct Document {
                                         true, false);
 
                         done = true;
-                    } break;
+                        break;
+                    }
                     case L'[': {
                         ++i;
 
@@ -526,7 +539,8 @@ struct Document {
                                         true, false);
 
                         done = true;
-                    } break;
+                        break;
+                    }
                     case L':': {
                         start = j + 1;
                         continue;
@@ -543,25 +557,29 @@ struct Document {
                                 number = 1;
                                 document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::BooleanT, &number,
                                                 false, false);
-                            } break;
+                                break;
+                            }
                             case L'f': {
                                 // False
                                 number = 0;
                                 document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::BooleanT, &number,
                                                 false, false);
-                            } break;
+                                break;
+                            }
                             case L'n': {
                                 // Null
                                 document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::NullT, nullptr,
                                                 false, false);
-                            } break;
+                                break;
+                            }
                             default: {
                                 if (String::ToNumber(content, number, start, limit)) {
                                     // Number
                                     document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::NumberT,
                                                     &number, false, false);
                                 }
-                            } break;
+                                break;
+                            }
                         }
 
                         done = true;
@@ -645,7 +663,7 @@ struct Document {
         }
 
         UNumber end_offset = (offset + limit);
-        UNumber _tmpOffset = end_offset;
+        UNumber _tmpOffset;
         UNumber _id;
 
         if (key[offset] == L'[') {
@@ -948,6 +966,16 @@ struct Document {
 
         if (tags.Index == 0) {
             _JsonEsc.Keyword = L'\\';
+            _JsonEsc.MatchCB = ([](String const &content, UNumber &endAt, Match &item, Array<Match> &items,
+                                   Expression **expr, UNumber const to) noexcept->bool {
+                UNumber index = endAt;
+                if ((content[++index] == L'\\') || (content[index] == L' ') || (index == to)) {
+                    // If there is a space after \ or \ or it's at the end, then it's a match.
+                    items += static_cast<Match &&>(item);
+                }
+
+                return true;
+            });
             _JsonEsc.Replace = L"\\\\";
 
             _JsonQuot.Keyword = L'"';
