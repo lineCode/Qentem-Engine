@@ -421,28 +421,28 @@ struct String {
         return hash;
     }
 
-    // Update the starting index and the ending one to be at the actual characters
-    inline static void SoftTrim(wchar_t const *str, UNumber &start, UNumber &end) noexcept {
-        --end;
+    inline static void SoftTrim(wchar_t const *str, UNumber &start, UNumber &limit) noexcept {
+        UNumber end = limit + start;
 
         while ((str[start] == L' ') || (str[start] == L'\n') || (str[start] == L'\r') || (str[start] == L'\t')) {
             ++start;
+            --limit;
         }
 
         while ((end > start) &&
-               ((str[end] == L' ') || (str[end] == L'\n') || (str[end] == L'\r') || (str[end] == L'\t'))) {
-            --end;
+               ((str[--end] == L' ') || (str[end] == L'\n') || (str[end] == L'\r') || (str[end] == L'\t'))) {
+            --limit;
         }
     }
 
     // Remove empty spaces
     static String Trim(String const &str) noexcept {
-        UNumber start = 0;
-        UNumber end   = (str.Length - start);
+        UNumber offset = 0;
+        UNumber limit  = str.Length;
 
-        SoftTrim(str.Str, start, end);
+        SoftTrim(str.Str, offset, limit);
 
-        return Part(str.Str, start, ((end + 1) - start));
+        return Part(str.Str, offset, limit);
     }
 
     // Revers a string
@@ -667,8 +667,8 @@ struct String {
         return true;
     }
 
-    inline static bool ToNumber(String const &str, double &number, UNumber const offset = 0,
-                                UNumber limit = 0) noexcept {
+    // TODO: rewrite
+    static bool ToNumber(String const &str, double &number, UNumber const offset = 0, UNumber limit = 0) noexcept {
         limit += offset;
         if (limit == offset) {
             limit = str.Length - offset;

@@ -470,9 +470,11 @@ static bool JSONTests() noexcept {
 
     if (!BigJSON) {
         data = getDocument();
-        if (data.ToJSON() != Qentem::Test::ReplaceNewLine(json_content, L"")) {
+        if (data.ToJSON() != Qentem::Test::Replace(Qentem::Test::ReplaceNewLine(json_content, L""), L"\": ", L"\":")) {
             std::wcout << "\n Document() might be broken!\n";
-            std::wcout << "\n File:\n" << Qentem::Test::ReplaceNewLine(json_content, L"").Str << "\n";
+            std::wcout << "\n File:\n"
+                       << Qentem::Test::Replace(Qentem::Test::ReplaceNewLine(json_content, L""), L"\": ", L"\":").Str
+                       << "\n";
             std::wcout << "\n ToJSON():\n" << data.ToJSON().Str << "\n";
             return false;
         }
@@ -502,7 +504,7 @@ static bool JSONTests() noexcept {
         return true;
     }
 
-    json_content = Qentem::Test::ReplaceNewLine(json_content, L"");
+    json_content = Qentem::Test::Replace(Qentem::Test::ReplaceNewLine(json_content, L""), L"\": ", L"\":");
     if (final == json_content) {
         std::wcout << "\n JSON looks good!\n";
         return true;

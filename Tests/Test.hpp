@@ -50,20 +50,33 @@ static Array<String> Extract(String const &content, Array<Match> const &items) n
     return matches;
 }
 
+static String Replace(String const &content, String const &_find, String const &_replace) {
+    static Expression find_key;
+
+    find_key.Keyword = _find;
+    find_key.Replace = _replace;
+
+    return Engine::Parse(content, Engine::Search(content, Expressions().Add(&find_key)));
+}
+
 static String ReplaceNewLine(String const &content, String const &_replace) {
     static Expressions find_keys;
     static Expression  find_key1;
     static Expression  find_key2;
     static Expression  find_key3;
+    static Expression  find_key4;
 
     find_key1.Replace = _replace;
     find_key2.Replace = _replace;
+    find_key3.Replace = _replace;
+    find_key4.Replace = _replace;
 
     if (find_keys.Index == 0) { // Caching
         find_key1.Keyword = L'\n';
         find_key2.Keyword = L'\r';
-        find_key3.Keyword = L"    ";
-        find_keys.Add(&find_key1).Add(&find_key2).Add(&find_key3);
+        find_key3.Keyword = L'\t';
+        find_key4.Keyword = L"    ";
+        find_keys.Add(&find_key1).Add(&find_key2).Add(&find_key3).Add(&find_key4);
     }
 
     return Engine::Parse(content, Engine::Search(content, find_keys));
@@ -286,6 +299,7 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
     data[L"lvl2"][L"e3"] = 5;
 
     data[L"lvl2"][L"numbers"] = Array<double>().Add(1);
+
     Document n2;
     n2["the_rest"] = Array<double>().Add(2);
     data[L"lvl2"][L"numbers"] += n2["the_rest"]; // Coping
@@ -295,8 +309,6 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
 
     data[L"lvl2"] += strings;
     data[L"lvl2"][L"strings"] += static_cast<Document &&>(n3); // Moving
-
-    auto ddd = data.ToJSON();
 
     data.Rehash(11, true);
     ///////////////////////////////////////////

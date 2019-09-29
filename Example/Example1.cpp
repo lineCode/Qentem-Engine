@@ -34,7 +34,7 @@ int main() {
     doc["strings2"] += Array<String>().Add(L"H").Add(L"I");
 
     String JSON = doc.ToJSON(); // Exporting the document
-    // std::wcout << JSON.Str << L'\n';
+    std::wcout << L"JSON:\n" << JSON.Str << L"\n\n";
 
     // Output:
     // {
@@ -48,5 +48,5 @@ int main() {
     content += L"<loop set=\"strings2\" value=\"s_value\" key=\"s_key\">s_key: s_value\n</loop>";
     String rendered = Template::Render(content, &doc);
 
-    std::wcout << rendered.Str << L'\n';
+    std::wcout << L"Template:\n" << rendered.Str << L'\n';
 }
