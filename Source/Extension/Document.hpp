@@ -349,17 +349,13 @@ struct Document {
     }
 
     void Rehash(UNumber newBase, bool const children = false) noexcept {
-        if (Ordered) {
-            return;
-        }
-
         Table.Reset();
         HashBase = newBase;
 
         Index   _index;
         String *key;
 
-        for (UNumber i = 0; i < Entries.Index; i++) {
+        for (UNumber i = 0; i < Keys.Index; i++) {
             key            = &(Keys[Entries[i].KeyID]);
             _index.Hash    = String::Hash(key->Str, 0, key->Length);
             _index.EntryID = i;
@@ -478,7 +474,6 @@ struct Document {
         }
     }
 
-    // TODO: Preallocate
     static void _makeList(Document &document, String const &content, Array<Match> &items) noexcept {
         Match * key;
         Match * data;

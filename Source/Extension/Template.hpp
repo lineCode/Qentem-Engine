@@ -66,7 +66,7 @@ struct Template {
             if (m->Offset > 5) { // for the length of: set= or var=
                 start_at = m->Offset;
 
-                while ((start_at <= m->Offset) && (start_at > 0)) {
+                while ((start_at <= m->Offset) && (start_at != 0)) {
                     --start_at;
 
                     if (block[start_at] == L'a') { // c[a]se

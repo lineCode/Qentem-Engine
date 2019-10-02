@@ -29,19 +29,19 @@ using Expressions = Array<Expression *>;
 /////////////////////////////////
 // Expressions flags
 struct Flags {
-    static unsigned short const NOTHING    = 0;    // ... NAN.
-    static unsigned short const COMPACT    = 1;    // Processing only the content inside Keywords Parse().
-    static unsigned short const NOPARSE    = 2;    // Match a Keyword but don't process it inside Parse().
-    static unsigned short const IGNORE     = 4;    // Match a Keyword but don't add it.
-    static unsigned short const TRIM       = 8;    // Trim the match before adding it.
-    static unsigned short const ONCE       = 16;   // Will stop searching after the first match.
-    static unsigned short const POP        = 32;   // Search again with NestExprs if the match fails (See ALU.cpp).
-    static unsigned short const BUBBLE     = 64;   // Parse nested matches.
-    static unsigned short const SPLIT      = 128;  // Split a match at a keyword.
-    static unsigned short const SPLITNEST  = 256;  // Split a Nested match.
-    static unsigned short const GROUPSPLIT = 512;  // Puts split matches into NestMatch, for one callback execution.
-    static unsigned short const NOTBROKEN  = 1024; // To Prevent the engine index assuming the match is broking.
-    static unsigned short const DROPEMPTY  = 2048; // Trim the match before adding it (spaces and newlines).
+    static UShort const NOTHING    = 0;    // ... NAN.
+    static UShort const COMPACT    = 1;    // Processing only the content inside Keywords Parse().
+    static UShort const NOPARSE    = 2;    // Match a Keyword but don't process it inside Parse().
+    static UShort const IGNORE     = 4;    // Match a Keyword but don't add it.
+    static UShort const TRIM       = 8;    // Trim the match before adding it.
+    static UShort const ONCE       = 16;   // Will stop searching after the first match.
+    static UShort const POP        = 32;   // Search again with NestExprs if the match fails (See ALU.cpp).
+    static UShort const BUBBLE     = 64;   // Parse nested matches.
+    static UShort const SPLIT      = 128;  // Split a match at a keyword.
+    static UShort const SPLITNEST  = 256;  // Split a Nested match.
+    static UShort const GROUPSPLIT = 512;  // Puts split matches into NestMatch, for one callback execution.
+    static UShort const NOTBROKEN  = 1024; // To Prevent the engine index assuming the match is broking.
+    static UShort const DROPEMPTY  = 2048; // Trim the match before adding it (spaces and newlines).
 };
 /////////////////////////////////
 struct Expression {

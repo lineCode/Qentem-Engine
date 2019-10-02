@@ -130,7 +130,7 @@ struct XMLParser {
                     }
                 } else if (_tag.Name.Compare(content, (startAt + 1), (tagLen - 1))) {
                     // A closing tag and it's equal to the current one.
-                    if (repeated > 0) {
+                    if (repeated != 0) {
                         // if it has a chiled of the same tag, then the closing tag is
                         // not for the undergoing tag; pass.
                         --repeated;

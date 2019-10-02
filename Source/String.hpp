@@ -446,10 +446,10 @@ struct String {
     }
 
     // Revers a string
-    inline static void Revers(wchar_t *str, UNumber index, UNumber limit) noexcept {
+    inline static void Revers(wchar_t *str, UShort index, UShort limit) noexcept {
         wchar_t ch;
 
-        for (UNumber i = index; i < limit;) {
+        for (UShort i = index; i < limit;) {
             ch         = str[limit];
             str[limit] = str[i];
             str[i]     = ch;
@@ -458,9 +458,9 @@ struct String {
         }
     }
 
-    static String FromNumber(UNumber number, UNumber const min = 1) noexcept {
+    static String FromNumber(UNumber number, UShort const min = 1) noexcept {
         wchar_t p1_str[41]; // 39 + "sign" + "\0"
-        UNumber str1_len = 0;
+        UShort  str1_len = 0;
 
         while (number != 0) {
             p1_str[str1_len++] = wchar_t((number % 10) + 48);
@@ -472,18 +472,20 @@ struct String {
         }
 
         p1_str[str1_len] = L'\0';
-        Revers(&(p1_str[0]), 0, (str1_len - 1));
+        Revers(&(p1_str[0]), 0, (--str1_len));
         return &(p1_str[0]);
     }
 
-    static String FromNumber(double number, UNumber const min = 1, UNumber r_min = 0, UNumber r_max = 0) noexcept {
-        UNumber str1_len = 0;
-        UNumber str2_len = 0;
+    static String FromNumber(double number, UShort const min = 1, UShort r_min = 0, UShort r_max = 0) noexcept {
+        UShort str1_len = 0;
+        UShort str2_len = 0;
 
-        wchar_t p2_str[41]; // 38 + "sign" + " . "+ "\0"
-        wchar_t p1_str[40]; // No "." needed.
+        wchar_t p1_str[19];
+        wchar_t p2_str[23];
 
-        bool const negative = (number < 0);
+        bool const negative  = (number < 0);
+        UShort     presision = 15;
+
         if (negative) {
             number *= -1;
         }
@@ -501,83 +503,53 @@ struct String {
 
             number -= static_cast<double>(num2);
             if (number != 0) {
-                UNumber num3 = 0; // For the reminder of 10
 
-                number += 1.1; // Forcing the value to round up to it's original number.
-                // The 0.1 is to prevent any leading zeros from being on the left
-                number *= 1e15; // Moving everyting to the left.
-                number -= 1e15; // Taking 1 back.
+                number *= 1e15;
+                num = static_cast<UNumber>(number);
 
-                num         = static_cast<UNumber>(number);
-                UNumber len = 14 - ((counter > 1) ? (counter - 1) : 0);
-                UNumber fnm = (num % 10);
-
-                number -= static_cast<double>(num);
-                if ((number >= 0.5) && (fnm >= 5)) {
-                    num += (10 - fnm); // Yep
-                }
-
-                while (counter > 1) {
-                    num /= 10;
-                    --counter;
-                }
-
-                fnm = num3 = (num % 10);
-                while ((num3 == 0) && (len > 0)) {
-                    --len;
-                    num /= 10;
-                    num3 = (num % 10);
-                }
-
-                if ((num3 == 9) && (fnm >= 5) && (number >= 0.5)) {
-                    ++num;
-                    while (((num % 10) == 0) && (len > 0)) {
-                        --len;
+                if (num != 0) {
+                    while (((num % 10) == 0) && (presision != 0)) {
+                        --presision;
                         num /= 10;
                     }
-                }
 
-                if (num != 1) {
-                    if (num != 10) { // Means .00000000000
-                        if (r_max != 0) {
-                            while (r_max < len) {
-                                --len;
-                                num /= 10;
-                            }
+                    if ((r_max != 0) && (r_max < presision)) {
+                        ++r_max;
 
-                            if ((num % 10) >= 5) {
-                                num /= 10;
-                                ++num;
-                            } else {
-                                num /= 10;
-                            }
-
-                            --len;
+                        while (r_max < presision) {
+                            --presision;
+                            num /= 10;
                         }
 
-                        for (UNumber w = 0; w < len;) {
-                            p2_str[str2_len++] = wchar_t((num % 10) + 48);
-
+                        if ((num % 10) >= 5) {
                             num /= 10;
-                            if (num == 0) {
-                                break;
-                            }
+                            ++num;
+                        } else {
+                            num /= 10;
+                        }
 
-                            ++w;
+                        --presision;
+
+                        while (((num % 10) == 0) && (presision != 0)) {
+                            --presision;
+                            num /= 10;
+                        }
+
+                        if (num == 1) {
+                            ++num2;
+                            str1_len = 0;
+
+                            while (num2 != 0) {
+                                p1_str[str1_len++] = wchar_t((num2 % 10) + 48);
+                                num2 /= 10;
+                            }
                         }
                     }
 
-                    if (num != 11) {
-                        p2_str[str2_len++] = wchar_t(((num - 1) % 10) + 48); // (num - 1) taking 0.1 back.
-                    } else {
-                        str1_len = 0;
-                        str2_len = 0;
-
-                        ++num2;
-                        while (num2 != 0) {
-                            p1_str[str1_len++] = wchar_t((num2 % 10) + 48);
-                            num2 /= 10;
-                        }
+                    while (presision != 0) {
+                        p2_str[str2_len++] = wchar_t((num % 10) + 48);
+                        --presision;
+                        num /= 10;
                     }
                 }
             }
@@ -598,17 +570,17 @@ struct String {
         if (str2_len != 0) {
             p2_str[str2_len++] = L'.';
 
-            for (UNumber i = 0; i < str1_len; i++) {
+            for (UShort i = 0; i < str1_len; i++) {
                 p2_str[str2_len++] = p1_str[i];
             }
 
             p2_str[str2_len] = L'\0';
-            Revers(&p2_str[0], 0, (str2_len - 1));
+            Revers(&p2_str[0], 0, (--str2_len));
             return &p2_str[0];
         }
 
         p1_str[str1_len] = L'\0';
-        Revers(&(p1_str[0]), 0, (str1_len - 1));
+        Revers(&(p1_str[0]), 0, (--str1_len));
         return &(p1_str[0]);
     }
 
