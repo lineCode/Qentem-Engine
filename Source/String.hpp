@@ -476,6 +476,10 @@ struct String {
         return &(p1_str[0]);
     }
 
+    inline static String FromNumber(UShort number, UShort const min = 1) noexcept {
+        return FromNumber(static_cast<UNumber>(number), min);
+    }
+
     static String FromNumber(double number, UShort const min = 1, UShort r_min = 0, UShort r_max = 0) noexcept {
         UShort str1_len = 0;
         UShort str2_len = 0;

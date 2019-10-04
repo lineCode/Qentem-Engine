@@ -20,7 +20,8 @@ namespace Qentem {
 struct Template {
     static String Render(String const &content, Document *data) noexcept {
         static Expressions const &_tagsAll = _getTagsAll();
-        return Engine::Parse(content, Engine::Search(content, _tagsAll), 0, 0, static_cast<void *>(data));
+        return Engine::Parse(content, Engine::Search(content, _tagsAll, 0, content.Length), 0, content.Length,
+                             static_cast<void *>(data));
     }
 
     // e.g. {v:var_name}
@@ -48,7 +49,7 @@ struct Template {
     static String RenderIIF(String const &block, Match const &item, void *other) noexcept {
         static Expressions const _tagsQuotes = _getTagsQuotes();
 
-        Array<Match> const &&items = Engine::Search(block, _tagsQuotes);
+        Array<Match> const &&items = Engine::Search(block, _tagsQuotes, 0, block.Length);
         if (items.Index == 0) {
             return L"";
         }
@@ -107,8 +108,7 @@ struct Template {
         UNumber const offset = (item.Offset + item.OLength);
         UNumber const length = (item.Length - (item.OLength + item.CLength));
 
-        String statement = Engine::Parse(block, Engine::Search(block, _tagsVars, offset, (offset + length)), offset,
-                                         (offset + length), other);
+        String statement = Engine::Parse(block, Engine::Search(block, _tagsVars, offset, length), offset, length, other);
 
         return (ALU::Evaluate(statement) != 0.0);
     }
@@ -120,7 +120,7 @@ struct Template {
         static Expressions const &_tagsAll  = _getTagsAll();
         static Expressions const &_tagsHead = _getTagsHead();
 
-        Array<Match> const &&_subMatch = Engine::Search(block, _tagsHead, item.Offset, (item.Offset + item.Length));
+        Array<Match> const &&_subMatch = Engine::Search(block, _tagsHead, item.Offset, item.Length);
 
         if (_subMatch.Index != 0) {
             Match *sm = &(_subMatch[0]);
@@ -143,7 +143,7 @@ struct Template {
                             Array<Match> _subMatch2;
 
                             for (UNumber i = 1; i < item.NestMatch.Index; i++) {
-                                _subMatch2 = Engine::Search(block, _tagsHead, offset, item.NestMatch[i].Offset);
+                                _subMatch2 = Engine::Search(block, _tagsHead, offset, (block.Length - offset));
 
                                 // inner content of the next part.
                                 offset = item.NestMatch[i].Offset;
@@ -160,8 +160,7 @@ struct Template {
                 }
 
                 if (_true) {
-                    return Engine::Parse(block, Engine::Search(block, _tagsAll, offset, (offset + length)), offset,
-                                         (offset + length), other);
+                    return Engine::Parse(block, Engine::Search(block, _tagsAll, offset, length), offset, length, other);
                 }
             }
         }
@@ -177,7 +176,7 @@ struct Template {
         static Expressions const &_tagsAll  = _getTagsAll();
         static Expressions const &_tagsHead = _getTagsHead();
 
-        Array<Match> const &&_subMatch = Engine::Search(block, _tagsHead, item.Offset, (item.Offset + item.Length));
+        Array<Match> const &&_subMatch = Engine::Search(block, _tagsHead, item.Offset, item.Length);
 
         if ((_subMatch.Index != 0) && (_subMatch[0].NestMatch.Index != 0)) {
             String       name;
@@ -224,7 +223,8 @@ struct Template {
                     name, value_id, key_id, other);
 
                 if (_content.Length != 0) {
-                    return Engine::Parse(_content, Engine::Search(_content, _tagsAll), 0, 0, other);
+                    return Engine::Parse(_content, Engine::Search(_content, _tagsAll, 0, _content.Length), 0,
+                                         _content.Length, other);
                 }
             }
         }
@@ -257,7 +257,7 @@ struct Template {
             loop_exp.Add(&key_ex);
         }
 
-        Array<Match> const items = Engine::Search(content, loop_exp);
+        Array<Match> const items = Engine::Search(content, loop_exp, 0, content.Length);
         if (_entry->Type == VType::DocumentT) {
             if (_storage->Ordered) {
                 if (_storage->Strings.Index != 0) {
@@ -270,7 +270,7 @@ struct Template {
 
                         loop_exp[0]->Replace = _storage->Strings[i];
 
-                        rendered += Engine::Parse(content, items);
+                        rendered += Engine::Parse(content, items, 0, content.Length);
                     }
                 } else if (_storage->Numbers.Index != 0) {
                     for (UNumber i = 0; i < _storage->Numbers.Index; i++) {
@@ -282,7 +282,7 @@ struct Template {
 
                         loop_exp[0]->Replace = String::FromNumber(_storage->Numbers[i], 1, 0, 3);
 
-                        rendered += Engine::Parse(content, items, 0, 0, other);
+                        rendered += Engine::Parse(content, items, 0, content.Length, other);
                     }
                 }
             } else {
@@ -295,7 +295,7 @@ struct Template {
                     _storage->GetString(value, _storage->Keys[i]);
                     loop_exp[0]->Replace = value;
 
-                    rendered += Engine::Parse(content, items, 0, 0, other);
+                    rendered += Engine::Parse(content, items, 0, content.Length, other);
                 }
             }
         }

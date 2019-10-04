@@ -72,7 +72,7 @@ int main() {
     }
 
     TestJSON = true;
-    // Pause        = true;
+    // Pause    = true;
 
     Array<TestBit> bits;
 
@@ -198,7 +198,7 @@ static bool runTests(String const &name, Array<TestBit> const &bits, bool dump_e
         for (UNumber t = counter; t < bits[i].Content.Index; t++) {
             search_ticks = static_cast<UNumber>(clock());
             for (UNumber x = 0; x < times; x++) {
-                matches = Qentem::Engine::Search(bits[i].Content[t], bits[i].Exprs);
+                matches = Qentem::Engine::Search(bits[i].Content[t], bits[i].Exprs, 0, bits[i].Content[t].Length);
             }
             search_ticks = (static_cast<UNumber>(clock()) - search_ticks);
             total_search += search_ticks;
@@ -206,7 +206,7 @@ static bool runTests(String const &name, Array<TestBit> const &bits, bool dump_e
             String rendered;
             parse_ticks = static_cast<UNumber>(clock());
             for (UNumber y = 0; y < times; y++) {
-                rendered = Qentem::Engine::Parse(bits[i].Content[t], matches, 0, 0, other);
+                rendered = Qentem::Engine::Parse(bits[i].Content[t], matches, 0, bits[i].Content[t].Length, other);
             }
             parse_ticks = (static_cast<UNumber>(clock()) - parse_ticks);
             total_parse += parse_ticks;
@@ -220,7 +220,11 @@ static bool runTests(String const &name, Array<TestBit> const &bits, bool dump_e
             ss += String::FromNumber(count, 2) + L'-';
             ss += String::FromNumber(counter, 2) + L": ";
 
-            ss += Pass ? L"Pass" : L"Fail";
+            if (Pass) {
+                ss += L"Pass";
+            } else {
+                ss += L"Fail";
+            }
 
             ss += L" (Search: ";
             ss += String::FromNumber((static_cast<double>(search_ticks) / CLOCKS_PER_SEC), 2, 3, 3) + L')';
@@ -300,7 +304,7 @@ static bool NumbersConvTest() noexcept {
     test.Add({1000000, L"1000000"}).Add({11, L"11"}).Add({22, L"22"}).Add({55, L"55"}).Add({199, L"199"});
     test.Add({10.0, L"10"}).Add({11.00, L"11"}).Add({-22.87, L"-22.87", 2}).Add({-55.0055, L"-55.0055", 10});
 
-    test.Add({-12345567898745556, L"-12345567898745556"}).Add({-0.123455678987452, L"-0.123455678987452"});
+    test.Add({-0.123455678987455, L"-0.123455678987455"}).Add({-0.123455678987452, L"-0.123455678987452"});
     test.Add({0.999999, L"1", 5}).Add({0.999999, L"0.999999", 6}).Add({0.999999, L"0.999999", 10});
     test.Add({0.123e-12, L"0.000000000000123"}).Add({9876.543210, L"9876.54321", 5});
     test.Add({-2.000000000000999, L"-2.000000000000999"}).Add({3.9999999999999, L"3.9999999999999", 14});
@@ -492,7 +496,6 @@ static bool JSONTests() noexcept {
         took = static_cast<UNumber>(clock());
         for (UNumber y = 1; y <= times; y++) {
             data = json_content;
-            // Qentem::Engine::Search(json_content, Qentem::Document::_getJsonExpres());
         }
         took = (static_cast<UNumber>(clock()) - took);
         std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << ' ';

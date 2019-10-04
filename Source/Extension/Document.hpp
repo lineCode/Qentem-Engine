@@ -156,7 +156,7 @@ struct Document {
     }
 
     Document(String const &value) noexcept {
-        Array<Match> items = Engine::Search(value, _getJsonExpres());
+        Array<Match> items = Engine::Search(value, _getJsonExpres(), 0, value.Length);
 
         if (items.Index == 0) {
             Ordered = true;
@@ -172,18 +172,20 @@ struct Document {
     }
 
     Document(wchar_t const *value) noexcept {
-        Array<Match> items = Engine::Search(value, _getJsonExpres());
+        String str = value;
+
+        Array<Match> items = Engine::Search(str, _getJsonExpres(), 0, str.Length);
 
         if (items.Index == 0) {
             // Just a string.
             Ordered = true;
-            Strings += value;
+            Strings += str;
             Entries += Entry(0, 0, VType::StringT);
         } else {
             if ((Ordered = (items[0].Expr->ID == 2))) {
-                _makeOrderedList(*this, value, items[0]);
+                _makeOrderedList(*this, str, items[0]);
             } else if (items[0].NestMatch.Index != 0) {
-                _makeList(*this, value, items[0].NestMatch);
+                _makeList(*this, str, items[0].NestMatch);
             }
         }
     }
@@ -395,8 +397,8 @@ struct Document {
                     if (subItem->NestMatch.Index == 0) {
                         document.Strings += String::Part(content.Str, (subItem->Offset + 1), (subItem->Length - 2));
                     } else {
-                        document.Strings += Engine::Parse(content, subItem->NestMatch, (subItem->Offset + 1),
-                                                          ((subItem->Length + subItem->Offset) - 1));
+                        document.Strings +=
+                            Engine::Parse(content, subItem->NestMatch, (subItem->Offset + 1), (subItem->Length - 2));
                     }
 
                     offset = (subItem->Offset + subItem->Length) - 1;
@@ -499,8 +501,7 @@ struct Document {
 
                         data = &(items[i]);
                         if (data->NestMatch.Index != 0) {
-                            tmpString = Engine::Parse(content, data->NestMatch, (data->Offset + 1),
-                                                      ((data->Offset + data->Length) - 1));
+                            tmpString = Engine::Parse(content, data->NestMatch, (data->Offset + 1), (data->Length - 2));
                         } else {
                             tmpString = String::Part(content.Str, (data->Offset + 1), (data->Length - 2));
                         }
@@ -600,7 +601,7 @@ struct Document {
 
         // C style comments
         if (!comments) {
-            items = Engine::Search(content, json_expres);
+            items = Engine::Search(content, json_expres, 0, content.Length);
         } else {
             static Expressions __comments;
             if (__comments.Index == 0) {
@@ -621,8 +622,9 @@ struct Document {
                 __comments = Expressions().Add(&comment1).Add(&comment2);
             }
 
-            n_content = Engine::Parse(content, Engine::Search(content, __comments));
-            items     = Engine::Search(n_content, json_expres);
+            n_content =
+                Engine::Parse(content, Engine::Search(content, __comments, 0, content.Length), 0, content.Length);
+            items = Engine::Search(n_content, json_expres, 0, n_content.Length);
         }
 
         if (items.Index != 0) {
@@ -846,8 +848,10 @@ struct Document {
 
     void _toJSON(StringStream &ss) const noexcept {
         static Expressions const &to_json_expres = _getToJsonExpres();
-        Entry *                   _entry;
-        Array<Match>              tmpMatchs;
+
+        Entry *      _entry;
+        Array<Match> tmpMatchs;
+        String *     str_ptr;
 
         if (Ordered) {
             ss.Share(&JFX.fss4);
@@ -863,11 +867,12 @@ struct Document {
                     case VType::StringT: {
                         ss.Share(&JFX.fss6);
 
-                        tmpMatchs = Engine::Search(Strings[_entry->ArrayID], to_json_expres);
+                        str_ptr   = &(Strings[_entry->ArrayID]);
+                        tmpMatchs = Engine::Search(*str_ptr, to_json_expres, 0, str_ptr->Length);
                         if (tmpMatchs.Index == 0) {
-                            ss.Share(&Strings[_entry->ArrayID]);
+                            ss.Share(str_ptr);
                         } else {
-                            ss += Engine::Parse(Strings[_entry->ArrayID], tmpMatchs);
+                            ss += Engine::Parse(*str_ptr, tmpMatchs, 0, str_ptr->Length);
                         }
 
                         ss.Share(&JFX.fss6);
@@ -907,11 +912,13 @@ struct Document {
                         ss.Share(&JFX.fss6);
                         ss.Share(&JFX.fsc1);
                         ss.Share(&JFX.fss6);
-                        tmpMatchs = Engine::Search(Strings[_entry->ArrayID], to_json_expres);
+
+                        str_ptr   = &(Strings[_entry->ArrayID]);
+                        tmpMatchs = Engine::Search(*str_ptr, to_json_expres, 0, str_ptr->Length);
                         if (tmpMatchs.Index == 0) {
-                            ss.Share(&Strings[_entry->ArrayID]);
+                            ss.Share(str_ptr);
                         } else {
-                            ss += Engine::Parse(Strings[_entry->ArrayID], tmpMatchs);
+                            ss += Engine::Parse(*str_ptr, tmpMatchs, 0, str_ptr->Length);
                         }
 
                         ss.Share(&JFX.fss6);
@@ -961,10 +968,10 @@ struct Document {
 
         if (tags.Index == 0) {
             _JsonEsc.Keyword = L'\\';
-            _JsonEsc.MatchCB = ([](String const &content, UNumber &endAt, Match &item, Array<Match> &items,
-                                   Expression **expr, UNumber const to) noexcept->bool {
-                UNumber index = endAt;
-                if ((content[++index] == L'\\') || (content[index] == L' ') || (index == to)) {
+            _JsonEsc.MatchCB = ([](String const &content, UNumber &offset, UNumber const endOffset, Match &item,
+                                   Array<Match> &items) noexcept->bool {
+                UNumber _offset = offset;
+                if ((content[++_offset] == L'\\') || (content[_offset] == L' ') || (_offset == endOffset)) {
                     // If there is a space after \ or \ or it's at the end, then it's a match.
                     items += static_cast<Match &&>(item);
                 }
@@ -1419,24 +1426,26 @@ struct Document {
     }
 
     void operator+=(wchar_t const *string) noexcept {
-        Array<Match> items = Engine::Search(string, _getJsonExpres());
+        String str = string;
+
+        Array<Match> items = Engine::Search(str, _getJsonExpres(), 0, str.Length);
 
         if (items.Index != 0) {
             Document doc;
             if ((doc.Ordered = (items[0].Expr->ID == 2))) {
-                _makeOrderedList(doc, string, items[0]);
+                _makeOrderedList(doc, str, items[0]);
             } else if (items[0].NestMatch.Index != 0) {
-                _makeList(doc, string, items[0].NestMatch);
+                _makeList(doc, str, items[0].NestMatch);
             }
             *this += doc;
         } else if (Ordered) {
             Entries += Entry(Strings.Index, 0, VType::StringT);
-            Strings += string;
+            Strings += str;
         }
     }
 
     void operator+=(String const &string) noexcept {
-        Array<Match> items = Engine::Search(string, _getJsonExpres());
+        Array<Match> items = Engine::Search(string, _getJsonExpres(), 0, string.Length);
 
         if (items.Index != 0) {
             Document doc;
@@ -1453,7 +1462,7 @@ struct Document {
     }
 
     void operator+=(String &&string) noexcept {
-        Array<Match> items = Engine::Search(string, _getJsonExpres());
+        Array<Match> items = Engine::Search(string, _getJsonExpres(), 0, string.Length);
 
         if (items.Index != 0) {
             Document doc;

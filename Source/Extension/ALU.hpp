@@ -169,12 +169,14 @@ struct ALU {
     // e.g. ( 4 + 3 ), ( 2 + ( 4 + ( 1 + 2 ) + 1 ) * 5 - 3 - 2 )
     static String ParenthesisCallback(String const &block, Match const &item, void *other) noexcept {
         static Expressions const _mathExprs = getMathExprs();
-        return Engine::Parse(block, Engine::Search(block, _mathExprs, item.OLength, (block.Length - item.CLength)),
-                             item.OLength, (block.Length - item.CLength));
+
+        UNumber limit = ((block.Length - (item.CLength + item.OLength)));
+
+        return Engine::Parse(block, Engine::Search(block, _mathExprs, item.OLength, limit), item.OLength, limit);
     }
 
     static void NestNumber(String const &block, Match const &item, double &number) noexcept {
-        String r = Engine::Parse(block, item.NestMatch, item.Offset, (item.Offset + item.Length));
+        String r = Engine::Parse(block, item.NestMatch, item.Offset, item.Length);
         if (r.Length != 0) {
             String::ToNumber(r, number);
         }
@@ -429,14 +431,14 @@ struct ALU {
          */
 
         // Stage one:
-        content = Engine::Parse(content, Engine::Search(content, _parensExprs));
+        content = Engine::Parse(content, Engine::Search(content, _parensExprs, 0, content.Length), 0, content.Length);
         if ((content.Length == 0) || (content == L'0')) {
             return 0.0;
         }
 
         // Stage two:
         double num = 0.0;
-        content    = Engine::Parse(content, Engine::Search(content, _mathExprs));
+        content    = Engine::Parse(content, Engine::Search(content, _mathExprs, 0, content.Length), 0, content.Length);
         if ((content.Length != 0) && String::ToNumber(content, num)) {
             return num;
         }
