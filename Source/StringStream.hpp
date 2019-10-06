@@ -21,7 +21,7 @@ enum SType { Bit = 0, PBit, Bits };
 
 struct StringBit {
     SType   Type;
-    UNumber Index;
+    UNumber Size;
 };
 
 class StringStream {
@@ -39,7 +39,7 @@ class StringStream {
     void operator+=(StringStream &&col) noexcept {
         if (col.Length != 0) {
             Length += col.Length;
-            bits += {SType::Bits, collections.Index};
+            bits += {SType::Bits, collections.Size};
             collections += static_cast<StringStream &&>(col);
         }
     }
@@ -47,7 +47,7 @@ class StringStream {
     void operator+=(StringStream const &col) noexcept {
         if (col.Length != 0) {
             Length += col.Length;
-            bits += {SType::Bits, collections.Index};
+            bits += {SType::Bits, collections.Size};
             collections += col;
         }
     }
@@ -55,7 +55,7 @@ class StringStream {
     void operator+=(String &&src) noexcept {
         if (src.Length != 0) {
             Length += src.Length;
-            bits += {SType::Bit, _strings.Index};
+            bits += {SType::Bit, _strings.Size};
             _strings += static_cast<String &&>(src);
         }
     }
@@ -63,7 +63,7 @@ class StringStream {
     void operator+=(String const &src) noexcept {
         if (src.Length != 0) {
             Length += src.Length;
-            bits += {SType::Bit, _strings.Index};
+            bits += {SType::Bit, _strings.Size};
             _strings += src;
         }
     }
@@ -71,7 +71,7 @@ class StringStream {
     void Share(String const *src) noexcept {
         if (src->Length != 0) {
             Length += src->Length;
-            bits += {SType::PBit, p_strings.Index};
+            bits += {SType::PBit, p_strings.Size};
             p_strings += src;
         }
     }
@@ -80,9 +80,9 @@ class StringStream {
         String const *sstr;
         UNumber       j = 0;
 
-        for (UNumber i = 0; i < _ss.bits.Index; i++) {
+        for (UNumber i = 0; i < _ss.bits.Size; i++) {
             if (_ss.bits[i].Type == SType::Bit) {
-                sstr = &(_ss._strings[_ss.bits[i].Index]);
+                sstr = &(_ss._strings[_ss.bits[i].Size]);
                 for (j = 0; j < sstr->Length;) {
                     buk[buk.Length] = sstr->operator[](j);
                     ++buk.Length;
@@ -92,7 +92,7 @@ class StringStream {
             }
 
             if (_ss.bits[i].Type == SType::PBit) {
-                sstr = _ss.p_strings[_ss.bits[i].Index];
+                sstr = _ss.p_strings[_ss.bits[i].Size];
                 for (j = 0; j < sstr->Length;) {
                     buk[buk.Length] = sstr->operator[](j);
                     ++buk.Length;
@@ -101,7 +101,7 @@ class StringStream {
                 continue;
             }
 
-            _pack(_ss.collections[_ss.bits[i].Index], buk);
+            _pack(_ss.collections[_ss.bits[i].Size], buk);
         }
     }
 
@@ -112,11 +112,11 @@ class StringStream {
         if (Length != 0) {
             _pack(*this, tmp);
             // To allow the reuse of the object
-            Length            = 0;
-            _strings.Index    = 0;
-            p_strings.Index   = 0;
-            collections.Index = 0;
-            bits.Index        = 0;
+            Length           = 0;
+            _strings.Size    = 0;
+            p_strings.Size   = 0;
+            collections.Size = 0;
+            bits.Size        = 0;
         }
 
         tmp[tmp.Length] = L'\0'; // Null trimmming

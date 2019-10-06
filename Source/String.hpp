@@ -424,13 +424,13 @@ struct String {
     inline static void SoftTrim(wchar_t const *str, UNumber &start, UNumber &limit) noexcept {
         UNumber end = limit + start;
 
-        while ((str[start] == L' ') || (str[start] == L'\n') || (str[start] == L'\r') || (str[start] == L'\t')) {
+        while ((str[start] == L' ') || (str[start] == L'\n') || (str[start] == L'\t') || (str[start] == L'\r')) {
             ++start;
             --limit;
         }
 
         while ((end > start) &&
-               ((str[--end] == L' ') || (str[end] == L'\n') || (str[end] == L'\r') || (str[end] == L'\t'))) {
+               ((str[--end] == L' ') || (str[end] == L'\n') || (str[end] == L'\t') || (str[end] == L'\r'))) {
             --limit;
         }
     }

@@ -50,7 +50,7 @@ struct Template {
         static Expressions const _tagsQuotes = _getTagsQuotes();
 
         Array<Match> const &&items = Engine::Search(block, _tagsQuotes, 0, block.Length);
-        if (items.Index == 0) {
+        if (items.Size == 0) {
             return L"";
         }
 
@@ -61,7 +61,7 @@ struct Template {
         UNumber start_at;
 
         // case="[statement]" true="[Yes]" false="[No]"
-        for (UNumber i = 0; i < items.Index; i++) {
+        for (UNumber i = 0; i < items.Size; i++) {
             // With this method, order is not necessary of case=, true=, false=
             m = &(items[i]);
             if (m->Offset > 5) { // for the length of: set= or var=
@@ -122,10 +122,10 @@ struct Template {
 
         Array<Match> const &&_subMatch = Engine::Search(block, _tagsHead, item.Offset, item.Length);
 
-        if (_subMatch.Index != 0) {
+        if (_subMatch.Size != 0) {
             Match *sm = &(_subMatch[0]);
 
-            if (sm->NestMatch.Index != 0) {
+            if (sm->NestMatch.Size != 0) {
                 Match *nm = &(sm->NestMatch[0]);
                 _true     = Template::EvaluateIF(block, *nm, other);
 
@@ -134,7 +134,7 @@ struct Template {
                 UNumber length = (item.Length - (sm->Length + item.CLength));
 
                 // // if_else (splitted content)
-                if (item.NestMatch.Index != 0) {
+                if (item.NestMatch.Size != 0) {
                     nm = &(item.NestMatch[0]);
                     if ((Flags::SPLIT & nm->Expr->Flag) != 0) {
                         if (_true) {
@@ -142,14 +142,14 @@ struct Template {
                         } else {
                             Array<Match> _subMatch2;
 
-                            for (UNumber i = 1; i < item.NestMatch.Index; i++) {
+                            for (UNumber i = 1; i < item.NestMatch.Size; i++) {
                                 _subMatch2 = Engine::Search(block, _tagsHead, offset, (block.Length - offset));
 
                                 // inner content of the next part.
                                 offset = item.NestMatch[i].Offset;
                                 length = item.NestMatch[i].Length;
 
-                                if ((_subMatch2[0].NestMatch.Index == 0) ||
+                                if ((_subMatch2[0].NestMatch.Size == 0) ||
                                     Template::EvaluateIF(block, _subMatch2[0].NestMatch[0], other)) {
                                     _true = true;
                                     break;
@@ -178,7 +178,7 @@ struct Template {
 
         Array<Match> const &&_subMatch = Engine::Search(block, _tagsHead, item.Offset, item.Length);
 
-        if ((_subMatch.Index != 0) && (_subMatch[0].NestMatch.Index != 0)) {
+        if ((_subMatch.Size != 0) && (_subMatch[0].NestMatch.Size != 0)) {
             String       name;
             String       value_id;
             String       key_id;
@@ -188,7 +188,7 @@ struct Template {
             Match * m;
             UNumber start_at;
 
-            for (UNumber i = 0; i < sm->NestMatch.Index; i++) {
+            for (UNumber i = 0; i < sm->NestMatch.Size; i++) {
                 m = &(sm->NestMatch[i]);
                 if (m->Offset > 5) { // for the length of: set= or var= + 1
                     start_at = m->Offset;
@@ -260,8 +260,8 @@ struct Template {
         Array<Match> const items = Engine::Search(content, loop_exp, 0, content.Length);
         if (_entry->Type == VType::DocumentT) {
             if (_storage->Ordered) {
-                if (_storage->Strings.Index != 0) {
-                    for (UNumber i = 0; i < _storage->Strings.Index; i++) {
+                if (_storage->Strings.Size != 0) {
+                    for (UNumber i = 0; i < _storage->Strings.Size; i++) {
                         num = String::FromNumber(i);
 
                         if (key_id.Length != 0) {
@@ -272,8 +272,8 @@ struct Template {
 
                         rendered += Engine::Parse(content, items, 0, content.Length);
                     }
-                } else if (_storage->Numbers.Index != 0) {
-                    for (UNumber i = 0; i < _storage->Numbers.Index; i++) {
+                } else if (_storage->Numbers.Size != 0) {
+                    for (UNumber i = 0; i < _storage->Numbers.Size; i++) {
                         num = String::FromNumber(i);
 
                         if (key_id.Length != 0) {
@@ -287,7 +287,7 @@ struct Template {
                 }
             } else {
                 String value;
-                for (UNumber i = 0; i < _storage->Keys.Index; i++) {
+                for (UNumber i = 0; i < _storage->Keys.Size; i++) {
                     if (key_id.Length != 0) {
                         loop_exp[1]->Replace = _storage->Keys[i];
                     }
@@ -308,7 +308,7 @@ struct Template {
         static Expression  VarTail;
         static Expressions tags;
 
-        if (tags.Index == 0) {
+        if (tags.Size == 0) {
             // Variables evaluation.
             VarTail.ParseCB = &(Template::RenderVar);
             // {v:var_name}
@@ -327,7 +327,7 @@ struct Template {
         static Expression  QuoteTail;
         static Expressions tags;
 
-        if (tags.Index == 0) {
+        if (tags.Size == 0) {
             TagQuote.Keyword   = L'"';
             QuoteTail.Keyword  = L'"';
             TagQuote.Connected = &QuoteTail;
@@ -343,7 +343,7 @@ struct Template {
         static Expressions        tags;
         static Expressions const &_tagsQuotes = _getTagsQuotes();
 
-        if (tags.Index == 0) {
+        if (tags.Size == 0) {
             TagHead.Keyword   = L"<";
             TagHead_T.Keyword = L'>';
             TagHead_T.Flag    = Flags::ONCE;
@@ -379,7 +379,7 @@ struct Template {
 
         static Expressions tags;
 
-        if (tags.Index == 0) {
+        if (tags.Size == 0) {
             // Inline if evaluation.
             IifTail.ParseCB = &(Template::RenderIIF);
             //{iif case="3 == 3" true="Yes" false="No"}

@@ -35,7 +35,7 @@ struct XTag {
 
 struct XMLParser {
     static bool InfinitSpaceCallback(String const &content, UNumber &offset, UNumber const endOffset, Match &item,
-                                     Array<Match> &items) noexcept {
+                                     Array<Match> &items, UNumber const level) noexcept {
 
         while (content[++offset] == L' ') {
             ++item.Length;
@@ -53,7 +53,7 @@ struct XMLParser {
 
         static Expressions tags;
 
-        if (tags.Index == 0) {
+        if (tags.Size == 0) {
             xStart.Keyword   = L"<";
             xEnd.Keyword     = L">";
             xStart.Connected = &xEnd;
@@ -73,7 +73,7 @@ struct XMLParser {
 
         static Expressions tags;
 
-        if (tags.Index == 0) {
+        if (tags.Size == 0) {
             equalExpr.Keyword = L'=';
             equalExpr.Flag    = Flags::SPLIT | Flags::DROPEMPTY;
 
@@ -140,7 +140,7 @@ struct XMLParser {
                         // Subtags
                         UNumber subStart  = matchStart + 1;
                         UNumber subCount  = id - subStart;
-                        UNumber lastTag   = (tags.Index - 1);
+                        UNumber lastTag   = (tags.Size - 1);
                         Match * headItem  = &(items[matchStart]);
                         UNumber headStart = (headItem->Offset + headItem->Length);
 
@@ -172,7 +172,7 @@ struct XMLParser {
 
                 _properties = Qentem::Engine::Search(content, _propertiesExprs, startIndex, remlen);
 
-                for (UNumber p = 0; p < _properties.Index;) {
+                for (UNumber p = 0; p < _properties.Size;) {
                     xpMatch = &_properties[p];
                     xp.Name = String::Part(content.Str, xpMatch->Offset, xpMatch->Length);
                     ++p;
@@ -211,7 +211,7 @@ struct XMLParser {
         static Expressions const &_xmlExprs = getXMLExprs();
 
         Array<Match> items = Qentem::Engine::Search(content, _xmlExprs, 0, content.Length);
-        return parseTags(content, items, 0, items.Index);
+        return parseTags(content, items, 0, items.Size);
     }
 };
 

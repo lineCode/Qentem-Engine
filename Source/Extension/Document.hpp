@@ -91,9 +91,9 @@ struct Document {
 
     Document(Array<double> const &_numbers) noexcept {
         Numbers = _numbers;
-        Entries.SetCapacity(_numbers.Index);
+        Entries.SetCapacity(_numbers.Size);
 
-        for (UNumber i = 0; i < _numbers.Index; i++) {
+        for (UNumber i = 0; i < _numbers.Size; i++) {
             Entries += Entry(i, 0, VType::NumberT);
         }
 
@@ -102,9 +102,9 @@ struct Document {
 
     Document(Array<String> const &_strings) noexcept {
         Strings = _strings;
-        Entries.SetCapacity(_strings.Index);
+        Entries.SetCapacity(_strings.Size);
 
-        for (UNumber i = 0; i < _strings.Index; i++) {
+        for (UNumber i = 0; i < _strings.Size; i++) {
             Entries += Entry(i, 0, VType::StringT);
         }
 
@@ -113,9 +113,9 @@ struct Document {
 
     Document(Array<Document> const &_documents) noexcept {
         Documents = _documents;
-        Entries.SetCapacity(_documents.Index);
+        Entries.SetCapacity(_documents.Size);
 
-        for (UNumber i = 0; i < _documents.Index; i++) {
+        for (UNumber i = 0; i < _documents.Size; i++) {
             Entries += Entry(i, 0, VType::DocumentT);
         }
 
@@ -124,9 +124,9 @@ struct Document {
 
     Document(Array<double> &&_numbers) noexcept {
         Numbers = static_cast<Array<double> &&>(_numbers);
-        Entries.SetCapacity(_numbers.Index);
+        Entries.SetCapacity(_numbers.Size);
 
-        for (UNumber i = 0; i < _numbers.Index; i++) {
+        for (UNumber i = 0; i < _numbers.Size; i++) {
             Entries += Entry(i, 0, VType::NumberT);
         }
 
@@ -135,9 +135,9 @@ struct Document {
 
     Document(Array<String> &&_strings) noexcept {
         Strings = static_cast<Array<String> &&>(_strings);
-        Entries.SetCapacity(_strings.Index);
+        Entries.SetCapacity(_strings.Size);
 
-        for (UNumber i = 0; i < _strings.Index; i++) {
+        for (UNumber i = 0; i < _strings.Size; i++) {
             Entries += Entry(i, 0, VType::StringT);
         }
 
@@ -146,9 +146,9 @@ struct Document {
 
     Document(Array<Document> &&_documents) noexcept {
         Documents = static_cast<Array<Document> &&>(_documents);
-        Entries.SetCapacity(_documents.Index);
+        Entries.SetCapacity(_documents.Size);
 
-        for (UNumber i = 0; i < _documents.Index; i++) {
+        for (UNumber i = 0; i < _documents.Size; i++) {
             Entries += Entry(i, 0, VType::DocumentT);
         }
 
@@ -158,14 +158,14 @@ struct Document {
     Document(String const &value) noexcept {
         Array<Match> items = Engine::Search(value, _getJsonExpres(), 0, value.Length);
 
-        if (items.Index == 0) {
+        if (items.Size == 0) {
             Ordered = true;
             Strings += value;
             Entries += Entry(0, 0, VType::StringT);
         } else {
             if ((Ordered = (items[0].Expr->ID == 2))) {
                 _makeOrderedList(*this, value, items[0]);
-            } else if (items[0].NestMatch.Index != 0) {
+            } else if (items[0].NestMatch.Size != 0) {
                 _makeList(*this, value, items[0].NestMatch);
             }
         }
@@ -176,7 +176,7 @@ struct Document {
 
         Array<Match> items = Engine::Search(str, _getJsonExpres(), 0, str.Length);
 
-        if (items.Index == 0) {
+        if (items.Size == 0) {
             // Just a string.
             Ordered = true;
             Strings += str;
@@ -184,7 +184,7 @@ struct Document {
         } else {
             if ((Ordered = (items[0].Expr->ID == 2))) {
                 _makeOrderedList(*this, str, items[0]);
-            } else if (items[0].NestMatch.Index != 0) {
+            } else if (items[0].NestMatch.Size != 0) {
                 _makeList(*this, str, items[0].NestMatch);
             }
         }
@@ -235,7 +235,7 @@ struct Document {
 
         if (_table.Capacity <= id) {
             _table.Resize(id + 1);
-            _table.Index = _table.Capacity;
+            _table.Size = _table.Capacity;
         }
 
         if (_table[id].Hash == 0) {
@@ -249,7 +249,7 @@ struct Document {
     Entry *Exist(UNumber hash, UNumber level, Array<Index> const &_table) const noexcept {
         UNumber id = ((hash + level) % HashBase);
 
-        if ((_table.Index > id) && (_table[id].Hash != 0)) {
+        if ((_table.Size > id) && (_table[id].Hash != 0)) {
             if (_table[id].Hash == hash) {
                 return &(Entries[_table[id].EntryID]);
             }
@@ -270,7 +270,7 @@ struct Document {
             // New item.
             switch (type) {
                 case VType::StringT: {
-                    id = Strings.Index;
+                    id = Strings.Size;
                     if (move) {
                         Strings += static_cast<String &&>(*(static_cast<String *>(ptr)));
                     } else {
@@ -279,11 +279,11 @@ struct Document {
                 } break;
                 case VType::NumberT:
                 case VType::BooleanT: {
-                    id = Numbers.Index;
+                    id = Numbers.Size;
                     Numbers += *(static_cast<double *>(ptr));
                 } break;
                 case VType::DocumentT: {
-                    id = Documents.Index;
+                    id = Documents.Size;
                     if (move) {
                         Documents += static_cast<Document &&>(*(static_cast<Document *>(ptr)));
                     } else {
@@ -342,9 +342,9 @@ struct Document {
 
         Index _index;
         _index.Hash    = _hash;
-        _index.EntryID = Entries.Index;
+        _index.EntryID = Entries.Size;
 
-        Entries += Entry(id, Keys.Index, type);
+        Entries += Entry(id, Keys.Size, type);
         Keys += String::Part(key.Str, offset, limit);
 
         InsertIndex(_index, 0, Table);
@@ -357,7 +357,7 @@ struct Document {
         Index   _index;
         String *key;
 
-        for (UNumber i = 0; i < Keys.Index; i++) {
+        for (UNumber i = 0; i < Keys.Size; i++) {
             key            = &(Keys[Entries[i].KeyID]);
             _index.Hash    = String::Hash(key->Str, 0, key->Length);
             _index.EntryID = i;
@@ -392,9 +392,9 @@ struct Document {
             switch (content[offset]) {
                 case L'"': {
                     subItem = &item.NestMatch[nestID++];
-                    document.Entries += Entry(document.Strings.Index, 0, VType::StringT);
+                    document.Entries += Entry(document.Strings.Size, 0, VType::StringT);
 
-                    if (subItem->NestMatch.Index == 0) {
+                    if (subItem->NestMatch.Size == 0) {
                         document.Strings += String::Part(content.Str, (subItem->Offset + 1), (subItem->Length - 2));
                     } else {
                         document.Strings +=
@@ -408,7 +408,7 @@ struct Document {
                 case L'{': {
                     subItem = &item.NestMatch[nestID++];
 
-                    document.Entries += Entry(document.Documents.Index, 0, VType::DocumentT);
+                    document.Entries += Entry(document.Documents.Size, 0, VType::DocumentT);
 
                     Document doc;
                     _makeList(doc, content, subItem->NestMatch);
@@ -421,7 +421,7 @@ struct Document {
                 case L'[': {
                     subItem = &item.NestMatch[nestID++];
 
-                    document.Entries += Entry(document.Documents.Index, 0, VType::DocumentT);
+                    document.Entries += Entry(document.Documents.Size, 0, VType::DocumentT);
 
                     Document doc;
                     doc.Ordered = true;
@@ -442,13 +442,13 @@ struct Document {
                         switch (content.Str[start]) {
                             case L't': {
                                 // True
-                                document.Entries += Entry(document.Numbers.Index, 0, VType::BooleanT);
+                                document.Entries += Entry(document.Numbers.Size, 0, VType::BooleanT);
                                 document.Numbers += 1;
                                 break;
                             }
                             case L'f': {
                                 // False
-                                document.Entries += Entry(document.Numbers.Index, 0, VType::BooleanT);
+                                document.Entries += Entry(document.Numbers.Size, 0, VType::BooleanT);
                                 document.Numbers += 0;
                                 break;
                             }
@@ -460,7 +460,7 @@ struct Document {
                             default: {
                                 // A number
                                 if (String::ToNumber(content, number, start, limit)) {
-                                    document.Entries += Entry(document.Numbers.Index, 0, VType::NumberT);
+                                    document.Entries += Entry(document.Numbers.Size, 0, VType::NumberT);
                                     document.Numbers += number;
                                 }
                                 break;
@@ -488,7 +488,7 @@ struct Document {
 
         String tmpString;
 
-        for (UNumber i = 0; i < items.Index; i++) {
+        for (UNumber i = 0; i < items.Size; i++) {
             key   = &(items[i]);
             start = 0;
             done  = false;
@@ -500,7 +500,7 @@ struct Document {
                         ++i;
 
                         data = &(items[i]);
-                        if (data->NestMatch.Index != 0) {
+                        if (data->NestMatch.Size != 0) {
                             tmpString = Engine::Parse(content, data->NestMatch, (data->Offset + 1), (data->Length - 2));
                         } else {
                             tmpString = String::Part(content.Str, (data->Offset + 1), (data->Length - 2));
@@ -604,7 +604,7 @@ struct Document {
             items = Engine::Search(content, json_expres, 0, content.Length);
         } else {
             static Expressions __comments;
-            if (__comments.Index == 0) {
+            if (__comments.Size == 0) {
                 static Expression comment1      = Expression();
                 static Expression comment_next1 = Expression();
                 comment1.Keyword                = L"/*";
@@ -627,13 +627,13 @@ struct Document {
             items = Engine::Search(n_content, json_expres, 0, n_content.Length);
         }
 
-        if (items.Index != 0) {
+        if (items.Size != 0) {
             Match *_item = &(items[0]);
 
             document.Ordered = (_item->Expr->ID == 2);
             if (document.Ordered) {
                 _makeOrderedList(document, (n_content.Length == 0) ? content : n_content, *_item);
-            } else if (_item->NestMatch.Index != 0) {
+            } else if (_item->NestMatch.Size != 0) {
                 _makeList(document, (n_content.Length == 0) ? content : n_content, _item->NestMatch);
             }
         }
@@ -703,7 +703,7 @@ struct Document {
 
                 if (limit != 0) {
                     if (doc->Ordered) {
-                        if (ExtractID(_id, key, end_offset, limit) && (doc->Entries.Index > _id)) {
+                        if (ExtractID(_id, key, end_offset, limit) && (doc->Entries.Size > _id)) {
                             *_entry = &(doc->Entries[_id]);
                         }
                     } else {
@@ -856,7 +856,7 @@ struct Document {
         if (Ordered) {
             ss.Share(&JFX.fss4);
 
-            for (UNumber i = 0; i < Entries.Index; i++) {
+            for (UNumber i = 0; i < Entries.Size; i++) {
                 _entry = &(Entries[i]);
 
                 if (ss.Length != 1) {
@@ -869,7 +869,7 @@ struct Document {
 
                         str_ptr   = &(Strings[_entry->ArrayID]);
                         tmpMatchs = Engine::Search(*str_ptr, to_json_expres, 0, str_ptr->Length);
-                        if (tmpMatchs.Index == 0) {
+                        if (tmpMatchs.Size == 0) {
                             ss.Share(str_ptr);
                         } else {
                             ss += Engine::Parse(*str_ptr, tmpMatchs, 0, str_ptr->Length);
@@ -898,7 +898,7 @@ struct Document {
         } else {
             ss.Share(&JFX.fss1);
 
-            for (UNumber i = 0; i < Entries.Index; i++) {
+            for (UNumber i = 0; i < Entries.Size; i++) {
                 _entry = &(Entries[i]);
 
                 if (ss.Length != 1) {
@@ -915,7 +915,7 @@ struct Document {
 
                         str_ptr   = &(Strings[_entry->ArrayID]);
                         tmpMatchs = Engine::Search(*str_ptr, to_json_expres, 0, str_ptr->Length);
-                        if (tmpMatchs.Index == 0) {
+                        if (tmpMatchs.Size == 0) {
                             ss.Share(str_ptr);
                         } else {
                             ss += Engine::Parse(*str_ptr, tmpMatchs, 0, str_ptr->Length);
@@ -966,10 +966,10 @@ struct Document {
         static Expression  _JsonQuot;
         static Expressions tags;
 
-        if (tags.Index == 0) {
+        if (tags.Size == 0) {
             _JsonEsc.Keyword = L'\\';
             _JsonEsc.MatchCB = ([](String const &content, UNumber &offset, UNumber const endOffset, Match &item,
-                                   Array<Match> &items) noexcept->bool {
+                                   Array<Match> &items, UNumber const level) noexcept->bool {
                 UNumber _offset = offset;
                 if ((content[++_offset] == L'\\') || (content[_offset] == L' ') || (_offset == endOffset)) {
                     // If there is a space after \ or \ or it's at the end, then it's a match.
@@ -1005,7 +1005,7 @@ struct Document {
 
         static Expressions tags;
 
-        if (tags.Index == 0) {
+        if (tags.Size == 0) {
             esc_esc.Keyword = L"\\\\";
             esc_esc.Replace = L"\\";
 
@@ -1025,7 +1025,7 @@ struct Document {
             opened_curly_bracket.Connected = &closed_curly_bracket;
 
             closed_curly_bracket.NestExprs =
-                Expressions().Add(&quotation_start).Add(&opened_curly_bracket).Add(&opened_square_bracket);
+                Expressions().Add(&opened_curly_bracket).Add(&quotation_start).Add(&opened_square_bracket);
 
             opened_square_bracket.Keyword   = L'[';
             closed_square_bracket.Keyword   = L']';
@@ -1033,7 +1033,7 @@ struct Document {
             opened_square_bracket.Connected = &closed_square_bracket;
 
             closed_square_bracket.NestExprs =
-                Expressions().Add(&opened_square_bracket).Add(&opened_curly_bracket).Add(&quotation_start);
+                Expressions().Add(&opened_square_bracket).Add(&quotation_start).Add(&opened_curly_bracket);
 
             tags = Expressions().Add(&opened_curly_bracket).Add(&opened_square_bracket);
         }
@@ -1050,27 +1050,27 @@ struct Document {
         Entry *_entry;
 
         if (Ordered) {
-            for (UNumber i = 0; i < doc.Entries.Index; i++) {
+            for (UNumber i = 0; i < doc.Entries.Size; i++) {
                 _entry = &(doc.Entries[i]);
 
                 switch (_entry->Type) {
                     case VType::StringT: {
-                        Entries += Entry(Strings.Index, 0, VType::StringT);
+                        Entries += Entry(Strings.Size, 0, VType::StringT);
                         Strings += doc.Strings[_entry->ArrayID];
                         break;
                     }
                     case VType::DocumentT: {
-                        Entries += Entry(Documents.Index, 0, VType::DocumentT);
+                        Entries += Entry(Documents.Size, 0, VType::DocumentT);
                         Documents += doc.Documents[_entry->ArrayID];
                         break;
                     }
                     case VType::NumberT: {
-                        Entries += Entry(Numbers.Index, 0, VType::NumberT);
+                        Entries += Entry(Numbers.Size, 0, VType::NumberT);
                         Numbers += doc.Numbers[_entry->ArrayID];
                         break;
                     }
                     case VType::BooleanT: {
-                        Entries += Entry(Numbers.Index, 0, VType::BooleanT);
+                        Entries += Entry(Numbers.Size, 0, VType::BooleanT);
                         Numbers += doc.Numbers[_entry->ArrayID];
                         break;
                     }
@@ -1085,7 +1085,7 @@ struct Document {
         } else {
             String *_key;
 
-            for (UNumber i = 0; i < doc.Entries.Index; i++) {
+            for (UNumber i = 0; i < doc.Entries.Size; i++) {
                 _entry = &(doc.Entries[i]);
                 _key   = &(doc.Keys[doc.Entries[i].KeyID]);
 
@@ -1126,27 +1126,27 @@ struct Document {
         Entry *_entry;
 
         if (Ordered) {
-            for (UNumber i = 0; i < doc.Entries.Index; i++) {
+            for (UNumber i = 0; i < doc.Entries.Size; i++) {
                 _entry = &(doc.Entries[i]);
 
                 switch (_entry->Type) {
                     case VType::StringT: {
-                        Entries += Entry(Strings.Index, 0, VType::StringT);
+                        Entries += Entry(Strings.Size, 0, VType::StringT);
                         Strings += static_cast<String &&>(doc.Strings[_entry->ArrayID]);
                         break;
                     }
                     case VType::DocumentT: {
-                        Entries += Entry(Documents.Index, 0, VType::DocumentT);
+                        Entries += Entry(Documents.Size, 0, VType::DocumentT);
                         Documents += static_cast<Document &&>(doc.Documents[_entry->ArrayID]);
                         break;
                     }
                     case VType::NumberT: {
-                        Entries += Entry(Numbers.Index, 0, VType::NumberT);
+                        Entries += Entry(Numbers.Size, 0, VType::NumberT);
                         Numbers += doc.Numbers[_entry->ArrayID];
                         break;
                     }
                     case VType::BooleanT: {
-                        Entries += Entry(Numbers.Index, 0, VType::BooleanT);
+                        Entries += Entry(Numbers.Size, 0, VType::BooleanT);
                         Numbers += doc.Numbers[_entry->ArrayID];
                         break;
                     }
@@ -1161,7 +1161,7 @@ struct Document {
         } else {
             String *_key;
 
-            for (UNumber i = 0; i < doc.Entries.Index; i++) {
+            for (UNumber i = 0; i < doc.Entries.Size; i++) {
                 _entry = &(doc.Entries[i]);
                 _key   = &(doc.Keys[doc.Entries[i].KeyID]);
 
@@ -1399,28 +1399,28 @@ struct Document {
 
     void operator+=(bool value) noexcept {
         if (Ordered) {
-            Entries += Entry(Numbers.Index, 0, VType::BooleanT);
+            Entries += Entry(Numbers.Size, 0, VType::BooleanT);
             Numbers += value ? 1.0 : 0.0;
         }
     }
 
     void operator+=(int num) noexcept {
         if (Ordered) {
-            Entries += Entry(Numbers.Index, 0, VType::NumberT);
+            Entries += Entry(Numbers.Size, 0, VType::NumberT);
             Numbers += static_cast<double>(num);
         }
     }
 
     void operator+=(long num) noexcept {
         if (Ordered) {
-            Entries += Entry(Numbers.Index, 0, VType::NumberT);
+            Entries += Entry(Numbers.Size, 0, VType::NumberT);
             Numbers += static_cast<double>(num);
         }
     }
 
     void operator+=(double num) noexcept {
         if (Ordered) {
-            Entries += Entry(Numbers.Index, 0, VType::NumberT);
+            Entries += Entry(Numbers.Size, 0, VType::NumberT);
             Numbers += num;
         }
     }
@@ -1430,16 +1430,16 @@ struct Document {
 
         Array<Match> items = Engine::Search(str, _getJsonExpres(), 0, str.Length);
 
-        if (items.Index != 0) {
+        if (items.Size != 0) {
             Document doc;
             if ((doc.Ordered = (items[0].Expr->ID == 2))) {
                 _makeOrderedList(doc, str, items[0]);
-            } else if (items[0].NestMatch.Index != 0) {
+            } else if (items[0].NestMatch.Size != 0) {
                 _makeList(doc, str, items[0].NestMatch);
             }
             *this += doc;
         } else if (Ordered) {
-            Entries += Entry(Strings.Index, 0, VType::StringT);
+            Entries += Entry(Strings.Size, 0, VType::StringT);
             Strings += str;
         }
     }
@@ -1447,16 +1447,16 @@ struct Document {
     void operator+=(String const &string) noexcept {
         Array<Match> items = Engine::Search(string, _getJsonExpres(), 0, string.Length);
 
-        if (items.Index != 0) {
+        if (items.Size != 0) {
             Document doc;
             if ((doc.Ordered = (items[0].Expr->ID == 2))) {
                 _makeOrderedList(doc, string, items[0]);
-            } else if (items[0].NestMatch.Index != 0) {
+            } else if (items[0].NestMatch.Size != 0) {
                 _makeList(doc, string, items[0].NestMatch);
             }
             *this += doc;
         } else if (Ordered) {
-            Entries += Entry(Strings.Index, 0, VType::StringT);
+            Entries += Entry(Strings.Size, 0, VType::StringT);
             Strings += string;
         }
     }
@@ -1464,24 +1464,24 @@ struct Document {
     void operator+=(String &&string) noexcept {
         Array<Match> items = Engine::Search(string, _getJsonExpres(), 0, string.Length);
 
-        if (items.Index != 0) {
+        if (items.Size != 0) {
             Document doc;
             if ((doc.Ordered = (items[0].Expr->ID == 2))) {
                 _makeOrderedList(doc, string, items[0]);
-            } else if (items[0].NestMatch.Index != 0) {
+            } else if (items[0].NestMatch.Size != 0) {
                 _makeList(doc, string, items[0].NestMatch);
             }
             *this += doc;
         } else if (Ordered) {
-            Entries += Entry(Strings.Index, 0, VType::StringT);
+            Entries += Entry(Strings.Size, 0, VType::StringT);
             Strings += static_cast<String &&>(string);
         }
     }
 
     void operator+=(Array<double> const &_numbers) noexcept {
         if (Ordered) {
-            UNumber id = Numbers.Index;
-            for (UNumber i = 0; i < _numbers.Index; i++) {
+            UNumber id = Numbers.Size;
+            for (UNumber i = 0; i < _numbers.Size; i++) {
                 Entries += Entry(id++, 0, VType::NumberT);
             }
 
@@ -1491,8 +1491,8 @@ struct Document {
 
     void operator+=(Array<String> const &_strings) noexcept {
         if (Ordered) {
-            UNumber id = Strings.Index;
-            for (UNumber i = 0; i < _strings.Index; i++) {
+            UNumber id = Strings.Size;
+            for (UNumber i = 0; i < _strings.Size; i++) {
                 Entries += Entry(id++, 0, VType::StringT);
             }
 
@@ -1502,8 +1502,8 @@ struct Document {
 
     void operator+=(Array<Document> const &_documents) noexcept {
         if (Ordered) {
-            UNumber id = Documents.Index;
-            for (UNumber i = 0; i < _documents.Index; i++) {
+            UNumber id = Documents.Size;
+            for (UNumber i = 0; i < _documents.Size; i++) {
                 Entries += Entry(id++, 0, VType::DocumentT);
             }
 
@@ -1513,8 +1513,8 @@ struct Document {
 
     void operator+=(Array<double> &&_numbers) noexcept {
         if (Ordered) {
-            UNumber id = Numbers.Index;
-            for (UNumber i = 0; i < _numbers.Index; i++) {
+            UNumber id = Numbers.Size;
+            for (UNumber i = 0; i < _numbers.Size; i++) {
                 Entries += Entry(id++, 0, VType::NumberT);
             }
 
@@ -1524,8 +1524,8 @@ struct Document {
 
     void operator+=(Array<String> &&_strings) noexcept {
         if (Ordered) {
-            UNumber id = Strings.Index;
-            for (UNumber i = 0; i < _strings.Index; i++) {
+            UNumber id = Strings.Size;
+            for (UNumber i = 0; i < _strings.Size; i++) {
                 Entries += Entry(id++, 0, VType::StringT);
             }
 
@@ -1535,8 +1535,8 @@ struct Document {
 
     void operator+=(Array<Document> &&_documents) noexcept {
         if (Ordered) {
-            UNumber id = Documents.Index;
-            for (UNumber i = 0; i < _documents.Index; i++) {
+            UNumber id = Documents.Size;
+            for (UNumber i = 0; i < _documents.Size; i++) {
                 Entries += Entry(id++, 0, VType::DocumentT);
             }
 

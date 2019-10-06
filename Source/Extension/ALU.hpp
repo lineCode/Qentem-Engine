@@ -47,7 +47,7 @@ struct ALU {
 
         static Expressions tags;
 
-        if (tags.Index == 0) {
+        if (tags.Size == 0) {
             MathMul.Keyword = L"*";
             MathMul.ID      = 1;
             MathMul.Flag    = flags_no_pop;
@@ -153,7 +153,7 @@ struct ALU {
         static Expression  ParensNext;
         static Expressions tags;
 
-        if (tags.Index == 0) {
+        if (tags.Size == 0) {
             ParensExpr.Keyword   = L'(';
             ParensNext.Keyword   = L')';
             ParensExpr.Connected = &ParensNext;
@@ -192,19 +192,19 @@ struct ALU {
         UNumber      op_id = m1->Expr->ID;
 
         if (m1->Length != 0) {
-            if (m1->NestMatch.Index != 0) {
+            if (m1->NestMatch.Size != 0) {
                 NestNumber(block, *m1, number1);
             } else {
                 String::ToNumber(block, number1, m1->Offset, m1->Length);
             }
         }
 
-        for (UNumber i = 1; i < item.NestMatch.Index; i++) {
+        for (UNumber i = 1; i < item.NestMatch.Size; i++) {
             m2 = &(item.NestMatch[i]);
 
             if (m2->Length != 0) {
 
-                if (m2->NestMatch.Index != 0) {
+                if (m2->NestMatch.Size != 0) {
                     NestNumber(block, *m2, number2);
                 } else {
                     String::ToNumber(block, number2, m2->Offset, m2->Length);
@@ -239,13 +239,13 @@ struct ALU {
         UNumber      op_id = m1->Expr->ID;
 
         if (m1->Length != 0) {
-            if (m1->NestMatch.Index != 0) {
+            if (m1->NestMatch.Size != 0) {
                 NestNumber(block, *m1, number1);
             } else {
                 wchar_t const c = block[m1->Offset];
                 if (((c <= 57) && (c >= 48)) || ((c == L'+') || (c == L'-'))) {
                     String::ToNumber(block, number1, m1->Offset, m1->Length);
-                } else if (item.NestMatch.Index == 2) { // String
+                } else if (item.NestMatch.Size == 2) { // String
                     bool const r = String::Part(block.Str, m1->Offset, m1->Length)
                                        .Compare(block, item.NestMatch[1].Offset, item.NestMatch[1].Length);
                     return (r ? L'1' : L'0');
@@ -253,12 +253,12 @@ struct ALU {
             }
         }
 
-        for (UNumber i = 1; i < item.NestMatch.Index; i++) {
+        for (UNumber i = 1; i < item.NestMatch.Size; i++) {
             m2 = &(item.NestMatch[i]);
 
             if (m2->Length != 0) {
 
-                if (m2->NestMatch.Index != 0) {
+                if (m2->NestMatch.Size != 0) {
                     NestNumber(block, *m2, number2);
                 } else {
                     String::ToNumber(block, number2, m2->Offset, m2->Length);
@@ -309,7 +309,7 @@ struct ALU {
             String::ToNumber(block, number1, m1->Offset, m1->Length);
         }
 
-        for (UNumber i = 1; i < item.NestMatch.Index; i++) {
+        for (UNumber i = 1; i < item.NestMatch.Size; i++) {
             m2 = &(item.NestMatch[i]);
 
             if (m2->Length != 0) {
@@ -370,19 +370,19 @@ struct ALU {
         UNumber      op_id = m1->Expr->ID;
 
         if (m1->Length != 0) {
-            if (m1->NestMatch.Index != 0) {
+            if (m1->NestMatch.Size != 0) {
                 NestNumber(block, *m1, number1);
             } else {
                 String::ToNumber(block, number1, m1->Offset, m1->Length);
             }
         }
 
-        for (UNumber i = 1; i < item.NestMatch.Index; i++) {
+        for (UNumber i = 1; i < item.NestMatch.Size; i++) {
             m2 = &(item.NestMatch[i]);
 
             if (m2->Length != 0) {
 
-                if (m2->NestMatch.Index != 0) {
+                if (m2->NestMatch.Size != 0) {
                     NestNumber(block, *m2, number2);
                 } else {
                     String::ToNumber(block, number2, m2->Offset, m2->Length);

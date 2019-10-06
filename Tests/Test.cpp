@@ -187,15 +187,15 @@ static bool runTests(String const &name, Array<TestBit> const &bits, bool dump_e
         ss += L"\n\n";
     }
 
-    for (UNumber i = start_at; i < bits.Index; i++) {
+    for (UNumber i = start_at; i < bits.Size; i++) {
         ++count;
 
-        if (bits[i].Expected.Index != bits[i].Content.Index) {
+        if (bits[i].Expected.Size != bits[i].Content.Size) {
             std::wcout << L"Check Expected & Content Size @" << String::FromNumber(bits[i].Line).Str << L'\n';
             return false;
         }
 
-        for (UNumber t = counter; t < bits[i].Content.Index; t++) {
+        for (UNumber t = counter; t < bits[i].Content.Size; t++) {
             search_ticks = static_cast<UNumber>(clock());
             for (UNumber x = 0; x < times; x++) {
                 matches = Qentem::Engine::Search(bits[i].Content[t], bits[i].Exprs, 0, bits[i].Content[t].Length);
@@ -331,7 +331,7 @@ static bool NumbersConvTest() noexcept {
 
     std::wcout << L"\n #Number Conversion Tests:\n";
 
-    for (UNumber i = 0; i < test.Index; i++) {
+    for (UNumber i = 0; i < test.Size; i++) {
         std::wcout << L' ' << String::FromNumber((i + 1), 2).Str << L") ";
 
         ticks = static_cast<UNumber>(clock());
@@ -381,16 +381,16 @@ static bool XMLTests() noexcept {
     }
     ticks = (static_cast<UNumber>(clock()) - ticks);
 
-    if (tags.Index != 0) {
+    if (tags.Size != 0) {
         Pass = true;
 
-        if (tags.Index == 4) {
+        if (tags.Size == 4) {
             std::wcout << L" Pass";
         } else {
             std::wcout << L" Fail";
             Pass = false;
         }
-        std::wcout << L" Tags' count: " << String::FromNumber(tags.Index).Str << L'\n';
+        std::wcout << L" Tags' count: " << String::FromNumber(tags.Size).Str << L'\n';
 
         UNumber id;
         if (Pass) {
@@ -417,7 +417,7 @@ static bool XMLTests() noexcept {
 
         if (Pass) {
             id = 1;
-            if ((tags[id].Properties.Index == 3) && (tags[id].Properties[0].Name == L"src") &&
+            if ((tags[id].Properties.Size == 3) && (tags[id].Properties[0].Name == L"src") &&
                 (tags[id].Properties[1].Name == L"id") && (tags[id].Properties[2].Name == L"class") &&
                 (tags[id].Properties[0].Value == L"www") && (tags[id].Properties[1].Value == L"  m  ") &&
                 (tags[id].Properties[2].Value == L"y")) {
@@ -427,12 +427,12 @@ static bool XMLTests() noexcept {
                 Pass = false;
             }
             std::wcout << L" Tag id:" << String::FromNumber(id).Str << L" (" << tags[id].Name.Str
-                       << L") properties count: " << String::FromNumber(tags[id].Properties.Index).Str << L'\n';
+                       << L") properties count: " << String::FromNumber(tags[id].Properties.Size).Str << L'\n';
         }
 
         if (Pass) {
             id = 2;
-            if ((tags[id].Name == L"div") && (tags[id].InnerNodes.Index == 2) &&
+            if ((tags[id].Name == L"div") && (tags[id].InnerNodes.Size == 2) &&
                 (tags[id].InnerNodes[0].InnerText == L"string")) {
                 std::wcout << L" Pass";
             } else {
@@ -440,7 +440,7 @@ static bool XMLTests() noexcept {
                 Pass = false;
             }
             std::wcout << L" Tag id:" << String::FromNumber(id).Str << L" (" << tags[id].Name.Str
-                       << L") InnerNodes' count: " << String::FromNumber(tags[id].InnerNodes.Index).Str << L'\n';
+                       << L") InnerNodes' count: " << String::FromNumber(tags[id].InnerNodes.Size).Str << L'\n';
         }
 
         if (Pass) {
