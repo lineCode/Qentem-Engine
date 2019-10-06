@@ -4,15 +4,15 @@ QLib_render = CDLL("./Build/QLib.so").renderTemplate_w
 QLib_render.restype = c_wchar_p
 QLib_render.argtypes = [c_wchar_p, c_wchar_p, c_bool]
 
-file_tempale = open("./Tests/temp.qtml", "r")
+file_tempale = open("./Tests/test.qtml", "r")
 tempale_text = file_tempale.read()
 file_tempale.close()
 
-file_json = open("./Tests/temp.json", "r")
+file_json = open("./Tests/test.json", "r")
 json_text = file_json.read()
 file_json.close()
 
-enable_comments = True
+enable_comments = False
 
 # Randering
 rendered = QLib_render(c_wchar_p(tempale_text),

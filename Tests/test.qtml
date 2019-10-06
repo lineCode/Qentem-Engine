@@ -14,10 +14,10 @@
 <!--- Inline condition with one value -->
 <div>{iif case="{v:var4} = 4" true="4 == 4"}</div>
 
-<!--- Inline condition with incremental value to a variable in an Array -->
+<!--- Inline condition with a resualt of a math value of a variable in an Array -->
 <div>{iif case="({v:numbers[2]} + 3) = 5" true="eq 5" false="({v:numbers[2]} + 3) != 5"}</div>
 
-<!--- Inline condition with math operations -->
+<!--- Inline condition with math -->
 <div>{iif case="14 == 14" true="eq 14" false="14 != 14"}</div>
 
 <!--- If conditions -->

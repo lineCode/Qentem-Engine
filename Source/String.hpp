@@ -23,6 +23,32 @@ struct String {
 
     String() = default;
 
+    String(char const *str) noexcept {
+        while (str[Capacity] != L'\0') {
+            ++Capacity;
+        };
+
+        Memory<wchar_t>::Allocate(&Str, (Capacity + 1));
+
+        for (; Length < Capacity; Length++) {
+            Str[Length] = static_cast<wchar_t>(str[Length]);
+        }
+
+        Str[Length] = L'\0';
+    }
+
+    String(char const str) noexcept { // one char
+        Capacity = 1;
+
+        Memory<wchar_t>::Allocate(&Str, 2);
+
+        if (str != L'\0') {
+            Str[Length++] = static_cast<wchar_t>(str);
+        }
+
+        Str[Length] = L'\0';
+    }
+
     String(wchar_t const str) noexcept { // one wchar
         Capacity = 1;
 
@@ -35,44 +61,13 @@ struct String {
         Str[Length] = L'\0';
     }
 
-    String(char const str) noexcept { // one char
-        Length = Capacity = 1;
-
-        Memory<wchar_t>::Allocate(&Str, 2);
-
-        if (str != L'\0') {
-            Str[Length++] = static_cast<wchar_t>(str);
-        }
-
-        Str[Length] = L'\0';
-    }
-
     String(wchar_t const *str) noexcept {
-        UNumber _length = Count(str);
+        Capacity = Count(str);
 
-        Capacity = _length;
+        Memory<wchar_t>::Allocate(&Str, (Capacity + 1));
 
-        Memory<wchar_t>::Allocate(&Str, (_length + 1));
-
-        for (; Length < _length; Length++) {
+        for (; Length < Capacity; Length++) {
             Str[Length] = str[Length];
-        }
-
-        Str[Length] = L'\0';
-    }
-
-    String(char const *str) noexcept {
-        UNumber _length = 0;
-        while (str[_length] != L'\0') {
-            ++_length;
-        };
-
-        Capacity = _length;
-
-        Memory<wchar_t>::Allocate(&Str, (_length + 1));
-
-        for (; Length < _length; Length++) {
-            Str[Length] = static_cast<wchar_t>(str[Length]);
         }
 
         Str[Length] = L'\0';
@@ -88,12 +83,11 @@ struct String {
             src.Length   = 0;
             src.Str      = nullptr;
 
-            return;
+        } else {
+            Capacity = 1;
+            Memory<wchar_t>::Allocate(&Str, 1); // 1 for /0
+            Str[Length] = L'\0';
         }
-
-        Capacity = 1;
-        Memory<wchar_t>::Allocate(&Str, 1); // 1 for /0
-        Str[Length] = L'\0';
     }
 
     String(String const &src) noexcept { // Copy
@@ -270,12 +264,14 @@ struct String {
 
         ns.SetLength(Length + src.Length);
         Copy(ns, Str, 0, Length);
-        Copy(ns, src.Str, ns.Length, src.Length);
+
+        if (src.Length != 0) {
+            Copy(ns, src.Str, ns.Length, src.Length);
+            src.Length = 0;
+        }
 
         Memory<wchar_t>::Deallocate(&src.Str);
-
         src.Capacity = 0;
-        src.Length   = 0;
 
         return ns;
     }
@@ -285,7 +281,10 @@ struct String {
 
         ns.SetLength(Length + src.Length);
         Copy(ns, Str, 0, Length);
-        Copy(ns, src.Str, ns.Length, src.Length);
+
+        if (src.Length != 0) {
+            Copy(ns, src.Str, ns.Length, src.Length);
+        }
 
         return ns;
     }
@@ -357,10 +356,13 @@ struct String {
     }
 
     inline void SetLength(UNumber const _size) noexcept {
-        Length   = 0;
         Capacity = _size;
 
-        Memory<wchar_t>::Deallocate(&Str);
+        if (Length != 0) {
+            Length = 0;
+            Memory<wchar_t>::Deallocate(&Str);
+        }
+
         Memory<wchar_t>::Allocate(&Str, (_size + 1));
 
         Str[0] = L'\0';
@@ -459,7 +461,7 @@ struct String {
     }
 
     static String FromNumber(UNumber number, UShort const min = 1) noexcept {
-        wchar_t p1_str[41]; // 39 + "sign" + "\0"
+        wchar_t p1_str[23];
         UShort  str1_len = 0;
 
         while (number != 0) {

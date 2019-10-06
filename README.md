@@ -1,13 +1,13 @@
-# Qentem Engine (v0.9.9.2)
+# Qentem Engine (v0.9.9.3)
 
 ## Introduction:
-Qentem Engine is an independent library that uses a fast algorithm for nest-searching and nest-matching. It can be used to match existing syntaxes or new ones, and with call-backs for post and per-parsing, It's posable to match almost any complex syntax. It's highly efficient and has small footprint on memory, and built using modern C++. It can be used to render complex templates that contains nested loop, nested if-else, inline if, math (+ * / - ^ %), logic (&& ||), and/or something simple; like text replacing/splitting. Also, it can be used for JSON, XML ,HTML... etc.
+Qentem Engine is an independent library that uses a fast algorithm for nest-searching/nest-matching. It can be used to match existing syntaxes or new ones, and with call-backs for post and per-parsing, It's posable to match almost any complex syntax. It is very efficient and has a small footprint on memory, and it's built using modern C++. It can be used to render complex templates that contains nested loop, nested if-else, inline if, math (+ * / - ^ %), logic (&& ||), and/or something simple: like replacing a text or splitting it. Also, it is cabable of doing JSON, XML/HTML.
 
 ## Built-in:
-The library - at the moment - has String class (with number conversion), Array<Type>, String Stream, Document (Tree/Map/Hash-Table), Template generator, Arithmetic and Logic Unit, and JSON parser (with C style comments). Also, XML/HTML parser.
+The library - at the moment - has String class (with number conversion), Array<Type>, String Stream, Document (Tree/Map/Hash-Table), Template generator (HTML friendly syntax), Arithmetic & Logic Unit, and JSON parser (with C style comments). Also, XML/HTML parser.
 
 ## Tests:
-This library includes over 350 tests; to insure that it's stable and functional. to compile the tests, the fowlling command can be  used:
+This library includes over 350 tests; to insure that it's stable and functional. to compile the tests, the next command can be used:
 ```txt
 CXX -I ./Source ./Tests/Test.cpp -o ./Tests/QTest.bin
 ```
@@ -87,7 +87,7 @@ String JSON = doc.ToJSON(); // Exporting the document
 }
 ```
 
-### Template (HTML friendly):
+### Template:
 ```cpp
 #include <Extension/Template.hpp>
 // Based on the Document example
@@ -110,24 +110,24 @@ d: D
 ```
 
 ### Note:
-The complete example is located @ [Example/Example1.cpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Example/Example1.cpp). For more about template syntax, see [Tests/temp.qtml](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/temp.qtml).
+The complete example is located @ [Example/Example1.cpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Example/Example1.cpp). For more about template syntax, see [Tests/test.qtml](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/test.qtml).
 
 
 ### Compiling:
-For the example:
+Example:
 ```txt
 CXX -I ./Source ./Example/Example1.cpp -o ./Tests/QTest.bin
 ```
 
-For the template library:
+Template library:
 ```txt
 CXX -O3 -std=c++11 -shared -fPIC -I ./Source ./Example/QLib.cpp -o ./Build/QLib.so
 ```
 
 ```txt
-where "./" being the path to Qentem Engine, and "CXX" is either clang or gcc.
+where "./" is the path to Qentem Engine, and "CXX" is either clang or gcc.
 -For Windows, see .sln files.
 ```
 
 ### Engine:
-More examples of the engine usage can be found @ [Tests/Test.hpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/Test.hpp) and [Tests/Test.cpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/Test.cpp).
+More examples of the engine usage can be found @ [Tests/Test.hpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/Test.hpp) starting around line: 458, and [Tests/Test.cpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/Test.cpp).

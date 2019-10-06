@@ -370,9 +370,9 @@ static bool XMLTests() noexcept {
     bool          Pass  = false;
     std::wcout << L"\n #XML Tests:\n";
 
-    String XMLContent = readFile("./Tests/temp.html");
+    String XMLContent = readFile("./Tests/test.html");
     if (XMLContent.Length == 0) {
-        XMLContent = readFile("./temp.html");
+        XMLContent = readFile("./test.html");
     }
 
     ticks = static_cast<UNumber>(clock());
@@ -474,9 +474,9 @@ static bool JSONTests() noexcept {
     Document      data;
     std::wcout << L"\n #JSON Tests:\n";
 
-    String json_content = readFile(!BigJSON ? "./Tests/temp.json" : "./Tests/bigjson.json");
+    String json_content = readFile(!BigJSON ? "./Tests/test.json" : "./Tests/bigjson.json");
     if (json_content.Length == 0) {
-        json_content = readFile(!BigJSON ? "./temp.json" : "./bigjson.json");
+        json_content = readFile(!BigJSON ? "./test.json" : "./bigjson.json");
     }
 
     if (!BigJSON) {

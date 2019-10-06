@@ -83,21 +83,25 @@ class StringStream {
         for (UNumber i = 0; i < _ss.bits.Size; i++) {
             if (_ss.bits[i].Type == SType::Bit) {
                 sstr = &(_ss._strings[_ss.bits[i].Size]);
+
                 for (j = 0; j < sstr->Length;) {
                     buk[buk.Length] = sstr->operator[](j);
                     ++buk.Length;
                     ++j;
                 }
+
                 continue;
             }
 
             if (_ss.bits[i].Type == SType::PBit) {
                 sstr = _ss.p_strings[_ss.bits[i].Size];
+
                 for (j = 0; j < sstr->Length;) {
                     buk[buk.Length] = sstr->operator[](j);
                     ++buk.Length;
                     ++j;
                 }
+
                 continue;
             }
 
@@ -120,6 +124,7 @@ class StringStream {
         }
 
         tmp[tmp.Length] = L'\0'; // Null trimmming
+
         return tmp;
     }
 };

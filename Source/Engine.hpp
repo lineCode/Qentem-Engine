@@ -128,19 +128,17 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
                             nest_offset     = (tmp_item->Offset + tmp_item->Length);
 
                             if (nest_offset >= tmp_offset) {
-                                offset = nest_offset;
-
-                                if (offset > tmp_offset) {
-                                    if (maxOffset > endOffset) {
-                                        // This is important to have the search look ahead of the limited length
-                                        // in order to find the entire currect match.
-                                        endOffset = maxOffset; // TO THE MAX!
-                                        OVERDRIVE = true;
-                                    }
+                                if ((nest_offset != tmp_offset) && (maxOffset > endOffset)) {
+                                    // This is important to have the search look ahead of the limited length
+                                    // in order to find the entire currect match.
+                                    endOffset = maxOffset; // TO THE MAX!
+                                    OVERDRIVE = true;
                                 }
 
+                                offset = nest_offset;
                                 LOCKED = true;
-                                continue; // Not done matching. Move to the next char.
+
+                                continue; // Not done yet, so ove to the next char.
                             }
                         }
                     }

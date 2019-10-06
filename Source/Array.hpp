@@ -48,6 +48,7 @@ struct Array {
                 src.Capacity = 0;
                 src.Size     = 0;
                 src.Storage  = nullptr;
+
                 return *this;
             }
 
@@ -145,6 +146,7 @@ struct Array {
             src.Size     = 0;
             src.Storage  = nullptr;
         }
+
         return *this;
     }
 
