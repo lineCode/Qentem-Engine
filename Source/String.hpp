@@ -541,7 +541,7 @@ struct String {
                             num /= 10;
                         }
 
-                        if (num == 1) {
+                        if ((num == 1) && (presision == 0)) {
                             ++num2;
                             str1_len = 0;
 

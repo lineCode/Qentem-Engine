@@ -22,8 +22,7 @@ struct Expression;
 /////////////////////////////////
 static void Split(Array<Match> &items, String const &content, UNumber offset, UNumber endOffset) noexcept;
 using _ParseCB = String(String const &content, Match const &item, void *other);
-using _MatchCB = bool(String const &content, UNumber &offset, UNumber const endOffset, Match &item, Array<Match> &items,
-                      UNumber const level);
+using _MatchCB = void(String const &content, UNumber &offset, UNumber const endOffset, Match &item, Array<Match> &items);
 
 using Expressions = Array<Expression *>;
 /////////////////////////////////
@@ -56,239 +55,191 @@ struct Expression {
 };
 /////////////////////////////////
 struct Match {
-    UNumber Length = 0; // The length of the entire match.
     UNumber Offset = 0; // The start position of the matched string.
+    UNumber Length = 0; // The length of the entire match.
 
-    UNumber OLength = 0; // Length of opening keyword.
-    UNumber CLength = 0; // Length of closing keyword.
+    UNumber OLength = 0; // Length of the start keyword.
+    UNumber CLength = 0; // Length of the end keyword.
 
     Expression * Expr = nullptr;
     Array<Match> NestMatch; // To hold sub matches inside a match.
 };
 /////////////////////////////////
 static void _search(Array<Match> &items, String const &content, Expressions const &exprs, UNumber offset,
-                    UNumber endOffset, UNumber const maxOffset, UNumber const level = 0) noexcept {
-    bool    LOCKED      = false; // To keep matching the end of the current expression.
-    bool    SPLIT_IT    = false; // To keep tracking a split match.
-    bool    OVERDRIVE   = false; // For nesting.
-    UNumber counter     = 0;
-    UNumber nest_offset = 0; // Tmp variable for nested matches.
-    UNumber id          = 1; // Expression's id.
+                    UNumber endOffset, UNumber const maxOffset) noexcept {
+    UNumber const started        = offset;
+    UNumber       current_offset = offset;
 
-    Expression *ce = exprs[0];
-    UNumber     tmp_offset; // Tmp offset.
-    Match       _item;      // Tmp match.
+    UNumber expr_id        = 0;
+    UNumber keyword_offset = 0;
 
-    UNumber const started = offset;
+    Expression *expr;
+    Match       item;
 
-    for (;;) {
-        if (content[offset] == ce->Keyword[0]) {
-            tmp_offset = offset;
+    bool MATCHED;
 
-            while (++counter < ce->Keyword.Length) {
-                if (content[++tmp_offset] != ce->Keyword[counter]) {
-                    // Mismatch.
-                    counter = 0;
-                    break;
-                }
-            }
+    while (offset < endOffset) {
+        expr           = exprs[expr_id];
+        keyword_offset = 0;
+        current_offset = offset;
 
-            if (counter != 0) {
-                counter = 0;
-
-                if (OVERDRIVE) {
-                    // If the match is on "OVERDRIVE", then slow down.
-                    OVERDRIVE = false;
-                    // Set the length of the nested match.
-                    endOffset = tmp_offset;
-                } else if (!LOCKED) {
-                    if (ce->Connected != nullptr) {
-                        _item.OLength = ((tmp_offset + 1) - offset);
-                    }
-
-                    _item.Offset = offset;
-                    offset       = tmp_offset; // Update the position.
-                    nest_offset  = tmp_offset + 1;
-                }
-
-                ++tmp_offset; // Next character
-
-                if ((LOCKED = (ce->Connected != nullptr))) {
-                    ce = ce->Connected;
-                } else {
-                    // If it's a nesting expression, search again but inside the current match.
-                    if ((ce->NestExprs.Size != 0) && (nest_offset != tmp_offset)) {
-                        // Start a new search inside the current match.
-                        _search(_item.NestMatch, content, ce->NestExprs, nest_offset, tmp_offset, maxOffset,
-                                (level + 1));
-
-                        if (_item.NestMatch.Size != 0) {
-                            // Seek to avoid having the same closing/ending keywork matched again.
-                            Match *tmp_item = &(_item.NestMatch[(_item.NestMatch.Size - 1)]);
-                            nest_offset     = (tmp_item->Offset + tmp_item->Length);
-
-                            if (nest_offset >= tmp_offset) {
-                                if ((nest_offset != tmp_offset) && (maxOffset > endOffset)) {
-                                    // This is important to have the search look ahead of the limited length
-                                    // in order to find the entire currect match.
-                                    endOffset = maxOffset; // TO THE MAX!
-                                    OVERDRIVE = true;
-                                }
-
-                                offset = nest_offset;
-                                LOCKED = true;
-
-                                continue; // Not done yet, so ove to the next char.
-                            }
-                        }
-                    }
-
-                    if ((Flags::IGNORE & ce->Flag) == 0) {
-                        _item.Length = (tmp_offset - _item.Offset);
-
-                        if (_item.OLength != 0) {
-                            _item.CLength = (tmp_offset - offset);
-
-                            if ((Flags::TRIM & ce->Flag) != 0) {
-                                UNumber tmpIndex = (_item.Offset + _item.OLength);
-                                while ((content[tmpIndex] == L' ') || (content[tmpIndex] == L'\n') ||
-                                       (content[tmpIndex] == L'\t') || (content[tmpIndex] == L'\r')) {
-                                    ++_item.OLength;
-                                    ++tmpIndex;
-                                }
-
-                                tmpIndex = ((_item.Offset + _item.Length) - _item.CLength);
-                                if ((_item.OLength + _item.CLength) != _item.Length) {
-                                    while ((content[--tmpIndex] == L' ') || (content[tmpIndex] == L'\n') ||
-                                           (content[tmpIndex] == L'\t') || (content[tmpIndex] == L'\r')) {
-                                        ++_item.CLength;
-                                    }
-                                }
-                            }
-                        }
-
-                        if (((Flags::DROPEMPTY & ce->Flag) == 0) || (_item.Length != (_item.OLength + _item.CLength))) {
-                            _item.Expr = ce;
-
-                            if (level == 0) {
-                                if (!SPLIT_IT && ((Flags::SPLIT & ce->Flag) != 0)) {
-                                    SPLIT_IT = true;
-                                }
-
-                                if (((Flags::SPLITNEST & ce->Flag) != 0) && (_item.NestMatch.Size != 0)) {
-                                    Split(_item.NestMatch, content, (_item.Offset + _item.OLength),
-                                          ((_item.Offset + _item.Length) - (_item.CLength)));
-                                }
-                            }
-
-                            // Adding the match
-                            if (ce->MatchCB == nullptr) {
-                                items += static_cast<Match &&>(_item);
-                            } else if (!ce->MatchCB(content, offset, endOffset, _item, items, level)) {
-                                // Ingnoring the match if the callback returned "false"
-                                continue;
-                            }
-
-                            if ((Flags::ONCE & ce->Flag) != 0) {
-                                break;
-                            }
-                        }
-                    }
-
-                    id = exprs.Size; // Reset expressions!
-                }
-            }
+        while ((expr->Keyword.Length > keyword_offset) && expr->Keyword[keyword_offset] == content[current_offset]) {
+            ++current_offset;
+            ++keyword_offset;
         }
 
-        ++offset;
+        if (keyword_offset == expr->Keyword.Length) {
+            item.Offset = offset;
 
-        if (!LOCKED) {
-            // Switching to the next character if all keywords have been checked.
-            if (id == exprs.Size) {
-                id = 0;
-            } else {
-                --offset;
+            if (!(MATCHED = (expr->Connected == nullptr))) {
+                item.OLength = expr->Keyword.Length;
+                expr         = expr->Connected;
+
+                UNumber sub_offset = current_offset;
+                bool    OVERDRIVE  = false;
+                keyword_offset     = 0;
+
+                while (current_offset < endOffset) {
+                    if (expr->Keyword[keyword_offset++] != content[current_offset++]) {
+                        keyword_offset = 0;
+                        if (current_offset == endOffset) {
+                            OVERDRIVE = (endOffset != maxOffset);
+                            endOffset = maxOffset;
+                        }
+                        continue;
+                    }
+
+                    if (expr->Keyword.Length == keyword_offset) {
+                        if ((expr->NestExprs.Size == 0) ||
+                            (current_offset == (item.Offset + item.OLength + keyword_offset))) {
+                            MATCHED = true;
+                            break;
+                        }
+
+                        // if (sub_offset < current_offset)
+                        _search(item.NestMatch, content, expr->NestExprs, sub_offset, current_offset, maxOffset);
+
+                        if (item.NestMatch.Size == 0) {
+                            MATCHED = true;
+                            break;
+                        }
+
+                        Match *sub_match = &(item.NestMatch[(item.NestMatch.Size - 1)]);
+                        sub_offset       = (sub_match->Offset + sub_match->Length);
+
+                        if (sub_offset < current_offset) {
+                            if (OVERDRIVE) {
+                                endOffset = sub_offset;
+                            }
+
+                            MATCHED = true;
+                            break;
+                        }
+
+                        if ((sub_offset >= endOffset) && (endOffset != maxOffset)) {
+                            endOffset = maxOffset;
+                            OVERDRIVE = true;
+                        }
+
+                        current_offset = sub_offset;
+                        keyword_offset = 0;
+                    }
+                }
+
+                if (MATCHED) {
+                    item.CLength = expr->Keyword.Length;
+                } else if (item.NestMatch.Size != 0) {
+                    items += static_cast<Array<Match> &&>(item.NestMatch);
+                }
             }
 
-            ce = exprs[id];
-            ++id;
-        }
+            if (MATCHED) {
+                if ((Flags::IGNORE & expr->Flag) == 0) {
+                    item.Length = (current_offset - item.Offset);
 
-        /////////////////////////////////
-        if (offset >= endOffset) {
-            if (!LOCKED) {
-                break;
-            }
+                    if ((Flags::TRIM & expr->Flag) != 0) {
+                        UNumber tmpIndex = (item.Offset + item.OLength);
+                        while ((content[tmpIndex] == L' ') || (content[tmpIndex] == L'\n') ||
+                               (content[tmpIndex] == L'\t') || (content[tmpIndex] == L'\r')) {
+                            ++item.OLength;
+                            ++tmpIndex;
+                        }
 
-            if (maxOffset > endOffset) {
-                // This is important to have the seearch look ahead of the limited length
-                // in order to find the entire currect match.
-                endOffset = maxOffset;
+                        tmpIndex = ((item.Offset + item.Length) - item.CLength);
+                        if ((item.OLength + item.CLength) != item.Length) {
+                            while ((content[--tmpIndex] == L' ') || (content[tmpIndex] == L'\n') ||
+                                   (content[tmpIndex] == L'\t') || (content[tmpIndex] == L'\r')) {
+                                ++item.CLength;
+                            }
+                        }
+                    }
 
-                OVERDRIVE = true;
+                    if (((Flags::DROPEMPTY & expr->Flag) == 0) || (item.Length != (item.OLength + item.CLength))) {
+                        item.Expr = expr;
+
+                        if (expr->MatchCB == nullptr) {
+                            items += static_cast<Match &&>(item);
+                        } else {
+                            expr->MatchCB(content, current_offset, endOffset, item, items);
+                        }
+
+                        if ((Flags::ONCE & expr->Flag) != 0) {
+                            break;
+                        }
+                    }
+                }
+
+                offset  = current_offset;
+                expr_id = 0;
+
+                item.OLength = 0;
+                item.CLength = 0;
                 continue;
             }
+        }
 
-            if ((Flags::NOTBROKEN & ce->Flag) != 0) {
-                // For spliting a search (resumable search).
-                items += static_cast<Match &&>(_item);
-                return;
-            }
-
-            // Take this path If it has gone too far (the other keyword is unmatched).
-            if (_item.NestMatch.Size == 0) {
-                // If it is a missmatch, go back to where it started and continue with the next expression if
-                // possible.
-                offset = _item.Offset;
-            } else {
-                // if it's a nested search... with matched items move every thing that has been found to the
-                // root items' list, to avoid searching them again.
-
-                // Seek the offset to where the last match ended.
-                offset = (_item.NestMatch[(_item.NestMatch.Size - 1)].Offset +
-                          _item.NestMatch[(_item.NestMatch.Size - 1)].Length);
-
-                items += static_cast<Array<Match> &&>(_item.NestMatch);
-
-                if (offset == endOffset) {
-                    break;
-                }
-            }
-
-            if (id == exprs.Size) {
-                break;
-            }
-
-            // House cleaning...
-            OVERDRIVE = false;
-            LOCKED    = false;
-
-            ce = exprs[id]; // Reset
+        if ((++expr_id) == exprs.Size) {
+            expr_id = 0;
+            ++offset;
         }
     }
 
-    /////////////////////////////////
     if (items.Size == 0) {
-        if ((Flags::POP & ce->Flag) != 0) {
-            _search(items, content, ce->NestExprs, started, endOffset, endOffset);
+        if ((Flags::POP & exprs[0]->Flag) != 0) {
+            _search(items, content, exprs[0]->NestExprs, started, endOffset, endOffset);
         }
-    } else if (SPLIT_IT) {
-        Split(items, content, started, endOffset);
     }
-
-    //////////////// Hani ///////////////////
-    // AlJumaa, Jamada El Oula 12, 1440
-    // Friday, January 18, 2019
 }
 /////////////////////////////////
 static Array<Match> Search(String const &content, Expressions const &exprs, UNumber const offset,
                            UNumber const limit) noexcept {
     Array<Match> items;
 
-    UNumber const end_offset = (offset + limit);
+    UNumber const endOffset = (offset + limit);
 
-    if ((limit != 0) && (exprs.Size != 0)) {
-        _search(items, content, exprs, offset, end_offset, end_offset);
+    if (exprs.Size != 0) {
+        _search(items, content, exprs, offset, endOffset, endOffset);
+
+        if (items.Size != 0) {
+            Match *item;
+            bool   SPLIT = false;
+
+            for (UNumber i = 0; i < items.Size; i++) {
+                item = &(items[i]);
+                if (!SPLIT && ((Flags::SPLIT & item->Expr->Flag) != 0)) {
+                    SPLIT = true;
+                }
+
+                if ((item->NestMatch.Size != 0) && ((Flags::SPLITNEST & item->Expr->Flag) != 0)) {
+                    Split(item->NestMatch, content, (item->Offset + item->OLength),
+                          ((item->Offset + item->Length) - (item->CLength)));
+                }
+            }
+
+            if (SPLIT) {
+                Split(items, content, offset, endOffset);
+            }
+        }
     }
 
     return items;
@@ -369,10 +320,6 @@ static void Engine::Split(Array<Match> &items, String const &content, UNumber co
         if ((Flags::SPLIT & tmp->Expr->Flag) == 0) {
             return;
         }
-    }
-
-    if (items.Size == 0) {
-        return;
     }
 
     Array<Match> splitted;

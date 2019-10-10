@@ -139,6 +139,19 @@ static String DumpExpressions(Expressions const &expres, String const &offset, U
         if ((expres[i]->Flag & Flags::ONCE) != 0) {
             ss += L" ONCE";
         }
+
+        if ((expres[i]->Flag & Flags::TRIM) != 0) {
+            ss += L" TRIM";
+        }
+
+        if ((expres[i]->Flag & Flags::DROPEMPTY) != 0) {
+            ss += L" DROPEMPTY";
+        }
+
+        if ((expres[i]->Flag & Flags::NOTBROKEN) != 0) {
+            ss += L" NOTBROKEN";
+        }
+
         ss += L'\n';
 
         if (expres[i]->ID != 0) {
@@ -151,6 +164,13 @@ static String DumpExpressions(Expressions const &expres, String const &offset, U
             ss += l_offset + L"Replace: " + ReplaceNewLine(expres[i]->Replace, L"\\n") + '\n';
         }
 
+        if (expres[i]->MatchCB != nullptr) {
+            ss += l_offset + L"MatchCB: Yes";
+        } else {
+            ss += l_offset + L"MatchCB: No";
+        }
+        ss += L'\n';
+
         if (expres[i]->ParseCB != nullptr) {
             ss += l_offset + L"ParseCB: Yes";
         } else {
@@ -159,13 +179,17 @@ static String DumpExpressions(Expressions const &expres, String const &offset, U
         ss += L'\n';
 
         if (expres[i]->Connected != nullptr) {
-            ss += l_offset + L"Next: ";
+            ss += l_offset + L"Connected to: ";
             ss += Test::DumpExpressions(Expressions().Add(expres[i]->Connected), innoffset + l_offset, 0, expres[i]);
         }
 
         if (expres[i]->NestExprs.Size != 0) {
             ss += l_offset + L"NestExprs: ";
-            ss += Test::DumpExpressions(expres[i]->NestExprs, innoffset + l_offset, 0, expres[i]);
+            if (expres[0] != expres[i]) {
+                ss += Test::DumpExpressions(expres[i]->NestExprs, innoffset + l_offset, 0, expres[i]);
+            } else {
+                ss += L"Self-Nest\n";
+            }
         }
 
         ss += innoffset + offset + L"}\n";
@@ -1131,73 +1155,102 @@ static Array<TestBit> GetEngineBits() noexcept {
 
         return nc;
     });
-    ///////////////////////////////////////////
-    bit      = TestBit();
-    bit.Line = __LINE__;
+    // ///////////////////////////////////////////
+    // bit      = TestBit();
+    // bit.Line = __LINE__;
 
-    bit.Content.Add(L"ff11-22ss33-44ttt55-777e");
-    bit.Expected.Add(L"HHHH");
+    // bit.Content.Add(L"ff11-22ss33-44ttt55-777e");
+    // bit.Expected.Add(L"HHHH");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&x3);
-    Memory<Expression>::AllocateBit(&x2);
-    Memory<Expression>::AllocateBit(&y1);
-    Memory<Expression>::AllocateBit(&y2);
+    // Memory<Expression>::AllocateBit(&x1);
+    // Memory<Expression>::AllocateBit(&x3);
+    // Memory<Expression>::AllocateBit(&x2);
+    // Memory<Expression>::AllocateBit(&y1);
+    // Memory<Expression>::AllocateBit(&y2);
 
-    x1->Keyword = L"ff";
-    x2->Keyword = L"ss";
-    x3->Keyword = L"ttt";
-    y2->Keyword = L'e';
-    y1->Keyword = L'-';
+    // x1->Keyword = L"ff";
+    // x2->Keyword = L"ss";
+    // x3->Keyword = L"ttt";
+    // y2->Keyword = L'e';
+    // y1->Keyword = L'-';
 
-    x1->Connected = x2;
-    x2->Connected = x3;
-    x3->Connected = y2;
+    // x1->Connected = x2;
+    // x2->Connected = x3;
+    // x3->Connected = y2;
 
-    y1->Flag = Flags::SPLIT;
-    y2->Flag = Flags::SPLITNEST;
-    y2->NestExprs.Add(y1);
+    // y1->Flag = Flags::SPLIT;
+    // y2->Flag = Flags::SPLITNEST;
+    // y2->NestExprs.Add(y1);
 
-    y2->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
-        String s = L"";
+    // y2->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
+    //     String s = L"";
 
-        for (UNumber i = 0; i < item.NestMatch.Size; i++) {
-            s += L'H';
-        }
+    //     for (UNumber i = 0; i < item.NestMatch.Size; i++) {
+    //         s += L'H';
+    //     }
 
-        return s;
-    });
+    //     return s;
+    // });
 
-    bit.Exprs.Add(x1);
-    bit.Collect.Add(x1).Add(x2).Add(x3).Add(y1).Add(y2);
-    bits += static_cast<TestBit &&>(bit);
-    ///////////////////////////////////////////
-    bit      = TestBit();
-    bit.Line = __LINE__;
+    // bit.Exprs.Add(x1);
+    // bit.Collect.Add(x1).Add(x2).Add(x3).Add(y1).Add(y2);
+    // bits += static_cast<TestBit &&>(bit);
+    // ///////////////////////////////////////////
+    // bit      = TestBit();
+    // bit.Line = __LINE__;
 
-    bit.Content.Add(L"< zz (  2  ) hh >");
-    bit.Expected.Add(L"xxx");
+    // bit.Content.Add(L"< zz (  2  ) hh >");
+    // bit.Expected.Add(L"xxx");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&x3);
-    Memory<Expression>::AllocateBit(&x2);
-    Memory<Expression>::AllocateBit(&y1);
-    Memory<Expression>::AllocateBit(&y3);
+    // Memory<Expression>::AllocateBit(&x1);
+    // Memory<Expression>::AllocateBit(&x3);
+    // Memory<Expression>::AllocateBit(&x2);
+    // Memory<Expression>::AllocateBit(&y1);
+    // Memory<Expression>::AllocateBit(&y3);
 
-    x1->Keyword = L'<';
-    x2->Keyword = L'>';
-    x3->Keyword = L'(';
-    y3->Keyword = L')';
+    // x1->Keyword = L'<';
+    // x2->Keyword = L'>';
+    // x3->Keyword = L'(';
+    // y3->Keyword = L')';
 
-    x2->Replace = L"xxx";
+    // x2->Replace = L"xxx";
 
-    x1->Connected = x3;
-    x3->Connected = y3;
-    y3->Connected = x2;
+    // x1->Connected = x3;
+    // x3->Connected = y3;
+    // y3->Connected = x2;
 
-    bit.Exprs.Add(x1);
-    bit.Collect.Add(x1).Add(x2).Add(x3).Add(y1).Add(y3);
-    bits += static_cast<TestBit &&>(bit);
+    // bit.Exprs.Add(x1);
+    // bit.Collect.Add(x1).Add(x2).Add(x3).Add(y1).Add(y3);
+    // bits += static_cast<TestBit &&>(bit);
+    // ///////////////////////////////////////////
+    // bit      = TestBit();
+    // bit.Line = __LINE__;
+
+    // bit.Content.Add(L"<br><s><br>");
+    // bit.Expected.Add(L"TR<wr>");
+
+    // Memory<Expression>::AllocateBit(&x1);
+    // Memory<Expression>::AllocateBit(&y1);
+    // Memory<Expression>::AllocateBit(&x2);
+    // Memory<Expression>::AllocateBit(&y2);
+    // Memory<Expression>::AllocateBit(&x3);
+
+    // x1->Keyword = L'<';
+    // y1->Keyword = L'>';
+    // x2->Keyword = L'<';
+    // y2->Keyword = L'>';
+    // y2->Replace = L"TR";
+
+    // x3->Keyword = L"br";
+    // x3->Replace = L"wr";
+
+    // x1->Connected = y1;
+    // y1->Connected = x2;
+    // x2->Connected = y2;
+
+    // bit.Exprs.Add(x1).Add(x3);
+    // bit.Collect.Add(x1).Add(x2).Add(x3).Add(y1).Add(y2);
+    // bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -1227,35 +1280,6 @@ static Array<TestBit> GetEngineBits() noexcept {
     y1->NestExprs.Add(x1).Add(x2);
     bit.Exprs.Add(x1);
     bit.Collect.Add(x1).Add(x2).Add(y1);
-    bits += static_cast<TestBit &&>(bit);
-    ///////////////////////////////////////////
-    bit      = TestBit();
-    bit.Line = __LINE__;
-
-    bit.Content.Add(L"<br><s><br>");
-    bit.Expected.Add(L"TR<wr>");
-
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&y1);
-    Memory<Expression>::AllocateBit(&x2);
-    Memory<Expression>::AllocateBit(&y2);
-    Memory<Expression>::AllocateBit(&x3);
-
-    x1->Keyword = L'<';
-    y1->Keyword = L'>';
-    x2->Keyword = L'<';
-    y2->Keyword = L'>';
-    y2->Replace = L"TR";
-
-    x3->Keyword = L"br";
-    x3->Replace = L"wr";
-
-    x1->Connected = y1;
-    y1->Connected = x2;
-    x2->Connected = y2;
-
-    bit.Exprs.Add(x1).Add(x3);
-    bit.Collect.Add(x1).Add(x2).Add(x3).Add(y1).Add(y2);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -1330,6 +1354,99 @@ static Array<TestBit> GetEngineBits() noexcept {
         nc += String::Part(block.Str, item.OLength, block.Length - (item.OLength + item.CLength));
         nc += L')';
         return nc;
+    });
+    ///////////////////////////////////////////
+    bit      = TestBit();
+    bit.Line = __LINE__;
+
+    bit.Content.Add(L"}-0");
+    bit.Expected.Add(L"-0");
+
+    Memory<Expression>::AllocateBit(&x1);
+    Memory<Expression>::AllocateBit(&x2);
+
+    x1->Keyword = L"}";
+    x2->Keyword = L"-";
+    x2->Replace = L'1';
+
+    bit.Exprs.Add(x1).Add(x2);
+    bit.Collect.Add(x1).Add(x2);
+    bits += static_cast<TestBit &&>(bit);
+
+    x1->MatchCB = ([](String const &content, UNumber &offset, UNumber const endOffset, Match &item,
+                      Array<Match> &items) noexcept->void {
+        if (content[offset] == L'-') {
+            // ++item.Length;
+            ++offset;
+            items += static_cast<Match &&>(item);
+        }
+    });
+    ///////////////////////////////////////////
+    bit      = TestBit();
+    bit.Line = __LINE__;
+
+    bit.Content.Add(L"/").Add(L"//").Add(L"/r").Add(L"/ r");
+    bit.Expected.Add(L"//").Add(L"////").Add(L"/r").Add(L"// r");
+
+    Memory<Expression>::AllocateBit(&x1);
+
+    x1->Keyword = L"/";
+    x1->Replace = L"//";
+
+    bit.Exprs.Add(x1);
+    bit.Collect.Add(x1);
+    bits += static_cast<TestBit &&>(bit);
+
+    x1->MatchCB = ([](String const &content, UNumber &offset, UNumber const endOffset, Match &item,
+                      Array<Match> &items) noexcept->void {
+        if ((content[offset] == L'/') || (content[offset] == L' ') || (offset == endOffset)) {
+            // If there is a space after \ or \ or it's at the end, then it's a match.
+            items += static_cast<Match &&>(item);
+        }
+    });
+    ///////////////////////////////////////////
+    bit      = TestBit();
+    bit.Line = __LINE__;
+
+    bit.Content.Add(L"{[{'0'}]}");
+    bit.Expected.Add(L"{1}");
+
+    Memory<Expression>::AllocateBit(&x1);
+    Memory<Expression>::AllocateBit(&x2);
+    Memory<Expression>::AllocateBit(&x3);
+
+    Memory<Expression>::AllocateBit(&y1);
+    Memory<Expression>::AllocateBit(&y2);
+    Memory<Expression>::AllocateBit(&y3);
+
+    x1->Keyword   = L'{';
+    y1->Keyword   = L'}';
+    x1->Connected = y1;
+    y1->Flag      = Flags::BUBBLE;
+    y1->NestExprs += x1;
+    y1->NestExprs += x2;
+    y1->NestExprs += x3;
+
+    x2->Keyword   = L'\'';
+    y2->Keyword   = L'\'';
+    y2->Replace   = L'X';
+    x2->Connected = y2;
+
+    x3->Keyword   = L'[';
+    y3->Keyword   = L']';
+    y3->Replace   = L'1';
+    x3->Connected = y3;
+    y3->NestExprs += x1;
+    y3->NestExprs += x2;
+    y3->NestExprs += x3;
+
+    bit.Exprs.Add(x1);
+    bit.Collect.Add(x1).Add(x2).Add(x3).Add(y1).Add(y2).Add(y3);
+    bits += static_cast<TestBit &&>(bit);
+
+    y1->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept->String {
+        //
+        return block;
     });
     ///////////////////////////////////////////
     return bits;

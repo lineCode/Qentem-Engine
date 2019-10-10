@@ -34,17 +34,14 @@ struct XTag {
 };
 
 struct XMLParser {
-    static bool InfinitSpaceCallback(String const &content, UNumber &offset, UNumber const endOffset, Match &item,
-                                     Array<Match> &items, UNumber const level) noexcept {
-
-        while (content[++offset] == L' ') {
+    static void InfinitSpaceCallback(String const &content, UNumber &offset, UNumber const endOffset, Match &item,
+                                     Array<Match> &items) noexcept {
+        while (content[offset] == L' ') {
+            ++offset;
             ++item.Length;
         }
-        --offset;
 
         items += static_cast<Match &&>(item);
-
-        return true;
     }
 
     static Expressions const &getXMLExprs() noexcept {
@@ -211,6 +208,7 @@ struct XMLParser {
         static Expressions const &_xmlExprs = getXMLExprs();
 
         Array<Match> items = Qentem::Engine::Search(content, _xmlExprs, 0, content.Length);
+
         return parseTags(content, items, 0, items.Size);
     }
 };

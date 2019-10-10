@@ -969,14 +969,11 @@ struct Document {
         if (tags.Size == 0) {
             _JsonEsc.Keyword = L'\\';
             _JsonEsc.MatchCB = ([](String const &content, UNumber &offset, UNumber const endOffset, Match &item,
-                                   Array<Match> &items, UNumber const level) noexcept->bool {
-                UNumber _offset = offset;
-                if ((content[++_offset] == L'\\') || (content[_offset] == L' ') || (_offset == endOffset)) {
+                                   Array<Match> &items) noexcept->void {
+                if ((content[offset] == L'\\') || (content[offset] == L' ') || (offset == endOffset)) {
                     // If there is a space after \ or \ or it's at the end, then it's a match.
                     items += static_cast<Match &&>(item);
                 }
-
-                return true;
             });
             _JsonEsc.Replace = L"\\\\";
 

@@ -139,11 +139,11 @@ int main() {
         }
     }
 
-    total            = (static_cast<UNumber>(clock()) - total);
-    String time_took = String::FromNumber((static_cast<double>(total) / CLOCKS_PER_SEC), 1, 3, 3);
+    total = (static_cast<UNumber>(clock()) - total);
 
     if (Pass) {
-        std::wcout << L"\n ALL GOOD. Took: " << time_took.Str << L"s\n\n";
+        std::wcout << L"\n ALL GOOD. Took: "
+                   << String::FromNumber((static_cast<double>(total) / CLOCKS_PER_SEC), 1, 3, 3).Str << L"s\n\n";
     } else {
         std::wcout << L"\n Something is wrong!" << L"\n\n";
     }
@@ -327,6 +327,8 @@ static bool NumbersConvTest() noexcept {
     test.Add({22.87, L"22.87", 2}).Add({-0.788065000000079, L"-0.788065000000079"});
     test.Add({9.99999999999901, L"9.99999999999901"}).Add({3.99999999999909, L"3.99999999999909"});
     test.Add({55.0055, L"55.0055", 14}).Add({55.0000055, L"55.0000055"});
+
+    test.Add({0.00056599999999999999, L"0.001", 3});
     ////////////////////////////////
 
     std::wcout << L"\n #Number Conversion Tests:\n";
@@ -355,7 +357,7 @@ static bool NumbersConvTest() noexcept {
         }
     }
 
-    std::wcout << L"\n Math looks good!";
+    std::wcout << L"\n Number Conversion is operational!";
     std::wcout << L" Total: " << String::FromNumber((static_cast<double>(total_ticks) / CLOCKS_PER_SEC), 2, 3, 3).Str
                << L'\n';
 
@@ -480,13 +482,14 @@ static bool JSONTests() noexcept {
     }
 
     if (!BigJSON) {
-        data = getDocument();
-        if (data.ToJSON() != Qentem::Test::Replace(Qentem::Test::ReplaceNewLine(json_content, L""), L"\": ", L"\":")) {
+        data  = getDocument();
+        final = data.ToJSON();
+        if (final != Qentem::Test::Replace(Qentem::Test::ReplaceNewLine(json_content, L""), L"\": ", L"\":")) {
             std::wcout << "\n Document() might be broken!\n";
             std::wcout << "\n File:\n"
                        << Qentem::Test::Replace(Qentem::Test::ReplaceNewLine(json_content, L""), L"\": ", L"\":").Str
                        << "\n";
-            std::wcout << "\n ToJSON():\n" << data.ToJSON().Str << "\n";
+            std::wcout << "\n Document():\n" << final.Str << "\n";
             return false;
         }
     }
@@ -521,9 +524,10 @@ static bool JSONTests() noexcept {
     }
 
     std::wcout << "\n JSON is borken!\n\n";
+    std::wcout << "\n-File:\n";
     std::wcout << json_content.Str;
     std::wcout << "\n-End-\n";
-    std::wcout << "\n-Returned:\n";
+    std::wcout << "\n-ToJSON:\n";
     std::wcout << final.Str;
     std::wcout << "\n-End-\n";
 
