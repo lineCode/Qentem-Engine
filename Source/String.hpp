@@ -552,6 +552,11 @@ struct String {
                         }
                     }
 
+                    while (r_min > presision) {
+                        p2_str[str2_len++] = L'0';
+                        --r_min;
+                    }
+
                     while (presision != 0) {
                         p2_str[str2_len++] = wchar_t((num % 10) + 48);
                         --presision;
