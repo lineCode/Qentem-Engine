@@ -110,13 +110,11 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
                     }
 
                     if (expr->Keyword.Length == keyword_offset) {
-                        if ((expr->NestExprs.Size == 0) ||
-                            (current_offset == (item.Offset + item.OLength + keyword_offset))) {
+                        if (expr->NestExprs.Size == 0) {
                             MATCHED = true;
                             break;
                         }
 
-                        // if (sub_offset < current_offset)
                         _search(item.NestMatch, content, expr->NestExprs, sub_offset, current_offset, maxOffset);
 
                         if (item.NestMatch.Size == 0) {
