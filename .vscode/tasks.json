@@ -7,7 +7,7 @@
             "label": "Build .bin",
             "promptOnClose": false,
             "type": "shell",
-            "command": "g++",
+            "command": "clang++",
             "args": [
                 "-g",
                 // "-O3",
@@ -74,7 +74,7 @@
             "label": "Build .so",
             "promptOnClose": false,
             "type": "shell",
-            "command": "g++",
+            "command": "clang++",
             "args": [
                 "-O3",
                 "-Wall",
@@ -114,7 +114,7 @@
             "args": [
                 "./Tests/Test.cpp",
                 "'-header-filter=.*'",
-                "-checks='*,-cppcoreguidelines-pro-bounds-constant-array-index,-modernize-avoid-c-arrays,-cppcoreguidelines-avoid-c-arrays,-modernize-use-auto,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-non-private-member-variables-in-classes,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-readability-magic-numbers,-hicpp*,-fuchs*,-llvm-header-guard,-misc-non-private-*,-googl*,-misc-unused-parameters'",
+                "-checks='*,-bugprone-branch-clone,-modernize-use-trailing-return-type,-misc-unconventional-assign-operator,-cppcoreguidelines-c-copy-assignment-signature,-cppcoreguidelines-pro-bounds-constant-array-index,-modernize-avoid-c-arrays,-cppcoreguidelines-avoid-c-arrays,-modernize-use-auto,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-non-private-member-variables-in-classes,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-readability-magic-numbers,-hicpp*,-fuchs*,-llvm-header-guard,-misc-non-private-*,-googl*,-misc-unused-parameters'",
                 "--",
                 "-I",
                 "./Source",

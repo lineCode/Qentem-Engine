@@ -175,6 +175,11 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
                     if (((Flags::DROPEMPTY & expr->Flag) == 0) || (item.Length != (item.OLength + item.CLength))) {
                         item.Expr = expr;
 
+                        if (((Flags::SPLITNEST & item.Expr->Flag) != 0) && (item.NestMatch.Size != 0)) {
+                            Split(item.NestMatch, content, (item.Offset + item.OLength),
+                                  ((item.Offset + item.Length) - (item.CLength)));
+                        }
+
                         if (expr->MatchCB == nullptr) {
                             items += static_cast<Match &&>(item);
                         } else {
@@ -219,23 +224,11 @@ static Array<Match> Search(String const &content, Expressions const &exprs, UNum
         _search(items, content, exprs, offset, endOffset, endOffset);
 
         if (items.Size != 0) {
-            Match *item;
-            bool   SPLIT = false;
-
             for (UNumber i = 0; i < items.Size; i++) {
-                item = &(items[i]);
-                if (!SPLIT && ((Flags::SPLIT & item->Expr->Flag) != 0)) {
-                    SPLIT = true;
+                if ((Flags::SPLIT & items[i].Expr->Flag) != 0) {
+                    Split(items, content, offset, endOffset);
+                    break;
                 }
-
-                if ((item->NestMatch.Size != 0) && ((Flags::SPLITNEST & item->Expr->Flag) != 0)) {
-                    Split(item->NestMatch, content, (item->Offset + item->OLength),
-                          ((item->Offset + item->Length) - (item->CLength)));
-                }
-            }
-
-            if (SPLIT) {
-                Split(items, content, offset, endOffset);
             }
         }
     }
@@ -249,21 +242,21 @@ static String Parse(String const &content, Array<Match> const &items, UNumber of
         return content;
     }
 
-    Match *      _item;
+    Match *      item;
     UNumber      tmp_limit;
     StringStream rendered; // Final content
 
     for (UNumber id = 0; id < items.Size; id++) {
         // Current match
-        _item = &(items[id]);
+        item = &(items[id]);
 
-        if (_item->Offset < offset) {
+        if (item->Offset < offset) {
             continue;
         }
 
         // Adding any content that comes before...
-        if (offset < _item->Offset) {
-            tmp_limit = (_item->Offset - offset);
+        if (offset < item->Offset) {
+            tmp_limit = (item->Offset - offset);
 
             if (tmp_limit >= limit) {
                 // If it's equal, then String::Part outside the for() will handel it.
@@ -275,25 +268,24 @@ static String Parse(String const &content, Array<Match> const &items, UNumber of
             rendered += String::Part(content.Str, offset, tmp_limit);
         }
 
-        if (_item->Expr->ParseCB != nullptr) {
-            if ((Flags::BUBBLE & _item->Expr->Flag) != 0) {
-                if (_item->NestMatch.Size != 0) {
-                    rendered += _item->Expr->ParseCB(
-                        Parse(content, _item->NestMatch, _item->Offset, _item->Length, other), *_item, other);
+        if (item->Expr->ParseCB != nullptr) {
+            if ((Flags::BUBBLE & item->Expr->Flag) != 0) {
+                if (item->NestMatch.Size != 0) {
+                    rendered += item->Expr->ParseCB(Parse(content, item->NestMatch, item->Offset, item->Length, other),
+                                                    *item, other);
                 } else {
-                    rendered +=
-                        _item->Expr->ParseCB(String::Part(content.Str, _item->Offset, _item->Length), *_item, other);
+                    rendered += item->Expr->ParseCB(String::Part(content.Str, item->Offset, item->Length), *item, other);
                 }
             } else {
-                rendered += _item->Expr->ParseCB(content, *_item, other);
+                rendered += item->Expr->ParseCB(content, *item, other);
             }
-        } else if (_item->Expr->Replace.Length != 0) {
+        } else if (item->Expr->Replace.Length != 0) {
             // Defaults to replace: it can be empty.
-            rendered += _item->Expr->Replace;
+            rendered += item->Expr->Replace;
         }
 
-        offset = _item->Offset + _item->Length;
-        limit -= _item->Length;
+        offset = item->Offset + item->Length;
+        limit -= item->Length;
     }
 
     if (limit != 0) {
@@ -304,130 +296,68 @@ static String Parse(String const &content, Array<Match> const &items, UNumber of
 }
 } // namespace Engine
 /////////////////////////////////
-static void Engine::Split(Array<Match> &items, String const &content, UNumber const offset,
-                          UNumber const endOffset) noexcept {
-    Match *tmp = nullptr;
-
-    if (items.Size == 1) {
-        tmp = &items[0];
-        if (((Flags::SPLITNEST & tmp->Expr->Flag) != 0) && (tmp->NestMatch.Size != 0)) {
-            Split(tmp->NestMatch, content, (tmp->Offset + tmp->OLength), ((tmp->Offset + tmp->Length) - (tmp->CLength)));
-            return;
-        }
-
-        if ((Flags::SPLIT & tmp->Expr->Flag) == 0) {
-            return;
-        }
-    }
-
+static void Engine::Split(Array<Match> &items, String const &content, UNumber offset, UNumber const endOffset) noexcept {
     Array<Match> splitted;
-    Array<Match> nesties;
-    Match        _item;
-    UNumber      current_offset = offset;
-    UNumber      ends;
-    Expression * master = nullptr;
-    Match *      tmp2   = nullptr;
+    Match        tmp_item;
 
-    for (UNumber i = 0; i < items.Size; i++) {
-        tmp        = &(items[i]);
-        _item.Expr = tmp->Expr;
+    UNumber       itemID     = 0;
+    UNumber       ends       = 0;
+    UNumber const started    = offset;
+    Expression *  split_expr = nullptr;
+    bool          do_split   = false;
 
-        if (((Flags::SPLITNEST & tmp->Expr->Flag) != 0) && (tmp->NestMatch.Size != 0)) {
-            Split(tmp->NestMatch, content, (tmp->Offset + tmp->OLength), ((tmp->Offset + tmp->Length) - (tmp->CLength)));
-        }
+    Match *item;
 
-        if ((Flags::SPLIT & tmp->Expr->Flag) != 0) {
-            _item.Offset = current_offset;
-
-            if ((Flags::TRIM & _item.Expr->Flag) != 0) {
-                while ((content[_item.Offset] == L' ') || (content[_item.Offset] == L'\n')) {
-                    ++_item.Offset;
-                }
-
-                _item.Length = (tmp->Offset - _item.Offset);
-                ends         = tmp->Offset;
-
-                if (_item.Length != 0) {
-                    while ((content[--ends] == L' ') || (content[ends] == L'\n')) {
-                    }
-                    ++ends;
-                    _item.Length = (ends - _item.Offset);
-                }
-            } else {
-                _item.Length = (tmp->Offset - _item.Offset);
-            }
-
-            master = _item.Expr;
-
-            if (((Flags::DROPEMPTY & _item.Expr->Flag) == 0) || (_item.Length != 0)) {
-                splitted += static_cast<Match &&>(_item);
-                tmp2 = &splitted[(splitted.Size - 1)];
-
-                if (tmp->NestMatch.Size != 0) {
-                    tmp2->NestMatch = static_cast<Array<Match> &&>(tmp->NestMatch);
-                } else if (nesties.Size != 0) {
-                    tmp2->NestMatch = static_cast<Array<Match> &&>(nesties);
-                } else if (tmp2->Expr->NestExprs.Size != 0) {
-                    tmp2->NestMatch = Search(content, _item.Expr->NestExprs, _item.Offset, _item.Length);
-                }
-            }
-            current_offset = (tmp->Offset + tmp->Length);
+    for (;;) {
+        if (itemID != items.Size) {
+            item = &(items[itemID++]);
+            ends = item->Offset;
         } else {
-            nesties += static_cast<Match &&>(*tmp);
-        }
-    }
-
-    _item.Offset = current_offset;
-    if ((Flags::TRIM & _item.Expr->Flag) != 0) {
-        while ((content[_item.Offset] == L' ') || (content[_item.Offset] == L'\n')) {
-            ++_item.Offset;
+            ends = endOffset;
         }
 
-        _item.Length = (endOffset - _item.Offset);
-        ends         = endOffset;
-
-        if (_item.Length != 0) {
-            while ((content[--ends] == L' ') || (content[ends] == L'\n')) {
+        if (((item != nullptr) && (do_split = ((Flags::SPLIT & item->Expr->Flag) != 0))) || (ends == endOffset)) {
+            if (do_split) {
+                split_expr = item->Expr;
             }
-            ++ends;
-            _item.Length = (ends - _item.Offset);
-        }
-    } else {
-        _item.Length = (endOffset - _item.Offset);
-    }
 
-    if (((Flags::DROPEMPTY & _item.Expr->Flag) == 0) || (_item.Length != 0)) {
-        if (splitted.Size == splitted.Capacity) {
-            splitted.Resize(items.Size + 1);
-        }
+            tmp_item.Expr   = item->Expr;
+            tmp_item.Offset = offset;
+            tmp_item.Length = ends - offset;
 
-        tmp2 = &splitted[splitted.Size];
-        ++splitted.Size;
-        *tmp2 = static_cast<Match &&>(_item);
+            offset += tmp_item.Length + item->Length;
 
-        if (_item.Length != 0) {
-            if (nesties.Size != 0) {
-                tmp2->NestMatch = static_cast<Array<Match> &&>(nesties);
-            } else if (_item.Expr->NestExprs.Size != 0) {
-                tmp2->NestMatch = Search(content, _item.Expr->NestExprs, _item.Offset, _item.Length);
+            if ((Flags::TRIM & tmp_item.Expr->Flag) != 0) {
+                String::SoftTrim(content.Str, tmp_item.Offset, tmp_item.Length);
             }
+
+            if (((Flags::DROPEMPTY & tmp_item.Expr->Flag) == 0) || (tmp_item.Length != 0)) {
+                if (tmp_item.Expr->NestExprs.Size != 0) {
+                    tmp_item.NestMatch = Search(content, tmp_item.Expr->NestExprs, tmp_item.Offset, tmp_item.Length);
+                }
+
+                splitted += static_cast<Match &&>(tmp_item);
+            }
+        } else {
+            tmp_item.NestMatch += static_cast<Match &&>(*item);
+        }
+
+        if (ends == endOffset) {
+            break;
         }
     }
 
-    if (splitted.Size == 0) {
-        items.Size = 0;
-        return;
-    }
-
-    if ((master != nullptr) && (Flags::GROUPSPLIT & master->Flag) == 0) {
+    if ((split_expr == nullptr) || (Flags::GROUPSPLIT & split_expr->Flag) == 0) {
         items = static_cast<Array<Match> &&>(splitted);
     } else {
         items.SetCapacity(1);
-        items.Size         = 1;
-        items[0].Offset    = offset;
-        items[0].Length    = (endOffset - offset);
-        items[0].Expr      = master;
-        items[0].NestMatch = static_cast<Array<Match> &&>(splitted);
+        items.Size = 1;
+        item       = &(items[0]);
+
+        item->Offset    = started;
+        item->Length    = (endOffset - started);
+        item->Expr      = split_expr;
+        item->NestMatch = static_cast<Array<Match> &&>(splitted);
     }
 }
 } // namespace Qentem

@@ -34,7 +34,7 @@ static bool const BigJSON = false;
 
 static String   readFile(char const *fullpath) noexcept;
 static Document getDocument() noexcept;
-static bool     runTests(String const &name, Array<TestBit> const &bits, bool dump_express, bool break_on_err,
+static bool     runTests(String const &name, Array<TestBit> const &bits, bool break_on_err,
                          Document *other = nullptr) noexcept;
 static bool     NumbersConvTest() noexcept;
 static bool     JSONTests() noexcept;
@@ -53,16 +53,19 @@ struct NCTest {
 };
 
 int main() {
-    bool Pass         = false;
+    bool Pass  = false;
+    bool Pause = false;
+
     bool TestEngine   = false;
     bool NumbersConv  = false;
     bool TestALU      = false;
     bool TestTemplate = false;
     bool TestXML      = false;
     bool TestJSON     = false;
-    bool Pause        = false;
 
     // This way is faster; just comment out the line instead of changing the value.
+    // Pause    = true;
+
     if (!BigJSON) {
         TestEngine   = true;
         NumbersConv  = true;
@@ -72,7 +75,6 @@ int main() {
     }
 
     TestJSON = true;
-    // Pause    = true;
 
     Array<TestBit> bits;
 
@@ -82,7 +84,7 @@ int main() {
         if (TestEngine) {
             // Core Engine Tests
             bits = Qentem::Test::GetEngineBits();
-            Pass = runTests(L"Engine", bits, false, true);
+            Pass = runTests(L"Engine", bits, true);
             Qentem::Test::CleanBits(bits);
             if (!Pass) {
                 break;
@@ -102,7 +104,7 @@ int main() {
         if (TestALU) {
             // Arithmetic & logic Evaluation Tests
             bits = Qentem::Test::GetALUBits();
-            Pass = runTests(L"Arithmetic & Logic Evaluation", bits, false, true);
+            Pass = runTests(L"Arithmetic & Logic Evaluation", bits, true);
             if (!Pass) {
                 break;
             }
@@ -113,7 +115,7 @@ int main() {
             // Template Tests
             Document data;
             bits = Qentem::Test::GetTemplateBits(data);
-            Pass = runTests(L"Template", bits, false, true, &data);
+            Pass = runTests(L"Template", bits, true, &data);
             if (!Pass) {
                 break;
             }
@@ -155,8 +157,7 @@ int main() {
     return 10;
 }
 
-static bool runTests(String const &name, Array<TestBit> const &bits, bool dump_express, bool break_on_err,
-                     Document *other) noexcept {
+static bool runTests(String const &name, Array<TestBit> const &bits, bool break_on_err, Document *other) noexcept {
     UNumber const times        = StreasTest ? 10000 : 1;
     UNumber const start_at     = 0;
     UNumber       counter      = 0;
@@ -247,11 +248,6 @@ static bool runTests(String const &name, Array<TestBit> const &bits, bool dump_e
                 ss += Qentem::Test::ReplaceNewLine(bits[i].Expected[t], L"\\n") + L"\"\n";
                 ss += L"  Matches:\n";
                 ss += Qentem::Test::DumpMatches(bits[i].Content[t], matches, L"    ");
-
-                if (dump_express) {
-                    ss += L"  Expressions: ";
-                    ss += Qentem::Test::DumpExpressions(bits[i].Exprs, L"    ");
-                }
 
                 ss += L"\n  ---------- End debug ";
                 ss += String::FromNumber(count) + L'-';

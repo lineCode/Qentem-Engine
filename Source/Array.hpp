@@ -101,10 +101,6 @@ struct Array {
     inline void SetCapacity(UNumber _size) noexcept {
         Memory<Type>::Deallocate(&Storage);
 
-        if (_size == 0) {
-            _size = 2;
-        }
-
         Size     = 0;
         Capacity = _size;
 
