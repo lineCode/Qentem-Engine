@@ -31,12 +31,11 @@ struct Flags {
     static UShort const IGNORE    = 1;   // Match a Keyword but don't add it.
     static UShort const TRIM      = 2;   // Trim the match before adding it.
     static UShort const ONCE      = 4;   // Will stop searching after the first match.
-    static UShort const POP       = 8;   // Search again with NestExprs if the match fails (See ALU.cpp).
-    static UShort const BUBBLE    = 16;  // Parse nested matches.
-    static UShort const SPLIT     = 32;  // Split a match at a keyword.
-    static UShort const GROUPED   = 64;  // Puts splitted matches into NestMatch, for one callback execution.
-    static UShort const NOTBROKEN = 128; // To Prevent the engine from assuming the match is broking.
-    static UShort const DROPEMPTY = 256; // Trim the match before adding it (spaces and newlines).
+    static UShort const BUBBLE    = 8;   // Parse nested matches.
+    static UShort const SPLIT     = 16;  // Split a match at a keyword.
+    static UShort const GROUPED   = 32;  // Puts splitted matches into NestMatch, for one callback execution.
+    static UShort const DROPEMPTY = 64;  // Trim the match before adding it (spaces and newlines).
+    static UShort const POP       = 128; // Search again with NestExprs if the match fails (See ALU.cpp).
 };
 /////////////////////////////////
 struct Expression {
@@ -182,7 +181,7 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
                                    ((item.Offset + item.Length) - item.CLength));
                         }
 
-                        if (!split && ((Flags::SPLIT & item.Expr->Flag) != 0)) {
+                        if (((Flags::SPLIT & item.Expr->Flag) != 0) && !split) {
                             split = true;
                         }
 
@@ -226,14 +225,12 @@ static Array<Match> Search(String const &content, Expressions const &exprs, UNum
 
     UNumber const endOffset = (offset + limit);
 
-    if (exprs.Size != 0) {
-        bool split = false;
+    bool split = false;
 
-        _search(items, content, exprs, offset, endOffset, endOffset, split);
+    _search(items, content, exprs, offset, endOffset, endOffset, split);
 
-        if (split) {
-            _split(items, content, offset, endOffset);
-        }
+    if (split) {
+        _split(items, content, offset, endOffset);
     }
 
     return items;
@@ -241,10 +238,6 @@ static Array<Match> Search(String const &content, Expressions const &exprs, UNum
 /////////////////////////////////
 static String Parse(String const &content, Array<Match> const &items, UNumber offset, UNumber limit,
                     void *other = nullptr) noexcept {
-    if (limit == 0) {
-        return content;
-    }
-
     Match *      item;
     UNumber      tmp_limit;
     StringStream rendered; // Final content
