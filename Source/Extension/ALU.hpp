@@ -42,8 +42,8 @@ struct ALU {
         static Expression LogicAnd;
         static Expression LogicOr;
 
-        static constexpr UNumber flags_ops    = Flags::SPLIT | Flags::GROUPSPLIT | Flags::POP | Flags::TRIM;
-        static constexpr UNumber flags_no_pop = Flags::SPLIT | Flags::GROUPSPLIT | Flags::TRIM;
+        static constexpr UNumber flags_ops    = Flags::SPLIT | Flags::GROUPED | Flags::POP | Flags::TRIM;
+        static constexpr UNumber flags_no_pop = Flags::SPLIT | Flags::GROUPED | Flags::TRIM;
 
         static Expressions tags;
 

@@ -411,7 +411,6 @@ struct Template {
             TagIf.Keyword    = L"<if";
             IfTail.Keyword   = L"</if>";
             TagIf.Connected  = &IfTail;
-            IfTail.Flag      = Flags::SPLITNEST;
             IfTail.NestExprs = Expressions().Add(&ShallowTagIf).Add(&TagELseIf);
             /////////////////////////////////
 

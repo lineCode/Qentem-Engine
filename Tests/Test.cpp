@@ -178,13 +178,15 @@ static bool runTests(String const &name, Array<TestBit> const &bits, bool break_
 
     if (start_at != 0) {
         ss += L"\n Starting at ";
-        ss += String::FromNumber(start_at, 2);
-        ss += L"\n\n";
+        ss += String::FromNumber(start_at);
+        if (counter == 0) {
+            ss += L"\n\n";
+        }
     }
 
     if (counter != 0) {
         ss += L"\n Counter is set to ";
-        ss += String::FromNumber(counter, 2);
+        ss += String::FromNumber(counter);
         ss += L"\n\n";
     }
 

@@ -833,7 +833,6 @@ static Array<TestBit> GetEngineBits() noexcept {
     y2->Keyword = L')';
     y2->NestExprs.Add(x1);
     y1->Connected = y2;
-    y2->Flag      = Flags::SPLITNEST;
 
     bit.Exprs.Add(y1);
     bit.Collect.Add(x1).Add(y1).Add(y2);
@@ -877,11 +876,11 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     Memory<Expression>::AllocateBit(&x1);
     x1->Keyword = L'+';
-    x1->Flag    = Flags::SPLIT | Flags::GROUPSPLIT;
+    x1->Flag    = Flags::SPLIT | Flags::GROUPED;
 
     Memory<Expression>::AllocateBit(&x2);
     x2->Keyword = L'*';
-    x2->Flag    = Flags::SPLIT | Flags::GROUPSPLIT;
+    x2->Flag    = Flags::SPLIT | Flags::GROUPED;
 
     x1->NestExprs.Add(x2);
     bit.Exprs.Add(x1);
@@ -947,7 +946,6 @@ static Array<TestBit> GetEngineBits() noexcept {
     y2->Keyword = L')';
     y2->NestExprs.Add(x1);
     y1->Connected = y2;
-    y2->Flag      = Flags::SPLITNEST;
 
     bit.Exprs.Add(y1);
     bit.Collect.Add(x1).Add(y1).Add(y2);
@@ -982,7 +980,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     Memory<Expression>::AllocateBit(&x1);
     x1->Keyword = L'+';
-    x1->Flag    = Flags::SPLIT | Flags::GROUPSPLIT;
+    x1->Flag    = Flags::SPLIT | Flags::GROUPED;
 
     Memory<Expression>::AllocateBit(&x2);
     x2->Keyword = L'x';
@@ -1036,7 +1034,6 @@ static Array<TestBit> GetEngineBits() noexcept {
     Memory<Expression>::AllocateBit(&y1);
     x1->Keyword   = L'{';
     y1->Keyword   = L'}';
-    y1->Flag      = Flags::SPLITNEST;
     x1->Connected = y1;
 
     Memory<Expression>::AllocateBit(&x2);
@@ -1173,7 +1170,6 @@ static Array<TestBit> GetEngineBits() noexcept {
     Memory<Expression>::AllocateBit(&y1);
     x1->Keyword   = L"{-";
     y1->Keyword   = L"-}";
-    y1->Flag      = Flags::SPLITNEST;
     x1->Connected = y1;
 
     Memory<Expression>::AllocateBit(&x2);
@@ -1209,7 +1205,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     y1->NestExprs.Add(x1);
 
     x2->Keyword = L'&';
-    x2->Flag    = Flags::SPLIT | Flags::GROUPSPLIT | Flags::TRIM | Flags::DROPEMPTY;
+    x2->Flag    = Flags::SPLIT | Flags::GROUPED | Flags::TRIM | Flags::DROPEMPTY;
 
     bit.Exprs.Add(x1).Add(x2);
     bit.Collect.Add(x1).Add(x2).Add(y1);

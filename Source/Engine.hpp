@@ -20,7 +20,7 @@ namespace Engine {
 struct Match;
 struct Expression;
 /////////////////////////////////
-static void Split(Array<Match> &items, String const &content, UNumber offset, UNumber endOffset) noexcept;
+static void _split(Array<Match> &items, String const &content, UNumber offset, UNumber endOffset) noexcept;
 using _ParseCB = String(String const &content, Match const &item, void *other);
 using _MatchCB = void(String const &content, UNumber &offset, UNumber const endOffset, Match &item, Array<Match> &items);
 
@@ -28,17 +28,15 @@ using Expressions = Array<Expression *>;
 /////////////////////////////////
 // Expressions flags
 struct Flags {
-    static UShort const NOTHING    = 0;   // ... NAN.
-    static UShort const IGNORE     = 1;   // Match a Keyword but don't add it.
-    static UShort const TRIM       = 2;   // Trim the match before adding it.
-    static UShort const ONCE       = 4;   // Will stop searching after the first match.
-    static UShort const POP        = 8;   // Search again with NestExprs if the match fails (See ALU.cpp).
-    static UShort const BUBBLE     = 16;  // Parse nested matches.
-    static UShort const SPLIT      = 32;  // Split a match at a keyword.
-    static UShort const SPLITNEST  = 64;  // Split a Nested match.
-    static UShort const GROUPSPLIT = 128; // Puts split matches into NestMatch, for one callback execution.
-    static UShort const NOTBROKEN  = 256; // To Prevent the engine from assuming the match is broking.
-    static UShort const DROPEMPTY  = 512; // Trim the match before adding it (spaces and newlines).
+    static UShort const IGNORE    = 1;   // Match a Keyword but don't add it.
+    static UShort const TRIM      = 2;   // Trim the match before adding it.
+    static UShort const ONCE      = 4;   // Will stop searching after the first match.
+    static UShort const POP       = 8;   // Search again with NestExprs if the match fails (See ALU.cpp).
+    static UShort const BUBBLE    = 16;  // Parse nested matches.
+    static UShort const SPLIT     = 32;  // Split a match at a keyword.
+    static UShort const GROUPED   = 64;  // Puts splitted matches into NestMatch, for one callback execution.
+    static UShort const NOTBROKEN = 128; // To Prevent the engine from assuming the match is broking.
+    static UShort const DROPEMPTY = 256; // Trim the match before adding it (spaces and newlines).
 };
 /////////////////////////////////
 struct Expression {
@@ -66,9 +64,10 @@ struct Match {
 };
 /////////////////////////////////
 static void _search(Array<Match> &items, String const &content, Expressions const &exprs, UNumber offset,
-                    UNumber endOffset, UNumber const maxOffset) noexcept {
+                    UNumber endOffset, UNumber const maxOffset, bool &split) noexcept {
     UNumber const started        = offset;
     UNumber       current_offset = offset;
+    bool          split_nest     = false;
 
     UNumber expr_id        = 0;
     UNumber keyword_offset = 0;
@@ -97,7 +96,8 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
 
                 UNumber sub_offset = current_offset;
                 bool    OVERDRIVE  = false;
-                keyword_offset     = 0;
+
+                keyword_offset = 0;
 
                 while (current_offset < endOffset) {
                     if (expr->Keyword[keyword_offset++] != content[current_offset++]) {
@@ -115,7 +115,8 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
                             break;
                         }
 
-                        _search(item.NestMatch, content, expr->NestExprs, sub_offset, current_offset, maxOffset);
+                        _search(item.NestMatch, content, expr->NestExprs, sub_offset, current_offset, maxOffset,
+                                split_nest);
 
                         if (item.NestMatch.Size == 0) {
                             MATCHED = true;
@@ -175,9 +176,14 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
                     if (((Flags::DROPEMPTY & expr->Flag) == 0) || (item.Length != (item.OLength + item.CLength))) {
                         item.Expr = expr;
 
-                        if (((Flags::SPLITNEST & item.Expr->Flag) != 0) && (item.NestMatch.Size != 0)) {
-                            Split(item.NestMatch, content, (item.Offset + item.OLength),
-                                  ((item.Offset + item.Length) - (item.CLength)));
+                        if (split_nest) {
+                            split_nest = false;
+                            _split(item.NestMatch, content, (item.Offset + item.OLength),
+                                   ((item.Offset + item.Length) - item.CLength));
+                        }
+
+                        if (!split && ((Flags::SPLIT & item.Expr->Flag) != 0)) {
+                            split = true;
                         }
 
                         if (expr->MatchCB == nullptr) {
@@ -209,7 +215,7 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
 
     if (items.Size == 0) {
         if ((Flags::POP & exprs[0]->Flag) != 0) {
-            _search(items, content, exprs[0]->NestExprs, started, endOffset, endOffset);
+            _search(items, content, exprs[0]->NestExprs, started, endOffset, endOffset, split);
         }
     }
 }
@@ -221,15 +227,12 @@ static Array<Match> Search(String const &content, Expressions const &exprs, UNum
     UNumber const endOffset = (offset + limit);
 
     if (exprs.Size != 0) {
-        _search(items, content, exprs, offset, endOffset, endOffset);
+        bool split = false;
 
-        if (items.Size != 0) {
-            for (UNumber i = 0; i < items.Size; i++) {
-                if ((Flags::SPLIT & items[i].Expr->Flag) != 0) {
-                    Split(items, content, offset, endOffset);
-                    break;
-                }
-            }
+        _search(items, content, exprs, offset, endOffset, endOffset, split);
+
+        if (split) {
+            _split(items, content, offset, endOffset);
         }
     }
 
@@ -296,7 +299,8 @@ static String Parse(String const &content, Array<Match> const &items, UNumber of
 }
 } // namespace Engine
 /////////////////////////////////
-static void Engine::Split(Array<Match> &items, String const &content, UNumber offset, UNumber const endOffset) noexcept {
+static void Engine::_split(Array<Match> &items, String const &content, UNumber offset,
+                           UNumber const endOffset) noexcept {
     Array<Match> splitted;
     Match        tmp_item;
 
@@ -304,9 +308,8 @@ static void Engine::Split(Array<Match> &items, String const &content, UNumber of
     UNumber       ends       = 0;
     UNumber const started    = offset;
     Expression *  split_expr = nullptr;
+    Match *       item       = nullptr;
     bool          do_split   = false;
-
-    Match *item;
 
     for (;;) {
         if (itemID != items.Size) {
@@ -316,7 +319,7 @@ static void Engine::Split(Array<Match> &items, String const &content, UNumber of
             ends = endOffset;
         }
 
-        if (((item != nullptr) && (do_split = ((Flags::SPLIT & item->Expr->Flag) != 0))) || (ends == endOffset)) {
+        if ((do_split = ((Flags::SPLIT & item->Expr->Flag) != 0)) || (ends == endOffset)) {
             if (do_split) {
                 split_expr = item->Expr;
             }
@@ -347,7 +350,7 @@ static void Engine::Split(Array<Match> &items, String const &content, UNumber of
         }
     }
 
-    if ((split_expr == nullptr) || (Flags::GROUPSPLIT & split_expr->Flag) == 0) {
+    if ((Flags::GROUPED & split_expr->Flag) == 0) {
         items = static_cast<Array<Match> &&>(splitted);
     } else {
         items.SetCapacity(1);
