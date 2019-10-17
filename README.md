@@ -1,4 +1,4 @@
-# Qentem Engine (v0.9.9.6)
+# Qentem Engine (v0.9.9.7)
 
 ## Introduction:
 Qentem Engine is an independent library that uses a fast algorithm for nest-searching/nest-matching. It can be used to match existing syntaxes or new ones, and with call-backs for post and per-parsing, It's posable to match almost any complex syntax. It is very efficient and has a small footprint on memory, and it's built using modern C++. It can be used to render complex templates that contains nested loop, nested if-else, inline if, math (+ * / - ^ %), logic (&& ||), and/or something simple: like replacing a text or splitting it. Also, it is capable of doing JSON, XML/HTML.

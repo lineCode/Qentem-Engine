@@ -74,141 +74,143 @@ static void _search(Array<Match> &items, String const &content, Expressions cons
     Expression *expr;
     Match       item;
 
-    bool MATCHED;
-
     while (offset < endOffset) {
         expr           = exprs[expr_id];
-        keyword_offset = 0;
         current_offset = offset;
+        keyword_offset = 0;
 
-        while ((expr->Keyword.Length > keyword_offset) && expr->Keyword[keyword_offset] == content[current_offset]) {
+        while ((keyword_offset < expr->Keyword.Length) && expr->Keyword[keyword_offset] == content[current_offset]) {
             ++current_offset;
             ++keyword_offset;
         }
 
-        if (keyword_offset == expr->Keyword.Length) {
-            item.Offset = offset;
+        if (keyword_offset != expr->Keyword.Length) {
+            if ((++expr_id) == exprs.Size) {
+                expr_id = 0;
+                ++offset;
+            }
+            continue;
+        }
 
-            if (!(MATCHED = (expr->Connected == nullptr))) {
-                item.OLength = expr->Keyword.Length;
-                expr         = expr->Connected;
+        if (expr->Connected != nullptr) {
+            item.OLength = expr->Keyword.Length;
+            expr         = expr->Connected;
 
-                UNumber sub_offset = current_offset;
-                bool    OVERDRIVE  = false;
+            UNumber sub_offset = current_offset;
+            bool    OVERDRIVE  = false;
 
-                keyword_offset = 0;
+            Match *sub_match;
+            keyword_offset = 0;
 
-                while (current_offset < endOffset) {
-                    if (expr->Keyword[keyword_offset++] != content[current_offset++]) {
-                        keyword_offset = 0;
-                        if (current_offset == endOffset) {
-                            OVERDRIVE = (endOffset != maxOffset);
-                            endOffset = maxOffset;
-                        }
-                        continue;
+            while (current_offset != endOffset) {
+                if (expr->Keyword[keyword_offset++] != content[current_offset++]) {
+                    keyword_offset = 0;
+                    if (current_offset == endOffset) {
+                        OVERDRIVE = (endOffset != maxOffset);
+                        endOffset = maxOffset;
                     }
+                    continue;
+                }
 
-                    if (expr->Keyword.Length == keyword_offset) {
-                        if (expr->NestExprs.Size == 0) {
-                            MATCHED = true;
-                            break;
-                        }
-
+                if (expr->Keyword.Length == keyword_offset) {
+                    if (expr->NestExprs.Size != 0) {
                         _search(item.NestMatch, content, expr->NestExprs, sub_offset, current_offset, maxOffset,
                                 split_nest);
 
-                        if (item.NestMatch.Size == 0) {
-                            MATCHED = true;
-                            break;
-                        }
+                        if (item.NestMatch.Size != 0) {
+                            sub_match  = &(item.NestMatch[(item.NestMatch.Size - 1)]);
+                            sub_offset = (sub_match->Offset + sub_match->Length);
 
-                        Match *sub_match = &(item.NestMatch[(item.NestMatch.Size - 1)]);
-                        sub_offset       = (sub_match->Offset + sub_match->Length);
+                            if (sub_offset < current_offset) {
+                                if (OVERDRIVE) {
+                                    endOffset = sub_offset;
+                                }
 
-                        if (sub_offset < current_offset) {
-                            if (OVERDRIVE) {
-                                endOffset = sub_offset;
+                                break;
                             }
 
-                            MATCHED = true;
-                            break;
-                        }
+                            if (sub_offset >= endOffset) {
+                                endOffset = maxOffset;
+                                OVERDRIVE = true;
+                            }
 
-                        if ((sub_offset >= endOffset) && (endOffset != maxOffset)) {
-                            endOffset = maxOffset;
-                            OVERDRIVE = true;
-                        }
+                            current_offset = sub_offset;
+                            keyword_offset = 0;
 
-                        current_offset = sub_offset;
-                        keyword_offset = 0;
+                            continue;
+                        }
                     }
-                }
 
-                if (MATCHED) {
-                    item.CLength = expr->Keyword.Length;
-                } else if (item.NestMatch.Size != 0) {
-                    items += static_cast<Array<Match> &&>(item.NestMatch);
+                    break;
                 }
             }
 
-            if (MATCHED) {
-                if ((Flags::IGNORE & expr->Flag) == 0) {
-                    item.Length = (current_offset - item.Offset);
-
-                    if ((Flags::TRIM & expr->Flag) != 0) {
-                        UNumber tmpIndex = (item.Offset + item.OLength);
-                        while ((content[tmpIndex] == L' ') || (content[tmpIndex] == L'\n') ||
-                               (content[tmpIndex] == L'\t') || (content[tmpIndex] == L'\r')) {
-                            ++item.OLength;
-                            ++tmpIndex;
-                        }
-
-                        tmpIndex = ((item.Offset + item.Length) - item.CLength);
-                        if ((item.OLength + item.CLength) != item.Length) {
-                            while ((content[--tmpIndex] == L' ') || (content[tmpIndex] == L'\n') ||
-                                   (content[tmpIndex] == L'\t') || (content[tmpIndex] == L'\r')) {
-                                ++item.CLength;
-                            }
-                        }
-                    }
-
-                    if (((Flags::DROPEMPTY & expr->Flag) == 0) || (item.Length != (item.OLength + item.CLength))) {
-                        if (split_nest) {
-                            split_nest = false;
-                            _split(item.NestMatch, content, (item.Offset + item.OLength),
-                                   (current_offset - item.CLength));
-                        }
-
-                        if (((Flags::SPLIT & expr->Flag) != 0) && !split) {
-                            split = true;
-                        }
-
-                        item.Expr = expr;
-                        if (expr->MatchCB == nullptr) {
-                            items += static_cast<Match &&>(item);
-                        } else {
-                            expr->MatchCB(content, current_offset, endOffset, item, items);
-                        }
-
-                        if ((Flags::ONCE & expr->Flag) != 0) {
-                            break;
-                        }
-                    }
-                }
-
-                offset  = current_offset;
+            if (keyword_offset == 0) {
                 expr_id = 0;
 
-                item.OLength = 0;
-                item.CLength = 0;
+                if (item.NestMatch.Size != 0) {
+                    sub_match = &(item.NestMatch[(item.NestMatch.Size - 1)]);
+                    offset    = (sub_match->Offset + sub_match->Length);
+                    items += static_cast<Array<Match> &&>(item.NestMatch);
+                    continue;
+                }
+
+                ++offset;
                 continue;
+            }
+
+            item.CLength = expr->Keyword.Length;
+        }
+
+        if ((Flags::IGNORE & expr->Flag) == 0) {
+            item.Offset = offset;
+            item.Length = (current_offset - item.Offset);
+
+            if ((Flags::TRIM & expr->Flag) != 0) {
+                UNumber tmpIndex = (item.Offset + item.OLength);
+                while ((content[tmpIndex] == L' ') || (content[tmpIndex] == L'\n') || (content[tmpIndex] == L'\t') ||
+                       (content[tmpIndex] == L'\r')) {
+                    ++item.OLength;
+                    ++tmpIndex;
+                }
+
+                tmpIndex = ((item.Offset + item.Length) - item.CLength);
+                if ((item.OLength + item.CLength) != item.Length) {
+                    while ((content[--tmpIndex] == L' ') || (content[tmpIndex] == L'\n') ||
+                           (content[tmpIndex] == L'\t') || (content[tmpIndex] == L'\r')) {
+                        ++item.CLength;
+                    }
+                }
+            }
+
+            if (((Flags::DROPEMPTY & expr->Flag) == 0) || (item.Length != (item.OLength + item.CLength))) {
+                if (split_nest) {
+                    split_nest = false;
+                    _split(item.NestMatch, content, (item.Offset + item.OLength), (current_offset - item.CLength));
+                }
+
+                if (((Flags::SPLIT & expr->Flag) != 0) && !split) {
+                    split = true;
+                }
+
+                item.Expr = expr;
+                if (expr->MatchCB == nullptr) {
+                    items += static_cast<Match &&>(item);
+                } else {
+                    expr->MatchCB(content, current_offset, endOffset, item, items);
+                }
+
+                if ((Flags::ONCE & expr->Flag) != 0) {
+                    break;
+                }
             }
         }
 
-        if ((++expr_id) == exprs.Size) {
-            expr_id = 0;
-            ++offset;
-        }
+        offset  = current_offset;
+        expr_id = 0;
+
+        item.OLength = 0;
+        item.CLength = 0;
     }
 
     if (items.Size == 0) {

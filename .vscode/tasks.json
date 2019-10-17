@@ -7,7 +7,7 @@
             "label": "Build .bin",
             "promptOnClose": false,
             "type": "shell",
-            "command": "clang++",
+            "command": "g++",
             "args": [
                 "-g",
                 // "-O3",
@@ -74,7 +74,7 @@
             "label": "Build .so",
             "promptOnClose": false,
             "type": "shell",
-            "command": "clang++",
+            "command": "g++",
             "args": [
                 "-O3",
                 "-Wall",

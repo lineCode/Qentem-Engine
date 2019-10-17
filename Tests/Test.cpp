@@ -64,7 +64,7 @@ int main() {
     bool TestJSON     = false;
 
     // This way is faster; just comment out the line instead of changing the value.
-    // Pause    = true;
+    // Pause = true;
 
     if (!BigJSON) {
         TestEngine   = true;
