@@ -18,20 +18,20 @@ namespace Qentem {
 
 template <typename Type>
 struct Memory {
-    static void Allocate(Type **_p, UNumber _size) noexcept {
+    static inline void Allocate(Type **_p, UNumber _size) noexcept {
         *_p = new Type[_size];
     }
 
-    static void Deallocate(Type **_p) noexcept {
+    static inline void Deallocate(Type **_p) noexcept {
         delete[] * _p;
         *_p = nullptr;
     }
 
-    static void AllocateBit(Type **_p) noexcept {
+    static inline void AllocateBit(Type **_p) noexcept {
         *_p = new Type;
     }
 
-    static void DeallocateBit(Type **_p) noexcept {
+    static inline void DeallocateBit(Type **_p) noexcept {
         delete *_p;
         *_p = nullptr;
     }

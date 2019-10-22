@@ -170,9 +170,8 @@ struct ALU {
     static String ParenthesisCallback(String const &block, Match const &item, void *other) noexcept {
         static Expressions const _mathExprs = getMathExprs();
 
-        UNumber limit = ((block.Length - (item.CLength + item.OLength)));
-
-        return Engine::Parse(block, Engine::Search(block, _mathExprs, item.OLength, limit), item.OLength, limit);
+        UNumber const limit = (block.Length - 2);
+        return Engine::Parse(block, Engine::Search(block, _mathExprs, 1, limit), 1, limit);
     }
 
     static void NestNumber(String const &block, Match const &item, double &number) noexcept {
@@ -189,7 +188,7 @@ struct ALU {
         Match *m2;
 
         Match const *m1    = &(item.NestMatch[0]);
-        UNumber      op_id = m1->Expr->ID;
+        UShort       op_id = m1->Expr->ID;
 
         if (m1->Length != 0) {
             if (m1->NestMatch.Size != 0) {
@@ -203,7 +202,6 @@ struct ALU {
             m2 = &(item.NestMatch[i]);
 
             if (m2->Length != 0) {
-
                 if (m2->NestMatch.Size != 0) {
                     NestNumber(block, *m2, number2);
                 } else {
@@ -236,7 +234,7 @@ struct ALU {
         Match *m2;
 
         Match const *m1    = &(item.NestMatch[0]);
-        UNumber      op_id = m1->Expr->ID;
+        UShort       op_id = m1->Expr->ID;
 
         if (m1->Length != 0) {
             if (m1->NestMatch.Size != 0) {
@@ -257,7 +255,6 @@ struct ALU {
             m2 = &(item.NestMatch[i]);
 
             if (m2->Length != 0) {
-
                 if (m2->NestMatch.Size != 0) {
                     NestNumber(block, *m2, number2);
                 } else {
@@ -303,7 +300,7 @@ struct ALU {
         Match *m2;
 
         Match const *m1    = &(item.NestMatch[0]);
-        UNumber      op_id = m1->Expr->ID;
+        UShort       op_id = m1->Expr->ID;
 
         if (m1->Length != 0) {
             String::ToNumber(block, number1, m1->Offset, m1->Length);
@@ -367,7 +364,7 @@ struct ALU {
         Match *m2;
 
         Match const *m1    = &(item.NestMatch[0]);
-        UNumber      op_id = m1->Expr->ID;
+        UShort       op_id = m1->Expr->ID;
 
         if (m1->Length != 0) {
             if (m1->NestMatch.Size != 0) {

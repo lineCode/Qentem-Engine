@@ -264,11 +264,20 @@ struct Document {
                 bool const check = true) noexcept {
         UNumber       id    = 0;
         UNumber const _hash = String::Hash(key.Str, offset, (offset + limit));
-        Entry *       _ent  = (!check) ? nullptr : Exist(_hash, 0, Table);
+        Entry *       _ent  = (!check ? nullptr : Exist(_hash, 0, Table));
 
         if ((_ent == nullptr) || (_ent->Type != type)) {
             // New item.
             switch (type) {
+                case VType::DocumentT: {
+                    id = Documents.Size;
+                    if (move) {
+                        Documents += static_cast<Document &&>(*(static_cast<Document *>(ptr)));
+                    } else {
+                        Documents += *(static_cast<Document *>(ptr));
+                    }
+                    break;
+                }
                 case VType::StringT: {
                     id = Strings.Size;
                     if (move) {
@@ -276,44 +285,41 @@ struct Document {
                     } else {
                         Strings += *(static_cast<String *>(ptr));
                     }
-                } break;
-                case VType::NumberT:
-                case VType::BooleanT: {
+                    break;
+                }
+                case VType::BooleanT:
+                case VType::NumberT: {
                     id = Numbers.Size;
                     Numbers += *(static_cast<double *>(ptr));
-                } break;
-                case VType::DocumentT: {
-                    id = Documents.Size;
-                    if (move) {
-                        Documents += static_cast<Document &&>(*(static_cast<Document *>(ptr)));
-                    } else {
-                        Documents += static_cast<Document const &>(*(static_cast<Document *>(ptr)));
-                    }
-                } break;
+                    break;
+                }
                 default:
                     break;
             }
         } else {
             // Updating an existing item.
             switch (type) {
-                case VType::BooleanT:
-                case VType::NumberT: {
-                    Numbers[_ent->ArrayID] = *(static_cast<double *>(ptr));
-                } break;
-                case VType::StringT: {
-                    if (move) {
-                        Strings[_ent->ArrayID] = static_cast<String &&>(*(static_cast<String *>(ptr)));
-                    } else {
-                        Strings[_ent->ArrayID] = *(static_cast<String *>(ptr));
-                    }
-                } break;
                 case VType::DocumentT: {
                     if (move) {
                         Documents[_ent->ArrayID] = static_cast<Document &&>(*(static_cast<Document *>(ptr)));
                     } else {
                         Documents[_ent->ArrayID] = *(static_cast<Document *>(ptr));
                     }
-                } break;
+                    break;
+                }
+                case VType::StringT: {
+                    if (move) {
+                        Strings[_ent->ArrayID] = static_cast<String &&>(*(static_cast<String *>(ptr)));
+                    } else {
+                        Strings[_ent->ArrayID] = *(static_cast<String *>(ptr));
+                    }
+                    break;
+                }
+                case VType::NumberT:
+                case VType::BooleanT: {
+                    Numbers[_ent->ArrayID] = *(static_cast<double *>(ptr));
+                    break;
+                }
                 default:
                     break;
             }
@@ -390,6 +396,46 @@ struct Document {
 
         for (; offset < end; offset++) {
             switch (content[offset]) {
+                case L',':
+                case L']': {
+                    if (!pass) {
+                        // A Number, true/false or null
+                        limit = (offset - start);
+                        String::SoftTrim(content.Str, start, limit);
+
+                        switch (content.Str[start]) {
+                            case L't': {
+                                // True
+                                document.Entries += Entry(document.Numbers.Size, 0, VType::BooleanT);
+                                document.Numbers += 1;
+                                break;
+                            }
+                            case L'f': {
+                                // False
+                                document.Entries += Entry(document.Numbers.Size, 0, VType::BooleanT);
+                                document.Numbers += 0;
+                                break;
+                            }
+                            case L'n': {
+                                // Null
+                                document.Entries += Entry(0, 0, VType::NullT);
+                                break;
+                            }
+                            default: {
+                                // A number
+                                if (String::ToNumber(content, number, start, limit)) {
+                                    document.Entries += Entry(document.Numbers.Size, 0, VType::NumberT);
+                                    document.Numbers += number;
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    start = (offset + 1);
+                    pass  = false;
+                    break;
+                }
                 case L'"': {
                     subItem = &item.NestMatch[nestID++];
                     document.Entries += Entry(document.Strings.Size, 0, VType::StringT);
@@ -432,46 +478,6 @@ struct Document {
                     pass   = true;
                     break;
                 }
-                case L',':
-                case L']': {
-                    if (!pass) {
-                        // A Number, true/false or null
-                        limit = (offset - start);
-                        String::SoftTrim(content.Str, start, limit);
-
-                        switch (content.Str[start]) {
-                            case L't': {
-                                // True
-                                document.Entries += Entry(document.Numbers.Size, 0, VType::BooleanT);
-                                document.Numbers += 1;
-                                break;
-                            }
-                            case L'f': {
-                                // False
-                                document.Entries += Entry(document.Numbers.Size, 0, VType::BooleanT);
-                                document.Numbers += 0;
-                                break;
-                            }
-                            case L'n': {
-                                // Null
-                                document.Entries += Entry(0, 0, VType::NullT);
-                                break;
-                            }
-                            default: {
-                                // A number
-                                if (String::ToNumber(content, number, start, limit)) {
-                                    document.Entries += Entry(document.Numbers.Size, 0, VType::NumberT);
-                                    document.Numbers += number;
-                                }
-                                break;
-                            }
-                        }
-                    }
-
-                    start = (offset + 1);
-                    pass  = false;
-                    break;
-                }
             }
         }
     }
@@ -508,31 +514,6 @@ struct Document {
 
                         document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::StringT, &tmpString, true,
                                         false);
-
-                        done = true;
-                        break;
-                    }
-                    case L'{': {
-                        ++i;
-
-                        Document uno_document;
-                        _makeList(uno_document, content, items[i].NestMatch);
-                        document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::DocumentT, &uno_document,
-                                        true, false);
-
-                        done = true;
-                        break;
-                    }
-                    case L'[': {
-                        ++i;
-
-                        Document o_document;
-                        o_document.Ordered = true;
-
-                        _makeOrderedList(o_document, content, items[i]);
-
-                        document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::DocumentT, &o_document,
-                                        true, false);
 
                         done = true;
                         break;
@@ -579,7 +560,34 @@ struct Document {
                         }
 
                         done = true;
-                    } break;
+                        break;
+                    }
+                    case L'{': {
+                        ++i;
+
+                        Document uno_document;
+                        _makeList(uno_document, content, items[i].NestMatch);
+
+                        document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::DocumentT, &uno_document,
+                                        true, false);
+
+                        done = true;
+                        break;
+                    }
+                    case L'[': {
+                        ++i;
+
+                        Document o_document;
+                        o_document.Ordered = true;
+
+                        _makeOrderedList(o_document, content, items[i]);
+
+                        document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::DocumentT, &o_document,
+                                        true, false);
+
+                        done = true;
+                        break;
+                    }
                 }
 
                 if (done) {
@@ -628,7 +636,7 @@ struct Document {
         }
 
         if (items.Size != 0) {
-            Match *_item = &(items[0]);
+            Match *const _item = &(items[0]);
 
             document.Ordered = (_item->Expr->ID == 2);
             if (document.Ordered) {
@@ -849,9 +857,9 @@ struct Document {
     void _toJSON(StringStream &ss) const noexcept {
         static Expressions const &to_json_expres = _getToJsonExpres();
 
-        Entry *      _entry;
         Array<Match> tmpMatchs;
         String *     str_ptr;
+        Entry *      _entry;
 
         if (Ordered) {
             ss.Share(&JFX.fss4);
@@ -876,19 +884,24 @@ struct Document {
                         }
 
                         ss.Share(&JFX.fss6);
-                    } break;
+                        break;
+                    }
                     case VType::NumberT: {
                         ss += String::FromNumber(Numbers[_entry->ArrayID]);
-                    } break;
+                        break;
+                    }
                     case VType::DocumentT: {
                         ss += Documents[_entry->ArrayID].ToJSON();
-                    } break;
+                        break;
+                    }
                     case VType::NullT: {
                         ss.Share(&JFX.fNull);
-                    } break;
+                        break;
+                    }
                     case VType::BooleanT: {
-                        ss.Share((Numbers[_entry->ArrayID] == 0) ? &JFX.fFalse : &JFX.fTrue);
-                    } break;
+                        ss.Share((Numbers[_entry->ArrayID] != 0) ? &JFX.fTrue : &JFX.fFalse);
+                        break;
+                    }
                     default:
                         break;
                 }
@@ -908,7 +921,7 @@ struct Document {
                 switch (_entry->Type) {
                     case VType::StringT: {
                         ss.Share(&JFX.fss6);
-                        ss += Keys[_entry->KeyID];
+                        ss.Share(&(Keys[_entry->KeyID]));
                         ss.Share(&JFX.fss6);
                         ss.Share(&JFX.fsc1);
                         ss.Share(&JFX.fss6);
@@ -922,36 +935,40 @@ struct Document {
                         }
 
                         ss.Share(&JFX.fss6);
-                    } break;
+                        break;
+                    }
                     case VType::NumberT: {
                         ss.Share(&JFX.fss6);
-                        ss += Keys[_entry->KeyID];
+                        ss.Share(&(Keys[_entry->KeyID]));
                         ss.Share(&JFX.fss6);
                         ss.Share(&JFX.fsc1);
                         ss += String::FromNumber(Numbers[_entry->ArrayID]);
-                    } break;
+                        break;
+                    }
                     case VType::DocumentT: {
                         ss.Share(&JFX.fss6);
-                        ss += Keys[_entry->KeyID];
+                        ss.Share(&(Keys[_entry->KeyID]));
                         ss.Share(&JFX.fss6);
                         ss.Share(&JFX.fsc1);
                         ss += Documents[_entry->ArrayID].ToJSON();
-                    } break;
+                        break;
+                    }
                     case VType::NullT: {
                         ss.Share(&JFX.fss6);
-                        ss += Keys[_entry->KeyID];
+                        ss.Share(&(Keys[_entry->KeyID]));
                         ss.Share(&JFX.fss6);
                         ss.Share(&JFX.fsc1);
                         ss.Share(&JFX.fNull);
-                    } break;
+                        break;
+                    }
                     case VType::BooleanT: {
                         ss.Share(&JFX.fss6);
-                        ss += Keys[_entry->KeyID];
+                        ss.Share(&(Keys[_entry->KeyID]));
                         ss.Share(&JFX.fss6);
                         ss.Share(&JFX.fsc1);
-
-                        ss.Share((Numbers[_entry->ArrayID] == 0) ? &JFX.fFalse : &JFX.fTrue);
-                    } break;
+                        ss.Share((Numbers[_entry->ArrayID] != 0) ? &JFX.fTrue : &JFX.fFalse);
+                        break;
+                    }
                     default:
                         break;
                 }

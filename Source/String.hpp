@@ -62,7 +62,7 @@ struct String {
     }
 
     String(wchar_t const *str) noexcept {
-        Capacity = Count(str);
+        Count(Capacity, str);
 
         Memory<wchar_t>::Allocate(&Str, (Capacity + 1));
 
@@ -95,8 +95,9 @@ struct String {
 
         Memory<wchar_t>::Allocate(&Str, (Capacity + 1));
 
-        for (; Length < src.Length; Length++) {
+        for (; Length < src.Length;) {
             Str[Length] = static_cast<wchar_t>(src[Length]);
+            ++Length;
         }
 
         Str[Length] = L'\0';
@@ -106,13 +107,10 @@ struct String {
         Reset();
     }
 
-    inline static UNumber Count(wchar_t const *str) {
-        UNumber _length = 0;
-        while (str[_length] != L'\0') {
-            ++_length;
+    inline static void Count(UNumber &length, wchar_t const *str) {
+        while (str[length] != L'\0') {
+            ++length;
         };
-
-        return _length;
     }
 
     inline void Reset() noexcept {
@@ -147,8 +145,8 @@ struct String {
     }
 
     String &operator=(wchar_t const *str) noexcept { // Copy
-        UNumber _length = Count(str);
-
+        UNumber _length = 0;
+        Count(_length, str);
         Copy(*this, str, 0, _length);
 
         return *this;
@@ -208,7 +206,8 @@ struct String {
     }
 
     String &operator+=(wchar_t const *str) noexcept { // Appand a string
-        UNumber _length = Count(str);
+        UNumber _length = 0;
+        Count(_length, str);
 
         Copy(*this, str, this->Length, _length);
 
@@ -247,10 +246,10 @@ struct String {
     }
 
     String operator+(wchar_t const *str) const noexcept {
+        UNumber _length = 0;
+        Count(_length, str);
+
         String ns;
-
-        UNumber _length = Count(str);
-
         ns.SetLength(Length + _length);
         Copy(ns, Str, 0, Length);
         Copy(ns, str, ns.Length, _length);
@@ -394,7 +393,7 @@ struct String {
 
         bit.Capacity = limit;
 
-        while (bit.Length < limit) {
+        while (bit.Length != limit) {
             bit[bit.Length++] = str[offset++];
         }
 
@@ -417,7 +416,7 @@ struct String {
 
             fl = !fl;
 
-            hash += (((static_cast<UNumber>(str[start++]))) * j++);
+            hash += (((static_cast<UNumber>(str[(start++)]))) * (j++));
         }
 
         return hash;
@@ -455,8 +454,8 @@ struct String {
             ch         = str[limit];
             str[limit] = str[i];
             str[i]     = ch;
-            --limit;
             ++i;
+            --limit;
         }
     }
 
@@ -497,21 +496,19 @@ struct String {
         }
 
         if (number != 0) {
-            UNumber            counter = 0;
-            unsigned long long num     = static_cast<unsigned long long>(number);
-            unsigned long long num2    = num;
+            unsigned long long num  = static_cast<unsigned long long>(number);
+            unsigned long long num2 = num;
 
             while (num != 0) {
                 p1_str[str1_len++] = wchar_t((num % 10) + 48);
                 num /= 10;
-                ++counter;
             }
 
             number -= static_cast<double>(num2);
             if (number != 0) {
 
                 number *= 1e15;
-                num = static_cast<UNumber>(number);
+                num = static_cast<unsigned long int>(number);
 
                 if (num != 0) {
                     while (((num % 10) == 0) && (presision != 0)) {

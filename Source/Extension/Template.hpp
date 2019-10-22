@@ -29,17 +29,17 @@ struct Template {
     // Nest: {v:var_{v:var2_{v:var3_id}}}
     static String RenderVar(String const &block, Match const &item, void *other) noexcept {
         String value;
-        if ((static_cast<Document *>(other))
-                ->GetString(value, block, (item.Offset + item.OLength), (item.Length - (item.CLength + item.OLength)))) {
+        if ((static_cast<Document *>(other))->GetString(value, block, (item.Offset + 3), (item.Length - 4))) {
             return value;
         }
 
-        return String::Part(block.Str, (item.Offset + item.OLength), (item.Length - (item.CLength + item.OLength)));
+        return String::Part(block.Str, (item.Offset + 3), (item.Length - 4));
     }
 
     static String RenderMath(String const &block, Match const &item, void *other) noexcept {
-        String value = String::Part(block.Str, item.OLength, (block.Length - (item.OLength + item.CLength)));
+        String value = String::Part(block.Str, 6, (block.Length - 7));
         return String::FromNumber(ALU::Evaluate(value), 1, 0, 3);
+        return L"";
     }
 
     // {iif case="3 == 3" true="Yes" false="No"}
@@ -71,20 +71,17 @@ struct Template {
                     --start_at;
 
                     if (block[start_at] == L'a') { // c[a]se
-                        iif_case =
-                            String::Part(block.Str, (m->Offset + m->OLength), (m->Length - (m->CLength + m->OLength)));
+                        iif_case = String::Part(block.Str, (m->Offset + 1), (m->Length - 2));
                         break;
                     }
 
                     if (block[start_at] == L'r') { // t[r]ue
-                        iif_true =
-                            String::Part(block.Str, (m->Offset + m->OLength), (m->Length - (m->CLength + m->OLength)));
+                        iif_true = String::Part(block.Str, (m->Offset + 1), (m->Length - 2));
                         break;
                     }
 
                     if (block[start_at] == L'l') { // fa[l]se
-                        iif_false =
-                            String::Part(block.Str, (m->Offset + m->OLength), (m->Length - (m->CLength + m->OLength)));
+                        iif_false = String::Part(block.Str, (m->Offset + 1), (m->Length - 2));
                         break;
                     }
                 }
@@ -105,8 +102,8 @@ struct Template {
     static bool EvaluateIF(String const &block, Match const &item, void *other) noexcept {
         static Expressions const _tagsVars = _getTagsVara();
 
-        UNumber const offset = (item.Offset + item.OLength);
-        UNumber const length = (item.Length - (item.OLength + item.CLength));
+        UNumber const offset = (item.Offset + 1);
+        UNumber const length = (item.Length - 2);
 
         String statement = Engine::Parse(block, Engine::Search(block, _tagsVars, offset, length), offset, length, other);
 
@@ -131,7 +128,7 @@ struct Template {
 
                 // inner content of if
                 UNumber offset = (sm->Offset + sm->Length);
-                UNumber length = (item.Length - (sm->Length + item.CLength));
+                UNumber length = (item.Length - (sm->Length + 5));
 
                 // // if_else (splitted content)
                 if (item.NestMatch.Size != 0) {
@@ -197,20 +194,17 @@ struct Template {
                         --start_at;
 
                         if (block[start_at] == L't') { // se[t]
-                            name = String::Part(block.Str, (m->Offset + m->OLength),
-                                                (m->Length - (m->CLength + m->OLength)));
+                            name = String::Part(block.Str, (m->Offset + 1), (m->Length - 2));
                             break;
                         }
 
                         if (block[start_at] == L'e') { // valu[e]
-                            value_id = String::Part(block.Str, (m->Offset + m->OLength),
-                                                    (m->Length - (m->CLength + m->OLength)));
+                            value_id = String::Part(block.Str, (m->Offset + 1), (m->Length - 2));
                             break;
                         }
 
                         if (block[start_at] == L'y') { // ke[y]
-                            key_id = String::Part(block.Str, (m->Offset + m->OLength),
-                                                  (m->Length - (m->CLength + m->OLength)));
+                            key_id = String::Part(block.Str, (m->Offset + 1), (m->Length - 2));
                             break;
                         }
                     }
@@ -219,8 +213,8 @@ struct Template {
 
             if ((name.Length != 0) && (value_id.Length != 0)) {
                 String &&_content = Template::Repeat(
-                    String::Part(block.Str, (sm->Offset + sm->Length), (item.Length - (sm->Length + item.CLength))),
-                    name, value_id, key_id, other);
+                    String::Part(block.Str, (sm->Offset + sm->Length), (item.Length - (sm->Length + 7))), name, value_id,
+                    key_id, other);
 
                 if (_content.Length != 0) {
                     return Engine::Parse(_content, Engine::Search(_content, _tagsAll, 0, _content.Length), 0,

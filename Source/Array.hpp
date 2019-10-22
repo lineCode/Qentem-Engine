@@ -29,8 +29,8 @@ struct Array {
         Capacity = src.Capacity;
         Size     = src.Size;
 
-        src.Capacity = 0;
         src.Size     = 0;
+        src.Capacity = 0;
         src.Storage  = nullptr;
     }
 
@@ -39,24 +39,28 @@ struct Array {
     }
 
     Array<Type> &Add(Array<Type> &&src) noexcept {
-        if ((src.Size + Size) > Capacity) {
+        UNumber const _nSize = (Size + src.Size);
+
+        if (_nSize > Capacity) {
             if (Capacity == 0) {
-                Storage  = src.Storage;
                 Capacity = src.Capacity;
                 Size     = src.Size;
+                Storage  = src.Storage;
 
-                src.Capacity = 0;
-                src.Size     = 0;
                 src.Storage  = nullptr;
+                src.Size     = 0;
+                src.Capacity = 0;
 
                 return *this;
             }
 
-            Resize(src.Size + Size);
+            Resize(_nSize);
         }
 
-        for (UNumber i = 0; i < src.Size; i++) {
-            Storage[Size++] = static_cast<Type &&>(src[i]);
+        for (UNumber i = 0; i < src.Size;) {
+            Storage[Size] = static_cast<Type &&>(src[i]);
+            ++i;
+            ++Size;
         }
 
         src.Reset();
@@ -65,18 +69,19 @@ struct Array {
     }
 
     Array<Type> &Add(Array<Type> const &src) noexcept {
-        if ((src.Size + Size) > Capacity) {
-            Resize(src.Size + Size);
+        UNumber const _nSize = (Size + src.Size);
+        if (_nSize > Capacity) {
+            Resize(_nSize);
         }
 
-        for (UNumber i = 0; i < src.Size; i++) {
-            Storage[Size++] = src[i];
+        for (UNumber i = 0; i < src.Size;) {
+            Storage[Size++] = src[i++];
         }
 
         return *this;
     }
 
-    inline Array<Type> &Add(Type &&item) noexcept { // Move
+    Array<Type> &Add(Type &&item) noexcept { // Move
         if (Size == Capacity) {
             Resize(Capacity * 2);
         }
@@ -98,16 +103,16 @@ struct Array {
         return *this;
     }
 
-    inline void SetCapacity(UNumber _size) noexcept {
+    void SetCapacity(UNumber _size) noexcept {
         Memory<Type>::Deallocate(&Storage);
 
         Size     = 0;
         Capacity = _size;
 
-        Memory<Type>::Allocate(&Storage, _size);
+        Memory<Type>::Allocate(&Storage, Capacity);
     }
 
-    inline void Resize(UNumber _size) noexcept {
+    void Resize(UNumber _size) noexcept {
         if (_size == 0) {
             _size = 2;
         }
@@ -121,7 +126,7 @@ struct Array {
         Storage   = nullptr;
         Capacity  = _size;
 
-        Memory<Type>::Allocate(&Storage, _size);
+        Memory<Type>::Allocate(&Storage, Capacity);
 
         for (UNumber n = 0; n < Size;) {
             Storage[n] = static_cast<Type &&>(tmp[n]);
@@ -138,8 +143,8 @@ struct Array {
             Capacity = src.Capacity;
             Size     = src.Size;
 
-            src.Capacity = 0;
             src.Size     = 0;
+            src.Capacity = 0;
             src.Storage  = nullptr;
         }
 
@@ -148,12 +153,16 @@ struct Array {
 
     Array<Type> &operator=(Array<Type> const &src) noexcept {
         if (this != &src) {
-            if ((src.Size + Size) > Capacity) {
-                Resize(src.Size + Size);
+            UNumber const _nSize = (Size + src.Size);
+
+            if (_nSize > Capacity) {
+                Resize(_nSize);
             }
 
-            for (UNumber i = 0; i < src.Size; i++) {
-                Storage[Size++] = src[i];
+            for (UNumber i = 0; i < src.Size;) {
+                Storage[Size] = src[i];
+                ++i;
+                ++Size;
             }
         }
 

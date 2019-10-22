@@ -21,18 +21,16 @@ enum SType { Bit = 0, PBit, Bits };
 
 struct StringBit {
     SType   Type;
-    UNumber Size;
+    UNumber ID;
 };
 
 class StringStream {
   public:
+    UNumber               Length = 0;
     Array<String>         _strings;
     Array<String const *> p_strings;
     Array<StringStream>   collections;
-
-    Array<StringBit> bits;
-
-    UNumber Length = 0;
+    Array<StringBit>      bits;
 
     StringStream() = default;
 
@@ -77,15 +75,17 @@ class StringStream {
     }
 
     static void _pack(StringStream &_ss, String &buk) noexcept {
-        String const *sstr;
-        UNumber       j = 0;
+        String const *   sstr;
+        StringBit const *ss_bit;
+        UNumber          j = 0;
 
         for (UNumber i = 0; i < _ss.bits.Size; i++) {
-            if (_ss.bits[i].Type == SType::Bit) {
-                sstr = &(_ss._strings[_ss.bits[i].Size]);
+            ss_bit = &(_ss.bits[i]);
+            if (ss_bit->Type == SType::PBit) {
+                sstr = _ss.p_strings[ss_bit->ID];
 
                 for (j = 0; j < sstr->Length;) {
-                    buk[buk.Length] = sstr->operator[](j);
+                    buk[buk.Length] = sstr->Str[j];
                     ++buk.Length;
                     ++j;
                 }
@@ -93,11 +93,11 @@ class StringStream {
                 continue;
             }
 
-            if (_ss.bits[i].Type == SType::PBit) {
-                sstr = _ss.p_strings[_ss.bits[i].Size];
+            if (ss_bit->Type == SType::Bit) {
+                sstr = &(_ss._strings[ss_bit->ID]);
 
                 for (j = 0; j < sstr->Length;) {
-                    buk[buk.Length] = sstr->operator[](j);
+                    buk[buk.Length] = sstr->Str[j];
                     ++buk.Length;
                     ++j;
                 }
@@ -105,7 +105,7 @@ class StringStream {
                 continue;
             }
 
-            _pack(_ss.collections[_ss.bits[i].Size], buk);
+            _pack(_ss.collections[ss_bit->ID], buk);
         }
     }
 
@@ -115,12 +115,11 @@ class StringStream {
 
         if (Length != 0) {
             _pack(*this, tmp);
-            // To allow the reuse of the object
-            Length           = 0;
-            _strings.Size    = 0;
-            p_strings.Size   = 0;
-            collections.Size = 0;
-            bits.Size        = 0;
+            Length = 0;
+            _strings.Reset();
+            p_strings.Reset();
+            collections.Reset();
+            bits.Reset();
         }
 
         tmp[tmp.Length] = L'\0'; // Null trimmming

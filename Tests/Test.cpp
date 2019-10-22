@@ -89,7 +89,7 @@ int main() {
             if (!Pass) {
                 break;
             }
-            std::wcout << "\n///////////////////////////////////////////////\n";
+            std::wcout << L"\n///////////////////////////////////////////////\n";
         }
 
         if (NumbersConv) {
@@ -98,7 +98,7 @@ int main() {
             if (!Pass) {
                 break;
             }
-            std::wcout << "\n///////////////////////////////////////////////\n";
+            std::wcout << L"\n///////////////////////////////////////////////\n";
         }
 
         if (TestALU) {
@@ -108,7 +108,7 @@ int main() {
             if (!Pass) {
                 break;
             }
-            std::wcout << "\n///////////////////////////////////////////////\n";
+            std::wcout << L"\n///////////////////////////////////////////////\n";
         }
 
         if (TestTemplate) {
@@ -119,7 +119,7 @@ int main() {
             if (!Pass) {
                 break;
             }
-            std::wcout << "\n///////////////////////////////////////////////\n";
+            std::wcout << L"\n///////////////////////////////////////////////\n";
         }
 
         if (TestXML) {
@@ -128,7 +128,7 @@ int main() {
             if (!Pass) {
                 break;
             }
-            std::wcout << "\n///////////////////////////////////////////////\n";
+            std::wcout << L"\n///////////////////////////////////////////////\n";
         }
 
         if (TestJSON) {
@@ -137,7 +137,7 @@ int main() {
             if (!Pass) {
                 break;
             }
-            std::wcout << "\n///////////////////////////////////////////////\n";
+            std::wcout << L"\n///////////////////////////////////////////////\n";
         }
     }
 
@@ -457,11 +457,11 @@ static bool XMLTests() noexcept {
     }
 
     if (Pass) {
-        std::wcout << "\n XML looks good!";
+        std::wcout << L"\n XML looks good!";
         std::wcout << L" Took: " << String::FromNumber((static_cast<double>(ticks) / CLOCKS_PER_SEC), 2, 3, 3).Str
                    << L'\n';
     } else {
-        std::wcout << "\n XML test failed!\n\n";
+        std::wcout << L"\n XML test failed!\n\n";
     }
 
     return Pass;
@@ -483,51 +483,52 @@ static bool JSONTests() noexcept {
         data  = getDocument();
         final = data.ToJSON();
         if (final != Qentem::Test::Replace(Qentem::Test::ReplaceNewLine(json_content, L""), L"\": ", L"\":")) {
-            std::wcout << "\n Document() might be broken!\n";
-            std::wcout << "\n File:\n"
+            std::wcout << L"\n Document() might be broken!\n";
+            std::wcout << L"\n File:\n"
                        << Qentem::Test::Replace(Qentem::Test::ReplaceNewLine(json_content, L""), L"\": ", L"\":").Str
-                       << "\n";
-            std::wcout << "\n Document():\n" << final.Str << "\n";
+                       << L"\n";
+            std::wcout << L"\n Document():\n" << final.Str << L"\n";
             return false;
         }
     }
 
     for (UNumber i = 0; i < 10; i++) {
-        std::wcout << " Importing... ";
+        std::wcout << L" Importing... ";
         took = static_cast<UNumber>(clock());
         for (UNumber y = 1; y <= times; y++) {
             data = json_content;
+            // Qentem::Engine::Search(json_content, Document::_getJsonExpres(), 0, json_content.Length);
         }
         took = (static_cast<UNumber>(clock()) - took);
-        std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << ' ';
+        std::wcout << String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << L' ';
 
-        std::wcout << " Exporting... ";
+        std::wcout << L" Exporting... ";
         took = static_cast<UNumber>(clock());
         for (UNumber y = 1; y <= times; y++) {
             final = data.ToJSON();
         }
         took = (static_cast<UNumber>(clock()) - took);
-        std::wcout << Qentem::String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << '\n';
+        std::wcout << String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << L'\n';
     }
 
     if (BigJSON) {
-        std::wcout << "\n Big JSON Run\n";
+        std::wcout << L"\n Big JSON Run\n";
         return true;
     }
 
     json_content = Qentem::Test::Replace(Qentem::Test::ReplaceNewLine(json_content, L""), L"\": ", L"\":");
     if (final == json_content) {
-        std::wcout << "\n JSON looks good!\n";
+        std::wcout << L"\n JSON looks good!\n";
         return true;
     }
 
-    std::wcout << "\n JSON is borken!\n\n";
-    std::wcout << "\n-File:\n";
+    std::wcout << L"\n JSON is borken!\n\n";
+    std::wcout << L"\n-File:\n";
     std::wcout << json_content.Str;
-    std::wcout << "\n-End-\n";
-    std::wcout << "\n-ToJSON:\n";
+    std::wcout << L"\n-End-\n";
+    std::wcout << L"\n-ToJSON:\n";
     std::wcout << final.Str;
-    std::wcout << "\n-End-\n";
+    std::wcout << L"\n-End-\n";
 
     return false;
 }
@@ -598,7 +599,7 @@ static String readFile(char const *fullpath) noexcept {
 
         file.close();
     } else {
-        std::wcout << '\n' << fullpath << L" does not exist!\n";
+        std::wcout << L'\n' << fullpath << L" does not exist!\n";
     }
 
     return content;
