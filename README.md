@@ -15,7 +15,7 @@ After That, ./Tests/QTest.bin can be run in a terminal.
 
 ## Requirements:
 * C++ 11 compiler.
-* (Optional) Emscripten: to compile into WebAssembly; to be used inside a web browser or with an independent JavaScript engine. This allows a web server to offload the rendering of an html/text to its clients. Also, I does intger calculations.
+* (Optional) Emscripten: to compile into WebAssembly; to be used inside a web browser or with an independent JavaScript engine. This allows a web server to offload its rendering of templates to its clients. Also, I does integer calculations.
 
 ## Preset editor:
 VS Code configrations are included for compiling and running tests.
