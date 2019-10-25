@@ -1,4 +1,3 @@
-
 /**
  * Qentem Document
  *
@@ -158,16 +157,16 @@ struct Document {
     Document(String const &value) noexcept {
         Array<Match> items = Engine::Search(value, _getJsonExpres(), 0, value.Length);
 
-        if (items.Size == 0) {
-            Ordered = true;
-            Strings += value;
-            Entries += Entry(0, 0, VType::StringT);
-        } else {
+        if (items.Size != 0) {
             if ((Ordered = (items[0].Expr->ID == 2))) {
                 _makeOrderedList(*this, value, items[0]);
             } else if (items[0].NestMatch.Size != 0) {
                 _makeList(*this, value, items[0].NestMatch);
             }
+        } else {
+            Ordered = true;
+            Strings += value;
+            Entries += Entry(0, 0, VType::StringT);
         }
     }
 
@@ -176,17 +175,17 @@ struct Document {
 
         Array<Match> items = Engine::Search(str, _getJsonExpres(), 0, str.Length);
 
-        if (items.Size == 0) {
-            // Just a string.
-            Ordered = true;
-            Strings += str;
-            Entries += Entry(0, 0, VType::StringT);
-        } else {
+        if (items.Size != 0) {
             if ((Ordered = (items[0].Expr->ID == 2))) {
                 _makeOrderedList(*this, str, items[0]);
             } else if (items[0].NestMatch.Size != 0) {
                 _makeList(*this, str, items[0].NestMatch);
             }
+        } else {
+            // Just a string.
+            Ordered = true;
+            Strings += str;
+            Entries += Entry(0, 0, VType::StringT);
         }
     }
 
@@ -383,16 +382,18 @@ struct Document {
     }
 
     static void _makeOrderedList(Document &document, String const &content, Match &item) noexcept {
-        UNumber offset = (item.Offset + 1); // the starting char [
-        UNumber start  = offset;
-        UNumber end    = (item.Length + item.Offset);
 
-        UNumber nestID = 0;
-        Match * subItem;
+        UNumber       nestID = 0;
+        Array<Match> *_items = &item.NestMatch;
+        Match *       subItem;
 
         UNumber limit;
         double  number;
         bool    pass = false;
+
+        UNumber       offset = (item.Offset + 1); // the starting char [
+        UNumber       start  = offset;
+        UNumber const end    = (item.Length + item.Offset);
 
         for (; offset < end; offset++) {
             switch (content[offset]) {
@@ -437,7 +438,8 @@ struct Document {
                     break;
                 }
                 case L'"': {
-                    subItem = &item.NestMatch[nestID++];
+                    subItem = &(_items->operator[](nestID++));
+
                     document.Entries += Entry(document.Strings.Size, 0, VType::StringT);
 
                     if (subItem->NestMatch.Size == 0) {
@@ -452,7 +454,7 @@ struct Document {
                     break;
                 }
                 case L'{': {
-                    subItem = &item.NestMatch[nestID++];
+                    subItem = &(_items->operator[](nestID++));
 
                     document.Entries += Entry(document.Documents.Size, 0, VType::DocumentT);
 
@@ -465,7 +467,7 @@ struct Document {
                     break;
                 }
                 case L'[': {
-                    subItem = &item.NestMatch[nestID++];
+                    subItem = &(_items->operator[](nestID++));
 
                     document.Entries += Entry(document.Documents.Size, 0, VType::DocumentT);
 
@@ -480,24 +482,25 @@ struct Document {
                 }
             }
         }
+
+        _items->Reset();
     }
 
     static void _makeList(Document &document, String const &content, Array<Match> &items) noexcept {
-        Match * key;
-        Match * data;
-        UNumber start;
-        UNumber j;
-        bool    done;
+        Match *subItem;
+        bool   done = false;
 
         UNumber limit;
         double  number;
 
         String tmpString;
 
+        UNumber j;
+        UNumber start;
+        Match * key;
         for (UNumber i = 0; i < items.Size; i++) {
-            key   = &(items[i]);
             start = 0;
-            done  = false;
+            key   = &(items[i]);
             j     = (key->Offset + key->Length);
 
             for (; j < content.Length; j++) {
@@ -505,11 +508,12 @@ struct Document {
                     case L'"': {
                         ++i;
 
-                        data = &(items[i]);
-                        if (data->NestMatch.Size != 0) {
-                            tmpString = Engine::Parse(content, data->NestMatch, (data->Offset + 1), (data->Length - 2));
+                        subItem = &(items[i]);
+                        if (subItem->NestMatch.Size != 0) {
+                            tmpString =
+                                Engine::Parse(content, subItem->NestMatch, (subItem->Offset + 1), (subItem->Length - 2));
                         } else {
-                            tmpString = String::Part(content.Str, (data->Offset + 1), (data->Length - 2));
+                            tmpString = String::Part(content.Str, (subItem->Offset + 1), (subItem->Length - 2));
                         }
 
                         document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::StringT, &tmpString, true,
@@ -591,6 +595,7 @@ struct Document {
                 }
 
                 if (done) {
+                    done = false;
                     break;
                 }
             }
@@ -979,9 +984,9 @@ struct Document {
     }
 
     static Expressions const &_getToJsonExpres() noexcept {
-        static Expression  _JsonEsc;
-        static Expression  _JsonQuot;
-        static Expressions tags;
+        static Expression  _JsonEsc  = Expression();
+        static Expression  _JsonQuot = Expression();
+        static Expressions tags      = Expressions();
 
         if (tags.Size == 0) {
             _JsonEsc.Keyword = L'\\';
@@ -1049,7 +1054,8 @@ struct Document {
             closed_square_bracket.NestExprs =
                 Expressions().Add(&opened_square_bracket).Add(&quotation_start).Add(&opened_curly_bracket);
 
-            tags = Expressions().Add(&opened_curly_bracket).Add(&opened_square_bracket);
+            tags += &opened_curly_bracket;
+            tags += &opened_square_bracket;
         }
 
         return tags;
@@ -1585,7 +1591,9 @@ struct Document {
     }
 
     Document &operator[](UNumber id) noexcept {
-        if (!Ordered) {
+        if (Ordered) {
+            lastKey = String::FromNumber(static_cast<double>(id), 1, 0, 0);
+        } else {
             lastKey = Keys[Entries[id].KeyID];
 
             Entry *   _entry;
@@ -1594,16 +1602,16 @@ struct Document {
                 src->lastKey = lastKey;
                 return *src;
             }
-        } else {
-            // I don't want to expand the size of Document by adding lastID , so this should do just find.
-            lastKey = String::FromNumber(static_cast<double>(id), 1, 0, 0);
         }
 
         return *this;
     }
 
     Document &operator[](int id) noexcept {
-        if (!Ordered) {
+        if (Ordered) {
+            // I don't want to expand the size of Document by adding lastID , so this should do just find.
+            lastKey = String::FromNumber(static_cast<UNumber>(id), 1, 0, 0);
+        } else {
             lastKey = Keys[Entries[static_cast<UNumber>(id)].KeyID];
 
             Entry *   _entry;
@@ -1612,13 +1620,12 @@ struct Document {
                 src->lastKey = lastKey;
                 return *src;
             }
-        } else {
-            // I don't want to expand the size of Document by adding lastID , so this should do just find.
-            lastKey = String::FromNumber(static_cast<UNumber>(id), 1, 0, 0);
         }
 
         return *this;
     }
 };
+
 } // namespace Qentem
+
 #endif

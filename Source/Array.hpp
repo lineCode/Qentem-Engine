@@ -57,10 +57,8 @@ struct Array {
             Resize(_nSize);
         }
 
-        for (UNumber i = 0; i < src.Size;) {
-            Storage[Size] = static_cast<Type &&>(src[i]);
-            ++i;
-            ++Size;
+        for (UNumber i = 0; i < src.Size; i++) {
+            Storage[Size++] = static_cast<Type &&>(src[i]);
         }
 
         src.Reset();
@@ -74,8 +72,8 @@ struct Array {
             Resize(_nSize);
         }
 
-        for (UNumber i = 0; i < src.Size;) {
-            Storage[Size++] = src[i++];
+        for (UNumber i = 0; i < src.Size; i++) {
+            Storage[Size++] = src[i];
         }
 
         return *this;
@@ -86,8 +84,7 @@ struct Array {
             Resize(Capacity * 2);
         }
 
-        Storage[Size] = static_cast<Type &&>(item);
-        ++Size;
+        Storage[Size++] = static_cast<Type &&>(item);
 
         return *this;
     }
@@ -104,12 +101,12 @@ struct Array {
     }
 
     void SetCapacity(UNumber _size) noexcept {
-        Memory<Type>::Deallocate(&Storage);
+        Memory::Deallocate<Type>(&Storage);
 
         Size     = 0;
         Capacity = _size;
 
-        Memory<Type>::Allocate(&Storage, Capacity);
+        Memory::Allocate<Type>(&Storage, Capacity);
     }
 
     void Resize(UNumber _size) noexcept {
@@ -126,19 +123,18 @@ struct Array {
         Storage   = nullptr;
         Capacity  = _size;
 
-        Memory<Type>::Allocate(&Storage, Capacity);
+        Memory::Allocate<Type>(&Storage, Capacity);
 
-        for (UNumber n = 0; n < Size;) {
+        for (UNumber n = 0; n < Size; n++) {
             Storage[n] = static_cast<Type &&>(tmp[n]);
-            ++n;
         }
 
-        Memory<Type>::Deallocate(&tmp);
+        Memory::Deallocate<Type>(&tmp);
     }
 
     Array<Type> &operator=(Array<Type> &&src) noexcept {
         if (this != &src) {
-            Memory<Type>::Deallocate(&Storage);
+            Memory::Deallocate<Type>(&Storage);
             Storage  = src.Storage;
             Capacity = src.Capacity;
             Size     = src.Size;
@@ -159,10 +155,8 @@ struct Array {
                 Resize(_nSize);
             }
 
-            for (UNumber i = 0; i < src.Size;) {
-                Storage[Size] = src[i];
-                ++i;
-                ++Size;
+            for (UNumber i = 0; i < src.Size; i++) {
+                Storage[Size++] = src[i];
             }
         }
 
@@ -186,7 +180,7 @@ struct Array {
     }
 
     inline void Reset() noexcept {
-        Memory<Type>::Deallocate(&Storage);
+        Memory::Deallocate<Type>(&Storage);
 
         Capacity = 0;
         Size     = 0;
@@ -201,6 +195,7 @@ struct Array {
         Reset();
     }
 };
+
 } // namespace Qentem
 
 #endif

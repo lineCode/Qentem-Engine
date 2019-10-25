@@ -1,4 +1,3 @@
-
 // #include <Extension/Document.hpp>
 #include <Extension/Template.hpp>
 #include <iostream>
@@ -6,7 +5,6 @@
 using Qentem::Array;
 using Qentem::Document;
 using Qentem::String;
-using Qentem::Template;
 using Qentem::UNumber;
 
 int main() {
@@ -46,7 +44,7 @@ int main() {
     // Template
     String content = L"<loop set=\"strings\" value=\"s_value\" key=\"s_key\">s_key: s_value\n</loop>--\n";
     content += L"<loop set=\"strings2\" value=\"s_value\" key=\"s_key\">s_key: s_value\n</loop>";
-    String rendered = Template::Render(content, &doc);
+    String rendered = Qentem::Template::Render(content, &doc);
 
     std::wcout << L"Template:\n" << rendered.Str << L'\n';
 }

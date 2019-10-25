@@ -1,4 +1,3 @@
-
 /**
  * Qentem String
  *
@@ -17,8 +16,8 @@
 namespace Qentem {
 
 struct String {
-    wchar_t *Str      = nullptr; // NULL terminated wchar_t
     UNumber  Length   = 0;
+    wchar_t *Str      = nullptr; // NULL terminated wchar_t
     UNumber  Capacity = 0;
 
     String() = default;
@@ -28,7 +27,7 @@ struct String {
             ++Capacity;
         };
 
-        Memory<wchar_t>::Allocate(&Str, (Capacity + 1));
+        Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
 
         for (; Length < Capacity; Length++) {
             Str[Length] = static_cast<wchar_t>(str[Length]);
@@ -40,7 +39,7 @@ struct String {
     String(char const str) noexcept { // one char
         Capacity = 1;
 
-        Memory<wchar_t>::Allocate(&Str, 2);
+        Memory::Allocate<wchar_t>(&Str, 2);
 
         if (str != L'\0') {
             Str[Length++] = static_cast<wchar_t>(str);
@@ -52,7 +51,7 @@ struct String {
     String(wchar_t const str) noexcept { // one wchar
         Capacity = 1;
 
-        Memory<wchar_t>::Allocate(&Str, 2); // 1 for /0
+        Memory::Allocate<wchar_t>(&Str, 2); // 1 for /0
 
         if (str != L'\0') {
             Str[Length++] = str;
@@ -64,7 +63,7 @@ struct String {
     String(wchar_t const *str) noexcept {
         Count(Capacity, str);
 
-        Memory<wchar_t>::Allocate(&Str, (Capacity + 1));
+        Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
 
         for (; Length < Capacity; Length++) {
             Str[Length] = str[Length];
@@ -75,17 +74,17 @@ struct String {
 
     String(String &&src) noexcept { // Move
         if (src.Length != 0) {
+            Length   = src.Length;
             Str      = src.Str;
             Capacity = src.Capacity;
-            Length   = src.Length;
 
             src.Capacity = 0;
-            src.Length   = 0;
             src.Str      = nullptr;
+            src.Length   = 0;
 
         } else {
             Capacity = 1;
-            Memory<wchar_t>::Allocate(&Str, 1); // 1 for /0
+            Memory::Allocate<wchar_t>(&Str, 1); // 1 for /0
             Str[Length] = L'\0';
         }
     }
@@ -93,9 +92,9 @@ struct String {
     String(String const &src) noexcept { // Copy
         Capacity = src.Length;
 
-        Memory<wchar_t>::Allocate(&Str, (Capacity + 1));
+        Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
 
-        for (; Length < src.Length;) {
+        for (; Length < Capacity;) {
             Str[Length] = static_cast<wchar_t>(src[Length]);
             ++Length;
         }
@@ -114,17 +113,17 @@ struct String {
     }
 
     inline void Reset() noexcept {
-        Memory<wchar_t>::Deallocate(&Str);
+        Memory::Deallocate<wchar_t>(&Str);
 
-        Capacity = 0;
         Length   = 0;
+        Capacity = 0;
     }
 
     inline wchar_t *Eject() noexcept {
         wchar_t *_str = Str;
+        Length        = 0;
         Str           = nullptr;
         Capacity      = 0;
-        Length        = 0;
         return _str;
     }
 
@@ -154,15 +153,15 @@ struct String {
 
     String &operator=(String &&src) noexcept { // Move
         if (this != &src) {
-            Memory<wchar_t>::Deallocate(&Str);
+            Memory::Deallocate<wchar_t>(&Str);
 
+            Length   = src.Length;
             Str      = src.Str;
             Capacity = src.Capacity;
-            Length   = src.Length;
 
             src.Capacity = 0;
-            src.Length   = 0;
             src.Str      = nullptr;
+            src.Length   = 0;
         }
 
         return *this;
@@ -171,12 +170,12 @@ struct String {
     String &operator=(String const &src) noexcept { // Copy
         if (this != &src) {
             if (Capacity < src.Length) {
-                Capacity = src.Length;
-                Memory<wchar_t>::Deallocate(&Str);
-                Memory<wchar_t>::Allocate(&Str, (Capacity + 1));
+                Memory::Deallocate<wchar_t>(&Str);
 
+                Capacity = src.Length;
+                Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
                 Length = 0;
-                for (; Length < src.Length;) {
+                for (; Length < Capacity;) {
                     Str[Length] = src[Length];
                     ++Length;
                 }
@@ -217,12 +216,11 @@ struct String {
     String &operator+=(String &&src) noexcept { // Move
         Copy(*this, src.Str, Length, src.Length);
 
-        Memory<wchar_t>::Deallocate(&src.Str);
+        Memory::Deallocate<wchar_t>(&src.Str);
 
-        src.Str = nullptr;
-
-        src.Capacity = 0;
         src.Length   = 0;
+        src.Str      = nullptr;
+        src.Capacity = 0;
 
         return *this;
     }
@@ -269,7 +267,7 @@ struct String {
             src.Length = 0;
         }
 
-        Memory<wchar_t>::Deallocate(&src.Str);
+        Memory::Deallocate<wchar_t>(&src.Str);
         src.Capacity = 0;
 
         return ns;
@@ -330,7 +328,7 @@ struct String {
             des.Capacity = (ln + des.Length);
 
             wchar_t *_tmp = des.Str;
-            Memory<wchar_t>::Allocate(&des.Str, (des.Capacity + 1));
+            Memory::Allocate<wchar_t>(&des.Str, (des.Capacity + 1));
 
             for (UNumber i = 0; i < des.Length;) {
                 des[i] = _tmp[j];
@@ -338,7 +336,7 @@ struct String {
                 ++i;
             }
 
-            Memory<wchar_t>::Deallocate(&_tmp);
+            Memory::Deallocate<wchar_t>(&_tmp);
         }
 
         // Add the new characters
@@ -359,10 +357,10 @@ struct String {
 
         if (Length != 0) {
             Length = 0;
-            Memory<wchar_t>::Deallocate(&Str);
+            Memory::Deallocate<wchar_t>(&Str);
         }
 
-        Memory<wchar_t>::Allocate(&Str, (_size + 1));
+        Memory::Allocate<wchar_t>(&Str, (_size + 1));
 
         Str[0] = L'\0';
     }
@@ -371,7 +369,7 @@ struct String {
         Capacity     = _size;
         wchar_t *tmp = Str;
 
-        Memory<wchar_t>::Allocate(&Str, (_size + 1));
+        Memory::Allocate<wchar_t>(&Str, (_size + 1));
 
         if (_size < Length) {
             Length = _size;
@@ -383,13 +381,13 @@ struct String {
 
         Str[Length] = L'\0';
 
-        Memory<wchar_t>::Deallocate(&tmp);
+        Memory::Deallocate<wchar_t>(&tmp);
     }
 
     inline static String Part(wchar_t const *str, UNumber offset, UNumber const limit) noexcept {
         String bit;
 
-        Memory<wchar_t>::Allocate(&bit.Str, (limit + 1));
+        Memory::Allocate<wchar_t>(&bit.Str, (limit + 1));
 
         bit.Capacity = limit;
 
@@ -719,6 +717,7 @@ struct String {
         return true;
     }
 };
+
 } // namespace Qentem
 
 #endif

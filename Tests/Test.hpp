@@ -1,4 +1,3 @@
-
 /**
  * Qentem Test
  *
@@ -18,6 +17,8 @@
 namespace Qentem {
 namespace Test {
 
+using Qentem::Engine::Flags;
+
 struct TestBit {
     UNumber       Line = 0;
     Expressions   Exprs;
@@ -32,7 +33,7 @@ static String FlipSplit(String const &block, Match const &item, void *ptr) noexc
 static void CleanBits(Array<TestBit> &bits) noexcept {
     for (UNumber i = 0; i < bits.Size; i++) {
         for (UNumber j = 0; j < bits[i].Collect.Size; j++) {
-            Qentem::Memory<Expression>::DeallocateBit(&bits[i].Collect[j]);
+            Qentem::Memory::DeallocateBit<Expression>(&bits[i].Collect[j]);
         }
     }
 }
@@ -211,6 +212,9 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
     data[L"lvl2"][L"strings"] += static_cast<Document &&>(n3); // Moving
 
     data.Rehash(11, true);
+
+    Qentem::Template::Render(L"", nullptr); // TO HIDE AN ERROR (Render is not used).
+
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -367,7 +371,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L'-').Add(L" -- ").Add(L"- - - -");
     bit.Expected.Add(L'*').Add(L" ** ").Add(L"* * * *");
 
-    Memory<Expression>::AllocateBit(&x1);
+    Memory::AllocateBit<Expression>(&x1);
     x1->Keyword = L'-';
     x1->Replace = L'*';
 
@@ -380,10 +384,10 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"----");
     bit.Expected.Add(L"****");
 
-    Memory<Expression>::AllocateBit(&x1);
+    Memory::AllocateBit<Expression>(&x1);
     x1->Keyword = L'-';
 
-    Memory<Expression>::AllocateBit(&x2);
+    Memory::AllocateBit<Expression>(&x2);
     x2->Keyword = L"--";
 
     x1->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept -> String { return L'*'; });
@@ -397,16 +401,16 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L" - ").Add(L" -- ").Add(L" {{{9}} ");
     bit.Expected.Add(L" 1-1 ").Add(L" 1-2 ").Add(L" 1-6 ");
 
-    Memory<Expression>::AllocateBit(&x1);
+    Memory::AllocateBit<Expression>(&x1);
     x1->Keyword = L'-';
 
-    Memory<Expression>::AllocateBit(&x2);
+    Memory::AllocateBit<Expression>(&x2);
     x2->Keyword = L"--";
 
-    Memory<Expression>::AllocateBit(&x3);
+    Memory::AllocateBit<Expression>(&x3);
     x3->Keyword = L"{{{";
 
-    Memory<Expression>::AllocateBit(&y3);
+    Memory::AllocateBit<Expression>(&y3);
     y3->Keyword   = L"}}";
     x3->Connected = y3;
 
@@ -426,8 +430,8 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"<a").Add(L"a<aa").Add(L"<aa> a").Add(L"a <a>").Add(L"a <a> a").Add(L"a  <aa>  a");
     bit.Expected.Add(L"<a").Add(L"a<aa").Add(L"- a").Add(L"a -").Add(L"a - a").Add(L"a  -  a");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&y1);
+    Memory::AllocateBit<Expression>(&x1);
+    Memory::AllocateBit<Expression>(&y1);
     x1->Keyword   = L'<';
     y1->Keyword   = L'>';
     x1->Connected = y1;
@@ -445,8 +449,8 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"<<a").Add(L"a<<aa").Add(L"<<aa> a").Add(L"a <<a>").Add(L"a <<a> a").Add(L"a  <<aa>  a");
     bit.Expected.Add(L"<<a").Add(L"a<<aa").Add(L"- a").Add(L"a -").Add(L"a - a").Add(L"a  -  a");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&y1);
+    Memory::AllocateBit<Expression>(&x1);
+    Memory::AllocateBit<Expression>(&y1);
     x1->Keyword   = L"<<";
     y1->Keyword   = L'>';
     x1->Connected = y1;
@@ -464,10 +468,10 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"<a").Add(L"a<aa").Add(L"<aa>> a").Add(L"a <a>>").Add(L"a <a>> a").Add(L"a {8} <aa>>  a");
     bit.Expected.Add(L"<a").Add(L"a<aa").Add(L"- a").Add(L"a -").Add(L"a - a").Add(L"a {8} -  a");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&y1);
-    Memory<Expression>::AllocateBit(&x2);
-    Memory<Expression>::AllocateBit(&y2);
+    Memory::AllocateBit<Expression>(&x1);
+    Memory::AllocateBit<Expression>(&y1);
+    Memory::AllocateBit<Expression>(&x2);
+    Memory::AllocateBit<Expression>(&y2);
 
     x1->Keyword   = L'<';
     y1->Keyword   = L">>";
@@ -490,8 +494,8 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"<<a").Add(L"a<<aa").Add(L"<<aa>> a").Add(L"a <<a>>").Add(L"a <<a>> a").Add(L"a  <<aa>>  a");
     bit.Expected.Add(L"<<a").Add(L"a<<aa").Add(L"- a").Add(L"a -").Add(L"a - a").Add(L"a  -  a");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&y1);
+    Memory::AllocateBit<Expression>(&x1);
+    Memory::AllocateBit<Expression>(&y1);
     x1->Keyword   = L"<<";
     y1->Keyword   = L">>";
     x1->Connected = y1;
@@ -507,8 +511,8 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L'<').Add(L"->-").Add(L"<o<>").Add(L"<>o>").Add(L"<><>o>").Add(L"<><><>");
     bit.Expected.Add(L'<').Add(L"->-").Add(L'=').Add(L"=o>").Add(L"==o>").Add(L"===");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&y1);
+    Memory::AllocateBit<Expression>(&x1);
+    Memory::AllocateBit<Expression>(&y1);
     x1->Keyword   = L'<';
     y1->Keyword   = L'>';
     x1->Connected = y1;
@@ -524,8 +528,8 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"<>").Add(L"<><>").Add(L"<><><>");
     bit.Expected.Add(L'=').Add(L"=<>").Add(L"=<><>");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&y1);
+    Memory::AllocateBit<Expression>(&x1);
+    Memory::AllocateBit<Expression>(&y1);
     x1->Keyword   = L'<';
     y1->Keyword   = L'>';
     x1->Connected = y1;
@@ -552,8 +556,8 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"<0><1><<2-0><<2-1-0><2-1-1><<2-1-2-0><2-1-2-1><2-1-2-2><2-1-2-3>>><2-2><2-3>><3> ><");
     bit.Expected.Add(L"==== ><");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&y1);
+    Memory::AllocateBit<Expression>(&x1);
+    Memory::AllocateBit<Expression>(&y1);
     x1->Keyword   = L'<';
     y1->Keyword   = L'>';
     x1->Connected = y1;
@@ -573,8 +577,8 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"<0<xxxX>").Add(L"<0-<0-X>").Add(L"<0-<0X>").Add(L"<0<<0X>").Add(L"<0>X>").Add(L"<0X>X>X>");
     bit.Expected.Add(L"W").Add(L"<0-W").Add(L"<0-W").Add(L"<0<W").Add(L"W").Add(L"WX>X>");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&y1);
+    Memory::AllocateBit<Expression>(&x1);
+    Memory::AllocateBit<Expression>(&y1);
     x1->Keyword   = L"<0";
     y1->Keyword   = L"X>";
     x1->Connected = y1;
@@ -590,8 +594,8 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"<0<0X> ").Add(L"<0<088888X> ").Add(L"<0<<0X> ").Add(L"<0>X> ").Add(L" <0X>X>X> ");
     bit.Expected.Add(L"<0W ").Add(L"<0W ").Add(L"<0<W ").Add(L"W ").Add(L" WX>X> ");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&y1);
+    Memory::AllocateBit<Expression>(&x1);
+    Memory::AllocateBit<Expression>(&y1);
     x1->Keyword   = L"<0";
     y1->Keyword   = L"X>";
     x1->Connected = y1;
@@ -613,8 +617,8 @@ static Array<TestBit> GetEngineBits() noexcept {
         L"<<0><<1><<<<2-0><<<<2-1-0><<2-1-1><<<<2-1-2-0><<2-1-2-1><<2-1-2-2><<2-1-2-3>>><<2-2><<2-3>><<3> ><<");
     bit.Expected.Add(L"++++ ><<");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&y1);
+    Memory::AllocateBit<Expression>(&x1);
+    Memory::AllocateBit<Expression>(&y1);
     x1->Keyword   = L"<<";
     y1->Keyword   = L'>';
     x1->Connected = y1;
@@ -634,8 +638,8 @@ static Array<TestBit> GetEngineBits() noexcept {
         L"<0>><1>><<2-0>><<2-1-0>><2-1-1>><<2-1-2-0>><2-1-2-1>><2-1-2-2>><2-1-2-3>>>>>><2-2>><2-3>>>><3>> >><");
     bit.Expected.Add(L"____ >><");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&y1);
+    Memory::AllocateBit<Expression>(&x1);
+    Memory::AllocateBit<Expression>(&y1);
     x1->Keyword   = L'<';
     y1->Keyword   = L">>";
     x1->Connected = y1;
@@ -658,8 +662,8 @@ static Array<TestBit> GetEngineBits() noexcept {
         L"<<0>><<1>><<<<2-0>><<<<2-1-0>><<2-1-1>><<<<2-1-2-0>><<2-1-2-1>><<2-1-2-2>><<2-1-2-3>>>>>><<2-2>><<2-3>>>><<3>> >><<");
     bit.Expected.Add(L"____ >><<");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&y1);
+    Memory::AllocateBit<Expression>(&x1);
+    Memory::AllocateBit<Expression>(&y1);
     x1->Keyword   = L"<<";
     y1->Keyword   = L">>";
     x1->Connected = y1;
@@ -678,8 +682,8 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"<0><1><<2-0><<2-1-0><2-1-1><<2-1-2-0><2-1-2-1><2-1-2-2><2-1-2-3>>><2-2><2-3>><3> ><");
     bit.Expected.Add(L"(0)(1)((2-0)((2-1-0)(2-1-1)((2-1-2-0)(2-1-2-1)(2-1-2-2)(2-1-2-3)))(2-2)(2-3))(3) ><");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&y1);
+    Memory::AllocateBit<Expression>(&x1);
+    Memory::AllocateBit<Expression>(&y1);
     x1->Keyword   = L'<';
     y1->Keyword   = L'>';
     x1->Connected = y1;
@@ -705,15 +709,15 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"(6<1-<2-<3-U>>>9)(6<1-<2-<3-U>>>9)");
     bit.Expected.Add(L"=(6A+9)==(6A+9)=");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&y1);
+    Memory::AllocateBit<Expression>(&x1);
+    Memory::AllocateBit<Expression>(&y1);
     x1->Keyword   = L'(';
     y1->Keyword   = L')';
     x1->Connected = y1;
     y1->Flag      = Flags::BUBBLE;
 
-    Memory<Expression>::AllocateBit(&x2);
-    Memory<Expression>::AllocateBit(&y2);
+    Memory::AllocateBit<Expression>(&x2);
+    Memory::AllocateBit<Expression>(&y2);
     x2->Keyword   = L'<';
     y2->Keyword   = L'>';
     x2->Connected = y2;
@@ -755,8 +759,8 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"[(<>)]").Add(L"(<>)").Add(L"<>");
     bit.Expected.Add(L"[(u)]").Add(L"(u)").Add(L'u');
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&y1);
+    Memory::AllocateBit<Expression>(&x1);
+    Memory::AllocateBit<Expression>(&y1);
     x1->Keyword   = L'[';
     y1->Keyword   = L']';
     x1->Connected = y1;
@@ -767,8 +771,8 @@ static Array<TestBit> GetEngineBits() noexcept {
         return block;
     });
 
-    Memory<Expression>::AllocateBit(&x2);
-    Memory<Expression>::AllocateBit(&y2);
+    Memory::AllocateBit<Expression>(&x2);
+    Memory::AllocateBit<Expression>(&y2);
     x2->Keyword   = L'(';
     y2->Keyword   = L')';
     x2->Flag      = Flags::POP;
@@ -779,8 +783,8 @@ static Array<TestBit> GetEngineBits() noexcept {
         return block;
     });
 
-    Memory<Expression>::AllocateBit(&x3);
-    Memory<Expression>::AllocateBit(&y3);
+    Memory::AllocateBit<Expression>(&x3);
+    Memory::AllocateBit<Expression>(&y3);
     x3->Keyword   = L'<';
     y3->Keyword   = L'>';
     x3->Connected = y3;
@@ -801,7 +805,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"<><><>").Add(L"111<>222").Add(L"1111<>2222<>3333").Add(L"1111<>2222<>3333<>4444");
     bit.Expected.Add(L"0<>2<>4<>").Add(L"3<>8").Add(L"4<>10<>16").Add(L"4<>10<>16<>22");
 
-    Memory<Expression>::AllocateBit(&x1);
+    Memory::AllocateBit<Expression>(&x1);
     x1->Keyword = L"<>";
     x1->Flag    = Flags::SPLIT;
 
@@ -822,12 +826,12 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"(11+222)").Add(L"( 111 + 22 )").Add(L"(1111+)").Add(L"(+1111)").Add(L"(11+222+3333)");
     bit.Expected.Add(L"233").Add(L"133").Add(L'0').Add(L"1111").Add(L"3566");
 
-    Memory<Expression>::AllocateBit(&x1);
+    Memory::AllocateBit<Expression>(&x1);
     x1->Keyword = L'+';
     x1->Flag    = Flags::SPLIT | Flags::TRIM;
 
-    Memory<Expression>::AllocateBit(&y1);
-    Memory<Expression>::AllocateBit(&y2);
+    Memory::AllocateBit<Expression>(&y1);
+    Memory::AllocateBit<Expression>(&y2);
     y1->Keyword = L'(';
     y2->Keyword = L')';
     y2->NestExprs.Add(x1);
@@ -873,11 +877,11 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"2*3+4*5+7*8").Add(L"2*3+4*5").Add(L"1+2*3+4*5+1").Add(L"1+1*1+1");
     bit.Expected.Add(L"82").Add(L"26").Add(L"28").Add(L'3');
 
-    Memory<Expression>::AllocateBit(&x1);
+    Memory::AllocateBit<Expression>(&x1);
     x1->Keyword = L'+';
     x1->Flag    = Flags::SPLIT | Flags::GROUPED;
 
-    Memory<Expression>::AllocateBit(&x2);
+    Memory::AllocateBit<Expression>(&x2);
     x2->Keyword = L'*';
     x2->Flag    = Flags::SPLIT | Flags::GROUPED;
 
@@ -935,12 +939,12 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"(11++222)").Add(L"( 111 ++ 22 )").Add(L"(1111++)").Add(L"(++1111)").Add(L"(11++222++3333)");
     bit.Expected.Add(L"233").Add(L"133").Add(L'0').Add(L'0').Add(L"3566");
 
-    Memory<Expression>::AllocateBit(&x1);
+    Memory::AllocateBit<Expression>(&x1);
     x1->Keyword = L"++";
     x1->Flag    = Flags::SPLIT | Flags::TRIM;
 
-    Memory<Expression>::AllocateBit(&y1);
-    Memory<Expression>::AllocateBit(&y2);
+    Memory::AllocateBit<Expression>(&y1);
+    Memory::AllocateBit<Expression>(&y2);
     y1->Keyword = L'(';
     y2->Keyword = L')';
     y2->NestExprs.Add(x1);
@@ -977,18 +981,18 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"yx+1+xy+2+y").Add(L"yx4xy+xx8y+y1yyy");
     bit.Expected.Add(L"120").Add(L"148601");
 
-    Memory<Expression>::AllocateBit(&x1);
+    Memory::AllocateBit<Expression>(&x1);
     x1->Keyword = L'+';
     x1->Flag    = Flags::SPLIT | Flags::GROUPED;
 
-    Memory<Expression>::AllocateBit(&x2);
+    Memory::AllocateBit<Expression>(&x2);
     x2->Keyword = L'x';
     x2->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept -> String {
         //
         return L'3';
     });
 
-    Memory<Expression>::AllocateBit(&x3);
+    Memory::AllocateBit<Expression>(&x3);
     x3->Keyword = L'y';
     x3->ParseCB = ([](String const &block, Match const &item, void *ptr) noexcept -> String {
         //
@@ -1029,14 +1033,14 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"{AAxx     yyyBBxx  yyyCC}");
     bit.Expected.Add(L"AABBCC");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&y1);
+    Memory::AllocateBit<Expression>(&x1);
+    Memory::AllocateBit<Expression>(&y1);
     x1->Keyword   = L'{';
     y1->Keyword   = L'}';
     x1->Connected = y1;
 
-    Memory<Expression>::AllocateBit(&x2);
-    Memory<Expression>::AllocateBit(&y2);
+    Memory::AllocateBit<Expression>(&x2);
+    Memory::AllocateBit<Expression>(&y2);
     x2->Keyword   = L"xx";
     y2->Keyword   = L"yyy";
     y2->Flag      = Flags::SPLIT;
@@ -1063,11 +1067,11 @@ static Array<TestBit> GetEngineBits() noexcept {
     // bit.Content.Add(L"ff11-22ss33-44ttt55-777e");
     // bit.Expected.Add(L"HHHH");
 
-    // Memory<Expression>::AllocateBit(&x1);
-    // Memory<Expression>::AllocateBit(&x3);
-    // Memory<Expression>::AllocateBit(&x2);
-    // Memory<Expression>::AllocateBit(&y1);
-    // Memory<Expression>::AllocateBit(&y2);
+    // Memory::AllocateBit<Expression>(&x1);
+    // Memory::AllocateBit<Expression>(&x3);
+    // Memory::AllocateBit<Expression>(&x2);
+    // Memory::AllocateBit<Expression>(&y1);
+    // Memory::AllocateBit<Expression>(&y2);
 
     // x1->Keyword = L"ff";
     // x2->Keyword = L"ss";
@@ -1103,11 +1107,11 @@ static Array<TestBit> GetEngineBits() noexcept {
     // bit.Content.Add(L"< zz (  2  ) hh >");
     // bit.Expected.Add(L"xxx");
 
-    // Memory<Expression>::AllocateBit(&x1);
-    // Memory<Expression>::AllocateBit(&x3);
-    // Memory<Expression>::AllocateBit(&x2);
-    // Memory<Expression>::AllocateBit(&y1);
-    // Memory<Expression>::AllocateBit(&y3);
+    // Memory::AllocateBit<Expression>(&x1);
+    // Memory::AllocateBit<Expression>(&x3);
+    // Memory::AllocateBit<Expression>(&x2);
+    // Memory::AllocateBit<Expression>(&y1);
+    // Memory::AllocateBit<Expression>(&y3);
 
     // x1->Keyword = L'<';
     // x2->Keyword = L'>';
@@ -1130,11 +1134,11 @@ static Array<TestBit> GetEngineBits() noexcept {
     // bit.Content.Add(L"<br><s><br>");
     // bit.Expected.Add(L"TR<wr>");
 
-    // Memory<Expression>::AllocateBit(&x1);
-    // Memory<Expression>::AllocateBit(&y1);
-    // Memory<Expression>::AllocateBit(&x2);
-    // Memory<Expression>::AllocateBit(&y2);
-    // Memory<Expression>::AllocateBit(&x3);
+    // Memory::AllocateBit<Expression>(&x1);
+    // Memory::AllocateBit<Expression>(&y1);
+    // Memory::AllocateBit<Expression>(&x2);
+    // Memory::AllocateBit<Expression>(&y2);
+    // Memory::AllocateBit<Expression>(&x3);
 
     // x1->Keyword = L'<';
     // y1->Keyword = L'>';
@@ -1165,13 +1169,13 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"{-w#{-d#{-x#o-}#{-r#e#t-}#b-}t#g{-c#{-x#o-}-}-}");
     bit.Expected.Add(L"[[[ox]c][b[ter][ox]d]w]");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&y1);
+    Memory::AllocateBit<Expression>(&x1);
+    Memory::AllocateBit<Expression>(&y1);
     x1->Keyword   = L"{-";
     y1->Keyword   = L"-}";
     x1->Connected = y1;
 
-    Memory<Expression>::AllocateBit(&x2);
+    Memory::AllocateBit<Expression>(&x2);
     x2->Flag    = Flags::SPLIT;
     x2->Keyword = L'#';
 
@@ -1193,9 +1197,9 @@ static Array<TestBit> GetEngineBits() noexcept {
         .Add(L"  a & b & c & & d  &");
     bit.Expected.Add(L"{}").Add(L"{  }").Add(L'x').Add(L'x').Add(L"").Add(L"abcd");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&y1);
-    Memory<Expression>::AllocateBit(&x2);
+    Memory::AllocateBit<Expression>(&x1);
+    Memory::AllocateBit<Expression>(&y1);
+    Memory::AllocateBit<Expression>(&x2);
 
     x1->Keyword   = L'{';
     y1->Keyword   = L'}';
@@ -1240,8 +1244,8 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"<div>ae<div>str0</div></diva>");
     bit.Expected.Add(L"<div>ae(str0)</diva>");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&y1);
+    Memory::AllocateBit<Expression>(&x1);
+    Memory::AllocateBit<Expression>(&y1);
 
     y1->Flag = Flags::BUBBLE;
 
@@ -1268,8 +1272,8 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"}-0");
     bit.Expected.Add(L"-0");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&x2);
+    Memory::AllocateBit<Expression>(&x1);
+    Memory::AllocateBit<Expression>(&x2);
 
     x1->Keyword = L"}";
     x2->Keyword = L"-";
@@ -1294,7 +1298,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"/").Add(L"//").Add(L"/r").Add(L"/ r");
     bit.Expected.Add(L"//").Add(L"////").Add(L"/r").Add(L"// r");
 
-    Memory<Expression>::AllocateBit(&x1);
+    Memory::AllocateBit<Expression>(&x1);
 
     x1->Keyword = L"/";
     x1->Replace = L"//";
@@ -1317,13 +1321,13 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Content.Add(L"{[{'0'}]}");
     bit.Expected.Add(L"{1}");
 
-    Memory<Expression>::AllocateBit(&x1);
-    Memory<Expression>::AllocateBit(&x2);
-    Memory<Expression>::AllocateBit(&x3);
+    Memory::AllocateBit<Expression>(&x1);
+    Memory::AllocateBit<Expression>(&x2);
+    Memory::AllocateBit<Expression>(&x3);
 
-    Memory<Expression>::AllocateBit(&y1);
-    Memory<Expression>::AllocateBit(&y2);
-    Memory<Expression>::AllocateBit(&y3);
+    Memory::AllocateBit<Expression>(&y1);
+    Memory::AllocateBit<Expression>(&y2);
+    Memory::AllocateBit<Expression>(&y3);
 
     x1->Keyword   = L'{';
     y1->Keyword   = L'}';

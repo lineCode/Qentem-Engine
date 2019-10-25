@@ -1,23 +1,23 @@
-# Qentem Engine (v0.9.9.8)
+# Qentem Engine (v0.9.9.9)
 
 ## Introduction:
 Qentem Engine is an independent library that uses a fast algorithm for nest-searching/nest-matching. It can be used to match existing syntaxes or new ones, and with call-backs for post and per-parsing, It's posable to match almost any complex syntax. It is very efficient and has a small footprint on memory, and it's built using modern C++. It can be used to render complex templates that contains nested loop, nested if-else, inline if, math (+ * / - ^ %), logic (&& ||), and/or something simple: like replacing a text or splitting it. Also, it is capable of doing JSON, XML/HTML.
 
 ## Built-in:
-The library - at the moment - has String class (with number conversion), Array<Type>, String Stream, Document (Tree/Map/Hash-Table), Template generator (HTML friendly syntax), Arithmetic & Logic Unit, and JSON parser (with C style comments). Also, XML/HTML parser.
-
-## Tests:
-This library includes over 350 tests; to insure that it's stable and functional. to compile the tests, the next command can be used:
-```txt
-CXX -I ./Source ./Tests/Test.cpp -o ./Tests/QTest.bin
-```
-After That, ./Tests/QTest.bin can be run in a terminal.
+The library - at the moment - has String class (with number conversion), Array, String Stream, Document (Tree/Map/HashTable), Template generator (HTML friendly syntax), Arithmetic & Logic Unit, and JSON parser (with C style comments). Also, XML/HTML parser.
 
 ## Requirements:
 * C++ 11 compiler.
 * (Optional) Emscripten: to compile into WebAssembly; to be used inside a web browser or with an independent JavaScript engine. This allows a web server to offload its rendering of templates to its clients. Also, I does integer calculations.
 
-## Preset editor:
+## Tests:
+This library includes over 350 tests; to insure that it's stable and functional. to compile the tests, the next command can be used:
+```txt
+c++ -I ./Source ./Tests/Test.cpp -o ./Tests/QTest.bin
+```
+After That, ./Tests/QTest.bin can be run in a terminal.
+
+## VS Code configrations:
 VS Code configrations are included for compiling and running tests.
 
 ## Template Demo:
@@ -116,18 +116,13 @@ The complete example is located @ [Example/Example1.cpp](https://github.com/Hani
 ### Compiling:
 Example:
 ```txt
-CXX -I ./Source ./Example/Example1.cpp -o ./Tests/QTest.bin
+c++ -I ./Source ./Example/Example1.cpp -o ./Tests/QTest.bin
 ```
 
 Template library:
 ```txt
-CXX -O3 -std=c++11 -shared -fPIC -I ./Source ./Example/QLib.cpp -o ./Build/QLib.so
-```
-
-```txt
-where "./" is the path to Qentem Engine, and "CXX" is either clang or gcc.
--For Windows, see .sln files.
+c++ -O3 -std=c++11 -shared -fPIC -I ./Source ./Example/QLib.cpp -o ./Build/QLib.so
 ```
 
 ### Engine:
-More examples of the engine usage can be found @ [Tests/Test.hpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/Test.hpp) starting around line: 458, and [Tests/Test.cpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/Test.cpp).
+More examples of the engine usage can be found @ [Tests/Test.hpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/Test.hpp) starting around line: 458, and [Tests/Test.cpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/Test.cpp)

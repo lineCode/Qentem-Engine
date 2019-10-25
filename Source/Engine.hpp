@@ -1,4 +1,3 @@
-
 /**
  * Qentem Engine
  *
@@ -66,7 +65,7 @@ static UNumber _search(Array<Match> &items, String const &content, Expressions c
     UNumber     expr_id = 0;
     Expression *expr;
     UNumber     keyword_offset;
-    UNumber     current_offset;
+    UNumber     current_offset = 0;
 
     while (offset < endOffset) {
         current_offset = offset;
@@ -242,6 +241,11 @@ static String Parse(String const &content, Array<Match> const &items, UNumber of
 /////////////////////////////////
 static void Engine::_split(Array<Match> &items, String const &content, UNumber offset,
                            UNumber const endOffset) noexcept {
+
+    if (items.Size == 0) {
+        return;
+    }
+
     UNumber const started = offset;
 
     Array<Match> splitted;
@@ -250,7 +254,7 @@ static void Engine::_split(Array<Match> &items, String const &content, UNumber o
     Match  item;
     Match *item_ptr = nullptr;
 
-    for (UNumber i = 0;; i++) {
+    for (UNumber i = 0; i <= items.Size; i++) {
         if (i != items.Size) {
             item_ptr = &(items[i]);
 
@@ -260,13 +264,13 @@ static void Engine::_split(Array<Match> &items, String const &content, UNumber o
             }
 
             item.Expr   = item_ptr->Expr;
+            item.Offset = offset;
             item.Length = item_ptr->Offset - offset;
+            offset += item.Length + item_ptr->Length;
         } else {
+            item.Offset = offset;
             item.Length = endOffset - offset;
         }
-
-        item.Offset = offset;
-        offset += item.Length + item_ptr->Length;
 
         if ((Flags::TRIM & item.Expr->Flag) != 0) {
             String::SoftTrim(content.Str, item.Offset, item.Length);
@@ -278,10 +282,6 @@ static void Engine::_split(Array<Match> &items, String const &content, UNumber o
             }
 
             splitted += static_cast<Match &&>(item);
-        }
-
-        if (i == items.Size) {
-            break;
         }
     }
 
@@ -298,5 +298,7 @@ static void Engine::_split(Array<Match> &items, String const &content, UNumber o
         item_ptr->NestMatch = static_cast<Array<Match> &&>(splitted);
     }
 }
+
 } // namespace Qentem
+
 #endif

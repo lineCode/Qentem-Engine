@@ -1,4 +1,3 @@
-
 /**
  * Qentem Engine Test
  *
@@ -21,10 +20,9 @@ using Qentem::String;
 using Qentem::StringStream;
 using Qentem::UNumber;
 using Qentem::UShort;
-using Qentem::XMLParser;
-using Qentem::XTag;
 using Qentem::Engine::Match;
 using Qentem::Test::TestBit;
+using Qentem::XMLParser::XTag;
 
 static UNumber const TimesToRun = 1;
 // static bool const    StreasTest = true;
@@ -41,10 +39,12 @@ static bool     JSONTests() noexcept;
 static bool     XMLTests() noexcept;
 
 struct NCTest {
-    double num    = 0;
-    String result = L"";
-    UShort r_max  = 0;
-    NCTest()      = default;
+    double num = 0;
+    String result;
+    UShort r_max = 0;
+
+    NCTest() = default;
+
     NCTest(double n, String r) : num(n), result(static_cast<String &&>(r)) {
     }
 
@@ -377,7 +377,7 @@ static bool XMLTests() noexcept {
 
     ticks = static_cast<UNumber>(clock());
     for (UNumber k = 0; k < times; k++) {
-        tags = XMLParser::Parse(XMLContent);
+        tags = Qentem::XMLParser::Parse(XMLContent);
     }
     ticks = (static_cast<UNumber>(clock()) - ticks);
 
@@ -588,13 +588,13 @@ static String readFile(char const *fullpath) noexcept {
 
         if (u_size != 0) {
             char *_tmp;
-            Qentem::Memory<char>::Allocate(&_tmp, u_size);
+            Qentem::Memory::Allocate<char>(&_tmp, u_size);
 
             file.read(_tmp, size);
             _tmp[(u_size - 1)] = L'\0';
 
             content = String(_tmp);
-            Qentem::Memory<char>::Deallocate(&_tmp);
+            Qentem::Memory::Deallocate<char>(&_tmp);
         }
 
         file.close();

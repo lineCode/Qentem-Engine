@@ -1,4 +1,3 @@
-
 /**
  * Qentem String Stream
  *
@@ -17,15 +16,14 @@
 
 namespace Qentem {
 
-enum SType { Bit = 0, PBit, Bits };
+enum SType { Bit = 0, PBit = 1, Bits = 2 };
 
 struct StringBit {
     SType   Type;
     UNumber ID;
 };
 
-class StringStream {
-  public:
+struct StringStream {
     UNumber               Length = 0;
     Array<String>         _strings;
     Array<String const *> p_strings;
@@ -127,6 +125,7 @@ class StringStream {
         return tmp;
     }
 };
+
 } // namespace Qentem
 
 #endif

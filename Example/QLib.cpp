@@ -5,7 +5,6 @@
 
 using Qentem::Document;
 using Qentem::String;
-using Qentem::Template;
 using Qentem::UNumber;
 
 #ifdef _WIN32
@@ -29,7 +28,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 extern "C" {
 DllExport wchar_t *renderTemplate_w(wchar_t const *temp, wchar_t const *json, bool comments) {
     Document data     = Document::FromJSON(json, comments);
-    String   rendered = Template::Render(temp, &data);
+    String   rendered = Qentem::Template::Render(temp, &data);
     data.Reset();
 
     return rendered.Eject();
@@ -43,7 +42,7 @@ EMSCRIPTEN_KEEPALIVE
 
 DllExport char *renderTemplate(char const *temp, char const *json, bool comments) {
     Document data     = Document::FromJSON(String(json), comments);
-    String   rendered = Template::Render(temp, &data);
+    String   rendered = Qentem::Template::Render(temp, &data);
     data.Reset();
 
     if (rendered.Length == 0) {
