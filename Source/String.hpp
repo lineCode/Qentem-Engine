@@ -78,9 +78,9 @@ struct String {
             Str      = src.Str;
             Capacity = src.Capacity;
 
-            src.Capacity = 0;
-            src.Str      = nullptr;
             src.Length   = 0;
+            src.Str      = nullptr;
+            src.Capacity = 0;
 
         } else {
             Capacity = 1;
@@ -159,9 +159,9 @@ struct String {
             Str      = src.Str;
             Capacity = src.Capacity;
 
-            src.Capacity = 0;
-            src.Str      = nullptr;
             src.Length   = 0;
+            src.Str      = nullptr;
+            src.Capacity = 0;
         }
 
         return *this;
@@ -464,11 +464,9 @@ struct String {
         wchar_t ch;
 
         for (UShort i = index; i < limit;) {
-            ch         = str[limit];
-            str[limit] = str[i];
-            str[i]     = ch;
-            ++i;
-            --limit;
+            ch           = str[limit];
+            str[limit--] = str[i];
+            str[i++]     = ch;
         }
     }
 

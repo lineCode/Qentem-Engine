@@ -19,19 +19,19 @@ namespace Qentem {
 template <typename Type>
 struct Array {
     UNumber Size     = 0;
-    UNumber Capacity = 0;
     Type *  Storage  = nullptr;
+    UNumber Capacity = 0;
 
     Array() = default;
 
     Array(Array<Type> &&src) noexcept {
+        Size     = src.Size;
         Storage  = src.Storage;
         Capacity = src.Capacity;
-        Size     = src.Size;
 
         src.Size     = 0;
-        src.Capacity = 0;
         src.Storage  = nullptr;
+        src.Capacity = 0;
     }
 
     Array(Array<Type> const &src) noexcept {
@@ -43,12 +43,12 @@ struct Array {
 
         if (_nSize > Capacity) {
             if (Capacity == 0) {
-                Capacity = src.Capacity;
                 Size     = src.Size;
                 Storage  = src.Storage;
+                Capacity = src.Capacity;
 
-                src.Storage  = nullptr;
                 src.Size     = 0;
+                src.Storage  = nullptr;
                 src.Capacity = 0;
 
                 return *this;
@@ -61,7 +61,9 @@ struct Array {
             Storage[Size++] = static_cast<Type &&>(src[i]);
         }
 
-        src.Reset();
+        src.Size     = 0;
+        src.Storage  = nullptr;
+        src.Capacity = 0;
 
         return *this;
     }
@@ -94,8 +96,7 @@ struct Array {
             Resize(Capacity * 2);
         }
 
-        Storage[Size] = item;
-        ++Size;
+        Storage[Size++] = item;
 
         return *this;
     }
@@ -135,13 +136,13 @@ struct Array {
     Array<Type> &operator=(Array<Type> &&src) noexcept {
         if (this != &src) {
             Memory::Deallocate<Type>(&Storage);
+            Size     = src.Size;
             Storage  = src.Storage;
             Capacity = src.Capacity;
-            Size     = src.Size;
 
             src.Size     = 0;
-            src.Capacity = 0;
             src.Storage  = nullptr;
+            src.Capacity = 0;
         }
 
         return *this;
@@ -182,9 +183,8 @@ struct Array {
     inline void Reset() noexcept {
         Memory::Deallocate<Type>(&Storage);
 
-        Capacity = 0;
         Size     = 0;
-        Storage  = nullptr;
+        Capacity = 0;
     }
 
     inline Type &operator[](UNumber const offset) const noexcept {

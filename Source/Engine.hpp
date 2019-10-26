@@ -211,20 +211,16 @@ static String Parse(String const &content, Array<Match> const &items, UNumber of
             rendered += String::Part(content.Str, offset, tmp_limit);
         }
 
-        if (item->Expr->ParseCB != nullptr) {
-            if ((Flags::BUBBLE & item->Expr->Flag) != 0) {
-                if (item->NestMatch.Size != 0) {
-                    rendered += item->Expr->ParseCB(Parse(content, item->NestMatch, item->Offset, item->Length, other),
-                                                    *item, other);
-                } else {
-                    rendered += item->Expr->ParseCB(String::Part(content.Str, item->Offset, item->Length), *item, other);
-                }
-            } else {
-                rendered += item->Expr->ParseCB(content, *item, other);
-            }
-        } else if (item->Expr->Replace.Length != 0) {
+        if (item->Expr->ParseCB == nullptr) {
             // Defaults to replace: it can be empty.
             rendered += item->Expr->Replace;
+        } else if ((Flags::BUBBLE & item->Expr->Flag) == 0) {
+            rendered += item->Expr->ParseCB(content, *item, other);
+        } else if (item->NestMatch.Size != 0) {
+            rendered +=
+                item->Expr->ParseCB(Parse(content, item->NestMatch, item->Offset, item->Length, other), *item, other);
+        } else {
+            rendered += item->Expr->ParseCB(String::Part(content.Str, item->Offset, item->Length), *item, other);
         }
 
         offset = item->Offset + item->Length;
@@ -241,7 +237,6 @@ static String Parse(String const &content, Array<Match> const &items, UNumber of
 /////////////////////////////////
 static void Engine::_split(Array<Match> &items, String const &content, UNumber offset,
                            UNumber const endOffset) noexcept {
-
     if (items.Size == 0) {
         return;
     }
@@ -249,7 +244,7 @@ static void Engine::_split(Array<Match> &items, String const &content, UNumber o
     UNumber const started = offset;
 
     Array<Match> splitted;
-    splitted.SetCapacity(items.Size + 1);
+    // splitted.SetCapacity(items.Size + 1);
 
     Match  item;
     Match *item_ptr = nullptr;
