@@ -339,7 +339,7 @@ static Expressions const &_getTagsHead() noexcept {
     static Expressions const &_tagsQuotes = _getTagsQuotes();
 
     if (tags.Size == 0) {
-        TagHead.Keyword   = L"<";
+        TagHead.Keyword   = L'<';
         TagHead_T.Keyword = L'>';
         TagHead_T.Flag    = Flags::ONCE;
         TagHead.Connected = &TagHead_T;

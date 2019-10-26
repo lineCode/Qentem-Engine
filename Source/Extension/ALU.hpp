@@ -91,9 +91,12 @@ static String EqualCallback(String const &block, Match const &item, void *other)
             if (((c <= 57) && (c >= 48)) || ((c == L'+') || (c == L'-'))) {
                 String::ToNumber(block, number1, m1->Offset, m1->Length);
             } else if (item.NestMatch.Size == 2) { // String
-                bool const r = String::Part(block.Str, m1->Offset, m1->Length)
-                                   .Compare(block, item.NestMatch[1].Offset, item.NestMatch[1].Length);
-                return (r ? L'1' : L'0');
+                if (String::Compare(block.Str, m1->Offset, m1->Length, block.Str, item.NestMatch[1].Offset,
+                                    item.NestMatch[1].Length)) {
+                    return L'1';
+                }
+
+                return L'0';
             }
         }
     }
@@ -166,7 +169,7 @@ static String MultiplicationCallback(String const &block, Match const &item, voi
                     break;
                 case 2: // /
                     if (number2 == 0) {
-                        return L"0";
+                        return L'0';
                     }
 
                     number1 /= number2;
@@ -195,7 +198,7 @@ static String MultiplicationCallback(String const &block, Match const &item, voi
                     break;
             }
         } else {
-            return L"0";
+            return L'0';
         }
 
         op_id = m2->Expr->ID;
@@ -281,7 +284,7 @@ static Expressions const &getMathExprs() noexcept {
     static Expressions tags;
 
     if (tags.Size == 0) {
-        MathMul.Keyword = L"*";
+        MathMul.Keyword = L'*';
         MathMul.ID      = 1;
         MathMul.Flag    = flags_no_pop;
         MathMul.ParseCB = &(MultiplicationCallback);
@@ -291,7 +294,7 @@ static Expressions const &getMathExprs() noexcept {
         MathDiv.Flag    = flags_no_pop;
         MathDiv.ParseCB = &(MultiplicationCallback);
 
-        MathExp.Keyword = L"^";
+        MathExp.Keyword = L'^';
         MathExp.ID      = 3;
         MathExp.Flag    = flags_no_pop;
         MathExp.ParseCB = &(MultiplicationCallback);
@@ -319,7 +322,7 @@ static Expressions const &getMathExprs() noexcept {
         MathEqu2.ParseCB   = &(EqualCallback);
         MathEqu2.NestExprs = Expressions().Add(&MathAdd).Add(&MathSub);
 
-        MathEqu.Keyword   = L"=";
+        MathEqu.Keyword   = L'=';
         MathEqu.ID        = 2;
         MathEqu.Flag      = flags_ops;
         MathEqu.ParseCB   = &(EqualCallback);
@@ -337,7 +340,7 @@ static Expressions const &getMathExprs() noexcept {
         MathLEqu.ParseCB   = &(EqualCallback);
         MathLEqu.NestExprs = MathEqu2.NestExprs;
 
-        MathLess.Keyword   = L"<";
+        MathLess.Keyword   = L'<';
         MathLess.ID        = 5;
         MathLess.Flag      = flags_no_pop;
         MathLess.ParseCB   = &(EqualCallback);
@@ -349,7 +352,7 @@ static Expressions const &getMathExprs() noexcept {
         MathBEqu.ParseCB   = &(EqualCallback);
         MathBEqu.NestExprs = MathEqu2.NestExprs;
 
-        MathBig.Keyword   = L">";
+        MathBig.Keyword   = L'>';
         MathBig.ID        = 7;
         MathBig.Flag      = flags_no_pop;
         MathBig.ParseCB   = &(EqualCallback);

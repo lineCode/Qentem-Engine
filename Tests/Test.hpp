@@ -117,47 +117,47 @@ static Array<TestBit> GetALUBits() noexcept {
     bit.Line = __LINE__;
 
     bit.Content.Add(L"+1").Add(L" +1 ").Add(L"1+").Add(L" 1+ ").Add(L"1+ ").Add(L" 1+").Add(L"1+1").Add(L" 1 + 1 ");
-    bit.Expected.Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"2").Add(L"2");
+    bit.Expected.Add(L'1').Add(L'1').Add(L'1').Add(L'1').Add(L'1').Add(L'1').Add(L'2').Add(L'2');
 
     bit.Content.Add(L" -1 ").Add(L"-1").Add(L"1-").Add(L" 1- ").Add(L"1- ").Add(L" 1-").Add(L"1-1").Add(L" 1 - 1 ");
-    bit.Expected.Add(L"-1").Add(L"-1").Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"0").Add(L"0");
+    bit.Expected.Add(L"-1").Add(L"-1").Add(L'1').Add(L'1').Add(L'1').Add(L'1').Add(L'0').Add(L'0');
 
     bit.Content.Add(L"1-").Add(L"--1").Add(L"1--").Add(L"1--1").Add(L"1---1");
-    bit.Expected.Add(L"1").Add(L"1").Add(L"1").Add(L"2").Add(L"0");
+    bit.Expected.Add(L'1').Add(L'1').Add(L'1').Add(L'2').Add(L'0');
 
     bit.Content.Add(L"-1--1");
-    bit.Expected.Add(L"0");
+    bit.Expected.Add(L'0');
 
     bit.Content.Add(L"+1+1+2+11").Add(L"1+1+2+11+").Add(L"1-1-2-11").Add(L"-1-1-2-11");
     bit.Expected.Add(L"15").Add(L"15").Add(L"-13").Add(L"-15");
 
     bit.Content.Add(L"+1-2+3").Add(L"+1+2-3").Add(L"-1-2+3-").Add(L"-1+2-3-");
-    bit.Expected.Add(L"2").Add(L"0").Add(L"0").Add(L"-2");
+    bit.Expected.Add(L'2').Add(L'0').Add(L'0').Add(L"-2");
 
     ////
     bit.Content.Add(L"*1").Add(L" 1*1 ").Add(L"3*5").Add(L" 5*3**1*2 ").Add(L" 5*3*1*2 ");
-    bit.Expected.Add(L"0").Add(L"1").Add(L"15").Add(L"0").Add(L"30");
+    bit.Expected.Add(L'0').Add(L'1').Add(L"15").Add(L'0').Add(L"30");
 
     bit.Content.Add(L"/1").Add(L" 1/1 ").Add(L"100/5").Add(L" 5/3//1/2 ").Add(L" 32/2/2/2/2/2 ");
-    bit.Expected.Add(L"0").Add(L"1").Add(L"20").Add(L"0").Add(L"1");
+    bit.Expected.Add(L'0').Add(L'1').Add(L"20").Add(L'0').Add(L'1');
 
     ////
     bit.Content.Add(L"2*1+1*2").Add(L"1+1*2");
-    bit.Expected.Add(L"4").Add(L"3");
+    bit.Expected.Add(L'4').Add(L'3');
 
     ////
     bit.Content.Add(L"4^0").Add(L"4^2").Add(L"8^2").Add(L"8^1");
-    bit.Expected.Add(L"1").Add(L"16").Add(L"64").Add(L"8");
+    bit.Expected.Add(L'1').Add(L"16").Add(L"64").Add(L'8');
 
     ////
     bit.Content.Add(L"2=2").Add(L"2==2").Add(L"1=2").Add(L"2==1").Add(L"2==1+1").Add(L"2/2==1");
-    bit.Expected.Add(L"1").Add(L"1").Add(L"0").Add(L"0").Add(L"1").Add(L"1");
+    bit.Expected.Add(L'1').Add(L'1').Add(L'0').Add(L'0').Add(L'1').Add(L'1');
 
     bit.Content.Add(L"2!=2").Add(L"1!=2").Add(L"1<=2").Add(L"2>=2").Add(L"2<=2").Add(L"2<=1").Add(L"1>=2").Add(L"2>=1");
-    bit.Expected.Add(L"0").Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"0").Add(L"0").Add(L"1");
+    bit.Expected.Add(L'0').Add(L'1').Add(L'1').Add(L'1').Add(L'1').Add(L'0').Add(L'0').Add(L'1');
 
     bit.Content.Add(L"3 + 9 - 1 - -1 + 2 == 14");
-    bit.Expected.Add(L"1");
+    bit.Expected.Add(L'1');
     ////
     bit.Exprs = _mathExprs;
     bits += static_cast<TestBit &&>(bit);
@@ -166,11 +166,11 @@ static Array<TestBit> GetALUBits() noexcept {
     bit.Line = __LINE__;
 
     bit.Content.Add(L"(2*(1+1))").Add(L"((1+10)+(5*5))");
-    bit.Expected.Add(L"4").Add(L"36");
+    bit.Expected.Add(L'4').Add(L"36");
 
     bit.Content.Add(
         L"(((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) + (1) + 2 = 14)");
-    bit.Expected.Add(L"1");
+    bit.Expected.Add(L'1');
 
     bit.Exprs = _parensExprs;
     bits += static_cast<TestBit &&>(bit);
@@ -220,16 +220,16 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
     bit.Line = __LINE__;
 
     bit.Content.Add(L"{v:r1}  ").Add(L" {v:r2}  ").Add(L"{v:e1} ").Add(L"{v:e2}");
-    bit.Expected.Add(L"Familly  ").Add(L" r2  ").Add(L" ").Add(L" ");
+    bit.Expected.Add(L"Familly  ").Add(L" r2  ").Add(L' ').Add(L' ');
 
     bit.Content.Add(L"{v:lvl2[e3]}");
-    bit.Expected.Add(L"5");
+    bit.Expected.Add(L'5');
 
     bit.Content.Add(L"{v:lvl2[r1]}").Add(L"{v:lvl2[r2]}").Add(L"{v:lvl2[e1]}").Add(L" {v:lvl2[e2]} ");
     bit.Expected.Add(L"l2").Add(L"lvl2[r2]").Add(L"").Add(L"   ");
 
     bit.Content.Add(L"{v:lvl2[numbers][0]}").Add(L"{v:lvl2[numbers][1]}").Add(L"{v:lvl2[numbers][3]}");
-    bit.Expected.Add(L"1").Add(L"2").Add(L"lvl2[numbers][3]");
+    bit.Expected.Add(L'1').Add(L'2').Add(L"lvl2[numbers][3]");
 
     bit.Content.Add(L"{v:lvl2[strings][0]}").Add(L"{v:lvl2[strings][1]}").Add(L"{v:lvl2[strings][3]}");
     bit.Expected.Add(L"N1").Add(L"N2").Add(L"lvl2[strings][3]");
@@ -243,16 +243,16 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
     ////
 
     bit.Content.Add(L"{iif case=\"987\" true =\"{iif case =\"1\" true=\"5\"}\"}");
-    bit.Expected.Add(L"5");
+    bit.Expected.Add(L'5');
 
     bit.Content.Add(L"{iif case=\"1\" false=\"10\"}");
     bit.Expected.Add(L"");
 
     bit.Content.Add(L"{iif case = \"1\" true = \"1\" false = \"0\"}");
-    bit.Expected.Add(L"1");
+    bit.Expected.Add(L'1');
 
     bit.Content.Add(L"{iif case=\"0\" true=\"1\" false=\"0\"}");
-    bit.Expected.Add(L"0");
+    bit.Expected.Add(L'0');
 
     bit.Content.Add(
         L"{iif case=\"((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) + (1) + 2\" true =\"14\"}");
@@ -271,33 +271,33 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
     bit.Expected.Add(L"35.5");
 
     bit.Content.Add(L"{iif case = \"5<1\" true = \"1\" false = \"0\"}");
-    bit.Expected.Add(L"0");
+    bit.Expected.Add(L'0');
 
     bit.Content.Add(L"{iif case=\"1<2\" false=\"No\"}");
     bit.Expected.Add(L"");
 
     bit.Content.Add(L"{iif case=\"5<10\" true=\"1\" false=\"0\"}");
-    bit.Expected.Add(L"1");
+    bit.Expected.Add(L'1');
 
     bit.Content.Add(L"{iif case=\"0&&3\" true=\"1\" false=\"0\"}");
-    bit.Expected.Add(L"0");
+    bit.Expected.Add(L'0');
 
     bit.Content.Add(L"{iif case=\"5&&10\" true=\"1\" false=\"0\"}");
-    bit.Expected.Add(L"1");
+    bit.Expected.Add(L'1');
 
     bit.Content.Add(L"{iif case=\"7&&0\" true=\"1\" false=\"0\"}");
-    bit.Expected.Add(L"0");
+    bit.Expected.Add(L'0');
 
     bit.Content.Add(L"{iif case=\"0||10\" true=\"1\" false=\"0\"}");
-    bit.Expected.Add(L"1");
+    bit.Expected.Add(L'1');
 
     bit.Content.Add(L"{iif case=\"10||0\" true=\"1\" false=\"0\"}");
-    bit.Expected.Add(L"1");
+    bit.Expected.Add(L'1');
 
     bit.Content.Add(L"{iif case=\"0||0\" true=\"1\" false=\"0\"}");
-    bit.Expected.Add(L"0");
+    bit.Expected.Add(L'0');
 
-    // Text compare
+    // Text compareing
     bit.Content.Add(L"{iif case=\"  {v:foo} == FOO  \" true =\"It's {v:foo}.\" false=\"Not {v:foo}!\"}");
     bit.Expected.Add(L"It's FOO.");
 
@@ -324,12 +324,12 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
         .Add(L" <if case=\"100\"><if case=\"1\">6</if></if>")
         .Add(L"<if case=\"8\"><if case=\"88\"><if case=\"888\">7</if></if></if>")
         .Add(L"<if case=\"1\"><if case=\"1\"><if case=\"1\"><if case=\"1\">8</if></if></if></if>");
-    bit.Expected.Add(L"  5  ").Add(L" ").Add(L" 6").Add(L"7").Add(L"8");
+    bit.Expected.Add(L"  5  ").Add(L' ').Add(L" 6").Add(L'7').Add(L'8');
 
     bit.Content.Add(L"<if case=\"1\">4<else /> 6 </if>")
         .Add(L"<if case=\"0\"> 4 <else />6</if>")
         .Add(L"<if case=\"0\"> 4 <else /><if case=\"0\"> 4 <else /><if case=\"0\"> 4 <else />7</if></if></if>");
-    bit.Expected.Add(L"4").Add(L"6").Add(L"7");
+    bit.Expected.Add(L'4').Add(L'6').Add(L'7');
 
     bit.Content.Add(L"<if case=\"0\"><else />91</if>");
     bit.Expected.Add(L"91");
@@ -338,10 +338,10 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
     bit.Expected.Add(L" 6 ");
 
     bit.Content.Add(L"<if case=\"1\">4<elseif case=\"{v:lvl2[numbers][0]} = 1\" /> 6 </if>");
-    bit.Expected.Add(L"4");
+    bit.Expected.Add(L'4');
 
     bit.Content.Add(L"<if case=\"0\">4<elseif case=\"0\" /> 6 <elseif case=\"1\" />9</if>");
-    bit.Expected.Add(L"9");
+    bit.Expected.Add(L'9');
 
     bit.Content.Add(L"<if case=\"0\">4<elseif case=\"0\" /> 6 <else />91</if>");
     bit.Expected.Add(L"91");
@@ -572,10 +572,10 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Line = __LINE__;
 
     bit.Content.Add(L"<0<X>").Add(L"<0<X> ").Add(L"<0<<X>");
-    bit.Expected.Add(L"W").Add(L"W ").Add(L"W");
+    bit.Expected.Add(L'W').Add(L"W ").Add(L'W');
 
     bit.Content.Add(L"<0<xxxX>").Add(L"<0-<0-X>").Add(L"<0-<0X>").Add(L"<0<<0X>").Add(L"<0>X>").Add(L"<0X>X>X>");
-    bit.Expected.Add(L"W").Add(L"<0-W").Add(L"<0-W").Add(L"<0<W").Add(L"W").Add(L"WX>X>");
+    bit.Expected.Add(L'W').Add(L"<0-W").Add(L"<0-W").Add(L"<0<W").Add(L'W').Add(L"WX>X>");
 
     Memory::AllocateBit<Expression>(&x1);
     Memory::AllocateBit<Expression>(&y1);
@@ -977,7 +977,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     // Note: Crazy mojo!
     bit.Content.Add(L"yx31xy").Add(L"x+1").Add(L"xx+1").Add(L"xx+1+2").Add(L"1+x").Add(L"1+xx").Add(L"1+yy").Add(
         L"1+3+yy");
-    bit.Expected.Add(L"733137").Add(L'4').Add(L"34").Add(L"36").Add(L"4").Add(L"34").Add(L"78").Add(L"81");
+    bit.Expected.Add(L"733137").Add(L'4').Add(L"34").Add(L"36").Add(L'4').Add(L"34").Add(L"78").Add(L"81");
     bit.Content.Add(L"yx+1+xy+2+y").Add(L"yx4xy+xx8y+y1yyy");
     bit.Expected.Add(L"120").Add(L"148601");
 
@@ -1275,8 +1275,8 @@ static Array<TestBit> GetEngineBits() noexcept {
     Memory::AllocateBit<Expression>(&x1);
     Memory::AllocateBit<Expression>(&x2);
 
-    x1->Keyword = L"}";
-    x2->Keyword = L"-";
+    x1->Keyword = L'}';
+    x2->Keyword = L'-';
     x2->Replace = L'1';
 
     bit.Exprs.Add(x1).Add(x2);
@@ -1295,12 +1295,12 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit      = TestBit();
     bit.Line = __LINE__;
 
-    bit.Content.Add(L"/").Add(L"//").Add(L"/r").Add(L"/ r");
+    bit.Content.Add(L'/').Add(L"//").Add(L"/r").Add(L"/ r");
     bit.Expected.Add(L"//").Add(L"////").Add(L"/r").Add(L"// r");
 
     Memory::AllocateBit<Expression>(&x1);
 
-    x1->Keyword = L"/";
+    x1->Keyword = L'/';
     x1->Replace = L"//";
 
     bit.Exprs.Add(x1);

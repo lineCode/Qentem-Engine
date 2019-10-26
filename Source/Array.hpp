@@ -187,7 +187,7 @@ struct Array {
         Storage  = nullptr;
     }
 
-    inline Type &operator[](UNumber const offset) const noexcept { // Compare
+    inline Type &operator[](UNumber const offset) const noexcept {
         return Storage[offset];
     }
 

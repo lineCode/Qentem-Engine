@@ -307,6 +307,21 @@ struct String {
         return Str[__index];
     }
 
+    static bool Compare(wchar_t const *src_text, UNumber const src_index, UNumber const src_length,
+                        wchar_t const *des_text, UNumber des_index, UNumber const des_length) noexcept {
+        if (src_length != des_length) {
+            return false;
+        }
+
+        UNumber i = src_index;
+        while ((i < src_length) && (src_text[i] == des_text[des_index])) {
+            ++i; // Only increment when there is a match
+            ++des_index;
+        }
+
+        return (i == src_length);
+    }
+
     bool Compare(String const &text, UNumber index, UNumber const length) const noexcept {
         if (Length != length) {
             return false;

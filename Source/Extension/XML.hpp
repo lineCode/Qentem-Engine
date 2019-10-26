@@ -50,8 +50,8 @@ static Expressions const &getXMLExprs() noexcept {
     static Expressions tags;
 
     if (tags.Size == 0) {
-        xStart.Keyword   = L"<";
-        xEnd.Keyword     = L">";
+        xStart.Keyword   = L'<';
+        xEnd.Keyword     = L'>';
         xStart.Connected = &xEnd;
 
         tags.SetCapacity(1);
@@ -150,6 +150,7 @@ static Array<XTag> parseTags(String const &content, Array<Match> const &items, U
             }
         } else if (content[startAt] != L'/') { // A new tag that is not a closing one.
             _tag.Name = String::Part(content.Str, startAt, tagLen);
+            // TODO: Add inline HTML tag list
 
             matchStart = id;
             tmpIndex   = index;
