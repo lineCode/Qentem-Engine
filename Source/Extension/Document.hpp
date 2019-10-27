@@ -1,7 +1,7 @@
 /**
  * Qentem Document
  *
- * @brief     Ordered/Unordered array with hasing capability and JSON build-in
+ * @brief     Ordered & Unordered array with hasing capability and JSON build-in
  *
  * @author    Hani Ammar <hani.code@outlook.com>
  * @copyright 2019 Hani Ammar
@@ -327,7 +327,7 @@ struct Document {
         if (_ent != nullptr) {
             // If exists ...
             if (_ent->Type != type) {
-                // Clearing an existing value.
+                // Clearing any existing value.
                 switch (type) {
                     case VType::StringT: {
                         Strings[_ent->ArrayID].Reset();
@@ -345,12 +345,17 @@ struct Document {
             return;
         }
 
-        Index _index;
+        InsertHash(_hash, id, key.Str, offset, limit, type);
+    }
+
+    void InsertHash(UNumber const _hash, UNumber const id, wchar_t const *key, UNumber const offset, UNumber const limit,
+                    const VType type) {
+        static Index _index;
         _index.Hash    = _hash;
         _index.EntryID = Entries.Size;
 
         Entries += Entry(id, Keys.Size, type);
-        Keys += String::Part(key.Str, offset, limit);
+        Keys += String::Part(key, offset, limit);
 
         InsertIndex(_index, 0, Table);
     }
@@ -396,6 +401,10 @@ struct Document {
         UNumber const end    = (item.Length + item.Offset);
 
         for (; offset < end; offset++) {
+            while (content[offset] == L' ') {
+                ++offset;
+            }
+
             switch (content[offset]) {
                 case L',':
                 case L']': {
@@ -495,25 +504,29 @@ struct Document {
 
         String tmpString;
 
+        UNumber start = 0;
         UNumber j;
-        UNumber start;
         Match * key;
+
         for (UNumber i = 0; i < items.Size; i++) {
-            start = 0;
-            key   = &(items[i]);
-            j     = (key->Offset + key->Length);
+            key = &(items[i]);
+            j   = (key->Offset + key->Length);
 
             for (; j < content.Length; j++) {
+                while (content[j] == L' ') {
+                    ++j;
+                }
+
                 switch (content[j]) {
                     case L'"': {
                         ++i;
 
                         subItem = &(items[i]);
-                        if (subItem->NestMatch.Size != 0) {
+                        if (subItem->NestMatch.Size == 0) {
+                            tmpString = String::Part(content.Str, (subItem->Offset + 1), (subItem->Length - 2));
+                        } else {
                             tmpString =
                                 Engine::Parse(content, subItem->NestMatch, (subItem->Offset + 1), (subItem->Length - 2));
-                        } else {
-                            tmpString = String::Part(content.Str, (subItem->Offset + 1), (subItem->Length - 2));
                         }
 
                         document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::StringT, &tmpString, true,

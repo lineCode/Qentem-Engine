@@ -73,20 +73,12 @@ struct String {
     }
 
     String(String &&src) noexcept { // Move
-        if (src.Length != 0) {
-            Length   = src.Length;
-            Str      = src.Str;
-            Capacity = src.Capacity;
-
-            src.Length   = 0;
-            src.Str      = nullptr;
-            src.Capacity = 0;
-
-        } else {
-            Capacity = 1;
-            Memory::Allocate<wchar_t>(&Str, 1); // 1 for /0
-            Str[Length] = L'\0';
-        }
+        Length       = src.Length;
+        src.Length   = 0;
+        Str          = src.Str;
+        src.Str      = nullptr;
+        Capacity     = src.Capacity;
+        src.Capacity = 0;
     }
 
     String(String const &src) noexcept { // Copy
@@ -121,8 +113,8 @@ struct String {
 
     inline wchar_t *Eject() noexcept {
         wchar_t *_str = Str;
-        Length        = 0;
         Str           = nullptr;
+        Length        = 0;
         Capacity      = 0;
         return _str;
     }
@@ -155,12 +147,11 @@ struct String {
         if (this != &src) {
             Memory::Deallocate<wchar_t>(&Str);
 
-            Length   = src.Length;
-            Str      = src.Str;
-            Capacity = src.Capacity;
-
+            Length       = src.Length;
             src.Length   = 0;
+            Str          = src.Str;
             src.Str      = nullptr;
+            Capacity     = src.Capacity;
             src.Capacity = 0;
         }
 
@@ -173,6 +164,7 @@ struct String {
                 Memory::Deallocate<wchar_t>(&Str);
 
                 Capacity = src.Length;
+                Str      = nullptr;
                 Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
                 Length = 0;
                 for (; Length < Capacity;) {
@@ -429,7 +421,7 @@ struct String {
 
             fl = !fl;
 
-            hash += (((static_cast<UNumber>(str[(start++)]))) * (j++));
+            hash += (((static_cast<UNumber>(str[start++]))) * (j++));
         }
 
         return hash;

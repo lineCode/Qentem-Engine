@@ -25,12 +25,11 @@ struct Array {
     Array() = default;
 
     Array(Array<Type> &&src) noexcept {
-        Size     = src.Size;
-        Storage  = src.Storage;
-        Capacity = src.Capacity;
-
+        Size         = src.Size;
         src.Size     = 0;
+        Storage      = src.Storage;
         src.Storage  = nullptr;
+        Capacity     = src.Capacity;
         src.Capacity = 0;
     }
 
@@ -43,12 +42,11 @@ struct Array {
 
         if (_nSize > Capacity) {
             if (Capacity == 0) {
-                Size     = src.Size;
-                Storage  = src.Storage;
-                Capacity = src.Capacity;
-
+                Size         = src.Size;
                 src.Size     = 0;
+                Storage      = src.Storage;
                 src.Storage  = nullptr;
+                Capacity     = src.Capacity;
                 src.Capacity = 0;
 
                 return *this;
@@ -70,6 +68,7 @@ struct Array {
 
     Array<Type> &Add(Array<Type> const &src) noexcept {
         UNumber const _nSize = (Size + src.Size);
+
         if (_nSize > Capacity) {
             Resize(_nSize);
         }
@@ -115,15 +114,10 @@ struct Array {
             _size = 2;
         }
 
-        // if (_size <= Size) {
-        //     Size = _size;
-        //     return;
-        // }
-
         Type *tmp = Storage;
-        Storage   = nullptr;
         Capacity  = _size;
 
+        Storage = nullptr;
         Memory::Allocate<Type>(&Storage, Capacity);
 
         for (UNumber n = 0; n < Size; n++) {
@@ -136,12 +130,12 @@ struct Array {
     Array<Type> &operator=(Array<Type> &&src) noexcept {
         if (this != &src) {
             Memory::Deallocate<Type>(&Storage);
-            Size     = src.Size;
-            Storage  = src.Storage;
-            Capacity = src.Capacity;
 
+            Size         = src.Size;
             src.Size     = 0;
+            Storage      = src.Storage;
             src.Storage  = nullptr;
+            Capacity     = src.Capacity;
             src.Capacity = 0;
         }
 
