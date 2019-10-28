@@ -13,7 +13,7 @@
     // },
     {
       "name": "Linux (GDB)",
-      // "preLaunchTask": "Build .bin",
+      "preLaunchTask": "Build .bin",
       "type": "cppdbg",
       "request": "launch",
       "cwd": "${workspaceFolder}",

@@ -54,37 +54,37 @@ struct Document {
     UNumber HashBase = 17; // Or 97; a prime number only!
     bool    Ordered  = false;
 
-    Array<Entry> Entries;
-    Array<Index> Table;
+    Array<Index>  Table;
+    Array<Entry>  Entries;
+    Array<String> Keys;
 
     Array<double>   Numbers;
     Array<String>   Strings;
-    Array<String>   Keys;
     Array<Document> Documents;
+    String          lastKey;
 
-    String lastKey;
     Document()          = default;
     virtual ~Document() = default;
 
     Document(Document &&doc) noexcept {
         HashBase  = doc.HashBase;
         Ordered   = doc.Ordered;
-        Entries   = static_cast<Array<Entry> &&>(doc.Entries);
         Table     = static_cast<Array<Index> &&>(doc.Table);
+        Entries   = static_cast<Array<Entry> &&>(doc.Entries);
+        Keys      = static_cast<Array<String> &&>(doc.Keys);
         Numbers   = static_cast<Array<double> &&>(doc.Numbers);
         Strings   = static_cast<Array<String> &&>(doc.Strings);
-        Keys      = static_cast<Array<String> &&>(doc.Keys);
         Documents = static_cast<Array<Document> &&>(doc.Documents);
     }
 
     Document(Document const &doc) noexcept {
         HashBase  = doc.HashBase;
         Ordered   = doc.Ordered;
-        Entries   = doc.Entries;
         Table     = doc.Table;
+        Entries   = doc.Entries;
+        Keys      = doc.Keys;
         Numbers   = doc.Numbers;
         Strings   = doc.Strings;
-        Keys      = doc.Keys;
         Documents = doc.Documents;
     }
 
@@ -158,10 +158,10 @@ struct Document {
         Array<Match> items = Engine::Search(value, _getJsonExpres(), 0, value.Length);
 
         if (items.Size != 0) {
-            if ((Ordered = (items[0].Expr->ID == 2))) {
+            if (items[0].Expr->ID == 1) {
+                _makeList(*this, value, items[0]);
+            } else {
                 _makeOrderedList(*this, value, items[0]);
-            } else if (items[0].NestMatch.Size != 0) {
-                _makeList(*this, value, items[0].NestMatch);
             }
         } else {
             Ordered = true;
@@ -176,10 +176,10 @@ struct Document {
         Array<Match> items = Engine::Search(str, _getJsonExpres(), 0, str.Length);
 
         if (items.Size != 0) {
-            if ((Ordered = (items[0].Expr->ID == 2))) {
+            if (items[0].Expr->ID == 1) {
+                _makeList(*this, str, items[0]);
+            } else {
                 _makeOrderedList(*this, str, items[0]);
-            } else if (items[0].NestMatch.Size != 0) {
-                _makeList(*this, str, items[0].NestMatch);
             }
         } else {
             // Just a string.
@@ -196,6 +196,7 @@ struct Document {
         Strings.Reset();
         Keys.Reset();
         Documents.Reset();
+        lastKey.Reset();
     }
 
     static void Drop(Entry &_entry, Document &storage) noexcept {
@@ -257,6 +258,26 @@ struct Document {
         }
 
         return nullptr;
+    }
+
+    void Rehash(UNumber newBase, bool const children = false) noexcept {
+        Table.Reset();
+        HashBase = newBase;
+
+        Index   _index;
+        String *key;
+
+        for (UNumber i = 0; i < Keys.Size; i++) {
+            key            = &(Keys[Entries[i].KeyID]);
+            _index.Hash    = String::Hash(key->Str, 0, key->Length);
+            _index.EntryID = i;
+
+            InsertIndex(_index, 0, Table);
+
+            if (children && (Entries[i].Type == VType::DocumentT)) {
+                Documents[Entries[i].ArrayID].Rehash(HashBase, true);
+            }
+        }
     }
 
     void Insert(String const &key, UNumber offset, UNumber limit, VType const type, void *ptr, bool const move,
@@ -345,60 +366,29 @@ struct Document {
             return;
         }
 
-        InsertHash(_hash, id, key.Str, offset, limit, type);
-    }
-
-    void InsertHash(UNumber const _hash, UNumber const id, wchar_t const *key, UNumber const offset, UNumber const limit,
-                    const VType type) {
-        static Index _index;
+        Index _index;
         _index.Hash    = _hash;
         _index.EntryID = Entries.Size;
 
         Entries += Entry(id, Keys.Size, type);
-        Keys += String::Part(key, offset, limit);
+        Keys += String::Part(key.Str, offset, limit);
 
         InsertIndex(_index, 0, Table);
     }
 
-    void Rehash(UNumber newBase, bool const children = false) noexcept {
-        Table.Reset();
-        HashBase = newBase;
-
-        Index   _index;
-        String *key;
-
-        for (UNumber i = 0; i < Keys.Size; i++) {
-            key            = &(Keys[Entries[i].KeyID]);
-            _index.Hash    = String::Hash(key->Str, 0, key->Length);
-            _index.EntryID = i;
-
-            InsertIndex(_index, 0, Table);
-
-            if (children && (Entries[i].Type == VType::DocumentT)) {
-                Documents[Entries[i].ArrayID].Rehash(HashBase, true);
-            }
-        }
-    }
-
-    inline String ToJSON() const noexcept {
-        StringStream ss;
-        _toJSON(ss);
-        return ss.Eject();
-    }
-
     static void _makeOrderedList(Document &document, String const &content, Match &item) noexcept {
+        document.Ordered     = true;
+        Array<Match> *_items = &(item.NestMatch);
 
-        UNumber       nestID = 0;
-        Array<Match> *_items = &item.NestMatch;
-        Match *       subItem;
-
+        Match * subItem;
         UNumber limit;
         double  number;
-        bool    pass = false;
 
-        UNumber       offset = (item.Offset + 1); // the starting char [
-        UNumber       start  = offset;
-        UNumber const end    = (item.Length + item.Offset);
+        bool          pass    = false;
+        UNumber       _itemID = 0;
+        UNumber       offset  = (item.Offset + 1); // the starting char [
+        UNumber       start   = offset;
+        UNumber const end     = (item.Length + item.Offset);
 
         for (; offset < end; offset++) {
             while (content[offset] == L' ') {
@@ -447,7 +437,7 @@ struct Document {
                     break;
                 }
                 case L'"': {
-                    subItem = &(_items->operator[](nestID++));
+                    subItem = &(_items->operator[](_itemID++));
 
                     document.Entries += Entry(document.Strings.Size, 0, VType::StringT);
 
@@ -463,12 +453,12 @@ struct Document {
                     break;
                 }
                 case L'{': {
-                    subItem = &(_items->operator[](nestID++));
+                    subItem = &(_items->operator[](_itemID++));
 
                     document.Entries += Entry(document.Documents.Size, 0, VType::DocumentT);
 
                     Document doc;
-                    _makeList(doc, content, subItem->NestMatch);
+                    _makeList(doc, content, *subItem);
                     document.Documents += static_cast<Document &&>(doc);
 
                     offset = (subItem->Offset + subItem->Length) - 1;
@@ -476,12 +466,11 @@ struct Document {
                     break;
                 }
                 case L'[': {
-                    subItem = &(_items->operator[](nestID++));
+                    subItem = &(_items->operator[](_itemID++));
 
                     document.Entries += Entry(document.Documents.Size, 0, VType::DocumentT);
 
                     Document doc;
-                    doc.Ordered = true;
                     _makeOrderedList(doc, content, *subItem);
                     document.Documents += static_cast<Document &&>(doc);
 
@@ -495,10 +484,11 @@ struct Document {
         _items->Reset();
     }
 
-    static void _makeList(Document &document, String const &content, Array<Match> &items) noexcept {
-        Match *subItem;
-        bool   done = false;
+    static void _makeList(Document &document, String const &content, Match &item) noexcept {
+        Array<Match> *_items = &(item.NestMatch);
+        bool          done   = false;
 
+        Match * subItem;
         UNumber limit;
         double  number;
 
@@ -508,8 +498,8 @@ struct Document {
         UNumber j;
         Match * key;
 
-        for (UNumber i = 0; i < items.Size; i++) {
-            key = &(items[i]);
+        for (UNumber i = 0; i < _items->Size; i++) {
+            key = &(_items->operator[](i));
             j   = (key->Offset + key->Length);
 
             for (; j < content.Length; j++) {
@@ -521,7 +511,7 @@ struct Document {
                     case L'"': {
                         ++i;
 
-                        subItem = &(items[i]);
+                        subItem = &(_items->operator[](i));
                         if (subItem->NestMatch.Size == 0) {
                             tmpString = String::Part(content.Str, (subItem->Offset + 1), (subItem->Length - 2));
                         } else {
@@ -583,7 +573,7 @@ struct Document {
                         ++i;
 
                         Document uno_document;
-                        _makeList(uno_document, content, items[i].NestMatch);
+                        _makeList(uno_document, content, _items->operator[](i));
 
                         document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::DocumentT, &uno_document,
                                         true, false);
@@ -595,9 +585,7 @@ struct Document {
                         ++i;
 
                         Document o_document;
-                        o_document.Ordered = true;
-
-                        _makeOrderedList(o_document, content, items[i]);
+                        _makeOrderedList(o_document, content, _items->operator[](i));
 
                         document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::DocumentT, &o_document,
                                         true, false);
@@ -614,7 +602,7 @@ struct Document {
             }
         }
 
-        items.Reset();
+        _items->Reset();
     }
 
     static Document FromJSON(String const &content, bool comments = false) noexcept {
@@ -654,13 +642,10 @@ struct Document {
         }
 
         if (items.Size != 0) {
-            Match *const _item = &(items[0]);
-
-            document.Ordered = (_item->Expr->ID == 2);
-            if (document.Ordered) {
-                _makeOrderedList(document, (n_content.Length == 0) ? content : n_content, *_item);
-            } else if (_item->NestMatch.Size != 0) {
-                _makeList(document, (n_content.Length == 0) ? content : n_content, _item->NestMatch);
+            if (items[0].Expr->ID == 1) {
+                _makeList(document, (n_content.Length == 0) ? content : n_content, items[0]);
+            } else {
+                _makeOrderedList(document, (n_content.Length == 0) ? content : n_content, items[0]);
             }
         }
 
@@ -870,6 +855,12 @@ struct Document {
         }
 
         return nullptr;
+    }
+
+    inline String ToJSON() const noexcept {
+        StringStream ss;
+        _toJSON(ss);
+        return ss.Eject();
     }
 
     void _toJSON(StringStream &ss) const noexcept {
@@ -1467,8 +1458,8 @@ struct Document {
             Document doc;
             if ((doc.Ordered = (items[0].Expr->ID == 2))) {
                 _makeOrderedList(doc, str, items[0]);
-            } else if (items[0].NestMatch.Size != 0) {
-                _makeList(doc, str, items[0].NestMatch);
+            } else {
+                _makeList(doc, str, items[0]);
             }
             *this += doc;
         } else if (Ordered) {
@@ -1482,10 +1473,10 @@ struct Document {
 
         if (items.Size != 0) {
             Document doc;
-            if ((doc.Ordered = (items[0].Expr->ID == 2))) {
+            if (items[0].Expr->ID == 1) {
+                _makeList(doc, string, items[0]);
+            } else {
                 _makeOrderedList(doc, string, items[0]);
-            } else if (items[0].NestMatch.Size != 0) {
-                _makeList(doc, string, items[0].NestMatch);
             }
             *this += doc;
         } else if (Ordered) {
@@ -1499,10 +1490,10 @@ struct Document {
 
         if (items.Size != 0) {
             Document doc;
-            if ((doc.Ordered = (items[0].Expr->ID == 2))) {
-                _makeOrderedList(doc, string, items[0]);
+            if (items[0].Expr->ID == 1) {
+                _makeList(doc, string, items[0]);
             } else if (items[0].NestMatch.Size != 0) {
-                _makeList(doc, string, items[0].NestMatch);
+                _makeOrderedList(doc, string, items[0]);
             }
             *this += doc;
         } else if (Ordered) {

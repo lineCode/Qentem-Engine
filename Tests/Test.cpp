@@ -146,15 +146,15 @@ int main() {
     if (Pass) {
         std::wcout << L"\n ALL GOOD. Took: "
                    << String::FromNumber((static_cast<double>(total) / CLOCKS_PER_SEC), 1, 3, 3).Str << L"s\n\n";
+        if (Pause) {
+            std::getwchar();
+        }
+        return 10;
     } else {
         std::wcout << L"\n Something is wrong!" << L"\n\n";
     }
 
-    if (Pause) {
-        std::getwchar();
-    }
-
-    return 10;
+    return 0;
 }
 
 static bool runTests(String const &name, Array<TestBit> const &bits, bool break_on_err, Document *other) noexcept {
