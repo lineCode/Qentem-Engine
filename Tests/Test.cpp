@@ -150,9 +150,9 @@ int main() {
             std::getwchar();
         }
         return 10;
-    } else {
-        std::wcout << L"\n Something is wrong!" << L"\n\n";
     }
+
+    std::wcout << L"\n Something is wrong!" << L"\n\n";
 
     return 0;
 }

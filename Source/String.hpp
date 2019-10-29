@@ -95,7 +95,7 @@ struct String {
     }
 
     ~String() noexcept {
-        Reset();
+        Memory::Deallocate<wchar_t>(&Str);
     }
 
     inline static void Count(UNumber &length, wchar_t const *str) {

@@ -63,30 +63,10 @@ struct Document {
     Array<Document> Documents;
     String          lastKey;
 
-    Document()          = default;
-    virtual ~Document() = default;
-
-    Document(Document &&doc) noexcept {
-        HashBase  = doc.HashBase;
-        Ordered   = doc.Ordered;
-        Table     = static_cast<Array<Index> &&>(doc.Table);
-        Entries   = static_cast<Array<Entry> &&>(doc.Entries);
-        Keys      = static_cast<Array<String> &&>(doc.Keys);
-        Numbers   = static_cast<Array<double> &&>(doc.Numbers);
-        Strings   = static_cast<Array<String> &&>(doc.Strings);
-        Documents = static_cast<Array<Document> &&>(doc.Documents);
-    }
-
-    Document(Document const &doc) noexcept {
-        HashBase  = doc.HashBase;
-        Ordered   = doc.Ordered;
-        Table     = doc.Table;
-        Entries   = doc.Entries;
-        Keys      = doc.Keys;
-        Numbers   = doc.Numbers;
-        Strings   = doc.Strings;
-        Documents = doc.Documents;
-    }
+    Document()                    = default;
+    virtual ~Document()           = default;
+    Document(Document &&doc)      = default;
+    Document(Document const &doc) = default;
 
     Document(Array<double> const &_numbers) noexcept {
         Numbers = _numbers;
@@ -190,11 +170,11 @@ struct Document {
     }
 
     void Reset() noexcept {
-        Entries.Reset();
         Table.Reset();
+        Entries.Reset();
+        Keys.Reset();
         Numbers.Reset();
         Strings.Reset();
-        Keys.Reset();
         Documents.Reset();
         lastKey.Reset();
     }

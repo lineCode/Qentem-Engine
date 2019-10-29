@@ -186,7 +186,7 @@ struct Array {
     }
 
     virtual ~Array() noexcept {
-        Reset();
+        Memory::Deallocate<Type>(&Storage);
     }
 };
 
