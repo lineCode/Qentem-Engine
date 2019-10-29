@@ -114,12 +114,13 @@ The complete example is located @ [Example/Example1.cpp](https://github.com/Hani
 
 
 ### Compiling:
-Example:
+The example:
 ```txt
 c++ -I ./Source ./Example/Example1.cpp -o ./Tests/QTest.bin
 ```
 
-Template library:
+
+QLib (template library):
 ```txt
 c++ -O3 -shared -fPIC -I ./Source ./Example/QLib.cpp -o ./Build/QLib.so
 ```
