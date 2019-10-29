@@ -38,25 +38,19 @@ struct Array {
     }
 
     Array<Type> &Add(Array<Type> &&src) noexcept {
-        UNumber const _nSize = (Size + src.Size);
-
-        if (_nSize > Capacity) {
-            if (Capacity == 0) {
-                Size         = src.Size;
-                src.Size     = 0;
-                Storage      = src.Storage;
-                src.Storage  = nullptr;
-                Capacity     = src.Capacity;
-                src.Capacity = 0;
-
-                return *this;
+        if (Capacity == 0) {
+            Size     = src.Size;
+            Storage  = src.Storage;
+            Capacity = src.Capacity;
+        } else {
+            UNumber const _nSize = (Size + src.Size);
+            if (_nSize > Capacity) {
+                Resize(_nSize);
             }
 
-            Resize(_nSize);
-        }
-
-        for (UNumber i = 0; i < src.Size; i++) {
-            Storage[Size++] = static_cast<Type &&>(src[i]);
+            for (UNumber i = 0; i < src.Size; i++) {
+                Storage[Size++] = static_cast<Type &&>(src[i]);
+            }
         }
 
         src.Size     = 0;

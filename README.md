@@ -1,4 +1,4 @@
-# Qentem Engine (v1.0.4)
+# Qentem Engine (v1.0.6)
 
 ## Introduction:
 Qentem Engine is an independent library that uses a fast algorithm for nest-searching/nest-matching. It can be used to match existing syntaxes or new ones, and with call-backs for post and per-parsing, It's posable to match almost any complex syntax. It is very efficient and has a small footprint on memory, and it's built using modern C++. It can be used to render complex templates that contains nested loop, nested if-else, inline if, math (+ * / - ^ %), logic (&& ||), and/or something simple: like replacing a text or splitting it. Also, it is capable of doing JSON, XML/HTML.
@@ -11,11 +11,10 @@ The library - at the moment - has String class (with number conversion), Array, 
 * (Optional) Emscripten: to compile into WebAssembly; to be used inside a web browser or with an independent JavaScript engine. This allows a web server to offload its rendering of templates to its clients. Also, I does integer calculations.
 
 ## Tests:
-This library includes over 350 tests; to insure that it's stable and functional. to compile the tests, the next command can be used:
+This library includes over 350 tests; to insure that it's stable and functional. to compile the tests, use:
 ```txt
 c++ -I ./Source ./Tests/Test.cpp -o ./Tests/QTest.bin
 ```
-After That, ./Tests/QTest.bin can be run in a terminal.
 
 ## VS Code configrations:
 VS Code configrations are included for compiling and running tests.

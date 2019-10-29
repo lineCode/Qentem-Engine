@@ -116,15 +116,16 @@ struct String {
         Str           = nullptr;
         Length        = 0;
         Capacity      = 0;
+
         return _str;
     }
 
     String &operator=(wchar_t const str) noexcept { // Copy
-        Length = 0;
+        Memory::Deallocate<wchar_t>(&Str);
+        Memory::Allocate<wchar_t>(&Str, 2);
 
-        if (Capacity == 0) {
-            Resize(1);
-        }
+        Capacity = 1;
+        Length   = 0;
 
         if (str != L'\0') {
             Str[Length++] = str;
@@ -329,33 +330,31 @@ struct String {
     }
 
     static void Copy(String &des, wchar_t const *src_p, UNumber start_at, UNumber const ln) noexcept {
-        // Copy any existing characters
         UNumber j = 0;
-        if ((des.Capacity == 0) || (ln > (des.Capacity - des.Length))) {
-            des.Capacity = (ln + des.Length);
+
+        UNumber const newlen = (ln + des.Length);
+
+        if ((des.Capacity == 0) || (des.Capacity < newlen)) {
+            // Copy any existing characters
+            des.Capacity = newlen;
 
             wchar_t *_tmp = des.Str;
             Memory::Allocate<wchar_t>(&des.Str, (des.Capacity + 1));
 
-            for (UNumber i = 0; i < des.Length;) {
-                des[i] = _tmp[j];
-                ++j;
-                ++i;
+            for (UNumber i = 0; i < des.Length; i++) {
+                des[i] = _tmp[j++];
             }
 
             Memory::Deallocate<wchar_t>(&_tmp);
         }
 
         // Add the new characters
-        for (j = 0; j < ln;) {
-            des[start_at] = src_p[j];
-            ++start_at;
-            ++j;
+        for (j = 0; j < ln; j++) {
+            des[start_at++] = src_p[j];
         }
 
         des[start_at] = L'\0'; // Null ending.
 
-        // Update the index to be at the last character
         des.Length = (ln + des.Length);
     }
 
@@ -393,10 +392,9 @@ struct String {
 
     inline static String Part(wchar_t const *str, UNumber offset, UNumber const limit) noexcept {
         String bit;
+        bit.Capacity = limit;
 
         Memory::Allocate<wchar_t>(&bit.Str, (limit + 1));
-
-        bit.Capacity = limit;
 
         while (bit.Length != limit) {
             bit[bit.Length++] = str[offset++];
@@ -408,8 +406,8 @@ struct String {
     }
 
     inline static UNumber Hash(wchar_t const *str, UNumber start, UNumber const end_offset) noexcept {
-        UNumber j    = 1;
         UNumber hash = 0;
+        UNumber j    = 1;
         bool    fl   = false;
 
         for (UNumber i = 0; start < end_offset;) {
@@ -443,8 +441,8 @@ struct String {
 
     // Remove empty spaces
     static String Trim(String const &str) noexcept {
-        UNumber offset = 0;
         UNumber limit  = str.Length;
+        UNumber offset = 0;
 
         SoftTrim(str.Str, offset, limit);
 

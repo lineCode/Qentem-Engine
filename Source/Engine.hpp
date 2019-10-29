@@ -38,22 +38,23 @@ struct Flags {
 };
 /////////////////////////////////
 struct Expression {
-    Expression *Connected = nullptr; // The next part of the match (the next keyword).
-    UNumber     Flag      = 0;       // Flags for the expression.
     String      Keyword;             // What to search for.
+    Expression *Connected = nullptr; // The next part of the match (the next keyword).
     Expressions NestExprs;           // Expressions for nesting Search().
+    UShort      Flag    = 0;         // Flags for the expression.
+    _MatchCB *  MatchCB = nullptr;   // A callback function for a custom action on a match.
 
-    _MatchCB *MatchCB = nullptr; // A callback function for a custom action on a match.
+    // for after match
     UShort    ID      = 0;       // Expression ID.
     _ParseCB *ParseCB = nullptr; // A callback function for custom rendering.
     String    Replace;           // A text to replace the match.
 };
 /////////////////////////////////
 struct Match {
-    Expression * Expr = nullptr;
-    Array<Match> NestMatch;  // To hold sub matches inside a match.
     UNumber      Offset = 0; // The start position of the matched string.
     UNumber      Length = 0; // The length of the entire match.
+    Array<Match> NestMatch;  // To hold sub matches inside a match.
+    Expression * Expr = nullptr;
 };
 /////////////////////////////////
 static UNumber _search(Array<Match> &items, String const &content, Expressions const &exprs, UNumber offset,
@@ -62,10 +63,10 @@ static UNumber _search(Array<Match> &items, String const &content, Expressions c
 
     Match item;
 
-    UNumber     expr_id = 0;
-    Expression *expr;
-    UNumber     keyword_offset;
     UNumber     current_offset = 0;
+    UShort      expr_id        = 0;
+    Expression *expr;
+    UShort      keyword_offset;
 
     while (offset < endOffset) {
         current_offset = offset;
@@ -86,22 +87,17 @@ static UNumber _search(Array<Match> &items, String const &content, Expressions c
         }
 
         if (expr->Connected != nullptr) {
-            expr = expr->Connected;
+            UShort const left_keyword_len = keyword_offset;
+            bool         split_nest       = false;
 
-            bool split_nest = false;
-
-            UNumber const left_keyword_len = keyword_offset;
-
-            UNumber sub_offset = current_offset;
             keyword_offset     = 0;
+            expr               = expr->Connected;
+            UNumber sub_offset = current_offset;
 
             while (current_offset != maxOffset) {
                 if (expr->Keyword[keyword_offset++] != content[current_offset++]) {
                     keyword_offset = 0;
-                    continue;
-                }
-
-                if (expr->Keyword.Length == keyword_offset) {
+                } else if (expr->Keyword.Length == keyword_offset) {
                     if ((expr->NestExprs.Size != 0) && ((sub_offset + keyword_offset) != current_offset)) {
                         sub_offset = _search(item.NestMatch, content, expr->NestExprs, sub_offset, current_offset,
                                              maxOffset, split_nest);
@@ -111,8 +107,8 @@ static UNumber _search(Array<Match> &items, String const &content, Expressions c
                         break;
                     }
 
-                    current_offset = sub_offset;
                     keyword_offset = 0;
+                    current_offset = sub_offset;
                 }
             }
 
@@ -126,10 +122,7 @@ static UNumber _search(Array<Match> &items, String const &content, Expressions c
                     items += static_cast<Array<Match> &&>(item.NestMatch);
                     expr_id = 0;
                     offset  = (sub_match->Offset + sub_match->Length);
-                    continue;
-                }
-
-                if (exprs.Size == (++expr_id)) {
+                } else if (exprs.Size == (++expr_id)) {
                     expr_id = 0;
                     ++offset;
                 }
@@ -139,18 +132,18 @@ static UNumber _search(Array<Match> &items, String const &content, Expressions c
         }
 
         if ((Flags::IGNORE & expr->Flag) == 0) {
-            item.Expr   = expr;
             item.Offset = offset;
             item.Length = (current_offset - offset);
+            item.Expr   = expr;
 
             if (((Flags::SPLIT & expr->Flag) != 0) && !split) {
                 split = true;
             }
 
-            if (expr->MatchCB != nullptr) {
-                expr->MatchCB(content, current_offset, endOffset, item, items);
-            } else {
+            if (expr->MatchCB == nullptr) {
                 items += static_cast<Match &&>(item);
+            } else {
+                expr->MatchCB(content, current_offset, endOffset, item, items);
             }
 
             if ((Flags::ONCE & expr->Flag) != 0) {
@@ -258,9 +251,10 @@ static void Engine::_split(Array<Match> &items, String const &content, UNumber o
                 continue;
             }
 
-            item.Expr   = item_ptr->Expr;
             item.Offset = offset;
             item.Length = item_ptr->Offset - offset;
+            item.Expr   = item_ptr->Expr;
+
             offset += item.Length + item_ptr->Length;
         } else {
             item.Offset = offset;
@@ -289,8 +283,8 @@ static void Engine::_split(Array<Match> &items, String const &content, UNumber o
 
         item_ptr->Offset    = started;
         item_ptr->Length    = (endOffset - started);
-        item_ptr->Expr      = item.Expr;
         item_ptr->NestMatch = static_cast<Array<Match> &&>(splitted);
+        item_ptr->Expr      = item.Expr;
     }
 }
 

@@ -11,6 +11,8 @@
             "args": [
                 "-g",
                 // "-O3",
+                // "-S",
+                // "-fverbose-asm",
                 "-std=c++11",
                 "-Wall",
                 "-Wunused",
