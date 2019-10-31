@@ -1318,8 +1318,8 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit      = TestBit();
     bit.Line = __LINE__;
 
-    bit.Content.Add(L"{[{'0'}]}");
-    bit.Expected.Add(L"{1}");
+    bit.Content.Add(L"{[{'0'}]}").Add(L"{[[123}]");
+    bit.Expected.Add(L"{1}").Add(L"{[1");
 
     Memory::AllocateBit<Expression>(&x1);
     Memory::AllocateBit<Expression>(&x2);

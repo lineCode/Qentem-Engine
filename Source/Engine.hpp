@@ -63,10 +63,10 @@ static UNumber _search(Array<Match> &items, String const &content, Expressions c
 
     Match item;
 
-    UNumber     current_offset = 0;
-    UShort      expr_id        = 0;
-    Expression *expr;
     UShort      keyword_offset;
+    Expression *expr;
+    UShort      expr_id        = 0;
+    UNumber     current_offset = 0;
 
     while (offset < endOffset) {
         current_offset = offset;
@@ -87,12 +87,13 @@ static UNumber _search(Array<Match> &items, String const &content, Expressions c
         }
 
         if (expr->Connected != nullptr) {
-            UShort const left_keyword_len = keyword_offset;
-            bool         split_nest       = false;
+            bool split_nest = false;
 
+            UShort const left_keyword_len = keyword_offset;
+
+            UNumber sub_offset = current_offset;
             keyword_offset     = 0;
             expr               = expr->Connected;
-            UNumber sub_offset = current_offset;
 
             while (current_offset != maxOffset) {
                 if (expr->Keyword[keyword_offset++] != content[current_offset++]) {
@@ -147,7 +148,7 @@ static UNumber _search(Array<Match> &items, String const &content, Expressions c
             }
 
             if ((Flags::ONCE & expr->Flag) != 0) {
-                break;
+                return current_offset;
             }
         }
 
@@ -206,7 +207,7 @@ static String Parse(String const &content, Array<Match> const &items, UNumber of
 
         if (item->Expr->ParseCB == nullptr) {
             // Defaults to replace: it can be empty.
-            rendered += item->Expr->Replace;
+            rendered.Share(&(item->Expr->Replace));
         } else if ((Flags::BUBBLE & item->Expr->Flag) == 0) {
             rendered += item->Expr->ParseCB(content, *item, other);
         } else if (item->NestMatch.Size != 0) {
@@ -226,6 +227,7 @@ static String Parse(String const &content, Array<Match> const &items, UNumber of
 
     return rendered.Eject();
 }
+
 } // namespace Engine
 /////////////////////////////////
 static void Engine::_split(Array<Match> &items, String const &content, UNumber offset,
@@ -234,13 +236,11 @@ static void Engine::_split(Array<Match> &items, String const &content, UNumber o
         return;
     }
 
-    UNumber const started = offset;
+    UNumber const started  = offset;
+    Match *       item_ptr = nullptr;
 
     Array<Match> splitted;
-    // splitted.SetCapacity(items.Size + 1);
-
-    Match  item;
-    Match *item_ptr = nullptr;
+    Match        item;
 
     for (UNumber i = 0; i <= items.Size; i++) {
         if (i != items.Size) {

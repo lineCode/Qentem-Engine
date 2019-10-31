@@ -453,14 +453,14 @@ struct String {
     inline static void Revers(wchar_t *str, UShort index, UShort limit) noexcept {
         wchar_t ch;
 
-        for (UShort i = index; i < limit;) {
+        while (index < limit) {
             ch           = str[limit];
-            str[limit--] = str[i];
-            str[i++]     = ch;
+            str[limit--] = str[index];
+            str[index++] = ch;
         }
     }
 
-    static String FromNumber(UNumber number, UShort const min = 1) noexcept {
+    static String FromNumber(unsigned long number, UShort const min = 1) noexcept {
         wchar_t p1_str[23];
         UShort  str1_len = 0;
 
@@ -479,7 +479,11 @@ struct String {
     }
 
     inline static String FromNumber(UShort number, UShort const min = 1) noexcept {
-        return FromNumber(static_cast<UNumber>(number), min);
+        return FromNumber(static_cast<unsigned long>(number), min);
+    }
+
+    inline static String FromNumber(unsigned int number, UShort const min = 1) noexcept {
+        return FromNumber(static_cast<unsigned long>(number), min);
     }
 
     static String FromNumber(double number, UShort const min = 1, UShort r_min = 0, UShort r_max = 0) noexcept {
