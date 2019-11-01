@@ -19,7 +19,7 @@ namespace Engine {
 struct Match;
 struct Expression;
 /////////////////////////////////
-static void _split(Array<Match> &items, String const &content, UNumber offset, UNumber endOffset) noexcept;
+static void _split(Array<Match> &items, String const &content, UNumber offset, UNumber endOffset, UShort count) noexcept;
 using _ParseCB = String(String const &content, Match const &item, void *other);
 using _MatchCB = void(String const &content, UNumber &offset, UNumber const endOffset, Match &item, Array<Match> &items);
 
@@ -58,7 +58,7 @@ struct Match {
 };
 /////////////////////////////////
 static UNumber _search(Array<Match> &items, String const &content, Expressions const &exprs, UNumber offset,
-                       UNumber endOffset, UNumber const maxOffset, bool &split) noexcept {
+                       UNumber endOffset, UNumber const maxOffset, UShort &split) noexcept {
     UNumber const started = offset;
 
     Match item;
@@ -87,7 +87,7 @@ static UNumber _search(Array<Match> &items, String const &content, Expressions c
         }
 
         if (expr->Connected != nullptr) {
-            bool split_nest = false;
+            UShort split_nest = 0;
 
             UShort const left_keyword_len = keyword_offset;
 
@@ -113,8 +113,9 @@ static UNumber _search(Array<Match> &items, String const &content, Expressions c
                 }
             }
 
-            if (split_nest) {
-                _split(item.NestMatch, content, (offset + left_keyword_len), (current_offset - expr->Keyword.Length));
+            if (split_nest != 0) {
+                _split(item.NestMatch, content, (offset + left_keyword_len), (current_offset - expr->Keyword.Length),
+                       split_nest);
             }
 
             if (keyword_offset == 0) {
@@ -137,8 +138,8 @@ static UNumber _search(Array<Match> &items, String const &content, Expressions c
             item.Length = (current_offset - offset);
             item.Expr   = expr;
 
-            if (((Flags::SPLIT & expr->Flag) != 0) && !split) {
-                split = true;
+            if ((Flags::SPLIT & expr->Flag) != 0) {
+                ++split;
             }
 
             if (expr->MatchCB == nullptr) {
@@ -165,14 +166,14 @@ static UNumber _search(Array<Match> &items, String const &content, Expressions c
 /////////////////////////////////
 static Array<Match> Search(String const &content, Expressions const &exprs, UNumber const offset,
                            UNumber const limit) noexcept {
-    bool          split     = false;
+    UShort        split     = 0;
     UNumber const endOffset = (offset + limit);
     Array<Match>  items;
 
     _search(items, content, exprs, offset, endOffset, endOffset, split);
 
-    if (split) {
-        _split(items, content, offset, endOffset);
+    if (split != 0) {
+        _split(items, content, offset, endOffset, split);
     }
 
     return items;
@@ -230,17 +231,14 @@ static String Parse(String const &content, Array<Match> const &items, UNumber of
 
 } // namespace Engine
 /////////////////////////////////
-static void Engine::_split(Array<Match> &items, String const &content, UNumber offset,
-                           UNumber const endOffset) noexcept {
-    if (items.Size == 0) {
-        return;
-    }
-
+static void Engine::_split(Array<Match> &items, String const &content, UNumber offset, UNumber const endOffset,
+                           UShort count) noexcept {
     UNumber const started  = offset;
     Match *       item_ptr = nullptr;
 
     Array<Match> splitted;
-    Match        item;
+    splitted.SetCapacity(++count);
+    Match item;
 
     for (UNumber i = 0; i <= items.Size; i++) {
         if (i != items.Size) {
@@ -278,8 +276,9 @@ static void Engine::_split(Array<Match> &items, String const &content, UNumber o
         items = static_cast<Array<Match> &&>(splitted);
     } else {
         items.SetCapacity(1);
-        items.Size = 1;
-        item_ptr   = &(items[0]);
+        ++items.Size;
+
+        item_ptr = &(items[0]);
 
         item_ptr->Offset    = started;
         item_ptr->Length    = (endOffset - started);

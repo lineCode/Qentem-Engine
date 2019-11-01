@@ -29,8 +29,9 @@ struct String {
 
         Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
 
-        for (; Length < Capacity; Length++) {
+        while (Length < Capacity) {
             Str[Length] = static_cast<wchar_t>(str[Length]);
+            ++Length;
         }
 
         Str[Length] = L'\0';
@@ -61,12 +62,15 @@ struct String {
     }
 
     String(wchar_t const *str) noexcept {
-        Count(Capacity, str);
+        while (str[Capacity] != L'\0') {
+            ++Capacity;
+        };
 
         Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
 
-        for (; Length < Capacity; Length++) {
-            Str[Length] = str[Length];
+        while (Length < Capacity) {
+            Str[Length] = static_cast<wchar_t>(str[Length]);
+            ++Length;
         }
 
         Str[Length] = L'\0';
@@ -96,12 +100,6 @@ struct String {
 
     ~String() noexcept {
         Memory::Deallocate<wchar_t>(&Str);
-    }
-
-    inline static void Count(UNumber &length, wchar_t const *str) {
-        while (str[length] != L'\0') {
-            ++length;
-        };
     }
 
     inline void Reset() noexcept {
@@ -138,7 +136,10 @@ struct String {
 
     String &operator=(wchar_t const *str) noexcept { // Copy
         UNumber _length = 0;
-        Count(_length, str);
+        while (str[_length] != L'\0') {
+            ++_length;
+        };
+
         Copy(*this, str, 0, _length);
 
         return *this;
@@ -199,7 +200,9 @@ struct String {
 
     String &operator+=(wchar_t const *str) noexcept { // Appand a string
         UNumber _length = 0;
-        Count(_length, str);
+        while (str[_length] != L'\0') {
+            ++_length;
+        };
 
         Copy(*this, str, this->Length, _length);
 
@@ -238,10 +241,13 @@ struct String {
 
     String operator+(wchar_t const *str) const noexcept {
         UNumber _length = 0;
-        Count(_length, str);
+        while (str[_length] != L'\0') {
+            ++_length;
+        };
 
         String ns;
         ns.SetLength(Length + _length);
+
         Copy(ns, Str, 0, Length);
         Copy(ns, str, ns.Length, _length);
 
@@ -330,32 +336,32 @@ struct String {
     }
 
     static void Copy(String &des, wchar_t const *src_p, UNumber start_at, UNumber const ln) noexcept {
-        UNumber j = 0;
+        UNumber i = 0;
 
         UNumber const newlen = (ln + des.Length);
 
-        if ((des.Capacity == 0) || (des.Capacity < newlen)) {
+        if ((des.Capacity < newlen) || (des.Capacity == 0)) {
             // Copy any existing characters
             des.Capacity = newlen;
 
             wchar_t *_tmp = des.Str;
             Memory::Allocate<wchar_t>(&des.Str, (des.Capacity + 1));
 
-            for (UNumber i = 0; i < des.Length; i++) {
-                des[i] = _tmp[j++];
+            while (i < des.Length) {
+                des[i] = _tmp[i];
+                ++i;
             }
 
             Memory::Deallocate<wchar_t>(&_tmp);
         }
 
         // Add the new characters
-        for (j = 0; j < ln; j++) {
-            des[start_at++] = src_p[j];
+        for (i = 0; i < ln; i++) {
+            des[start_at++] = src_p[i];
         }
 
         des[start_at] = L'\0'; // Null ending.
-
-        des.Length = (ln + des.Length);
+        des.Length    = newlen;
     }
 
     inline void SetLength(UNumber const _size) noexcept {
@@ -408,9 +414,10 @@ struct String {
     inline static UNumber Hash(wchar_t const *str, UNumber start, UNumber const end_offset) noexcept {
         UNumber hash = 0;
         UNumber j    = 1;
+        UNumber i    = 0;
         bool    fl   = false;
 
-        for (UNumber i = 0; start < end_offset;) {
+        while (start < end_offset) {
             if (fl) {
                 j *= (++i);
             } else {
@@ -439,7 +446,6 @@ struct String {
         }
     }
 
-    // Remove empty spaces
     static String Trim(String const &str) noexcept {
         UNumber limit  = str.Length;
         UNumber offset = 0;
@@ -465,12 +471,14 @@ struct String {
         UShort  str1_len = 0;
 
         while (number != 0) {
-            p1_str[str1_len++] = wchar_t((number % 10) + 48);
+            p1_str[str1_len] = wchar_t((number % 10) + 48);
+            ++str1_len;
             number /= 10;
         }
 
         while (str1_len < min) {
-            p1_str[str1_len++] = L'0';
+            p1_str[str1_len] = L'0';
+            ++str1_len;
         }
 
         p1_str[str1_len] = L'\0';
@@ -505,13 +513,13 @@ struct String {
             unsigned long long num2 = num;
 
             while (num != 0) {
-                p1_str[str1_len++] = wchar_t((num % 10) + 48);
+                p1_str[str1_len] = wchar_t((num % 10) + 48);
+                ++str1_len;
                 num /= 10;
             }
 
             number -= static_cast<double>(num2);
             if (number != 0) {
-
                 number *= 1e15;
                 num = static_cast<unsigned long int>(number);
 
@@ -548,43 +556,51 @@ struct String {
                             str1_len = 0;
 
                             while (num2 != 0) {
-                                p1_str[str1_len++] = wchar_t((num2 % 10) + 48);
+                                p1_str[str1_len] = wchar_t((num2 % 10) + 48);
+                                ++str1_len;
                                 num2 /= 10;
                             }
                         }
                     }
 
                     while (r_min > presision) {
-                        p2_str[str2_len++] = L'0';
+                        p2_str[str2_len] = L'0';
+                        ++str2_len;
                         --r_min;
                     }
 
                     while (presision != 0) {
-                        p2_str[str2_len++] = wchar_t((num % 10) + 48);
-                        --presision;
+                        p2_str[str2_len] = wchar_t((num % 10) + 48);
                         num /= 10;
+                        ++str2_len;
+                        --presision;
                     }
                 }
             }
         }
 
         while (str1_len < min) {
-            p1_str[str1_len++] = L'0';
+            p1_str[str1_len] = L'0';
+            ++str1_len;
         }
 
         if (negative) {
-            p1_str[str1_len++] = L'-';
+            p1_str[str1_len] = L'-';
+            ++str1_len;
         }
 
         while (str2_len < r_min) {
-            p2_str[str2_len++] = L'0';
+            p2_str[str2_len] = L'0';
+            ++str2_len;
         }
 
         if (str2_len != 0) {
-            p2_str[str2_len++] = L'.';
+            p2_str[str2_len] = L'.';
+            ++str2_len;
 
             for (UShort i = 0; i < str1_len; i++) {
-                p2_str[str2_len++] = p1_str[i];
+                p2_str[str2_len] = p1_str[i];
+                ++str2_len;
             }
 
             p2_str[str2_len] = L'\0';
