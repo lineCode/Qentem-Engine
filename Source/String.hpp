@@ -40,13 +40,10 @@ struct String {
     String(char const str) noexcept { // one char
         Capacity = 1;
 
-        Memory::Allocate<wchar_t>(&Str, 2);
+        Memory::Allocate<wchar_t>(&Str, 2); // 1 for /0
 
-        if (str != L'\0') {
-            Str[Length++] = static_cast<wchar_t>(str);
-        }
-
-        Str[Length] = L'\0';
+        Str[Length]   = static_cast<wchar_t>(str);
+        Str[++Length] = L'\0';
     }
 
     String(wchar_t const str) noexcept { // one wchar
@@ -54,11 +51,8 @@ struct String {
 
         Memory::Allocate<wchar_t>(&Str, 2); // 1 for /0
 
-        if (str != L'\0') {
-            Str[Length++] = str;
-        }
-
-        Str[Length] = L'\0';
+        Str[Length]   = str;
+        Str[++Length] = L'\0';
     }
 
     String(wchar_t const *str) noexcept {
@@ -116,6 +110,15 @@ struct String {
         Capacity      = 0;
 
         return _str;
+    }
+
+    inline static UNumber Count(wchar_t const *str) noexcept {
+        UNumber _length = 0;
+        while (str[_length] != L'\0') {
+            ++_length;
+        };
+
+        return _length;
     }
 
     String &operator=(wchar_t const str) noexcept { // Copy
@@ -183,16 +186,16 @@ struct String {
         return *this;
     }
 
-    String &operator+=(wchar_t const src) noexcept { // Appand a string
+    String &operator+=(wchar_t const _char) noexcept { // Appand a string
         if (Length == Capacity) {
             if (Capacity == 0) {
                 Capacity = 2;
             }
 
-            Resize(Capacity * 2);
+            Resize(Capacity + 1);
         }
 
-        Str[Length]   = src;
+        Str[Length]   = _char;
         Str[++Length] = L'\0';
 
         return *this;
@@ -285,29 +288,82 @@ struct String {
         return ns;
     }
 
-    bool operator==(String const &src) const noexcept { // Compare
-        if (Length != src.Length) {
+    bool operator==(wchar_t const _char) const noexcept { // Compare
+        return ((Length == 1) && (Str[0] == _char));
+    }
+
+    inline bool operator!=(wchar_t const _char) const noexcept { // Compare
+        return (!(*this == _char));
+    }
+
+    bool operator==(wchar_t const *string) const noexcept { // Compare
+        UNumber i       = 0;
+        UNumber _length = 0;
+        while (string[_length] != L'\0') {
+            ++_length;
+        };
+
+        if (Length != _length) {
             return false;
         }
 
-        UNumber i = 0;
-        while ((i < Length) && (Str[i] == src[i])) {
+        while ((i < Length) && (Str[i] == string[i])) {
             ++i;
         }
 
         return (i == Length);
     }
 
-    bool operator!=(String const &src) const noexcept { // Compare
-        return (!(*this == src));
+    inline bool operator!=(wchar_t const *string) const noexcept { // Compare
+        return (!(*this == string));
+    }
+
+    bool operator==(String const &string) const noexcept { // Compare
+        if (Length != string.Length) {
+            return false;
+        }
+
+        UNumber i = 0;
+        while ((i < Length) && (Str[i] == string[i])) {
+            ++i;
+        }
+
+        return (i == Length);
+    }
+
+    inline bool operator!=(String const &string) const noexcept { // Compare
+        return (!(*this == string));
     }
 
     inline wchar_t &operator[](UNumber const __index) const noexcept {
         return Str[__index];
     }
 
-    static bool Compare(wchar_t const *src_text, UNumber const src_index, UNumber const src_length,
-                        wchar_t const *des_text, UNumber des_index, UNumber const des_length) noexcept {
+    static bool Compare(wchar_t const *left, wchar_t const *right) noexcept { // Compare
+        UNumber i        = 0;
+        UNumber r_length = 0;
+        while (right[r_length] != L'\0') {
+            ++r_length;
+        };
+
+        UNumber l_length = 0;
+        while (left[l_length] != L'\0') {
+            ++l_length;
+        };
+
+        if (r_length != l_length) {
+            return false;
+        }
+
+        while ((i < r_length) && (left[i] == right[i])) {
+            ++i;
+        }
+
+        return (i == r_length);
+    }
+
+    static bool Compare(wchar_t const *src_text, UNumber const src_index, UNumber const src_length, wchar_t const *des_text,
+                        UNumber des_index, UNumber const des_length) noexcept {
         if (src_length != des_length) {
             return false;
         }
@@ -440,8 +496,7 @@ struct String {
             --limit;
         }
 
-        while ((end > start) &&
-               ((str[--end] == L' ') || (str[end] == L'\n') || (str[end] == L'\t') || (str[end] == L'\r'))) {
+        while ((end > start) && ((str[--end] == L' ') || (str[end] == L'\n') || (str[end] == L'\t') || (str[end] == L'\r'))) {
             --limit;
         }
     }

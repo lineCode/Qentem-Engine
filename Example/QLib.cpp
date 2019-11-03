@@ -52,7 +52,7 @@ DllExport char *renderTemplate(char const *temp, char const *json, bool comments
     char *tmp = new char[rendered.Length + 1]; // 1 for '\0'
     for (UNumber j = 0; j <= rendered.Length; j++) {
         // It got it as a "char" type in the first place, so there won't be any above 255.
-        tmp[j] = static_cast<char>(static_cast<unsigned int>(rendered[j]));
+        tmp[j] = static_cast<char>(rendered[j]);
     }
 
     return tmp;

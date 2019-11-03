@@ -32,23 +32,22 @@ static bool const BigJSON = false;
 
 static String   readFile(char const *fullpath) noexcept;
 static Document getDocument() noexcept;
-static bool     runTests(String const &name, Array<TestBit> const &bits, bool break_on_err,
-                         Document *other = nullptr) noexcept;
+static bool     runTests(wchar_t const *name, Array<TestBit> const &bits, bool break_on_err, Document *other = nullptr) noexcept;
 static bool     NumbersConvTest() noexcept;
 static bool     JSONTests() noexcept;
 static bool     XMLTests() noexcept;
 
 struct NCTest {
-    double num = 0;
-    String result;
-    UShort r_max = 0;
+    double         Number   = 0;
+    wchar_t const *Expected = nullptr;
+    UShort         Max      = 0;
 
     NCTest() = default;
 
-    NCTest(double n, String r) : num(n), result(static_cast<String &&>(r)) {
+    NCTest(double n, wchar_t const *e) : Number(n), Expected(e) {
     }
 
-    NCTest(double n, String r, UShort rma) : num(n), result(static_cast<String &&>(r)), r_max(rma) {
+    NCTest(double n, wchar_t const *e, UShort rma) : Number(n), Expected(e), Max(rma) {
     }
 };
 
@@ -144,8 +143,7 @@ int main() {
     total = (static_cast<UNumber>(clock()) - total);
 
     if (Pass) {
-        std::wcout << L"\n ALL GOOD. Took: "
-                   << String::FromNumber((static_cast<double>(total) / CLOCKS_PER_SEC), 1, 3, 3).Str << L"s\n\n";
+        std::wcout << L"\n ALL GOOD. Took: " << String::FromNumber((static_cast<double>(total) / CLOCKS_PER_SEC), 1, 3, 3).Str << L"s\n\n";
         if (Pause) {
             std::getwchar();
         }
@@ -157,7 +155,7 @@ int main() {
     return 0;
 }
 
-static bool runTests(String const &name, Array<TestBit> const &bits, bool break_on_err, Document *other) noexcept {
+static bool runTests(wchar_t const *name, Array<TestBit> const &bits, bool break_on_err, Document *other) noexcept {
     UNumber const times        = StreasTest ? 10000 : 1;
     UNumber const start_at     = 0;
     UNumber       counter      = 0;
@@ -168,13 +166,15 @@ static bool runTests(String const &name, Array<TestBit> const &bits, bool break_
     UNumber       total_parse  = 0;
     UNumber       parse_ticks  = 0;
     UNumber       count        = start_at;
+    UNumber       length       = 0;
     bool          Pass         = false;
 
     StringStream ss;
     Array<Match> matches;
 
     ss += L"\n #";
-    ss += name + L" Tests:\n";
+    ss += name;
+    ss += L" Tests:\n";
 
     if (start_at != 0) {
         ss += L"\n Starting at ";
@@ -199,9 +199,11 @@ static bool runTests(String const &name, Array<TestBit> const &bits, bool break_
         }
 
         for (UNumber t = counter; t < bits[i].Content.Size; t++) {
+            length = String::Count(bits[i].Content[t]);
+
             search_ticks = static_cast<UNumber>(clock());
             for (UNumber x = 0; x < times; x++) {
-                matches = Qentem::Engine::Search(bits[i].Content[t], bits[i].Exprs, 0, bits[i].Content[t].Length);
+                matches = Qentem::Engine::Search(bits[i].Content[t], bits[i].Exprs, 0, length);
             }
             search_ticks = (static_cast<UNumber>(clock()) - search_ticks);
             total_search += search_ticks;
@@ -209,7 +211,7 @@ static bool runTests(String const &name, Array<TestBit> const &bits, bool break_
             String rendered;
             parse_ticks = static_cast<UNumber>(clock());
             for (UNumber y = 0; y < times; y++) {
-                rendered = Qentem::Engine::Parse(bits[i].Content[t], matches, 0, bits[i].Content[t].Length, other);
+                rendered = Qentem::Engine::Parse(bits[i].Content[t], matches, 0, length, other);
             }
             parse_ticks = (static_cast<UNumber>(clock()) - parse_ticks);
             total_parse += parse_ticks;
@@ -217,7 +219,7 @@ static bool runTests(String const &name, Array<TestBit> const &bits, bool break_
             ++counter;
             ++total;
 
-            Pass = rendered.Compare(bits[i].Expected[t], 0, bits[i].Expected[t].Length);
+            Pass = (rendered == bits[i].Expected[t]);
             ss += Pass ? L" " : L"\n ";
 
             ss += String::FromNumber(count, 2) + L'-';
@@ -270,8 +272,10 @@ static bool runTests(String const &name, Array<TestBit> const &bits, bool break_
         }
     }
 
-    ss += "\n ";
-    ss += name + L" is";
+    ss += L"\n ";
+    ss += name;
+    ss += L" is";
+
     if (fail == 0) {
         ss += L" operational! (Total Tests: ";
         ss += String::FromNumber(total) + L')';
@@ -298,12 +302,12 @@ static bool NumbersConvTest() noexcept {
     UNumber       total_ticks = 0;
     bool          Pass        = false;
     ////////////////////////////////
-    test.Add({0, L'0'}).Add({1, L'1'}).Add({-2, L"-2"}).Add({5, L'5'}).Add({9, L'9'}).Add({-3.1, L"-3.1"});
+    test.Add({0, L"0"}).Add({1, L"1"}).Add({-2, L"-2"}).Add({5, L"5"}).Add({9, L"9"}).Add({-3.1, L"-3.1"});
     test.Add({1000000, L"1000000"}).Add({11, L"11"}).Add({22, L"22"}).Add({55, L"55"}).Add({199, L"199"});
     test.Add({10.0, L"10"}).Add({11.00, L"11"}).Add({-22.87, L"-22.87", 2}).Add({-55.0055, L"-55.0055", 10});
 
     test.Add({-0.123455678987455, L"-0.123455678987455"}).Add({-0.123455678987452, L"-0.123455678987452"});
-    test.Add({0.999999, L'1', 5}).Add({0.999999, L"0.999999", 6}).Add({0.999999, L"0.999999", 10});
+    test.Add({0.999999, L"1", 5}).Add({0.999999, L"0.999999", 6}).Add({0.999999, L"0.999999", 10});
     test.Add({0.123e-12, L"0.000000000000123"}).Add({9876.543210, L"9876.54321", 5});
     test.Add({-2.000000000000999, L"-2.000000000000999"}).Add({3.9999999999999, L"3.9999999999999", 14});
     test.Add({99.1005099, L"99.1005099", 7}).Add({871.080055555, L"871.080055555", 9});
@@ -314,7 +318,7 @@ static bool NumbersConvTest() noexcept {
     test.Add({6666666.30000400000001, L"6666666.300004", 9}).Add({22.300000000000055, L"22.30000000000005", 14});
     test.Add({22.300000000000059, L"22.30000000000006", 14}).Add({71.080055555, L"71.080055555", 9});
     test.Add({1.000055555, L"1.000055555"}).Add({22.300000000000054, L"22.300000000000054"});
-    test.Add({2.00000000000001, L"2.00000000000001"}).Add({2.000000000000001, L'2', 1});
+    test.Add({2.00000000000001, L"2.00000000000001"}).Add({2.000000000000001, L"2", 1});
     test.Add({222.300000000000055, L"222.3", 1}).Add({0.11111111111111, L"0.11111111111111"});
     test.Add({2.00000000000001, L"2.00000000000001"}).Add({22.00000000000005, L"22.00000000000005", 14});
     test.Add({22.300000000000055, L"22.30000000000005", 14});
@@ -337,18 +341,17 @@ static bool NumbersConvTest() noexcept {
         ticks = static_cast<UNumber>(clock());
 
         for (UNumber k = 0; k < times; k++) {
-            Pass = (test[i].result == String::FromNumber(test[i].num, 1, 0, test[i].r_max));
+            Pass = (String::FromNumber(test[i].Number, 1, 0, test[i].Max) == test[i].Expected);
         }
 
         ticks = (static_cast<UNumber>(clock()) - ticks);
         total_ticks += ticks;
 
         if (Pass) {
-            std::wcout << L"Pass " << String::FromNumber((static_cast<double>(ticks) / CLOCKS_PER_SEC), 2, 3, 3).Str
-                       << L'\n';
+            std::wcout << L"Pass " << String::FromNumber((static_cast<double>(ticks) / CLOCKS_PER_SEC), 2, 3, 3).Str << L'\n';
         } else {
-            std::wcout << L"Fail " << String::FromNumber(test[i].num, 1, 0, test[i].r_max).Str << L", Expected: "
-                       << test[i].result.Str << L'\n';
+            std::wcout << L"Fail " << String::FromNumber(test[i].Number, 1, 0, test[i].Max).Str << L", Expected: " << test[i].Expected
+                       << L'\n';
             std::wcout << L"\n Math failed to pass the test.\n";
 
             return false;
@@ -356,8 +359,7 @@ static bool NumbersConvTest() noexcept {
     }
 
     std::wcout << L"\n Number Conversion is operational!";
-    std::wcout << L" Total: " << String::FromNumber((static_cast<double>(total_ticks) / CLOCKS_PER_SEC), 2, 3, 3).Str
-               << L'\n';
+    std::wcout << L" Total: " << String::FromNumber((static_cast<double>(total_ticks) / CLOCKS_PER_SEC), 2, 3, 3).Str << L'\n';
 
     ////////////////////////////////
     return true;
@@ -417,30 +419,28 @@ static bool XMLTests() noexcept {
 
         if (Pass) {
             id = 1;
-            if ((tags[id].Properties.Size == 3) && (tags[id].Properties[0].Name == L"src") &&
-                (tags[id].Properties[1].Name == L"id") && (tags[id].Properties[2].Name == L"class") &&
-                (tags[id].Properties[0].Value == L"www") && (tags[id].Properties[1].Value == L"  m  ") &&
-                (tags[id].Properties[2].Value == L"y")) {
+            if ((tags[id].Properties.Size == 3) && (tags[id].Properties[0].Name == L"src") && (tags[id].Properties[1].Name == L"id") &&
+                (tags[id].Properties[2].Name == L"class") && (tags[id].Properties[0].Value == L"www") &&
+                (tags[id].Properties[1].Value == L"  m  ") && (tags[id].Properties[2].Value == L"y")) {
                 std::wcout << L" Pass";
             } else {
                 std::wcout << L" Fail";
                 Pass = false;
             }
-            std::wcout << L" Tag id:" << String::FromNumber(id).Str << L" (" << tags[id].Name.Str
-                       << L") properties count: " << String::FromNumber(tags[id].Properties.Size).Str << L'\n';
+            std::wcout << L" Tag id:" << String::FromNumber(id).Str << L" (" << tags[id].Name.Str << L") properties count: "
+                       << String::FromNumber(tags[id].Properties.Size).Str << L'\n';
         }
 
         if (Pass) {
             id = 2;
-            if ((tags[id].Name == L"div") && (tags[id].InnerNodes.Size == 2) &&
-                (tags[id].InnerNodes[0].InnerText == L"string")) {
+            if ((tags[id].Name == L"div") && (tags[id].InnerNodes.Size == 2) && (tags[id].InnerNodes[0].InnerText == L"string")) {
                 std::wcout << L" Pass";
             } else {
                 std::wcout << L" Fail";
                 Pass = false;
             }
-            std::wcout << L" Tag id:" << String::FromNumber(id).Str << L" (" << tags[id].Name.Str
-                       << L") InnerNodes' count: " << String::FromNumber(tags[id].InnerNodes.Size).Str << L'\n';
+            std::wcout << L" Tag id:" << String::FromNumber(id).Str << L" (" << tags[id].Name.Str << L") InnerNodes' count: "
+                       << String::FromNumber(tags[id].InnerNodes.Size).Str << L'\n';
         }
 
         if (Pass) {
@@ -458,8 +458,7 @@ static bool XMLTests() noexcept {
 
     if (Pass) {
         std::wcout << L"\n XML looks good!";
-        std::wcout << L" Took: " << String::FromNumber((static_cast<double>(ticks) / CLOCKS_PER_SEC), 2, 3, 3).Str
-                   << L'\n';
+        std::wcout << L" Took: " << String::FromNumber((static_cast<double>(ticks) / CLOCKS_PER_SEC), 2, 3, 3).Str << L'\n';
     } else {
         std::wcout << L"\n XML test failed!\n\n";
     }
@@ -485,8 +484,7 @@ static bool JSONTests() noexcept {
         if (final != Qentem::Test::Replace(Qentem::Test::ReplaceNewLine(json_content, L""), L"\": ", L"\":")) {
             std::wcout << L"\n Document() might be broken!\n";
             std::wcout << L"\n File:\n"
-                       << Qentem::Test::Replace(Qentem::Test::ReplaceNewLine(json_content, L""), L"\": ", L"\":").Str
-                       << L"\n";
+                       << Qentem::Test::Replace(Qentem::Test::ReplaceNewLine(json_content, L""), L"\": ", L"\":").Str << L"\n";
             std::wcout << L"\n Document():\n" << final.Str << L"\n";
             return false;
         }
@@ -496,7 +494,7 @@ static bool JSONTests() noexcept {
         std::wcout << L" Importing... ";
         took = static_cast<UNumber>(clock());
         for (UNumber y = 1; y <= times; y++) {
-            data = json_content;
+            data = Document::FromJSON(json_content);
             // Qentem::Engine::Search(json_content, Document::_getJsonExpres(), 0, json_content.Length);
         }
         took = (static_cast<UNumber>(clock()) - took);
@@ -550,14 +548,14 @@ static Document getDocument() noexcept {
     data[L"var3"]       = L"3";
     data[L"var4"]       = L"4";
     data[L"var5"]       = L"5";
-    data[L"num34"]      = Array<String>().Add(L'3').Add(L'4');
+    data[L"num34"]      = Array<String>().Add(L"3").Add(L"4");
     data[L"var_string"] = L"image";
     data[L"engine"]     = L"Qentem";
-    data[L"abc1"]       = Array<String>().Add(L'B').Add(L'C').Add(L'D').Add(L'A');
-    data[L"abc2"]       = Array<String>().Add(L'E').Add(L'F').Add(L'A');
+    data[L"abc1"]       = Array<String>().Add(L"B").Add(L"C").Add(L"D").Add(L"A");
+    data[L"abc2"]       = Array<String>().Add(L"E").Add(L"F").Add(L"A");
     data[L"numbers"]    = Array<double>().Add(0).Add(1).Add(2).Add(3).Add(4).Add(5);
     data[L"empty"]      = L"";
-    data[L"math"] = L"((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) - (-1) + 2";
+    data[L"math"]       = L"((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) - (-1) + 2";
 
     data[L"abc"]         = Document();
     data[L"abc"][L'B']   = L"b";
@@ -565,42 +563,37 @@ static Document getDocument() noexcept {
     data[L"abc"][L'A']   = L"a";
     data[L"abc"][L'C']   = L"c";
     data[L"abc"][L'D']   = L"d";
-    data[L"abc"][L'E']   = Array<String>().Add(L'O').Add(L"K!");
+    data[L"abc"][L'E']   = Array<String>().Add(L"O").Add(L"K!");
     data[L"abc"][L"A-Z"] = L"ABCDEFGHIGKLMNOBQRST.....";
 
     data[L"multi"]                = Document();
     data[L"multi"][L"arr1"]       = Document();
-    data[L"multi"][L"arr1"][L'E'] = Array<String>().Add(L'O').Add(L"K!");
-    data[L"multi"][L"arr2"]       = Array<String>().Add(L'B').Add(L'C').Add(L'D').Add(L'A');
+    data[L"multi"][L"arr1"][L'E'] = Array<String>().Add(L"O").Add(L"K!");
+    data[L"multi"][L"arr2"]       = Array<String>().Add(L"B").Add(L"C").Add(L"D").Add(L"A");
     data[L"multi"][L'C']          = L"cool";
 
     return data;
 }
 
-static String readFile(char const *fullpath) noexcept {
-    String content = L"";
+static String readFile(char const *path) noexcept {
+    std::wifstream file(path, std::ios::ate | std::ios::out);
 
-    std::ifstream file(fullpath, std::ios::ate | std::ios::out);
     if (file.is_open()) {
         std::streampos size = file.tellg();
         file.seekg(0, std::ios::beg);
-        UNumber u_size = (UNumber(size) + 1);
 
-        if (u_size != 0) {
-            char *_tmp;
-            Qentem::Memory::Allocate<char>(&_tmp, u_size);
+        String content;
+        content.SetLength(UNumber(size));
+        content.Length = content.Capacity;
 
-            file.read(_tmp, size);
-            _tmp[(u_size - 1)] = L'\0';
-
-            content = String(_tmp);
-            Qentem::Memory::Deallocate<char>(&_tmp);
-        }
+        file.read(content.Str, size);
 
         file.close();
-    } else {
-        std::wcout << L'\n' << fullpath << L" does not exist!\n";
+
+        return content;
     }
 
-    return content;
+    std::wcout << L'\n' << path << L" does not exist!\n";
+
+    return L"";
 }

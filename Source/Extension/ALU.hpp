@@ -21,14 +21,14 @@ using Engine::Expressions;
 using Engine::Flags;
 using Engine::Match;
 
-static void NestNumber(String const &block, Match const &item, double &number) noexcept {
+static void NestNumber(wchar_t const *block, Match const &item, double &number) noexcept {
     String r = Engine::Parse(block, item.NestMatch, item.Offset, item.Length);
     if (r.Length != 0) {
         String::ToNumber(r, number);
     }
 }
 
-static String LogicCallback(String const &block, Match const &item, void *other) noexcept {
+static String LogicCallback(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
     double number1 = 0.0;
     double number2 = 0.0;
 
@@ -74,7 +74,7 @@ static String LogicCallback(String const &block, Match const &item, void *other)
     return String::FromNumber(number1, 1, 0, 3);
 }
 
-static String EqualCallback(String const &block, Match const &item, void *other) noexcept {
+static String EqualCallback(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
     double number1 = 0.0;
     double number2 = 0.0;
 
@@ -91,8 +91,7 @@ static String EqualCallback(String const &block, Match const &item, void *other)
             if (((c <= 57) && (c >= 48)) || ((c == L'+') || (c == L'-'))) {
                 String::ToNumber(block, number1, m1->Offset, m1->Length);
             } else if (item.NestMatch.Size == 2) { // String
-                if (String::Compare(block.Str, m1->Offset, m1->Length, block.Str, item.NestMatch[1].Offset,
-                                    item.NestMatch[1].Length)) {
+                if (String::Compare(block, m1->Offset, m1->Length, block, item.NestMatch[1].Offset, item.NestMatch[1].Length)) {
                     return L'1';
                 }
 
@@ -143,7 +142,7 @@ static String EqualCallback(String const &block, Match const &item, void *other)
     return String::FromNumber(number1, 1, 0, 3);
 }
 
-static String MultiplicationCallback(String const &block, Match const &item, void *other) noexcept {
+static String MultiplicationCallback(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
     double number1 = 0.0;
     double number2 = 0.0;
 
@@ -207,7 +206,7 @@ static String MultiplicationCallback(String const &block, Match const &item, voi
     return String::FromNumber(number1, 1, 0, 3);
 }
 
-static String AdditionCallback(String const &block, Match const &item, void *other) noexcept {
+static String AdditionCallback(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
     double number1 = 0.0;
     double number2 = 0.0;
 
@@ -278,8 +277,8 @@ static Expressions const &getMathExprs() noexcept {
     static Expression LogicAnd;
     static Expression LogicOr;
 
-    static constexpr UNumber flags_ops    = Flags::SPLIT | Flags::GROUPED | Flags::POP | Flags::TRIM;
     static constexpr UNumber flags_no_pop = Flags::SPLIT | Flags::GROUPED | Flags::TRIM;
+    static constexpr UNumber flags_ops    = flags_no_pop | Flags::POP;
 
     static Expressions tags;
 
@@ -363,8 +362,7 @@ static Expressions const &getMathExprs() noexcept {
         LogicAnd.Flag    = flags_ops;
         LogicAnd.ParseCB = &(LogicCallback);
         LogicAnd.NestExprs =
-            Expressions().Add(&MathEqu2).Add(&MathEqu).Add(&MathNEqu).Add(&MathLEqu).Add(&MathLess).Add(&MathBEqu).Add(
-                &MathBig);
+            Expressions().Add(&MathEqu2).Add(&MathEqu).Add(&MathNEqu).Add(&MathLEqu).Add(&MathLess).Add(&MathBEqu).Add(&MathBig);
 
         LogicOr.Keyword   = L"||";
         LogicOr.ID        = 2;
@@ -380,10 +378,10 @@ static Expressions const &getMathExprs() noexcept {
 }
 
 // e.g. ( 4 + 3 ), ( 2 + ( 4 + ( 1 + 2 ) + 1 ) * 5 - 3 - 2 )
-static String ParenthesisCallback(String const &block, Match const &item, void *other) noexcept {
+static String ParenthesisCallback(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
     static Expressions const _mathExprs = getMathExprs();
 
-    UNumber const limit = (block.Length - 2);
+    UNumber const limit = (length - 2);
     return Engine::Parse(block, Engine::Search(block, _mathExprs, 1, limit), 1, limit);
 }
 
@@ -425,14 +423,14 @@ static double Evaluate(String &content) noexcept {
      */
 
     // Stage one:
-    content = Engine::Parse(content, Engine::Search(content, _parensExprs, 0, content.Length), 0, content.Length);
+    content = Engine::Parse(content.Str, Engine::Search(content.Str, _parensExprs, 0, content.Length), 0, content.Length);
     if ((content.Length == 0) || (content == L'0')) {
         return 0.0;
     }
 
     // Stage two:
     double num = 0.0;
-    content    = Engine::Parse(content, Engine::Search(content, _mathExprs, 0, content.Length), 0, content.Length);
+    content    = Engine::Parse(content.Str, Engine::Search(content.Str, _mathExprs, 0, content.Length), 0, content.Length);
     if ((content.Length != 0) && String::ToNumber(content, num)) {
         return num;
     }

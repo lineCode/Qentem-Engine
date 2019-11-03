@@ -5,7 +5,6 @@
 using Qentem::Array;
 using Qentem::Document;
 using Qentem::String;
-using Qentem::UNumber;
 
 int main() {
     // Document and JSON
@@ -14,24 +13,24 @@ int main() {
     numbers += L"[5,6]";                      // Extanding JSON
     numbers += Array<double>().Add(7).Add(8); // Extanding win an ordered array
 
-    Document doc;             // New document
-    doc["numbers"] = numbers; // assigning an ordered numbers
-    doc["numbers"] += 9;
-    doc["numbers"][0] = 0;
+    Document doc;              // New document
+    doc[L"numbers"] = numbers; // assigning an ordered numbers
+    doc[L"numbers"] += 9;
+    doc[L"numbers"][0] = 0; // Override
 
     doc += L"{\"strings\": { }}"; // Expanding the document with an unordered array
-    doc["strings"][L"a"] = L"A";
-    doc["strings"][L"b"] = L"O";
-    doc["strings"][1]    = L"B"; // Override
+    doc[L"strings"][L"a"] = L"A";
+    doc[L"strings"][L"b"] = L"O";
+    doc[L"strings"][1]    = L"B"; // Override
 
     // Importing JSON with comments
-    doc["strings"] += Document::FromJSON(L"{\"c\": \"C\", \"d\": \"D\"  /* \"e\": \"E\" */}", true);
+    doc[L"strings"] += Document::FromJSON(L"{\"c\": \"C\", \"d\": \"D\"  /* \"e\": \"E\" */}", true);
 
     doc += L"{\"strings2\": [\"E\", \"F\"]}"; // Ordered strings
-    doc["strings2"] += L"G";
-    doc["strings2"] += Array<String>().Add(L"H").Add(L"I");
+    doc[L"strings2"] += L"G";
+    doc[L"strings2"] += Array<String>().Add(L"H").Add(L"I");
 
-    String JSON = doc.ToJSON(); // Exporting the document
+    String JSON = doc.ToJSON(); // Exporting document
     std::wcout << L"JSON:\n" << JSON.Str << L"\n\n";
 
     // Output:

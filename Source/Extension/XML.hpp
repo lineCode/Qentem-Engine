@@ -33,7 +33,7 @@ struct XTag {
     Array<XTag>      InnerNodes;
 };
 
-static void InfinitSpaceCallback(String const &content, UNumber &offset, UNumber const endOffset, Match &item,
+static void InfinitSpaceCallback(wchar_t const *content, UNumber &offset, UNumber const endOffset, Match &item,
                                  Array<Match> &items) noexcept {
     while (content[offset] == L' ') {
         ++offset;
@@ -89,8 +89,7 @@ static Expressions const &getPropertiesExprs() noexcept {
     return tags;
 }
 
-static Array<XTag> parseTags(String const &content, Array<Match> const &items, UNumber id,
-                             UNumber const count) noexcept {
+static Array<XTag> parseTags(String const &content, Array<Match> const &items, UNumber id, UNumber const count) noexcept {
 
     static Expressions const &_propertiesExprs = getPropertiesExprs();
 
@@ -168,7 +167,7 @@ static Array<XTag> parseTags(String const &content, Array<Match> const &items, U
             XProperty xp;
             Match *   xpMatch;
 
-            _properties = Qentem::Engine::Search(content, _propertiesExprs, startIndex, remlen);
+            _properties = Qentem::Engine::Search(content.Str, _propertiesExprs, startIndex, remlen);
 
             for (UNumber p = 0; p < _properties.Size;) {
                 xpMatch = &_properties[p];
@@ -208,7 +207,7 @@ static Array<XTag> parseTags(String const &content, Array<Match> const &items, U
 static Array<XTag> Parse(String const &content) noexcept {
     static Expressions const &_xmlExprs = getXMLExprs();
 
-    Array<Match> items = Qentem::Engine::Search(content, _xmlExprs, 0, content.Length);
+    Array<Match> items = Qentem::Engine::Search(content.Str, _xmlExprs, 0, content.Length);
 
     return parseTags(content, items, 0, items.Size);
 }

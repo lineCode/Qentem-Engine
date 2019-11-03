@@ -27,18 +27,18 @@ static Expressions const &_getTagsHead() noexcept;
 // e.g. {v:var_name}
 // e.g. {v:var_name[id]}
 // Nest: {v:var_{v:var2_{v:var3_id}}}
-static String RenderVar(String const &block, Match const &item, void *other) noexcept {
+static String RenderVar(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
     String value;
 
     if (!(static_cast<Document *>(other))->GetString(value, block, (item.Offset + 3), (item.Length - 4))) {
-        value = String::Part(block.Str, (item.Offset + 3), (item.Length - 4));
+        value = String::Part(block, (item.Offset + 3), (item.Length - 4));
     }
 
     return value;
 }
 
-static String RenderMath(String const &block, Match const &item, void *other) noexcept {
-    String value = String::Part(block.Str, 6, (block.Length - 7));
+static String RenderMath(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
+    String value = String::Part(block, 6, (length - 7));
     return String::FromNumber(ALU::Evaluate(value), 1, 0, 3);
 }
 
@@ -46,10 +46,10 @@ static String RenderMath(String const &block, Match const &item, void *other) no
 // {iif case="{v:var_five} == 5" true="5" false="no"}
 // {iif case="{v:var_five} == 5" true="{v:var_five} is equal to 5" false="no"}
 // {iif case="3 == 3" true="Yes" false="No"}
-static String RenderIIF(String const &block, Match const &item, void *other) noexcept {
+static String RenderIIF(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
     static Expressions const _tagsQuotes = _getTagsQuotes();
 
-    Array<Match> const &&items = Engine::Search(block, _tagsQuotes, 0, block.Length);
+    Array<Match> const &&items = Engine::Search(block, _tagsQuotes, 0, length);
 
     if (items.Size == 0) {
         return L"";
@@ -72,17 +72,17 @@ static String RenderIIF(String const &block, Match const &item, void *other) noe
                 --start_at;
 
                 if (block[start_at] == L'a') { // c[a]se
-                    iif_case = String::Part(block.Str, (m->Offset + 1), (m->Length - 2));
+                    iif_case = String::Part(block, (m->Offset + 1), (m->Length - 2));
                     break;
                 }
 
                 if (block[start_at] == L'r') { // t[r]ue
-                    iif_true = String::Part(block.Str, (m->Offset + 1), (m->Length - 2));
+                    iif_true = String::Part(block, (m->Offset + 1), (m->Length - 2));
                     break;
                 }
 
                 if (block[start_at] == L'l') { // fa[l]se
-                    iif_false = String::Part(block.Str, (m->Offset + 1), (m->Length - 2));
+                    iif_false = String::Part(block, (m->Offset + 1), (m->Length - 2));
                     break;
                 }
             }
@@ -100,25 +100,25 @@ static String RenderIIF(String const &block, Match const &item, void *other) noe
 // <if case="{case}">html code1 <else /> html code2</if>
 // <if case="{case1}">html code1 <elseif case={case2} /> html code2</if>
 // <if case="{case}">html code <if case="{case2}" />additional html code</if></if>
-static bool EvaluateIF(String const &block, Match const &item, void *other) noexcept {
+static bool EvaluateIF(wchar_t const *block, Match const &item, void *other) noexcept {
     static Expressions const _tagsVars = _getTagsVara();
 
     UNumber const offset = (item.Offset + 1);
-    UNumber const length = (item.Length - 2);
+    UNumber const limit  = (item.Length - 2);
 
-    String statement = Engine::Parse(block, Engine::Search(block, _tagsVars, offset, length), offset, length, other);
+    String statement = Engine::Parse(block, Engine::Search(block, _tagsVars, offset, limit), offset, limit, other);
 
     return (ALU::Evaluate(statement) != 0.0);
 }
 
-static String RenderIF(String const &block, Match const &item, void *other) noexcept {
+static String RenderIF(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
     // Nothing is processed inside the match before checking if the condition is TRUE.
     bool _true = false;
 
     static Expressions const &_tagsAll  = _getTagsAll();
     static Expressions const &_tagsHead = _getTagsHead();
 
-    Array<Match> const &&_subMatch = Engine::Search(block, _tagsHead, item.Offset, item.Length);
+    Array<Match> _subMatch = Engine::Search(block, _tagsHead, item.Offset, item.Length);
 
     if (_subMatch.Size != 0) {
         Match *sm = &(_subMatch[0]);
@@ -129,36 +129,34 @@ static String RenderIF(String const &block, Match const &item, void *other) noex
 
             // inner content of if
             UNumber offset = (sm->Offset + sm->Length);
-            UNumber length = (item.Length - (sm->Length + 5));
+            UNumber limit  = (item.Length - (sm->Length + 5));
 
             // // if_else (splitted content)
             if (item.NestMatch.Size != 0) {
                 nm = &(item.NestMatch[0]);
-                if ((Flags::SPLIT & nm->Expr->Flag) != 0) {
-                    if (_true) {
-                        length = (nm->Length - (offset - nm->Offset));
-                    } else {
-                        Array<Match> _subMatch2;
+                if (_true) {
+                    limit = (nm->Length - (offset - nm->Offset));
+                } else {
+                    for (UNumber i = 1; i < item.NestMatch.Size; i++) {
+                        offset    = (nm->Offset + nm->Length);
+                        _subMatch = Engine::Search(block, _tagsHead, offset, (length - nm->Length));
 
-                        for (UNumber i = 1; i < item.NestMatch.Size; i++) {
-                            _subMatch2 = Engine::Search(block, _tagsHead, offset, (block.Length - offset));
+                        // inner content of the next part.
+                        nm     = &(item.NestMatch[i]);
+                        offset = nm->Offset;
+                        limit  = nm->Length;
 
-                            // inner content of the next part.
-                            offset = item.NestMatch[i].Offset;
-                            length = item.NestMatch[i].Length;
-
-                            if ((_subMatch2[0].NestMatch.Size == 0) ||
-                                Template::EvaluateIF(block, _subMatch2[0].NestMatch[0], other)) {
-                                _true = true;
-                                break;
-                            }
+                        if ((_subMatch.Size != 0) &&
+                            ((_subMatch[0].NestMatch.Size == 0) || Template::EvaluateIF(block, _subMatch[0].NestMatch[0], other))) {
+                            _true = true;
+                            break;
                         }
                     }
                 }
             }
 
             if (_true) {
-                return Engine::Parse(block, Engine::Search(block, _tagsAll, offset, length), offset, length, other);
+                return Engine::Parse(block, Engine::Search(block, _tagsAll, offset, limit), offset, limit, other);
             }
         }
     }
@@ -166,8 +164,7 @@ static String RenderIF(String const &block, Match const &item, void *other) noex
     return L"";
 }
 
-static String Repeat(String const &content, String const &name, String const &value_id, String const &key_id,
-                     void *other) noexcept {
+static String Repeat(String const &content, String const &name, String const &value_id, String const &key_id, void *other) noexcept {
     Entry *   _entry;
     Document *_storage = (static_cast<Document *>(other))->GetSource(&_entry, name, 0, name.Length);
 
@@ -177,7 +174,6 @@ static String Repeat(String const &content, String const &name, String const &va
 
     StringStream rendered;
     Expressions  loop_exp;
-    String       num;
 
     Expression value_ex;
     value_ex.Keyword = value_id;
@@ -191,45 +187,39 @@ static String Repeat(String const &content, String const &name, String const &va
         loop_exp.Add(&key_ex);
     }
 
-    Array<Match> const items = Engine::Search(content, loop_exp, 0, content.Length);
+    Array<Match> const items = Engine::Search(content.Str, loop_exp, 0, content.Length);
     if (_entry->Type == VType::DocumentT) {
         if (_storage->Ordered) {
             if (_storage->Strings.Size != 0) {
                 for (UNumber i = 0; i < _storage->Strings.Size; i++) {
-                    num = String::FromNumber(i);
-
                     if (key_id.Length != 0) {
-                        loop_exp[1]->Replace = num;
+                        loop_exp[1]->Replace = String::FromNumber(i);
                     }
 
                     loop_exp[0]->Replace = _storage->Strings[i];
 
-                    rendered += Engine::Parse(content, items, 0, content.Length);
+                    rendered += Engine::Parse(content.Str, items, 0, content.Length);
                 }
             } else if (_storage->Numbers.Size != 0) {
                 for (UNumber i = 0; i < _storage->Numbers.Size; i++) {
-                    num = String::FromNumber(i);
-
                     if (key_id.Length != 0) {
-                        loop_exp[1]->Replace = num;
+                        loop_exp[1]->Replace = String::FromNumber(i);
                     }
 
                     loop_exp[0]->Replace = String::FromNumber(_storage->Numbers[i], 1, 0, 3);
 
-                    rendered += Engine::Parse(content, items, 0, content.Length, other);
+                    rendered += Engine::Parse(content.Str, items, 0, content.Length, other);
                 }
             }
         } else {
-            String value;
             for (UNumber i = 0; i < _storage->Keys.Size; i++) {
                 if (key_id.Length != 0) {
                     loop_exp[1]->Replace = _storage->Keys[i];
                 }
 
-                _storage->GetString(value, _storage->Keys[i]);
-                loop_exp[0]->Replace = value;
+                _storage->GetString(loop_exp[0]->Replace, _storage->Keys[i]);
 
-                rendered += Engine::Parse(content, items, 0, content.Length, other);
+                rendered += Engine::Parse(content.Str, items, 0, content.Length, other);
             }
         }
     }
@@ -240,7 +230,7 @@ static String Repeat(String const &content, String const &name, String const &va
 // <loop set="abc2" value="s_value" key="s_key">
 //     <span>s_key: s_value</span>
 // </loop>
-static String RenderLoop(String const &block, Match const &item, void *other) noexcept {
+static String RenderLoop(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
     // To match: <loop (set="abc2" value="s_value" key="s_key")>
     static Expressions const &_tagsAll  = _getTagsAll();
     static Expressions const &_tagsHead = _getTagsHead();
@@ -266,17 +256,17 @@ static String RenderLoop(String const &block, Match const &item, void *other) no
                     --start_at;
 
                     if (block[start_at] == L't') { // se[t]
-                        name = String::Part(block.Str, (m->Offset + 1), (m->Length - 2));
+                        name = String::Part(block, (m->Offset + 1), (m->Length - 2));
                         break;
                     }
 
                     if (block[start_at] == L'e') { // valu[e]
-                        value_id = String::Part(block.Str, (m->Offset + 1), (m->Length - 2));
+                        value_id = String::Part(block, (m->Offset + 1), (m->Length - 2));
                         break;
                     }
 
                     if (block[start_at] == L'y') { // ke[y]
-                        key_id = String::Part(block.Str, (m->Offset + 1), (m->Length - 2));
+                        key_id = String::Part(block, (m->Offset + 1), (m->Length - 2));
                         break;
                     }
                 }
@@ -284,13 +274,11 @@ static String RenderLoop(String const &block, Match const &item, void *other) no
         }
 
         if ((name.Length != 0) && (value_id.Length != 0)) {
-            String &&_content =
-                Repeat(String::Part(block.Str, (sm->Offset + sm->Length), (item.Length - (sm->Length + 7))), name,
-                       value_id, key_id, other);
+            String _content =
+                Repeat(String::Part(block, (sm->Offset + sm->Length), (item.Length - (sm->Length + 7))), name, value_id, key_id, other);
 
             if (_content.Length != 0) {
-                return Engine::Parse(_content, Engine::Search(_content, _tagsAll, 0, _content.Length), 0,
-                                     _content.Length, other);
+                return Engine::Parse(_content.Str, Engine::Search(_content.Str, _tagsAll, 0, _content.Length), 0, _content.Length, other);
             }
         }
     }
@@ -438,7 +426,7 @@ static Expressions const &_getTagsAll() noexcept {
 
 static String Render(String const &content, Document *data) noexcept {
     static Expressions const &_tagsAll = _getTagsAll();
-    return Engine::Parse(content, Engine::Search(content, _tagsAll, 0, content.Length), 0, content.Length,
+    return Engine::Parse(content.Str, Engine::Search(content.Str, _tagsAll, 0, content.Length), 0, content.Length,
                          static_cast<void *>(data));
 }
 

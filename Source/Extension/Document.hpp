@@ -19,7 +19,7 @@ using Engine::Expression;
 using Engine::Expressions;
 using Engine::Match;
 
-enum VType { UndefinedT = 0, NullT, BooleanT, NumberT, StringT, DocumentT };
+enum VType { UndefinedT = 0, NullT = 1, BooleanT = 2, NumberT = 3, StringT = 4, DocumentT = 5 };
 
 struct Index {
     UNumber      EntryID = 0;
@@ -135,7 +135,7 @@ struct Document {
     }
 
     Document(String const &value) noexcept {
-        Array<Match> items = Engine::Search(value, _getJsonExpres(), 0, value.Length);
+        Array<Match> items = Engine::Search(value.Str, _getJsonExpres(), 0, value.Length);
 
         if (items.Size != 0) {
             if (items[0].Expr->ID == 1) {
@@ -151,20 +151,20 @@ struct Document {
     }
 
     Document(wchar_t const *value) noexcept {
-        String str = value;
+        String string = value;
 
-        Array<Match> items = Engine::Search(str, _getJsonExpres(), 0, str.Length);
+        Array<Match> items = Engine::Search(string.Str, _getJsonExpres(), 0, string.Length);
 
         if (items.Size != 0) {
             if (items[0].Expr->ID == 1) {
-                _makeList(*this, str, items[0]);
+                _makeList(*this, string, items[0]);
             } else {
-                _makeOrderedList(*this, str, items[0]);
+                _makeOrderedList(*this, string, items[0]);
             }
         } else {
             // Just a string.
             Ordered = true;
-            Strings += str;
+            Strings += static_cast<String &&>(string);
             Entries += Entry(0, 0, VType::StringT);
         }
     }
@@ -424,8 +424,7 @@ struct Document {
                     if (subItem->NestMatch.Size == 0) {
                         document.Strings += String::Part(content.Str, (subItem->Offset + 1), (subItem->Length - 2));
                     } else {
-                        document.Strings +=
-                            Engine::Parse(content, subItem->NestMatch, (subItem->Offset + 1), (subItem->Length - 2));
+                        document.Strings += Engine::Parse(content.Str, subItem->NestMatch, (subItem->Offset + 1), (subItem->Length - 2));
                     }
 
                     offset = (subItem->Offset + subItem->Length) - 1;
@@ -478,11 +477,13 @@ struct Document {
         UNumber j;
         Match * key;
 
+        UNumber const _length = (item.Offset + item.Length);
+
         for (UNumber i = 0; i < _items->Size; i++) {
             key = &(_items->operator[](i));
             j   = (key->Offset + key->Length);
 
-            for (; j < content.Length; j++) {
+            for (; j < _length; j++) {
                 while (content[j] == L' ') {
                     ++j;
                 }
@@ -495,12 +496,10 @@ struct Document {
                         if (subItem->NestMatch.Size == 0) {
                             tmpString = String::Part(content.Str, (subItem->Offset + 1), (subItem->Length - 2));
                         } else {
-                            tmpString =
-                                Engine::Parse(content, subItem->NestMatch, (subItem->Offset + 1), (subItem->Length - 2));
+                            tmpString = Engine::Parse(content.Str, subItem->NestMatch, (subItem->Offset + 1), (subItem->Length - 2));
                         }
 
-                        document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::StringT, &tmpString, true,
-                                        false);
+                        document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::StringT, &tmpString, true, false);
 
                         done = true;
                         break;
@@ -519,28 +518,24 @@ struct Document {
                             case L't': {
                                 // True
                                 number = 1;
-                                document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::BooleanT, &number,
-                                                false, false);
+                                document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::BooleanT, &number, false, false);
                                 break;
                             }
                             case L'f': {
                                 // False
                                 number = 0;
-                                document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::BooleanT, &number,
-                                                false, false);
+                                document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::BooleanT, &number, false, false);
                                 break;
                             }
                             case L'n': {
                                 // Null
-                                document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::NullT, nullptr,
-                                                false, false);
+                                document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::NullT, nullptr, false, false);
                                 break;
                             }
                             default: {
                                 if (String::ToNumber(content, number, start, limit)) {
                                     // Number
-                                    document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::NumberT,
-                                                    &number, false, false);
+                                    document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::NumberT, &number, false, false);
                                 }
                                 break;
                             }
@@ -555,8 +550,7 @@ struct Document {
                         Document uno_document;
                         _makeList(uno_document, content, _items->operator[](i));
 
-                        document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::DocumentT, &uno_document,
-                                        true, false);
+                        document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::DocumentT, &uno_document, true, false);
 
                         done = true;
                         break;
@@ -567,8 +561,7 @@ struct Document {
                         Document o_document;
                         _makeOrderedList(o_document, content, _items->operator[](i));
 
-                        document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::DocumentT, &o_document,
-                                        true, false);
+                        document.Insert(content, (key->Offset + 1), (key->Length - 2), VType::DocumentT, &o_document, true, false);
 
                         done = true;
                         break;
@@ -595,30 +588,29 @@ struct Document {
 
         // C style comments
         if (!comments) {
-            items = Engine::Search(content, json_expres, 0, content.Length);
+            items = Engine::Search(content.Str, json_expres, 0, content.Length);
         } else {
             static Expressions __comments;
             if (__comments.Size == 0) {
-                static Expression comment1      = Expression();
-                static Expression comment_next1 = Expression();
-                comment1.Keyword                = L"/*";
-                comment_next1.Keyword           = L"*/";
-                comment_next1.Replace           = L'\n';
-                comment1.Connected              = &comment_next1;
+                static Expression comment1;
+                static Expression comment_next1;
+                comment1.Keyword      = L"/*";
+                comment_next1.Keyword = L"*/";
+                comment_next1.Replace = L'\n';
+                comment1.Connected    = &comment_next1;
 
-                static Expression comment2      = Expression();
-                static Expression comment_next2 = Expression();
-                comment2.Keyword                = L"//";
-                comment_next2.Keyword           = L'\n';
-                comment_next2.Replace           = L'\n';
-                comment2.Connected              = &comment_next2;
+                static Expression comment2;
+                static Expression comment_next2;
+                comment2.Keyword      = L"//";
+                comment_next2.Keyword = L'\n';
+                comment_next2.Replace = L'\n';
+                comment2.Connected    = &comment_next2;
 
                 __comments = Expressions().Add(&comment1).Add(&comment2);
             }
 
-            n_content =
-                Engine::Parse(content, Engine::Search(content, __comments, 0, content.Length), 0, content.Length);
-            items = Engine::Search(n_content, json_expres, 0, n_content.Length);
+            n_content = Engine::Parse(content.Str, Engine::Search(content.Str, __comments, 0, content.Length), 0, content.Length);
+            items     = Engine::Search(n_content.Str, json_expres, 0, n_content.Length);
         }
 
         if (items.Size != 0) {
@@ -865,11 +857,11 @@ struct Document {
                         ss.Share(&JFX.fss6);
 
                         str_ptr   = &(Strings[_entry->ArrayID]);
-                        tmpMatchs = Engine::Search(*str_ptr, to_json_expres, 0, str_ptr->Length);
+                        tmpMatchs = Engine::Search(str_ptr->Str, to_json_expres, 0, str_ptr->Length);
                         if (tmpMatchs.Size == 0) {
                             ss.Share(str_ptr);
                         } else {
-                            ss += Engine::Parse(*str_ptr, tmpMatchs, 0, str_ptr->Length);
+                            ss += Engine::Parse(str_ptr->Str, tmpMatchs, 0, str_ptr->Length);
                         }
 
                         ss.Share(&JFX.fss6);
@@ -916,11 +908,11 @@ struct Document {
                         ss.Share(&JFX.fss6);
 
                         str_ptr   = &(Strings[_entry->ArrayID]);
-                        tmpMatchs = Engine::Search(*str_ptr, to_json_expres, 0, str_ptr->Length);
+                        tmpMatchs = Engine::Search(str_ptr->Str, to_json_expres, 0, str_ptr->Length);
                         if (tmpMatchs.Size == 0) {
                             ss.Share(str_ptr);
                         } else {
-                            ss += Engine::Parse(*str_ptr, tmpMatchs, 0, str_ptr->Length);
+                            ss += Engine::Parse(str_ptr->Str, tmpMatchs, 0, str_ptr->Length);
                         }
 
                         ss.Share(&JFX.fss6);
@@ -968,19 +960,19 @@ struct Document {
     }
 
     static Expressions const &_getToJsonExpres() noexcept {
-        static Expression  _JsonEsc  = Expression();
-        static Expression  _JsonQuot = Expression();
-        static Expressions tags      = Expressions();
+        static Expression  _JsonEsc;
+        static Expression  _JsonQuot;
+        static Expressions tags;
 
         if (tags.Size == 0) {
             _JsonEsc.Keyword = L'\\';
-            _JsonEsc.MatchCB = ([](String const &content, UNumber &offset, UNumber const endOffset, Match &item,
-                                   Array<Match> &items) noexcept -> void {
-                if ((content[offset] == L'\\') || (content[offset] == L' ') || (offset == endOffset)) {
-                    // If there is a space after \ or \ or it's at the end, then it's a match.
-                    items += static_cast<Match &&>(item);
-                }
-            });
+            _JsonEsc.MatchCB =
+                ([](wchar_t const *content, UNumber &offset, UNumber const endOffset, Match &item, Array<Match> &items) noexcept -> void {
+                    if ((content[offset] == L'\\') || (content[offset] == L' ') || (offset == endOffset)) {
+                        // If there is a space after \ or \ or it's at the end, then it's a match.
+                        items += static_cast<Match &&>(item);
+                    }
+                });
             _JsonEsc.Replace = L"\\\\";
 
             _JsonQuot.Keyword = L'"';
@@ -994,17 +986,17 @@ struct Document {
     }
 
     static Expressions const &_getJsonExpres() noexcept {
-        static Expression esc_quotation = Expression();
-        static Expression esc_esc       = Expression();
+        static Expression esc_quotation;
+        static Expression esc_esc;
 
-        static Expression quotation_start = Expression();
-        static Expression quotation_end   = Expression();
+        static Expression quotation_start;
+        static Expression quotation_end;
 
-        static Expression opened_square_bracket = Expression();
-        static Expression closed_square_bracket = Expression();
+        static Expression opened_square_bracket;
+        static Expression closed_square_bracket;
 
-        static Expression opened_curly_bracket = Expression();
-        static Expression closed_curly_bracket = Expression();
+        static Expression opened_curly_bracket;
+        static Expression closed_curly_bracket;
 
         static Expressions tags;
 
@@ -1027,16 +1019,14 @@ struct Document {
             closed_curly_bracket.ID        = 1;
             opened_curly_bracket.Connected = &closed_curly_bracket;
 
-            closed_curly_bracket.NestExprs =
-                Expressions().Add(&opened_curly_bracket).Add(&quotation_start).Add(&opened_square_bracket);
+            closed_curly_bracket.NestExprs = Expressions().Add(&opened_curly_bracket).Add(&quotation_start).Add(&opened_square_bracket);
 
             opened_square_bracket.Keyword   = L'[';
             closed_square_bracket.Keyword   = L']';
             closed_square_bracket.ID        = 2;
             opened_square_bracket.Connected = &closed_square_bracket;
 
-            closed_square_bracket.NestExprs =
-                Expressions().Add(&opened_square_bracket).Add(&quotation_start).Add(&opened_curly_bracket);
+            closed_square_bracket.NestExprs = Expressions().Add(&opened_square_bracket).Add(&quotation_start).Add(&opened_curly_bracket);
 
             tags += &opened_curly_bracket;
             tags += &opened_square_bracket;
@@ -1432,7 +1422,7 @@ struct Document {
     void operator+=(wchar_t const *string) noexcept {
         String str = string;
 
-        Array<Match> items = Engine::Search(str, _getJsonExpres(), 0, str.Length);
+        Array<Match> items = Engine::Search(str.Str, _getJsonExpres(), 0, str.Length);
 
         if (items.Size != 0) {
             Document doc;
@@ -1444,12 +1434,12 @@ struct Document {
             *this += doc;
         } else if (Ordered) {
             Entries += Entry(Strings.Size, 0, VType::StringT);
-            Strings += str;
+            Strings += static_cast<String &&>(str);
         }
     }
 
     void operator+=(String const &string) noexcept {
-        Array<Match> items = Engine::Search(string, _getJsonExpres(), 0, string.Length);
+        Array<Match> items = Engine::Search(string.Str, _getJsonExpres(), 0, string.Length);
 
         if (items.Size != 0) {
             Document doc;
@@ -1466,7 +1456,7 @@ struct Document {
     }
 
     void operator+=(String &&string) noexcept {
-        Array<Match> items = Engine::Search(string, _getJsonExpres(), 0, string.Length);
+        Array<Match> items = Engine::Search(string.Str, _getJsonExpres(), 0, string.Length);
 
         if (items.Size != 0) {
             Document doc;
@@ -1561,7 +1551,7 @@ struct Document {
         return *this;
     }
 
-    Document &operator[](wchar_t key) noexcept {
+    Document &operator[](wchar_t const key) noexcept {
         Entry *_entry;
 
         Document *src = GetSource(&_entry, key, 0, 1);
