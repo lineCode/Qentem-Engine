@@ -176,10 +176,12 @@ static String Repeat(String const &content, String const &name, String const &va
     Expressions  loop_exp;
 
     Expression value_ex;
-    value_ex.Keyword = value_id;
+    value_ex.Keyword = value_id.Str;
+    value_ex.Length  = value_id.Length;
 
     Expression key_ex;
-    key_ex.Keyword = key_id;
+    key_ex.Keyword = key_id.Str;
+    key_ex.Length  = key_id.Length;
 
     loop_exp.Add(&value_ex);
 
@@ -295,8 +297,8 @@ static Expressions const &_getTagsVara() noexcept {
         // Variables evaluation.
         VarTail.ParseCB = &(Template::RenderVar);
         // {v:var_name}
-        TagVar.Keyword   = L"{v:";
-        VarTail.Keyword  = L'}';
+        TagVar.SetKeyword(L"{v:");
+        VarTail.SetKeyword(L"}");
         TagVar.Connected = &VarTail;
         VarTail.Flag     = Flags::TRIM;
         tags             = Expressions().Add(&TagVar);
@@ -311,8 +313,8 @@ static Expressions const &_getTagsQuotes() noexcept {
     static Expressions tags;
 
     if (tags.Size == 0) {
-        TagQuote.Keyword   = L'"';
-        QuoteTail.Keyword  = L'"';
+        TagQuote.SetKeyword(L"\"");
+        QuoteTail.SetKeyword(L"\"");
         TagQuote.Connected = &QuoteTail;
         tags               = Expressions().Add(&TagQuote);
     }
@@ -327,8 +329,8 @@ static Expressions const &_getTagsHead() noexcept {
     static Expressions const &_tagsQuotes = _getTagsQuotes();
 
     if (tags.Size == 0) {
-        TagHead.Keyword   = L'<';
-        TagHead_T.Keyword = L'>';
+        TagHead.SetKeyword(L"<");
+        TagHead_T.SetKeyword(L">");
         TagHead_T.Flag    = Flags::ONCE;
         TagHead.Connected = &TagHead_T;
         // Nest to prevent matching ">" bigger sign inside if statement.
@@ -366,8 +368,8 @@ static Expressions const &_getTagsAll() noexcept {
         // Inline if evaluation.
         IifTail.ParseCB = &(Template::RenderIIF);
         //{iif case="3 == 3" true="Yes" false="No"}
-        TagIif.Keyword    = L"{iif";
-        IifTail.Keyword   = L'}';
+        TagIif.SetKeyword(L"{iif");
+        IifTail.SetKeyword(L"}");
         TagIif.Connected  = &IifTail;
         IifTail.Flag      = Flags::BUBBLE;
         IifTail.NestExprs = Expressions().Add(&TagIif).Add(_tagsVars); // Nested by itself and TagVars
@@ -375,24 +377,24 @@ static Expressions const &_getTagsAll() noexcept {
 
         // If spliter.
         // <else />
-        TagELseIf.Keyword   = L"<else";
-        ELseIfTail.Keyword  = L"/>";
+        TagELseIf.SetKeyword(L"<else");
+        ELseIfTail.SetKeyword(L"/>");
         ELseIfTail.Flag     = Flags::SPLIT;
         TagELseIf.Connected = &ELseIfTail;
         /////////////////////////////////
 
         // Shallow IF
         // To not match anything inside inner if until it's needed.
-        ShallowTagIf.Keyword    = L"<if";
-        ShallowIfTail.Keyword   = L"</if>";
+        ShallowTagIf.SetKeyword(L"<if");
+        ShallowIfTail.SetKeyword(L"</if>");
         ShallowTagIf.Connected  = &ShallowIfTail;
         ShallowIfTail.NestExprs = Expressions().Add(&ShallowTagIf);
 
         // If evaluation.
         IfTail.ParseCB = &(Template::RenderIF);
         // <if case="{case}">html code</if>
-        TagIf.Keyword    = L"<if";
-        IfTail.Keyword   = L"</if>";
+        TagIf.SetKeyword(L"<if");
+        IfTail.SetKeyword(L"</if>");
         TagIf.Connected  = &IfTail;
         IfTail.NestExprs = Expressions().Add(&ShallowTagIf).Add(&TagELseIf);
         /////////////////////////////////
@@ -402,8 +404,8 @@ static Expressions const &_getTagsAll() noexcept {
         // <loop set="abc2" var="loopId">
         //     <span>loopId): -{v:abc2[loopId]}</span>
         // </loop>
-        TagLoop.Keyword    = L"<loop";
-        LoopTail.Keyword   = L"</loop>";
+        TagLoop.SetKeyword(L"<loop");
+        LoopTail.SetKeyword(L"</loop>");
         TagLoop.Connected  = &LoopTail;
         LoopTail.NestExprs = Expressions().Add(&TagLoop); // Nested by itself
         /////////////////////////////////
@@ -411,8 +413,8 @@ static Expressions const &_getTagsAll() noexcept {
         // Math Tag.
         MathTail.ParseCB = &(Template::RenderMath);
         // {math:5+6*8*(8+3)}
-        TagMath.Keyword    = L"{math:";
-        MathTail.Keyword   = L'}';
+        TagMath.SetKeyword(L"{math:");
+        MathTail.SetKeyword(L"}");
         TagMath.Connected  = &MathTail;
         MathTail.Flag      = Flags::TRIM | Flags::BUBBLE;
         MathTail.NestExprs = Expressions().Add(_tagsVars);

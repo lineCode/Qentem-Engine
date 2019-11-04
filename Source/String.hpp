@@ -63,7 +63,7 @@ struct String {
         Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
 
         while (Length < Capacity) {
-            Str[Length] = static_cast<wchar_t>(str[Length]);
+            Str[Length] = str[Length];
             ++Length;
         }
 
@@ -85,7 +85,7 @@ struct String {
         Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
 
         for (; Length < Capacity;) {
-            Str[Length] = static_cast<wchar_t>(src[Length]);
+            Str[Length] = src[Length];
             ++Length;
         }
 
@@ -138,12 +138,22 @@ struct String {
     }
 
     String &operator=(wchar_t const *str) noexcept { // Copy
-        UNumber _length = 0;
-        while (str[_length] != L'\0') {
-            ++_length;
+        Memory::Deallocate<wchar_t>(&Str);
+        Length   = 0;
+        Capacity = 0;
+
+        while (str[Capacity] != L'\0') {
+            ++Capacity;
         };
 
-        Copy(*this, str, 0, _length);
+        Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
+
+        for (; Length < Capacity;) {
+            Str[Length] = str[Length];
+            ++Length;
+        }
+
+        Str[Length] = L'\0';
 
         return *this;
     }
@@ -165,22 +175,18 @@ struct String {
 
     String &operator=(String const &src) noexcept { // Copy
         if (this != &src) {
-            if (Capacity < src.Length) {
-                Memory::Deallocate<wchar_t>(&Str);
+            Memory::Deallocate<wchar_t>(&Str);
+            Length   = 0;
+            Capacity = src.Length;
 
-                Capacity = src.Length;
-                Str      = nullptr;
-                Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
-                Length = 0;
-                for (; Length < Capacity;) {
-                    Str[Length] = src[Length];
-                    ++Length;
-                }
-                Str[Length] = L'\0';
-            } else {
-                Length = 0;
-                Copy(*this, src.Str, Length, src.Length);
+            Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
+
+            for (; Length < Capacity;) {
+                Str[Length] = src[Length];
+                ++Length;
             }
+
+            Str[Length] = L'\0';
         }
 
         return *this;

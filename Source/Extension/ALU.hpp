@@ -283,88 +283,88 @@ static Expressions const &getMathExprs() noexcept {
     static Expressions tags;
 
     if (tags.Size == 0) {
-        MathMul.Keyword = L'*';
+        MathMul.SetKeyword(L"*");
         MathMul.ID      = 1;
         MathMul.Flag    = flags_no_pop;
         MathMul.ParseCB = &(MultiplicationCallback);
 
-        MathDiv.Keyword = L'/';
+        MathDiv.SetKeyword(L"/");
         MathDiv.ID      = 2;
         MathDiv.Flag    = flags_no_pop;
         MathDiv.ParseCB = &(MultiplicationCallback);
 
-        MathExp.Keyword = L'^';
+        MathExp.SetKeyword(L"^");
         MathExp.ID      = 3;
         MathExp.Flag    = flags_no_pop;
         MathExp.ParseCB = &(MultiplicationCallback);
 
-        MathRem.Keyword = L'%';
+        MathRem.SetKeyword(L"%");
         MathRem.ID      = 4;
         MathRem.Flag    = flags_no_pop;
         MathRem.ParseCB = &(MultiplicationCallback);
         ///////////////////////////////////////////
-        MathAdd.Keyword   = L'+';
+        MathAdd.SetKeyword(L"+");
         MathAdd.ID        = 1;
         MathAdd.Flag      = flags_ops;
         MathAdd.ParseCB   = &(AdditionCallback);
         MathAdd.NestExprs = Expressions().Add(&MathExp).Add(&MathRem).Add(&MathDiv).Add(&MathMul);
 
-        MathSub.Keyword   = L'-';
+        MathSub.SetKeyword(L"-");
         MathSub.ID        = 2;
         MathSub.Flag      = flags_no_pop;
         MathSub.ParseCB   = &(AdditionCallback);
         MathSub.NestExprs = MathAdd.NestExprs;
         ///////////////////////////////////////////
-        MathEqu2.Keyword   = L"==";
+        MathEqu2.SetKeyword(L"==");
         MathEqu2.ID        = 1;
         MathEqu2.Flag      = flags_ops;
         MathEqu2.ParseCB   = &(EqualCallback);
         MathEqu2.NestExprs = Expressions().Add(&MathAdd).Add(&MathSub);
 
-        MathEqu.Keyword   = L'=';
+        MathEqu.SetKeyword(L"=");
         MathEqu.ID        = 2;
         MathEqu.Flag      = flags_ops;
         MathEqu.ParseCB   = &(EqualCallback);
         MathEqu.NestExprs = MathEqu2.NestExprs;
 
-        MathNEqu.Keyword   = L"!=";
+        MathNEqu.SetKeyword(L"!=");
         MathNEqu.ID        = 3;
         MathNEqu.Flag      = flags_no_pop;
         MathNEqu.ParseCB   = &(EqualCallback);
         MathNEqu.NestExprs = MathEqu2.NestExprs;
 
-        MathLEqu.Keyword   = L"<=";
+        MathLEqu.SetKeyword(L"<=");
         MathLEqu.ID        = 4;
         MathLEqu.Flag      = flags_no_pop;
         MathLEqu.ParseCB   = &(EqualCallback);
         MathLEqu.NestExprs = MathEqu2.NestExprs;
 
-        MathLess.Keyword   = L'<';
+        MathLess.SetKeyword(L"<");
         MathLess.ID        = 5;
         MathLess.Flag      = flags_no_pop;
         MathLess.ParseCB   = &(EqualCallback);
         MathLess.NestExprs = MathEqu2.NestExprs;
 
-        MathBEqu.Keyword   = L">=";
+        MathBEqu.SetKeyword(L">=");
         MathBEqu.ID        = 6;
         MathBEqu.Flag      = flags_no_pop;
         MathBEqu.ParseCB   = &(EqualCallback);
         MathBEqu.NestExprs = MathEqu2.NestExprs;
 
-        MathBig.Keyword   = L'>';
+        MathBig.SetKeyword(L">");
         MathBig.ID        = 7;
         MathBig.Flag      = flags_no_pop;
         MathBig.ParseCB   = &(EqualCallback);
         MathBig.NestExprs = MathEqu2.NestExprs;
         ///////////////////////////////////////////
-        LogicAnd.Keyword = L"&&";
+        LogicAnd.SetKeyword(L"&&");
         LogicAnd.ID      = 1;
         LogicAnd.Flag    = flags_ops;
         LogicAnd.ParseCB = &(LogicCallback);
         LogicAnd.NestExprs =
             Expressions().Add(&MathEqu2).Add(&MathEqu).Add(&MathNEqu).Add(&MathLEqu).Add(&MathLess).Add(&MathBEqu).Add(&MathBig);
 
-        LogicOr.Keyword   = L"||";
+        LogicOr.SetKeyword(L"||");
         LogicOr.ID        = 2;
         LogicOr.Flag      = flags_no_pop;
         LogicOr.ParseCB   = &(LogicCallback);
@@ -391,8 +391,8 @@ static Expressions const &getParensExprs() noexcept {
     static Expressions tags;
 
     if (tags.Size == 0) {
-        ParensExpr.Keyword   = L'(';
-        ParensNext.Keyword   = L')';
+        ParensExpr.SetKeyword(L"(");
+        ParensNext.SetKeyword(L")");
         ParensExpr.Connected = &ParensNext;
         ParensNext.Flag      = Flags::BUBBLE | Flags::TRIM;
         ParensNext.ParseCB   = &(ParenthesisCallback);

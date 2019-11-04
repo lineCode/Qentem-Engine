@@ -50,8 +50,8 @@ static Expressions const &getXMLExprs() noexcept {
     static Expressions tags;
 
     if (tags.Size == 0) {
-        xStart.Keyword   = L'<';
-        xEnd.Keyword     = L'>';
+        xStart.SetKeyword(L"<");
+        xEnd.SetKeyword(L">");
         xStart.Connected = &xEnd;
 
         tags.SetCapacity(1);
@@ -71,17 +71,17 @@ static Expressions const &getPropertiesExprs() noexcept {
     static Expressions tags;
 
     if (tags.Size == 0) {
-        equalExpr.Keyword = L'=';
-        equalExpr.Flag    = Flags::SPLIT | Flags::DROPEMPTY;
+        equalExpr.SetKeyword(L"=");
+        equalExpr.Flag = Flags::SPLIT | Flags::DROPEMPTY;
 
-        spaceExpr.Keyword = L' ';
+        spaceExpr.SetKeyword(L" ");
         spaceExpr.Flag    = Flags::SPLIT | Flags::DROPEMPTY;
         spaceExpr.MatchCB = &(InfinitSpaceCallback);
 
-        quotExpr.Keyword    = L'"';
-        endQuotExpr.Keyword = L'"';
-        quotExpr.Connected  = &endQuotExpr;
-        endQuotExpr.Flag    = Flags::IGNORE;
+        quotExpr.SetKeyword(L"\"");
+        endQuotExpr.SetKeyword(L"\"");
+        quotExpr.Connected = &endQuotExpr;
+        endQuotExpr.Flag   = Flags::IGNORE;
 
         tags = Expressions().Add(&equalExpr).Add(&quotExpr).Add(&spaceExpr);
     }

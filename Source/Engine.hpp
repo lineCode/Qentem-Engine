@@ -43,7 +43,9 @@ struct Flags {
 };
 /////////////////////////////////
 struct Expression {
-    String      Keyword;             // What to search for.
+    wchar_t const *Keyword; // What to search for.
+    UNumber        Length;  // Keyword length.
+
     Expression *Connected = nullptr; // The next part of the match (the next keyword).
     Expressions NestExprs;           // Expressions for nesting Search().
     UShort      Flag    = 0;         // Flags for the expression.
@@ -53,6 +55,11 @@ struct Expression {
     UShort    ID      = 0;       // Expression ID.
     _ParseCB *ParseCB = nullptr; // A callback function for custom rendering.
     String    Replace;           // A text to replace the match.
+
+    void SetKeyword(wchar_t const *string) {
+        Keyword = string;
+        Length  = String::Count(string);
+    }
 };
 /////////////////////////////////
 struct Match {
@@ -78,12 +85,12 @@ static UNumber _search(Array<Match> &items, wchar_t const *content, Expressions 
         expr           = exprs[expr_id];
         keyword_offset = 0;
 
-        while ((keyword_offset < expr->Keyword.Length) && (expr->Keyword[keyword_offset] == content[current_offset])) {
+        while ((keyword_offset < expr->Length) && (expr->Keyword[keyword_offset] == content[current_offset])) {
             ++current_offset;
             ++keyword_offset;
         }
 
-        if (keyword_offset != expr->Keyword.Length) {
+        if ((keyword_offset == 0) || (keyword_offset != expr->Length)) {
             if (exprs.Size == (++expr_id)) {
                 expr_id = 0;
                 ++offset;
@@ -103,7 +110,7 @@ static UNumber _search(Array<Match> &items, wchar_t const *content, Expressions 
             while (current_offset != maxOffset) {
                 if (expr->Keyword[keyword_offset++] != content[current_offset++]) {
                     keyword_offset = 0;
-                } else if (expr->Keyword.Length == keyword_offset) {
+                } else if (expr->Length == keyword_offset) {
                     if ((expr->NestExprs.Size != 0) && ((sub_offset + keyword_offset) != current_offset)) {
                         sub_offset = _search(item.NestMatch, content, expr->NestExprs, sub_offset, current_offset, maxOffset, split_nest);
                     }
@@ -118,7 +125,7 @@ static UNumber _search(Array<Match> &items, wchar_t const *content, Expressions 
             }
 
             if (split_nest != 0) {
-                _split(item.NestMatch, content, (offset + left_keyword_len), (current_offset - expr->Keyword.Length), split_nest);
+                _split(item.NestMatch, content, (offset + left_keyword_len), (current_offset - expr->Length), split_nest);
             }
 
             if (keyword_offset == 0) {

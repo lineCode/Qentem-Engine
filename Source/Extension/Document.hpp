@@ -38,13 +38,13 @@ struct Entry {
 };
 
 struct _JsonFixedString {
-    String const fss1   = L'{';
-    String const fss2   = L'}';
-    String const fss3   = L',';
-    String const fss4   = L'[';
-    String const fss5   = L']';
-    String const fss6   = L'"';
-    String const fsc1   = L':';
+    String const fss1   = L"{";
+    String const fss2   = L"}";
+    String const fss3   = L",";
+    String const fss4   = L"[";
+    String const fss5   = L"]";
+    String const fss6   = L"\"";
+    String const fsc1   = L":";
     String const fNull  = L"null";
     String const fTrue  = L"true";
     String const fFalse = L"false";
@@ -594,16 +594,16 @@ struct Document {
             if (__comments.Size == 0) {
                 static Expression comment1;
                 static Expression comment_next1;
-                comment1.Keyword      = L"/*";
-                comment_next1.Keyword = L"*/";
+                comment1.SetKeyword(L"/*");
+                comment_next1.SetKeyword(L"*/");
                 comment_next1.Replace = L'\n';
                 comment1.Connected    = &comment_next1;
 
                 static Expression comment2;
                 static Expression comment_next2;
-                comment2.Keyword      = L"//";
-                comment_next2.Keyword = L'\n';
-                comment_next2.Replace = L'\n';
+                comment2.SetKeyword(L"//");
+                comment_next2.SetKeyword(L"\n");
+                comment_next2.Replace = L"\n";
                 comment2.Connected    = &comment_next2;
 
                 __comments = Expressions().Add(&comment1).Add(&comment2);
@@ -965,7 +965,7 @@ struct Document {
         static Expressions tags;
 
         if (tags.Size == 0) {
-            _JsonEsc.Keyword = L'\\';
+            _JsonEsc.SetKeyword(L"\\");
             _JsonEsc.MatchCB =
                 ([](wchar_t const *content, UNumber &offset, UNumber const endOffset, Match &item, Array<Match> &items) noexcept -> void {
                     if ((content[offset] == L'\\') || (content[offset] == L' ') || (offset == endOffset)) {
@@ -975,7 +975,7 @@ struct Document {
                 });
             _JsonEsc.Replace = L"\\\\";
 
-            _JsonQuot.Keyword = L'"';
+            _JsonQuot.SetKeyword(L"\"");
             _JsonQuot.Replace = L"\\\"";
 
             tags += &_JsonEsc;
@@ -1001,28 +1001,28 @@ struct Document {
         static Expressions tags;
 
         if (tags.Size == 0) {
-            esc_esc.Keyword = L"\\\\";
+            esc_esc.SetKeyword(L"\\\\");
             esc_esc.Replace = L"\\";
 
-            esc_quotation.Keyword = L"\\\"";
-            esc_quotation.Replace = L'"';
+            esc_quotation.SetKeyword(L"\\\"");
+            esc_quotation.Replace = L"\"";
 
-            quotation_start.Keyword   = L'"';
-            quotation_end.Keyword     = L'"';
+            quotation_start.SetKeyword(L"\"");
+            quotation_end.SetKeyword(L"\"");
             quotation_end.ID          = 3;
             quotation_start.Connected = &quotation_end;
             quotation_end.NestExprs += &esc_esc;
             quotation_end.NestExprs += &esc_quotation;
 
-            opened_curly_bracket.Keyword   = L'{';
-            closed_curly_bracket.Keyword   = L'}';
+            opened_curly_bracket.SetKeyword(L"{");
+            closed_curly_bracket.SetKeyword(L"}");
             closed_curly_bracket.ID        = 1;
             opened_curly_bracket.Connected = &closed_curly_bracket;
 
             closed_curly_bracket.NestExprs = Expressions().Add(&opened_curly_bracket).Add(&quotation_start).Add(&opened_square_bracket);
 
-            opened_square_bracket.Keyword   = L'[';
-            closed_square_bracket.Keyword   = L']';
+            opened_square_bracket.SetKeyword(L"[");
+            closed_square_bracket.SetKeyword(L"]");
             closed_square_bracket.ID        = 2;
             opened_square_bracket.Connected = &closed_square_bracket;
 
