@@ -1,4 +1,4 @@
-# Qentem Engine (v1.1.3)
+# Qentem Engine (v1.1.4)
 
 ## Introduction:
 Qentem Engine is an independent library that uses a fast algorithm for nest-searching/nest-matching. It can be used to match existing syntaxes or new ones, and with call-backs for post and per-parsing, It's posable to match almost any complex syntax. It is very efficient and has a small footprint on memory, and it's built using modern C++. It can be used to render complex templates that contains nested loop, nested if-else, inline if, math (+ * / - ^ %), logic (&& ||), and/or something simple: like replacing a text or splitting it. Also, it is capable of doing JSON, XML/HTML.
@@ -20,7 +20,7 @@ c++ -I ./Source ./Tests/Test.cpp -o ./Tests/QTest.bin
 VS Code configrations are included for compiling and running tests.
 
 ## Template Demo:
-HTML, JavaScript and WebAssembly: [JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/releases/download/v1.1.1/JQen.zip)
+HTML, JavaScript and WebAssembly: [JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/releases/download/v1.1.4/JQen.zip)
 
 ## Examples:
 ### Document and JSON:
@@ -30,18 +30,17 @@ using Qentem::Array;
 using Qentem::Document;
 using Qentem::String;
 
-// Document and JSON
-Document numbers = L"[1,1,2,3,4]"; // New document from a JSON text
+Document numbers = L"[1,1,2,3,4]"; // New document from JSON text
 
 numbers += L"[5,6]";                      // Extanding JSON
-numbers += Array<double>().Add(7).Add(8); // Extanding win an ordered array
+numbers += Array<double>().Add(7).Add(8); // Extanding win ordered array
 
 Document doc;              // New document
-doc[L"numbers"] = numbers; // assigning an ordered numbers
+doc[L"numbers"] = numbers; // assigning ordered numbers
 doc[L"numbers"] += 9;
 doc[L"numbers"][0] = 0; // Override
 
-doc += L"{\"strings\": { }}"; // Expanding the document with an unordered array
+doc += L"{\"strings\": { }}"; // Expanding document with unordered array
 doc[L"strings"][L"a"] = L"A";
 doc[L"strings"][L"b"] = L"O";
 doc[L"strings"][1]    = L"B"; // Override

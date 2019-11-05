@@ -7,18 +7,17 @@ using Qentem::Document;
 using Qentem::String;
 
 int main() {
-    // Document and JSON
-    Document numbers = L"[1,1,2,3,4]"; // New document from a JSON text
+    Document numbers = L"[1,1,2,3,4]"; // New document from JSON text
 
     numbers += L"[5,6]";                      // Extanding JSON
-    numbers += Array<double>().Add(7).Add(8); // Extanding win an ordered array
+    numbers += Array<double>().Add(7).Add(8); // Extanding win ordered array
 
     Document doc;              // New document
-    doc[L"numbers"] = numbers; // assigning an ordered numbers
+    doc[L"numbers"] = numbers; // assigning ordered numbers
     doc[L"numbers"] += 9;
     doc[L"numbers"][0] = 0; // Override
 
-    doc += L"{\"strings\": { }}"; // Expanding the document with an unordered array
+    doc += L"{\"strings\": { }}"; // Expanding document with unordered array
     doc[L"strings"][L"a"] = L"A";
     doc[L"strings"][L"b"] = L"O";
     doc[L"strings"][1]    = L"B"; // Override
