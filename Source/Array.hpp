@@ -94,7 +94,7 @@ struct Array {
         return *this;
     }
 
-    void SetCapacity(UNumber _size) noexcept {
+    void SetCapacity(UNumber const _size) noexcept {
         Memory::Deallocate<Type>(&Storage);
 
         Size     = 0;
@@ -103,13 +103,9 @@ struct Array {
         Memory::Allocate<Type>(&Storage, Capacity);
     }
 
-    void Resize(UNumber _size) noexcept {
-        if (_size == 0) {
-            _size = 2;
-        }
-
+    void Resize(UNumber const _size) noexcept {
         Type *tmp = Storage;
-        Capacity  = _size;
+        Capacity  = _size == 0 ? 2 : _size;
 
         Storage = nullptr;
         Memory::Allocate<Type>(&Storage, Capacity);

@@ -38,8 +38,7 @@ static String RenderVar(wchar_t const *block, Match const &item, UNumber const l
 }
 
 static String RenderMath(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
-    String value = String::Part(block, 6, (length - 7));
-    return String::FromNumber(ALU::Evaluate(value), 1, 0, 3);
+    return String::FromNumber(ALU::Evaluate(block, 6, (length - 7)), 1, 0, 3);
 }
 
 // {iif case="3 == 3" true="Yes" false="No"}
@@ -52,11 +51,11 @@ static String RenderIIF(wchar_t const *block, Match const &item, UNumber const l
     Array<Match> const &&items = Engine::Search(block, _tagsQuotes, 0, length);
 
     if (items.Size == 0) {
-        return L"";
+        return String();
     }
 
     Match * m;
-    String  iif_case;
+    bool    iif_case = false;
     String  iif_false;
     String  iif_true;
     UNumber start_at;
@@ -72,7 +71,7 @@ static String RenderIIF(wchar_t const *block, Match const &item, UNumber const l
                 --start_at;
 
                 if (block[start_at] == L'a') { // c[a]se
-                    iif_case = String::Part(block, (m->Offset + 1), (m->Length - 2));
+                    iif_case = (ALU::Evaluate(block, (m->Offset + 1), (m->Length - 2)) != 0.0);
                     break;
                 }
 
@@ -89,26 +88,26 @@ static String RenderIIF(wchar_t const *block, Match const &item, UNumber const l
         }
     }
 
-    if ((iif_case.Length != 0) && (ALU::Evaluate(iif_case) != 0.0)) {
-        return (iif_true.Length != 0) ? iif_true : L"";
+    if (iif_case) {
+        return (iif_true.Length != 0) ? iif_true : String();
     }
 
-    return (iif_false.Length != 0) ? iif_false : L"";
+    return (iif_false.Length != 0) ? iif_false : String();
 }
 
 // <if case="{case}">html code</if>
 // <if case="{case}">html code1 <else /> html code2</if>
 // <if case="{case1}">html code1 <elseif case={case2} /> html code2</if>
 // <if case="{case}">html code <if case="{case2}" />additional html code</if></if>
-static bool EvaluateIF(wchar_t const *block, Match const &item, void *other) noexcept {
+static bool const EvaluateIF(wchar_t const *block, Match const &item, void *other) noexcept {
     static Expressions const _tagsVars = _getTagsVara();
 
     UNumber const offset = (item.Offset + 1);
     UNumber const limit  = (item.Length - 2);
 
-    String statement = Engine::Parse(block, Engine::Search(block, _tagsVars, offset, limit), offset, limit, other);
+    String const content = Engine::Parse(block, Engine::Search(block, _tagsVars, offset, limit), offset, limit, other);
 
-    return (ALU::Evaluate(statement) != 0.0);
+    return (ALU::Evaluate(content.Str, 0, content.Length) != 0.0);
 }
 
 static String RenderIF(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
@@ -161,15 +160,15 @@ static String RenderIF(wchar_t const *block, Match const &item, UNumber const le
         }
     }
 
-    return L"";
+    return String();
 }
 
 static String Repeat(String const &content, String const &name, String const &value_id, String const &key_id, void *other) noexcept {
     Entry *   _entry;
-    Document *_storage = (static_cast<Document *>(other))->GetSource(&_entry, name, 0, name.Length);
+    Document *_storage = (static_cast<Document *>(other))->GetSource(&_entry, name.Str, 0, name.Length);
 
     if (_storage == nullptr) {
-        return L"";
+        return String();
     }
 
     StringStream rendered;
@@ -191,24 +190,34 @@ static String Repeat(String const &content, String const &name, String const &va
 
     Array<Match> const items = Engine::Search(content.Str, loop_exp, 0, content.Length);
     if (_entry->Type == VType::DocumentT) {
+        String tmpstr;
+        String tmpstr2;
+
         if (_storage->Ordered) {
             if (_storage->Strings.Size != 0) {
                 for (UNumber i = 0; i < _storage->Strings.Size; i++) {
                     if (key_id.Length != 0) {
-                        loop_exp[1]->Replace = String::FromNumber(i);
+                        tmpstr                   = String::FromNumber(i);
+                        loop_exp[1]->ReplaceWith = tmpstr.Str;
+                        loop_exp[1]->RLength     = tmpstr.Length;
                     }
 
-                    loop_exp[0]->Replace = _storage->Strings[i];
+                    loop_exp[0]->ReplaceWith = _storage->Strings[i].Str;
+                    loop_exp[0]->RLength     = _storage->Strings[i].Length;
 
                     rendered += Engine::Parse(content.Str, items, 0, content.Length);
                 }
             } else if (_storage->Numbers.Size != 0) {
                 for (UNumber i = 0; i < _storage->Numbers.Size; i++) {
                     if (key_id.Length != 0) {
-                        loop_exp[1]->Replace = String::FromNumber(i);
+                        tmpstr                   = String::FromNumber(i);
+                        loop_exp[1]->ReplaceWith = tmpstr.Str;
+                        loop_exp[1]->RLength     = tmpstr.Length;
                     }
 
-                    loop_exp[0]->Replace = String::FromNumber(_storage->Numbers[i], 1, 0, 3);
+                    tmpstr2                  = String::FromNumber(_storage->Numbers[i], 1, 0, 3);
+                    loop_exp[0]->ReplaceWith = tmpstr2.Str;
+                    loop_exp[0]->RLength     = tmpstr2.Length;
 
                     rendered += Engine::Parse(content.Str, items, 0, content.Length, other);
                 }
@@ -216,10 +225,13 @@ static String Repeat(String const &content, String const &name, String const &va
         } else {
             for (UNumber i = 0; i < _storage->Keys.Size; i++) {
                 if (key_id.Length != 0) {
-                    loop_exp[1]->Replace = _storage->Keys[i];
+                    loop_exp[1]->ReplaceWith = _storage->Keys[i].Str;
+                    loop_exp[1]->RLength     = _storage->Keys[i].Length;
                 }
 
-                _storage->GetString(loop_exp[0]->Replace, _storage->Keys[i]);
+                _storage->GetString(tmpstr2, _storage->Keys[i].Str, 0, _storage->Keys[i].Length);
+                loop_exp[0]->ReplaceWith = tmpstr2.Str;
+                loop_exp[0]->RLength     = tmpstr2.Length;
 
                 rendered += Engine::Parse(content.Str, items, 0, content.Length, other);
             }
@@ -285,7 +297,7 @@ static String RenderLoop(wchar_t const *block, Match const &item, UNumber const 
         }
     }
 
-    return L"";
+    return String();
 }
 
 static Expressions const &_getTagsVara() noexcept {

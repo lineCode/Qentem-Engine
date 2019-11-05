@@ -30,7 +30,7 @@ static bool const StreasTest = false;
 // static bool const BigJSON    = true;
 static bool const BigJSON = false;
 
-static String   readFile(char const *fullpath) noexcept;
+static String   readFile(char const *path) noexcept;
 static Document getDocument() noexcept;
 static bool     runTests(wchar_t const *name, Array<TestBit> const &bits, bool break_on_err, Document *other = nullptr) noexcept;
 static bool     NumbersConvTest() noexcept;
@@ -222,7 +222,7 @@ static bool runTests(wchar_t const *name, Array<TestBit> const &bits, bool break
             Pass = (rendered == bits[i].Expected[t]);
             ss += Pass ? L" " : L"\n ";
 
-            ss += String::FromNumber(count, 2) + L'-';
+            ss += String::FromNumber(count, 2) + L"-";
             ss += String::FromNumber(counter, 2) + L": ";
 
             if (Pass) {
@@ -232,7 +232,7 @@ static bool runTests(wchar_t const *name, Array<TestBit> const &bits, bool break
             }
 
             ss += L" (Search: ";
-            ss += String::FromNumber((static_cast<double>(search_ticks) / CLOCKS_PER_SEC), 2, 3, 3) + L')';
+            ss += String::FromNumber((static_cast<double>(search_ticks) / CLOCKS_PER_SEC), 2, 3, 3) + L")";
             ss += L" (Parse: ";
             ss += String::FromNumber((static_cast<double>(parse_ticks) / CLOCKS_PER_SEC), 2, 3, 3) + L")\n";
 
@@ -240,12 +240,12 @@ static bool runTests(wchar_t const *name, Array<TestBit> const &bits, bool break
                 ++fail;
 
                 ss += L" ----------- Start debug ";
-                ss += String::FromNumber(count) + L'-';
+                ss += String::FromNumber(count) + L"-";
                 ss += String::FromNumber(counter);
                 ss += L" -----\n  Line:      ";
-                ss += String::FromNumber(bits[i].Line) + L'\n';
+                ss += String::FromNumber(bits[i].Line) + L"\n";
                 ss += L"  Content:  ";
-                ss += Qentem::Test::ReplaceNewLine(bits[i].Content[t], L"\\n") + L'\n';
+                ss += Qentem::Test::ReplaceNewLine(bits[i].Content[t], L"\\n") + L"\n";
                 ss += L"  Rendered: \"";
                 ss += Qentem::Test::ReplaceNewLine(rendered, L"\\n") + L"\"\n";
                 ss += L"  Expected: \"";
@@ -254,7 +254,7 @@ static bool runTests(wchar_t const *name, Array<TestBit> const &bits, bool break
                 ss += Qentem::Test::DumpMatches(bits[i].Content[t], matches, L"    ");
 
                 ss += L"\n  ---------- End debug ";
-                ss += String::FromNumber(count) + L'-';
+                ss += String::FromNumber(count) + L"-";
                 ss += String::FromNumber(counter) + L" -------\n";
 
                 if (break_on_err) {
@@ -278,11 +278,11 @@ static bool runTests(wchar_t const *name, Array<TestBit> const &bits, bool break
 
     if (fail == 0) {
         ss += L" operational! (Total Tests: ";
-        ss += String::FromNumber(total) + L')';
+        ss += String::FromNumber(total) + L")";
     } else {
         ss += L" broken! (Failed: ";
         ss += String::FromNumber(fail) + L",  out of: ";
-        ss += String::FromNumber(total) + L')';
+        ss += String::FromNumber(total) + L")";
     }
 
     ss += L", Total Search: ";
@@ -336,7 +336,7 @@ static bool NumbersConvTest() noexcept {
     std::wcout << L"\n #Number Conversion Tests:\n";
 
     for (UNumber i = 0; i < test.Size; i++) {
-        std::wcout << L' ' << String::FromNumber((i + 1), 2).Str << L") ";
+        std::wcout << L" " << String::FromNumber((i + 1), 2).Str << L") ";
 
         ticks = static_cast<UNumber>(clock());
 
@@ -498,7 +498,7 @@ static bool JSONTests() noexcept {
             // Qentem::Engine::Search(json_content, Document::_getJsonExpres(), 0, json_content.Length);
         }
         took = (static_cast<UNumber>(clock()) - took);
-        std::wcout << String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << L' ';
+        std::wcout << String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << L" ";
 
         std::wcout << L" Exporting... ";
         took = static_cast<UNumber>(clock());
@@ -558,19 +558,19 @@ static Document getDocument() noexcept {
     data[L"math"]       = L"((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) - (-1) + 2";
 
     data[L"abc"]         = Document();
-    data[L"abc"][L'B']   = L"b";
+    data[L"abc"][L"B"]   = L"b";
     data[L"abc"][L"@@"]  = 100.0;
-    data[L"abc"][L'A']   = L"a";
-    data[L"abc"][L'C']   = L"c";
-    data[L"abc"][L'D']   = L"d";
-    data[L"abc"][L'E']   = Array<String>().Add(L"O").Add(L"K!");
+    data[L"abc"][L"A"]   = L"a";
+    data[L"abc"][L"C"]   = L"c";
+    data[L"abc"][L"D"]   = L"d";
+    data[L"abc"][L"E"]   = Array<String>().Add(L"O").Add(L"K!");
     data[L"abc"][L"A-Z"] = L"ABCDEFGHIGKLMNOBQRST.....";
 
     data[L"multi"]                = Document();
     data[L"multi"][L"arr1"]       = Document();
-    data[L"multi"][L"arr1"][L'E'] = Array<String>().Add(L"O").Add(L"K!");
+    data[L"multi"][L"arr1"][L"E"] = Array<String>().Add(L"O").Add(L"K!");
     data[L"multi"][L"arr2"]       = Array<String>().Add(L"B").Add(L"C").Add(L"D").Add(L"A");
-    data[L"multi"][L'C']          = L"cool";
+    data[L"multi"][L"C"]          = L"cool";
 
     return data;
 }

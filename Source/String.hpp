@@ -37,24 +37,6 @@ struct String {
         Str[Length] = L'\0';
     }
 
-    String(char const str) noexcept { // one char
-        Capacity = 1;
-
-        Memory::Allocate<wchar_t>(&Str, 2); // 1 for /0
-
-        Str[Length]   = static_cast<wchar_t>(str);
-        Str[++Length] = L'\0';
-    }
-
-    String(wchar_t const str) noexcept { // one wchar
-        Capacity = 1;
-
-        Memory::Allocate<wchar_t>(&Str, 2); // 1 for /0
-
-        Str[Length]   = str;
-        Str[++Length] = L'\0';
-    }
-
     String(wchar_t const *str) noexcept {
         while (str[Capacity] != L'\0') {
             ++Capacity;
@@ -121,22 +103,6 @@ struct String {
         return _length;
     }
 
-    String &operator=(wchar_t const str) noexcept { // Copy
-        Memory::Deallocate<wchar_t>(&Str);
-        Memory::Allocate<wchar_t>(&Str, 2);
-
-        Capacity = 1;
-        Length   = 0;
-
-        if (str != L'\0') {
-            Str[Length++] = str;
-        }
-
-        Str[Length] = L'\0';
-
-        return *this;
-    }
-
     String &operator=(wchar_t const *str) noexcept { // Copy
         Memory::Deallocate<wchar_t>(&Str);
         Length   = 0;
@@ -192,21 +158,6 @@ struct String {
         return *this;
     }
 
-    String &operator+=(wchar_t const _char) noexcept { // Appand a string
-        if (Length == Capacity) {
-            if (Capacity == 0) {
-                Capacity = 2;
-            }
-
-            Resize(Capacity + 1);
-        }
-
-        Str[Length]   = _char;
-        Str[++Length] = L'\0';
-
-        return *this;
-    }
-
     String &operator+=(wchar_t const *str) noexcept { // Appand a string
         UNumber _length = 0;
         while (str[_length] != L'\0') {
@@ -234,18 +185,6 @@ struct String {
         Copy(*this, src.Str, Length, src.Length);
 
         return *this;
-    }
-
-    String operator+(wchar_t const src) const noexcept {
-        String ns;
-        ns.SetLength(Length + 1);
-
-        Copy(ns, Str, 0, Length);
-
-        ns[ns.Length]   = src;
-        ns[++ns.Length] = L'\0';
-
-        return ns;
     }
 
     String operator+(wchar_t const *str) const noexcept {
@@ -292,14 +231,6 @@ struct String {
         }
 
         return ns;
-    }
-
-    bool operator==(wchar_t const _char) const noexcept { // Compare
-        return ((Length == 1) && (Str[0] == _char));
-    }
-
-    inline bool operator!=(wchar_t const _char) const noexcept { // Compare
-        return (!(*this == _char));
     }
 
     bool operator==(wchar_t const *string) const noexcept { // Compare
@@ -674,11 +605,8 @@ struct String {
         return &(p1_str[0]);
     }
 
-    static bool ToNumber(String const &str, UNumber &number, UNumber const offset = 0, UNumber limit = 0) noexcept {
+    static bool ToNumber(UNumber &number, wchar_t const *str, UNumber const offset, UNumber limit) noexcept {
         limit += offset;
-        if (limit == offset) {
-            limit = str.Length - offset;
-        }
 
         wchar_t c;
         UNumber m        = 1;
@@ -730,11 +658,8 @@ struct String {
     }
 
     // TODO: rewrite
-    static bool ToNumber(String const &str, double &number, UNumber const offset = 0, UNumber limit = 0) noexcept {
+    static bool ToNumber(double &number, wchar_t const *str, UNumber const offset, UNumber limit) noexcept {
         limit += offset;
-        if (limit == offset) {
-            limit = str.Length - offset;
-        }
 
         wchar_t c;
         double  m        = 1.0;

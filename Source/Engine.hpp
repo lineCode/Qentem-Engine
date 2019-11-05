@@ -19,7 +19,7 @@ namespace Engine {
 struct Match;
 struct Expression;
 /////////////////////////////////
-static void _split(Array<Match> &items, wchar_t const *content, UNumber offset, UNumber endOffset, UShort count) noexcept;
+static void _split(Array<Match> &items, wchar_t const *content, UNumber offset, UNumber endOffset, UNumber count) noexcept;
 using _ParseCB = String(wchar_t const *content, Match const &item, UNumber const length, void *other);
 using _MatchCB = void(wchar_t const *content, UNumber &offset, UNumber const endOffset, Match &item, Array<Match> &items);
 
@@ -43,8 +43,8 @@ struct Flags {
 };
 /////////////////////////////////
 struct Expression {
-    wchar_t const *Keyword; // What to search for.
-    UNumber        Length;  // Keyword length.
+    wchar_t const *Keyword = nullptr; // What to search for.
+    UNumber        Length  = 0;       // Keyword length.
 
     Expression *Connected = nullptr; // The next part of the match (the next keyword).
     Expressions NestExprs;           // Expressions for nesting Search().
@@ -52,13 +52,19 @@ struct Expression {
     _MatchCB *  MatchCB = nullptr;   // A callback function for a custom action on a match.
 
     // for after match
-    UShort    ID      = 0;       // Expression ID.
-    _ParseCB *ParseCB = nullptr; // A callback function for custom rendering.
-    String    Replace;           // A text to replace the match.
+    UShort         ID          = 0;       // Expression ID.
+    _ParseCB *     ParseCB     = nullptr; // A callback function for custom rendering.
+    wchar_t const *ReplaceWith = nullptr; // A text to replace a match.
+    UNumber        RLength     = 0;       // Keyword length.
 
     void SetKeyword(wchar_t const *string) {
         Keyword = string;
         Length  = String::Count(string);
+    }
+
+    void SetReplace(wchar_t const *string) {
+        ReplaceWith = string;
+        RLength     = String::Count(string);
     }
 };
 /////////////////////////////////
@@ -69,7 +75,7 @@ struct Match {
     Expression * Expr = nullptr;
 };
 /////////////////////////////////
-static UNumber _search(Array<Match> &items, wchar_t const *content, Expressions const &exprs, UNumber offset, UNumber endOffset,
+static UNumber _search(Array<Match> &items, wchar_t const *content, Expressions const &exprs, UNumber offset, UNumber const endOffset,
                        UNumber const maxOffset, UShort &split) noexcept {
     UNumber const started = offset;
 
@@ -217,7 +223,9 @@ static String Parse(wchar_t const *content, Array<Match> const &items, UNumber o
 
         if (item->Expr->ParseCB == nullptr) {
             // Defaults to replace: it can be empty.
-            rendered.Share(&(item->Expr->Replace));
+            if (item->Expr->RLength != 0) {
+                rendered.Add(item->Expr->ReplaceWith, item->Expr->RLength);
+            }
         } else if ((Flags::BUBBLE & item->Expr->Flag) == 0) {
             rendered += item->Expr->ParseCB(content, *item, item->Length, other);
         } else if (item->NestMatch.Size != 0) {
@@ -240,12 +248,13 @@ static String Parse(wchar_t const *content, Array<Match> const &items, UNumber o
 
 } // namespace Engine
 /////////////////////////////////
-static void Engine::_split(Array<Match> &items, wchar_t const *content, UNumber offset, UNumber const endOffset, UShort count) noexcept {
+static void Engine::_split(Array<Match> &items, wchar_t const *content, UNumber offset, UNumber const endOffset,
+                           UNumber const count) noexcept {
     UNumber const started  = offset;
     Match *       item_ptr = nullptr;
 
     Array<Match> splitted;
-    splitted.SetCapacity(++count);
+    splitted.SetCapacity(count + 1);
     Match item;
 
     for (UNumber i = 0; i <= items.Size; i++) {

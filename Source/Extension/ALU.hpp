@@ -21,10 +21,10 @@ using Engine::Expressions;
 using Engine::Flags;
 using Engine::Match;
 
-static void NestNumber(wchar_t const *block, Match const &item, double &number) noexcept {
+static void NestNumber(double &number, wchar_t const *block, Match const &item) noexcept {
     String r = Engine::Parse(block, item.NestMatch, item.Offset, item.Length);
     if (r.Length != 0) {
-        String::ToNumber(r, number);
+        String::ToNumber(number, r.Str, 0, r.Length);
     }
 }
 
@@ -39,9 +39,9 @@ static String LogicCallback(wchar_t const *block, Match const &item, UNumber con
 
     if (m1->Length != 0) {
         if (m1->NestMatch.Size != 0) {
-            NestNumber(block, *m1, number1);
+            NestNumber(number1, block, *m1);
         } else {
-            String::ToNumber(block, number1, m1->Offset, m1->Length);
+            String::ToNumber(number1, block, m1->Offset, m1->Length);
         }
     }
 
@@ -50,9 +50,9 @@ static String LogicCallback(wchar_t const *block, Match const &item, UNumber con
 
         if (m2->Length != 0) {
             if (m2->NestMatch.Size != 0) {
-                NestNumber(block, *m2, number2);
+                NestNumber(number2, block, *m2);
             } else {
-                String::ToNumber(block, number2, m2->Offset, m2->Length);
+                String::ToNumber(number2, block, m2->Offset, m2->Length);
             }
 
             switch (op_id) {
@@ -85,17 +85,17 @@ static String EqualCallback(wchar_t const *block, Match const &item, UNumber con
 
     if (m1->Length != 0) {
         if (m1->NestMatch.Size != 0) {
-            NestNumber(block, *m1, number1);
+            NestNumber(number1, block, *m1);
         } else {
             wchar_t const c = block[m1->Offset];
             if (((c <= 57) && (c >= 48)) || ((c == L'+') || (c == L'-'))) {
-                String::ToNumber(block, number1, m1->Offset, m1->Length);
+                String::ToNumber(number1, block, m1->Offset, m1->Length);
             } else if (item.NestMatch.Size == 2) { // String
                 if (String::Compare(block, m1->Offset, m1->Length, block, item.NestMatch[1].Offset, item.NestMatch[1].Length)) {
-                    return L'1';
+                    return L"1";
                 }
 
-                return L'0';
+                return L"0";
             }
         }
     }
@@ -105,9 +105,9 @@ static String EqualCallback(wchar_t const *block, Match const &item, UNumber con
 
         if (m2->Length != 0) {
             if (m2->NestMatch.Size != 0) {
-                NestNumber(block, *m2, number2);
+                NestNumber(number2, block, *m2);
             } else {
-                String::ToNumber(block, number2, m2->Offset, m2->Length);
+                String::ToNumber(number2, block, m2->Offset, m2->Length);
             }
 
             switch (op_id) {
@@ -152,7 +152,7 @@ static String MultiplicationCallback(wchar_t const *block, Match const &item, UN
     UShort       op_id = m1->Expr->ID;
 
     if (m1->Length != 0) {
-        String::ToNumber(block, number1, m1->Offset, m1->Length);
+        String::ToNumber(number1, block, m1->Offset, m1->Length);
     }
 
     for (UNumber i = 1; i < item.NestMatch.Size; i++) {
@@ -160,7 +160,7 @@ static String MultiplicationCallback(wchar_t const *block, Match const &item, UN
 
         if (m2->Length != 0) {
 
-            String::ToNumber(block, number2, m2->Offset, m2->Length);
+            String::ToNumber(number2, block, m2->Offset, m2->Length);
 
             switch (op_id) {
                 case 1: // *
@@ -168,7 +168,7 @@ static String MultiplicationCallback(wchar_t const *block, Match const &item, UN
                     break;
                 case 2: // /
                     if (number2 == 0) {
-                        return L'0';
+                        return L"0";
                     }
 
                     number1 /= number2;
@@ -197,7 +197,7 @@ static String MultiplicationCallback(wchar_t const *block, Match const &item, UN
                     break;
             }
         } else {
-            return L'0';
+            return L"0";
         }
 
         op_id = m2->Expr->ID;
@@ -217,9 +217,9 @@ static String AdditionCallback(wchar_t const *block, Match const &item, UNumber 
 
     if (m1->Length != 0) {
         if (m1->NestMatch.Size != 0) {
-            NestNumber(block, *m1, number1);
+            NestNumber(number1, block, *m1);
         } else {
-            String::ToNumber(block, number1, m1->Offset, m1->Length);
+            String::ToNumber(number1, block, m1->Offset, m1->Length);
         }
     }
 
@@ -229,9 +229,9 @@ static String AdditionCallback(wchar_t const *block, Match const &item, UNumber 
         if (m2->Length != 0) {
 
             if (m2->NestMatch.Size != 0) {
-                NestNumber(block, *m2, number2);
+                NestNumber(number2, block, *m2);
             } else {
-                String::ToNumber(block, number2, m2->Offset, m2->Length);
+                String::ToNumber(number2, block, m2->Offset, m2->Length);
             }
 
             switch (op_id) {
@@ -403,7 +403,7 @@ static Expressions const &getParensExprs() noexcept {
     return tags;
 }
 
-static double Evaluate(String &content) noexcept {
+static double Evaluate(wchar_t const *content, UNumber const offset, UNumber const limit) noexcept {
     static Expressions const &_parensExprs = getParensExprs();
     static Expressions const &_mathExprs   = getMathExprs();
 
@@ -423,15 +423,15 @@ static double Evaluate(String &content) noexcept {
      */
 
     // Stage one:
-    content = Engine::Parse(content.Str, Engine::Search(content.Str, _parensExprs, 0, content.Length), 0, content.Length);
-    if ((content.Length == 0) || (content == L'0')) {
+    String _content = Engine::Parse(content, Engine::Search(content, _parensExprs, offset, limit), offset, limit);
+    if ((_content.Length == 0) || (_content == L"0")) {
         return 0.0;
     }
 
     // Stage two:
     double num = 0.0;
-    content    = Engine::Parse(content.Str, Engine::Search(content.Str, _mathExprs, 0, content.Length), 0, content.Length);
-    if ((content.Length != 0) && String::ToNumber(content, num)) {
+    _content   = Engine::Parse(_content.Str, Engine::Search(_content.Str, _mathExprs, 0, _content.Length), 0, _content.Length);
+    if ((_content.Length != 0) && String::ToNumber(num, _content.Str, 0, _content.Length)) {
         return num;
     }
 

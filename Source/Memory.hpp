@@ -17,7 +17,7 @@ namespace Qentem {
 namespace Memory {
 
 template <typename Type>
-static inline void Allocate(Type **_p, UNumber size) noexcept {
+static inline void Allocate(Type **_p, UNumber const size) noexcept {
     *_p = new Type[size];
 }
 

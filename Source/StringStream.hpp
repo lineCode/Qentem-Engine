@@ -16,108 +16,62 @@
 
 namespace Qentem {
 
-enum SType { Bit = 0, PBit = 1, Bits = 2 };
-
-struct StringBit {
-    SType   Type;
-    UNumber ID;
-};
-
 struct StringStream {
-    UNumber               Length = 0;
-    Array<String>         _strings;
-    Array<String const *> p_strings;
-    Array<StringStream>   collections;
-    Array<StringBit>      bits;
+    struct StringBit {
+        UNumber        Length;
+        wchar_t const *Str;
+    };
+    Array<StringBit> Bits;
 
-    StringStream() = default;
-
-    void operator+=(StringStream &&col) noexcept {
-        if (col.Length != 0) {
-            Length += col.Length;
-            bits += {SType::Bits, collections.Size};
-            collections += static_cast<StringStream &&>(col);
-        }
-    }
-
-    void operator+=(StringStream const &col) noexcept {
-        if (col.Length != 0) {
-            Length += col.Length;
-            bits += {SType::Bits, collections.Size};
-            collections += col;
-        }
-    }
+    UNumber       Length = 0;
+    Array<String> _strings;
 
     void operator+=(String &&src) noexcept {
         if (src.Length != 0) {
             Length += src.Length;
-            bits += {SType::Bit, _strings.Size};
             _strings += static_cast<String &&>(src);
+            String *last = &(_strings[_strings.Size - 1]);
+            Bits += {last->Length, last->Str};
         }
     }
 
-    void operator+=(String const &src) noexcept {
-        if (src.Length != 0) {
-            Length += src.Length;
-            bits += {SType::Bit, _strings.Size};
-            _strings += src;
-        }
-    }
-
-    void Share(String const *src) noexcept {
+    void operator+=(String const *src) noexcept {
         if (src->Length != 0) {
             Length += src->Length;
-            bits += {SType::PBit, p_strings.Size};
-            p_strings += src;
+            Bits += {src->Length, src->Str};
         }
     }
 
-    static void _pack(StringStream &_ss, String &buk) noexcept {
-        String const *   sstr;
-        StringBit const *ss_bit;
-        UNumber          j = 0;
+    void operator+=(wchar_t const *str) noexcept {
+        if (str != nullptr) {
+            UNumber len = String::Count(str);
+            Length += len;
+            Bits += {len, str};
+        }
+    }
 
-        for (UNumber i = 0; i < _ss.bits.Size; i++) {
-            ss_bit = &(_ss.bits[i]);
-            if (ss_bit->Type == SType::PBit) {
-                sstr = _ss.p_strings[ss_bit->ID];
-
-                for (j = 0; j < sstr->Length;) {
-                    buk[buk.Length] = sstr->Str[j];
-                    ++buk.Length;
-                    ++j;
-                }
-
-                continue;
-            }
-
-            if (ss_bit->Type == SType::Bit) {
-                sstr = &(_ss._strings[ss_bit->ID]);
-
-                for (j = 0; j < sstr->Length;) {
-                    buk[buk.Length] = sstr->Str[j];
-                    ++buk.Length;
-                    ++j;
-                }
-
-                continue;
-            }
-
-            _pack(_ss.collections[ss_bit->ID], buk);
+    void Add(wchar_t const *str, UNumber const len) noexcept {
+        if (len != 0) {
+            Length += len;
+            Bits += {len, str};
         }
     }
 
     String Eject() noexcept {
         String tmp;
-        tmp.SetLength(Length); // Will always add 1 for \0
+        tmp.SetLength(Length);
 
         if (Length != 0) {
-            _pack(*this, tmp);
+            UNumber j;
+            for (UNumber i = 0; i < Bits.Size; i++) {
+                for (j = 0; j < Bits[i].Length; j++) {
+                    tmp.Str[tmp.Length++] = Bits[i].Str[j];
+                }
+            }
+
             Length = 0;
             _strings.Reset();
-            p_strings.Reset();
-            collections.Reset();
-            bits.Reset();
+            Bits.Reset();
         }
 
         tmp[tmp.Length] = L'\0'; // Null trimmming
