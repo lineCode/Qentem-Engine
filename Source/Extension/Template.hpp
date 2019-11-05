@@ -24,6 +24,15 @@ static Expressions const &_getTagsVara() noexcept;
 static Expressions const &_getTagsQuotes() noexcept;
 static Expressions const &_getTagsHead() noexcept;
 
+static String Render(wchar_t const *content, UNumber const offset, UNumber const limit, void *data) noexcept {
+    static Expressions const &_tagsAll = _getTagsAll();
+    return Engine::Parse(content, Engine::Search(content, _tagsAll, offset, limit), offset, limit, static_cast<void *>(data));
+}
+
+inline static String Render(String const &content, Document *data) noexcept {
+    return Render(content.Str, 0, content.Length, data);
+}
+
 // e.g. {v:var_name}
 // e.g. {v:var_name[id]}
 // Nest: {v:var_{v:var2_{v:var3_id}}}
@@ -46,26 +55,22 @@ static String RenderMath(wchar_t const *block, Match const &item, UNumber const 
 // {iif case="{v:var_five} == 5" true="{v:var_five} is equal to 5" false="no"}
 // {iif case="3 == 3" true="Yes" false="No"}
 static String RenderIIF(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
-    static Expressions const _tagsQuotes = _getTagsQuotes();
+    static Expressions const &_tagsQuotes = _getTagsQuotes();
 
-    Array<Match> const &&items = Engine::Search(block, _tagsQuotes, 0, length);
-
-    if (items.Size == 0) {
-        return String();
-    }
+    Array<Match> const items = Engine::Search(block, _tagsQuotes, 0, length);
 
     Match * m;
-    bool    iif_case = false;
-    String  iif_false;
-    String  iif_true;
+    bool    iif_case  = false;
+    Match * iif_true  = nullptr;
+    Match * iif_false = nullptr;
     UNumber start_at;
 
     // case="[statement]" true="[Yes]" false="[No]"
     for (UNumber i = 0; i < items.Size; i++) {
         // With this method, order is not necessary of case=, true=, false=
         m = &(items[i]);
-        if (m->Offset > 5) { // for the length of: set= or var=
-            start_at = m->Offset;
+        if (m->Offset > 5) {
+            start_at = m->Offset - 3;
 
             while ((start_at <= m->Offset) && (start_at != 0)) {
                 --start_at;
@@ -76,12 +81,12 @@ static String RenderIIF(wchar_t const *block, Match const &item, UNumber const l
                 }
 
                 if (block[start_at] == L'r') { // t[r]ue
-                    iif_true = String::Part(block, (m->Offset + 1), (m->Length - 2));
+                    iif_true = m;
                     break;
                 }
 
                 if (block[start_at] == L'l') { // fa[l]se
-                    iif_false = String::Part(block, (m->Offset + 1), (m->Length - 2));
+                    iif_false = m;
                     break;
                 }
             }
@@ -89,18 +94,22 @@ static String RenderIIF(wchar_t const *block, Match const &item, UNumber const l
     }
 
     if (iif_case) {
-        return (iif_true.Length != 0) ? iif_true : String();
+        if (iif_true != nullptr) {
+            return String::Part(block, (iif_true->Offset + 1), (iif_true->Length - 2));
+        }
+    } else if (iif_false != nullptr) {
+        return String::Part(block, (iif_false->Offset + 1), (iif_false->Length - 2));
     }
 
-    return (iif_false.Length != 0) ? iif_false : String();
+    return String();
 }
 
 // <if case="{case}">html code</if>
 // <if case="{case}">html code1 <else /> html code2</if>
 // <if case="{case1}">html code1 <elseif case={case2} /> html code2</if>
 // <if case="{case}">html code <if case="{case2}" />additional html code</if></if>
-static bool const EvaluateIF(wchar_t const *block, Match const &item, void *other) noexcept {
-    static Expressions const _tagsVars = _getTagsVara();
+static bool EvaluateIF(wchar_t const *block, Match const &item, void *other) noexcept {
+    static Expressions const &_tagsVars = _getTagsVara();
 
     UNumber const offset = (item.Offset + 1);
     UNumber const limit  = (item.Length - 2);
@@ -114,7 +123,6 @@ static String RenderIF(wchar_t const *block, Match const &item, UNumber const le
     // Nothing is processed inside the match before checking if the condition is TRUE.
     bool _true = false;
 
-    static Expressions const &_tagsAll  = _getTagsAll();
     static Expressions const &_tagsHead = _getTagsHead();
 
     Array<Match> _subMatch = Engine::Search(block, _tagsHead, item.Offset, item.Length);
@@ -155,7 +163,7 @@ static String RenderIF(wchar_t const *block, Match const &item, UNumber const le
             }
 
             if (_true) {
-                return Engine::Parse(block, Engine::Search(block, _tagsAll, offset, limit), offset, limit, other);
+                return Render(block, offset, limit, other);
             }
         }
     }
@@ -246,10 +254,9 @@ static String Repeat(String const &content, String const &name, String const &va
 // </loop>
 static String RenderLoop(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
     // To match: <loop (set="abc2" value="s_value" key="s_key")>
-    static Expressions const &_tagsAll  = _getTagsAll();
     static Expressions const &_tagsHead = _getTagsHead();
 
-    Array<Match> const &&_subMatch = Engine::Search(block, _tagsHead, item.Offset, item.Length);
+    Array<Match> const _subMatch = Engine::Search(block, _tagsHead, item.Offset, item.Length);
 
     if ((_subMatch.Size != 0) && (_subMatch[0].NestMatch.Size != 0)) {
         String       name;
@@ -264,7 +271,7 @@ static String RenderLoop(wchar_t const *block, Match const &item, UNumber const 
         for (UNumber i = 0; i < sm->NestMatch.Size; i++) {
             m = &(sm->NestMatch[i]);
             if (m->Offset > 5) { // for the length of: set= or var= + 1
-                start_at = m->Offset;
+                start_at = m->Offset - 1;
 
                 while ((start_at <= m->Offset) && (start_at > item.Offset)) {
                     --start_at;
@@ -290,10 +297,7 @@ static String RenderLoop(wchar_t const *block, Match const &item, UNumber const 
         if ((name.Length != 0) && (value_id.Length != 0)) {
             String _content =
                 Repeat(String::Part(block, (sm->Offset + sm->Length), (item.Length - (sm->Length + 7))), name, value_id, key_id, other);
-
-            if (_content.Length != 0) {
-                return Engine::Parse(_content.Str, Engine::Search(_content.Str, _tagsAll, 0, _content.Length), 0, _content.Length, other);
-            }
+            return Render(_content.Str, 0, _content.Length, other);
         }
     }
 
@@ -436,12 +440,6 @@ static Expressions const &_getTagsAll() noexcept {
     }
 
     return tags;
-}
-
-static String Render(String const &content, Document *data) noexcept {
-    static Expressions const &_tagsAll = _getTagsAll();
-    return Engine::Parse(content.Str, Engine::Search(content.Str, _tagsAll, 0, content.Length), 0, content.Length,
-                         static_cast<void *>(data));
 }
 
 } // namespace Template

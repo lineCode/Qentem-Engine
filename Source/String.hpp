@@ -20,10 +20,19 @@ struct String {
     wchar_t *Str      = nullptr; // NULL terminated wchar_t
     UNumber  Capacity = 0;
 
+    static UNumber Count(wchar_t const *str) noexcept {
+        UNumber _length = 0;
+        while (str[_length] != L'\0') {
+            ++_length;
+        };
+
+        return _length;
+    }
+
     String() = default;
 
     String(char const *str) noexcept {
-        while (str[Capacity] != L'\0') {
+        while (str[Capacity] != '\0') {
             ++Capacity;
         };
 
@@ -38,9 +47,7 @@ struct String {
     }
 
     String(wchar_t const *str) noexcept {
-        while (str[Capacity] != L'\0') {
-            ++Capacity;
-        };
+        Capacity = Count(str);
 
         Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
 
@@ -94,23 +101,10 @@ struct String {
         return _str;
     }
 
-    inline static UNumber Count(wchar_t const *str) noexcept {
-        UNumber _length = 0;
-        while (str[_length] != L'\0') {
-            ++_length;
-        };
-
-        return _length;
-    }
-
     String &operator=(wchar_t const *str) noexcept { // Copy
         Memory::Deallocate<wchar_t>(&Str);
         Length   = 0;
-        Capacity = 0;
-
-        while (str[Capacity] != L'\0') {
-            ++Capacity;
-        };
+        Capacity = Count(str);
 
         Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
 
@@ -159,12 +153,7 @@ struct String {
     }
 
     String &operator+=(wchar_t const *str) noexcept { // Appand a string
-        UNumber _length = 0;
-        while (str[_length] != L'\0') {
-            ++_length;
-        };
-
-        Copy(*this, str, this->Length, _length);
+        Copy(*this, str, this->Length, Count(str));
 
         return *this;
     }
@@ -188,10 +177,7 @@ struct String {
     }
 
     String operator+(wchar_t const *str) const noexcept {
-        UNumber _length = 0;
-        while (str[_length] != L'\0') {
-            ++_length;
-        };
+        UNumber _length = Count(str);
 
         String ns;
         ns.SetLength(Length + _length);
@@ -233,18 +219,15 @@ struct String {
         return ns;
     }
 
-    bool operator==(wchar_t const *string) const noexcept { // Compare
-        UNumber i       = 0;
-        UNumber _length = 0;
-        while (string[_length] != L'\0') {
-            ++_length;
-        };
+    bool operator==(wchar_t const *str) const noexcept { // Compare
+        UNumber _length = Count(str);
 
         if (Length != _length) {
             return false;
         }
 
-        while ((i < Length) && (Str[i] == string[i])) {
+        UNumber i = 0;
+        while ((i < Length) && (Str[i] == str[i])) {
             ++i;
         }
 
@@ -277,21 +260,14 @@ struct String {
     }
 
     static bool Compare(wchar_t const *left, wchar_t const *right) noexcept { // Compare
-        UNumber i        = 0;
-        UNumber r_length = 0;
-        while (right[r_length] != L'\0') {
-            ++r_length;
-        };
-
-        UNumber l_length = 0;
-        while (left[l_length] != L'\0') {
-            ++l_length;
-        };
+        UNumber l_length = Count(left);
+        UNumber r_length = Count(right);
 
         if (r_length != l_length) {
             return false;
         }
 
+        UNumber i = 0;
         while ((i < r_length) && (left[i] == right[i])) {
             ++i;
         }

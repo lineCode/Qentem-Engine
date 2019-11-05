@@ -50,16 +50,17 @@ static Array<String> Extract(wchar_t const *content, Array<Match> const &items) 
     return matches;
 }
 
-static String Replace(String const &content, wchar_t const *_find, wchar_t const *_replace) {
+static String Replace(wchar_t const *content, UNumber length, wchar_t const *_find, wchar_t const *_replace) {
     static Expression find_key;
 
     find_key.SetKeyword(_find);
     find_key.SetReplace(_replace);
 
-    return Engine::Parse(content.Str, Engine::Search(content.Str, Expressions().Add(&find_key), 0, content.Length), 0, content.Length);
+    return Engine::Parse(content, Engine::Search(content, Expressions().Add(&find_key), 0, length), 0, length);
 }
 
-static String ReplaceNewLine(String const &content, wchar_t const *_replace) {
+static String ReplaceNewLine(wchar_t const *content, UNumber length, wchar_t const *_replace) {
+
     static Expressions find_keys;
     static Expression  find_key1;
     static Expression  find_key2;
@@ -79,7 +80,7 @@ static String ReplaceNewLine(String const &content, wchar_t const *_replace) {
         find_keys.Add(&find_key1).Add(&find_key2).Add(&find_key3).Add(&find_key4);
     }
 
-    return Engine::Parse(content.Str, Engine::Search(content.Str, find_keys, 0, content.Length), 0, content.Length);
+    return Engine::Parse(content, Engine::Search(content, find_keys, 0, length), 0, length);
 }
 
 static String DumpMatches(wchar_t const *content, Array<Match> const &matches, String const &offset, UNumber index = 0) noexcept {
@@ -96,8 +97,8 @@ static String DumpMatches(wchar_t const *content, Array<Match> const &matches, S
         _array += innoffset + offset + L"[" + String::FromNumber(static_cast<double>(i)) + L"]: " + items[i] + L"\n";
 
         if (matches[i].NestMatch.Size != 0) {
-            _array += innoffset + offset + L"-NestMatch:\n";
-            _array += Test::DumpMatches(content, matches[i].NestMatch, innoffset + innoffset + offset, 0);
+            _array += (innoffset + offset + L"-NestMatch:\n");
+            _array += Test::DumpMatches(content, matches[i].NestMatch, (innoffset + innoffset + offset), 0);
         }
     }
 
@@ -209,8 +210,6 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
     data[L"lvl2"][L"strings"] += static_cast<Document &&>(n3); // Moving
 
     data.Rehash(11, true);
-
-    Qentem::Template::Render(L"", nullptr); // TO HIDE AN ERROR (Render is not used).
 
     ///////////////////////////////////////////
     bit      = TestBit();

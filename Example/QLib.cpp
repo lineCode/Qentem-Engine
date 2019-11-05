@@ -27,8 +27,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 extern "C" {
 DllExport wchar_t *renderTemplate_w(wchar_t const *temp, wchar_t const *json, bool comments) {
-    Document data     = Document::FromJSON(json, comments);
-    String   rendered = Qentem::Template::Render(temp, &data);
+    Document data     = Document::FromJSON(json, 0, String::Count(json), comments);
+    String   rendered = Qentem::Template::Render(temp, 0, String::Count(temp), &data);
     data.Reset();
 
     return rendered.Eject();
@@ -46,10 +46,10 @@ DllExport char *renderTemplate(char const *temp, char const *json, bool comments
     data.Reset();
 
     if (rendered.Length == 0) {
-        rendered = L"";
+        return nullptr;
     }
 
-    char *tmp = new char[rendered.Length + 1]; // 1 for '\0'
+    char *tmp = new char[rendered.Length + 1];
     for (UNumber j = 0; j <= rendered.Length; j++) {
         // It got it as a "char" type in the first place, so there won't be any above 255.
         tmp[j] = static_cast<char>(rendered[j]);

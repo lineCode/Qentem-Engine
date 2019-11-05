@@ -245,11 +245,11 @@ static bool runTests(wchar_t const *name, Array<TestBit> const &bits, bool break
                 ss += L" -----\n  Line:      ";
                 ss += String::FromNumber(bits[i].Line) + L"\n";
                 ss += L"  Content:  ";
-                ss += Qentem::Test::ReplaceNewLine(bits[i].Content[t], L"\\n") + L"\n";
+                ss += Qentem::Test::ReplaceNewLine(bits[i].Content[t], length, L"\\n") + L"\n";
                 ss += L"  Rendered: \"";
-                ss += Qentem::Test::ReplaceNewLine(rendered, L"\\n") + L"\"\n";
+                ss += Qentem::Test::ReplaceNewLine(rendered.Str, rendered.Length, L"\\n") + L"\"\n";
                 ss += L"  Expected: \"";
-                ss += Qentem::Test::ReplaceNewLine(bits[i].Expected[t], L"\\n") + L"\"\n";
+                ss += Qentem::Test::ReplaceNewLine(bits[i].Expected[t], String::Count(bits[i].Expected[t]), L"\\n") + L"\"\n";
                 ss += L"  Matches:\n";
                 ss += Qentem::Test::DumpMatches(bits[i].Content[t], matches, L"    ");
 
@@ -479,12 +479,13 @@ static bool JSONTests() noexcept {
     }
 
     if (!BigJSON) {
-        data  = getDocument();
-        final = data.ToJSON();
-        if (final != Qentem::Test::Replace(Qentem::Test::ReplaceNewLine(json_content, L""), L"\": ", L"\":")) {
+        data             = getDocument();
+        final            = data.ToJSON();
+        String n_content = Qentem::Test::ReplaceNewLine(json_content.Str, json_content.Length, L"");
+        n_content        = Qentem::Test::Replace(n_content.Str, n_content.Length, L"\": ", L"\":");
+        if (final != n_content) {
             std::wcout << L"\n Document() might be broken!\n";
-            std::wcout << L"\n File:\n"
-                       << Qentem::Test::Replace(Qentem::Test::ReplaceNewLine(json_content, L""), L"\": ", L"\":").Str << L"\n";
+            std::wcout << L"\n File:\n" << n_content.Str << L"\n";
             std::wcout << L"\n Document():\n" << final.Str << L"\n";
             return false;
         }
@@ -514,7 +515,9 @@ static bool JSONTests() noexcept {
         return true;
     }
 
-    json_content = Qentem::Test::Replace(Qentem::Test::ReplaceNewLine(json_content, L""), L"\": ", L"\":");
+    json_content = Qentem::Test::ReplaceNewLine(json_content.Str, json_content.Length, L"");
+    json_content = Qentem::Test::Replace(json_content.Str, json_content.Length, L"\": ", L"\":");
+
     if (final == json_content) {
         std::wcout << L"\n JSON looks good!\n";
         return true;

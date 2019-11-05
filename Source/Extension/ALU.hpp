@@ -379,7 +379,7 @@ static Expressions const &getMathExprs() noexcept {
 
 // e.g. ( 4 + 3 ), ( 2 + ( 4 + ( 1 + 2 ) + 1 ) * 5 - 3 - 2 )
 static String ParenthesisCallback(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
-    static Expressions const _mathExprs = getMathExprs();
+    static Expressions const &_mathExprs = getMathExprs();
 
     UNumber const limit = (length - 2);
     return Engine::Parse(block, Engine::Search(block, _mathExprs, 1, limit), 1, limit);
