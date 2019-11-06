@@ -16,12 +16,11 @@
 namespace Qentem {
 
 struct String {
-    UNumber  Length;
-    wchar_t *Str; // NULL terminated wchar_t
-    UNumber  Capacity;
+    UNumber  Length{0};
+    wchar_t *Str{nullptr}; // NULL terminated wchar_t
+    UNumber  Capacity{0};
 
-    explicit String() : Length(0), Str(nullptr), Capacity(0) {
-    }
+    explicit String() = default;
 
     String(char const *str) noexcept {
         Length   = 0;

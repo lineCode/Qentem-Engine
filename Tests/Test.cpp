@@ -38,9 +38,9 @@ static bool     JSONTests() noexcept;
 static bool     XMLTests() noexcept;
 
 struct NCTest {
-    double         Number   = 0;
-    wchar_t const *Expected = nullptr;
-    UShort         Max      = 0;
+    double         Number{0};
+    wchar_t const *Expected{nullptr};
+    UShort         Max{0};
 
     NCTest() = default;
 

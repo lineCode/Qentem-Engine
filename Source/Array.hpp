@@ -18,12 +18,11 @@ namespace Qentem {
 
 template <typename Type>
 struct Array {
-    UNumber Size;
-    Type *  Storage;
-    UNumber Capacity;
+    UNumber Size{0};
+    Type *  Storage{nullptr};
+    UNumber Capacity{0};
 
-    explicit Array() : Size(0), Storage(nullptr), Capacity(0) {
-    }
+    explicit Array() = default;
 
     explicit Array(UNumber _capacity) noexcept {
         Size     = 0;
