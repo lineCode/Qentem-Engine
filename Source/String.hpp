@@ -22,6 +22,10 @@ struct String {
 
     explicit String() = default;
 
+    explicit String(UNumber const _size) noexcept : Capacity(_size) {
+        Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
+    }
+
     String(char const *str) noexcept {
         while (str[Capacity] != '\0') {
             ++Capacity;
@@ -55,14 +59,16 @@ struct String {
     }
 
     explicit String(String const &src) noexcept : Capacity(src.Length) { // Copy
-        Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
+        if (Capacity != 0) {
+            Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
 
-        for (; Length < Capacity;) {
-            Str[Length] = src[Length];
-            ++Length;
+            for (; Length < Capacity;) {
+                Str[Length] = src[Length];
+                ++Length;
+            }
+
+            Str[Length] = L'\0';
         }
-
-        Str[Length] = L'\0';
     }
 
     ~String() noexcept {
@@ -95,8 +101,11 @@ struct String {
     }
 
     String &operator=(wchar_t const *str) noexcept { // Copy
-        Memory::Deallocate<wchar_t>(&Str);
-        Length   = 0;
+        if (Str != nullptr) {
+            Memory::Deallocate<wchar_t>(&Str);
+            Length = 0;
+        }
+
         Capacity = Count(str);
 
         Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
@@ -113,7 +122,6 @@ struct String {
 
     String &operator=(String &&src) noexcept { // Move
         if (this != &src) {
-
             if (Str != nullptr) {
                 Memory::Deallocate<wchar_t>(&Str);
             }
@@ -131,8 +139,11 @@ struct String {
 
     String &operator=(String const &src) noexcept { // Copy
         if (this != &src) {
-            Memory::Deallocate<wchar_t>(&Str);
-            Length   = 0;
+            if (Str != nullptr) {
+                Memory::Deallocate<wchar_t>(&Str);
+                Length = 0;
+            }
+
             Capacity = src.Length;
 
             Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
@@ -155,19 +166,23 @@ struct String {
     }
 
     String &operator+=(String &&src) noexcept { // Move
-        Copy(*this, src.Str, Length, src.Length);
+        if (src.Length != 0) {
+            Copy(*this, src.Str, Length, src.Length);
 
-        Memory::Deallocate<wchar_t>(&src.Str);
+            Memory::Deallocate<wchar_t>(&src.Str);
 
-        src.Length   = 0;
-        src.Str      = nullptr;
-        src.Capacity = 0;
+            src.Length   = 0;
+            src.Str      = nullptr;
+            src.Capacity = 0;
+        }
 
         return *this;
     }
 
     inline String &operator+=(String const &src) noexcept { // Appand a string
-        Copy(*this, src.Str, Length, src.Length);
+        if (src.Length != 0) {
+            Copy(*this, src.Str, Length, src.Length);
+        }
 
         return *this;
     }
@@ -175,8 +190,7 @@ struct String {
     String operator+(wchar_t const *str) const noexcept {
         UNumber _length = Count(str);
 
-        String ns;
-        ns.SetLength(Length + _length);
+        String ns(Length + _length);
 
         Copy(ns, Str, 0, Length);
         Copy(ns, str, ns.Length, _length);
@@ -186,9 +200,7 @@ struct String {
 
     // Appand a string by moving another into it
     String operator+(String &&src) const noexcept {
-        String ns;
-
-        ns.SetLength(Length + src.Length);
+        String ns(Length + src.Length);
         Copy(ns, Str, 0, Length);
 
         if (src.Length != 0) {
@@ -203,9 +215,8 @@ struct String {
     }
 
     String operator+(String const &src) const noexcept { // Appand a string and return a new one
-        String ns;
+        String ns(Length + src.Length);
 
-        ns.SetLength(Length + src.Length);
         Copy(ns, Str, 0, Length);
 
         if (src.Length != 0) {

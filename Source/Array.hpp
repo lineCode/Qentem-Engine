@@ -35,10 +35,12 @@ struct Array {
     }
 
     explicit Array(Array<Type> const &src) noexcept : Capacity(src.Size) {
-        Memory::Allocate<Type>(&Storage, Capacity);
+        if (src.Size != 0) {
+            Memory::Allocate<Type>(&Storage, Capacity);
 
-        for (UNumber i = 0; i < src.Size; i++) {
-            Storage[Size++] = src[i];
+            for (UNumber i = 0; i < src.Size; i++) {
+                Storage[Size++] = src[i];
+            }
         }
     }
 
@@ -180,7 +182,7 @@ struct Array {
         return Storage[offset];
     }
 
-    virtual ~Array() noexcept {
+    ~Array() noexcept {
         Memory::Deallocate<Type>(&Storage);
     }
 };

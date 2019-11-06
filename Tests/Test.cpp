@@ -585,8 +585,8 @@ static String readFile(char const *path) noexcept {
         std::streampos size = file.tellg();
         file.seekg(0, std::ios::beg);
 
-        String content;
-        content.SetLength(UNumber(size));
+        String content(static_cast<UNumber>(size));
+
         content.Length = content.Capacity;
 
         file.read(content.Str, size);

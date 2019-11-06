@@ -58,8 +58,7 @@ struct StringStream {
     }
 
     String Eject() noexcept {
-        String tmp;
-        tmp.SetLength(Length);
+        String tmp(Length);
         Length = 0;
 
         UNumber j;
