@@ -47,14 +47,13 @@ static Expressions const &getXMLExprs() noexcept {
     static Expression xStart;
     static Expression xEnd;
 
-    static Expressions tags;
+    static Expressions tags(1);
 
     if (tags.Size == 0) {
         xStart.SetKeyword(L"<");
         xEnd.SetKeyword(L">");
         xStart.Connected = &xEnd;
 
-        tags.SetCapacity(1);
         tags += &xStart;
     }
 
@@ -68,7 +67,7 @@ static Expressions const &getPropertiesExprs() noexcept {
     static Expression quotExpr;
     static Expression endQuotExpr;
 
-    static Expressions tags;
+    static Expressions tags(3);
 
     if (tags.Size == 0) {
         equalExpr.SetKeyword(L"=");
@@ -83,7 +82,6 @@ static Expressions const &getPropertiesExprs() noexcept {
         quotExpr.Connected = &endQuotExpr;
         endQuotExpr.Flag   = Flags::IGNORE;
 
-        tags.SetCapacity(3);
         tags.Add(&equalExpr).Add(&quotExpr).Add(&spaceExpr);
     }
 

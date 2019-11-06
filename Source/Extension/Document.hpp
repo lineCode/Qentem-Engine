@@ -49,7 +49,7 @@ struct {
 struct Document {
     bool Ordered = false;
 
-    UNumber       HashBase = 17; // Or 97; a prime number only!
+    UNumber       HashBase{17}; // Or 97; a prime number only!
     Array<String> Keys;
     Array<Index>  Table;
     Array<Entry>  Entries;
@@ -58,8 +58,8 @@ struct Document {
     Array<String>   Strings;
     Array<Document> Documents;
 
-    UNumber        LastKeyLen = 0;
-    wchar_t const *LastKey    = nullptr;
+    UNumber        LastKeyLen{0};
+    wchar_t const *LastKey;
 
     Document()                    = default;
     virtual ~Document()           = default;

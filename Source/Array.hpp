@@ -24,25 +24,17 @@ struct Array {
 
     explicit Array() = default;
 
-    explicit Array(UNumber _capacity) noexcept {
-        Size     = 0;
-        Storage  = nullptr;
-        Capacity = 0;
+    explicit Array(UNumber _capacity) noexcept : Capacity(_capacity) {
+        Memory::Allocate<Type>(&Storage, Capacity);
     }
 
-    Array(Array<Type> &&src) noexcept {
-        Size         = src.Size;
+    Array(Array<Type> &&src) noexcept : Size(src.Size), Storage(src.Storage), Capacity(src.Capacity) {
         src.Size     = 0;
-        Storage      = src.Storage;
         src.Storage  = nullptr;
-        Capacity     = src.Capacity;
         src.Capacity = 0;
     }
 
-    explicit Array(Array<Type> const &src) noexcept {
-        Size     = 0;
-        Capacity = src.Size;
-
+    explicit Array(Array<Type> const &src) noexcept : Capacity(src.Size) {
         Memory::Allocate<Type>(&Storage, Capacity);
 
         for (UNumber i = 0; i < src.Size; i++) {

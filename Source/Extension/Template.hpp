@@ -307,7 +307,7 @@ static String RenderLoop(wchar_t const *block, Match const &item, UNumber const 
 static Expressions const &_getTagsVara() noexcept {
     static Expression  TagVar;
     static Expression  VarTail;
-    static Expressions tags;
+    static Expressions tags(1);
 
     if (tags.Size == 0) {
         // Variables evaluation.
@@ -318,7 +318,6 @@ static Expressions const &_getTagsVara() noexcept {
         TagVar.Connected = &VarTail;
         VarTail.Flag     = Flags::TRIM;
 
-        tags.SetCapacity(1);
         tags.Add(&TagVar);
     }
 
@@ -328,14 +327,13 @@ static Expressions const &_getTagsVara() noexcept {
 static Expressions const &_getTagsQuotes() noexcept {
     static Expression  TagQuote;
     static Expression  QuoteTail;
-    static Expressions tags;
+    static Expressions tags(1);
 
     if (tags.Size == 0) {
         TagQuote.SetKeyword(L"\"");
         QuoteTail.SetKeyword(L"\"");
         TagQuote.Connected = &QuoteTail;
 
-        tags.SetCapacity(1);
         tags.Add(&TagQuote);
     }
 
@@ -345,7 +343,7 @@ static Expressions const &_getTagsQuotes() noexcept {
 static Expressions const &_getTagsHead() noexcept {
     static Expression  TagHead;
     static Expression  TagHead_T;
-    static Expressions tags;
+    static Expressions tags(1);
 
     if (tags.Size == 0) {
         TagHead.SetKeyword(L"<");
@@ -355,7 +353,6 @@ static Expressions const &_getTagsHead() noexcept {
         // Nest to prevent matching ">" bigger sign inside if statement.
         TagHead_T.NestExprs = _getTagsQuotes();
 
-        tags.SetCapacity(1);
         tags.Add(&TagHead);
     }
 
@@ -381,7 +378,7 @@ static Expressions const &_getTagsAll() noexcept {
     static Expression TagMath;
     static Expression MathTail;
 
-    static Expressions tags;
+    static Expressions tags(5);
 
     if (tags.Size == 0) {
         // Inline if evaluation.
@@ -442,7 +439,6 @@ static Expressions const &_getTagsAll() noexcept {
         MathTail.NestExprs.Add(_getTagsVara());
         /////////////////////////////////
 
-        tags.SetCapacity(5);
         tags.Add(_getTagsVara()).Add(&TagMath).Add(&TagIif).Add(&TagIf).Add(&TagLoop);
     }
 

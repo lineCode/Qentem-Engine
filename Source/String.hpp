@@ -23,9 +23,6 @@ struct String {
     explicit String() = default;
 
     String(char const *str) noexcept {
-        Length   = 0;
-        Capacity = 0;
-
         while (str[Capacity] != '\0') {
             ++Capacity;
         };
@@ -40,10 +37,7 @@ struct String {
         Str[Length] = L'\0';
     }
 
-    String(wchar_t const *str) noexcept {
-        Length   = 0;
-        Capacity = Count(str);
-
+    String(wchar_t const *str) noexcept : Capacity(Count(str)) {
         Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
 
         while (Length < Capacity) {
@@ -54,19 +48,13 @@ struct String {
         Str[Length] = L'\0';
     }
 
-    String(String &&src) noexcept { // Move
-        Length       = src.Length;
+    String(String &&src) noexcept : Length(src.Length), Str(src.Str), Capacity(src.Capacity) { // Move
         src.Length   = 0;
-        Str          = src.Str;
         src.Str      = nullptr;
-        Capacity     = src.Capacity;
         src.Capacity = 0;
     }
 
-    explicit String(String const &src) noexcept { // Copy
-        Length   = 0;
-        Capacity = src.Length;
-
+    explicit String(String const &src) noexcept : Capacity(src.Length) { // Copy
         Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
 
         for (; Length < Capacity;) {

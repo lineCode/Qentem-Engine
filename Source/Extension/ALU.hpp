@@ -280,7 +280,7 @@ static Expressions const &getMathExprs() noexcept {
     static constexpr UNumber flags_no_pop = Flags::SPLIT | Flags::GROUPED | Flags::TRIM;
     static constexpr UNumber flags_ops    = flags_no_pop | Flags::POP;
 
-    static Expressions tags;
+    static Expressions tags(2);
 
     if (tags.Size == 0) {
         MathMul.SetKeyword(L"*");
@@ -389,7 +389,7 @@ static String ParenthesisCallback(wchar_t const *block, Match const &item, UNumb
 static Expressions const &getParensExprs() noexcept {
     static Expression  ParensExpr;
     static Expression  ParensNext;
-    static Expressions tags;
+    static Expressions tags(1);
 
     if (tags.Size == 0) {
         ParensExpr.SetKeyword(L"(");
@@ -399,7 +399,6 @@ static Expressions const &getParensExprs() noexcept {
         ParensNext.ParseCB   = &(ParenthesisCallback);
         ParensNext.NestExprs = Expressions().Add(&ParensExpr);
 
-        tags.SetCapacity(1);
         tags.Add(&ParensExpr);
     }
 

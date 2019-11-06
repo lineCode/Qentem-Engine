@@ -43,19 +43,19 @@ struct Flags {
 };
 /////////////////////////////////
 struct Expression {
-    wchar_t const *Keyword = nullptr; // What to search for.
-    UNumber        Length  = 0;       // Keyword length.
+    UNumber        Length{0};        // Keyword length.
+    wchar_t const *Keyword{nullptr}; // What to search for.
 
-    Expression *Connected = nullptr; // The next part of the match (the next keyword).
-    Expressions NestExprs;           // Expressions for nesting Search().
-    UShort      Flag    = 0;         // Flags for the expression.
-    _MatchCB *  MatchCB = nullptr;   // A callback function for a custom action on a match.
+    Expression *Connected{nullptr}; // The next part of the match (the next keyword).
+    Expressions NestExprs;          // Expressions for nesting Search().
+    UShort      Flag{0};            // Flags for the expression.
+    _MatchCB *  MatchCB{nullptr};   // A callback function for a custom action on a match.
 
     // for after match
-    UShort         ID          = 0;       // Expression ID.
-    _ParseCB *     ParseCB     = nullptr; // A callback function for custom rendering.
-    wchar_t const *ReplaceWith = nullptr; // A text to replace a match.
-    UNumber        RLength     = 0;       // Keyword length.
+    UShort         ID{0};                // Expression ID.
+    _ParseCB *     ParseCB{nullptr};     // A callback function for custom rendering.
+    wchar_t const *ReplaceWith{nullptr}; // A text to replace a match.
+    UNumber        RLength{0};           // Keyword length.
 
     void SetKeyword(wchar_t const *string) {
         Keyword = string;
@@ -69,10 +69,10 @@ struct Expression {
 };
 /////////////////////////////////
 struct Match {
-    UNumber      Offset = 0; // The start position of the matched string.
-    UNumber      Length = 0; // The length of the entire match.
-    Array<Match> NestMatch;  // To hold sub matches inside a match.
-    Expression * Expr = nullptr;
+    UNumber      Offset{0}; // The start position of the matched string.
+    UNumber      Length{0}; // The length of the entire match.
+    Array<Match> NestMatch; // To hold sub matches inside a match.
+    Expression * Expr{nullptr};
 };
 /////////////////////////////////
 static UNumber _search(Array<Match> &items, wchar_t const *content, Expressions const &exprs, UNumber offset, UNumber const endOffset,
