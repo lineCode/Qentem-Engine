@@ -16,22 +16,17 @@
 namespace Qentem {
 
 struct String {
-    UNumber  Length   = 0;
-    wchar_t *Str      = nullptr; // NULL terminated wchar_t
-    UNumber  Capacity = 0;
+    UNumber  Length;
+    wchar_t *Str; // NULL terminated wchar_t
+    UNumber  Capacity;
 
-    static UNumber Count(wchar_t const *str) noexcept {
-        UNumber _length = 0;
-        while (str[_length] != L'\0') {
-            ++_length;
-        };
-
-        return _length;
+    explicit String() : Length(0), Str(nullptr), Capacity(0) {
     }
 
-    String() = default;
-
     String(char const *str) noexcept {
+        Length   = 0;
+        Capacity = 0;
+
         while (str[Capacity] != '\0') {
             ++Capacity;
         };
@@ -47,6 +42,7 @@ struct String {
     }
 
     String(wchar_t const *str) noexcept {
+        Length   = 0;
         Capacity = Count(str);
 
         Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
@@ -68,7 +64,8 @@ struct String {
         src.Capacity = 0;
     }
 
-    String(String const &src) noexcept { // Copy
+    explicit String(String const &src) noexcept { // Copy
+        Length   = 0;
         Capacity = src.Length;
 
         Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
@@ -83,6 +80,15 @@ struct String {
 
     ~String() noexcept {
         Memory::Deallocate<wchar_t>(&Str);
+    }
+
+    static UNumber Count(wchar_t const *str) noexcept {
+        UNumber _length = 0;
+        while (str[_length] != L'\0') {
+            ++_length;
+        };
+
+        return _length;
     }
 
     inline void Reset() noexcept {
@@ -120,7 +126,10 @@ struct String {
 
     String &operator=(String &&src) noexcept { // Move
         if (this != &src) {
-            Memory::Deallocate<wchar_t>(&Str);
+
+            if (Str != nullptr) {
+                Memory::Deallocate<wchar_t>(&Str);
+            }
 
             Length       = src.Length;
             src.Length   = 0;

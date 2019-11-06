@@ -83,7 +83,8 @@ static Expressions const &getPropertiesExprs() noexcept {
         quotExpr.Connected = &endQuotExpr;
         endQuotExpr.Flag   = Flags::IGNORE;
 
-        tags = Expressions().Add(&equalExpr).Add(&quotExpr).Add(&spaceExpr);
+        tags.SetCapacity(3);
+        tags.Add(&equalExpr).Add(&quotExpr).Add(&spaceExpr);
     }
 
     return tags;
@@ -207,7 +208,7 @@ static Array<XTag> parseTags(String const &content, Array<Match> const &items, U
 static Array<XTag> Parse(String const &content) noexcept {
     static Expressions const &_xmlExprs = getXMLExprs();
 
-    Array<Match> items = Qentem::Engine::Search(content.Str, _xmlExprs, 0, content.Length);
+    Array<Match> const items = Qentem::Engine::Search(content.Str, _xmlExprs, 0, content.Length);
 
     return parseTags(content, items, 0, items.Size);
 }

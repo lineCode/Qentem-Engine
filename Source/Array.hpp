@@ -18,11 +18,18 @@ namespace Qentem {
 
 template <typename Type>
 struct Array {
-    UNumber Size     = 0;
-    Type *  Storage  = nullptr;
-    UNumber Capacity = 0;
+    UNumber Size;
+    Type *  Storage;
+    UNumber Capacity;
 
-    Array() = default;
+    explicit Array() : Size(0), Storage(nullptr), Capacity(0) {
+    }
+
+    explicit Array(UNumber _capacity) noexcept {
+        Size     = 0;
+        Storage  = nullptr;
+        Capacity = 0;
+    }
 
     Array(Array<Type> &&src) noexcept {
         Size         = src.Size;
@@ -33,8 +40,15 @@ struct Array {
         src.Capacity = 0;
     }
 
-    Array(Array<Type> const &src) noexcept {
-        Add(src);
+    explicit Array(Array<Type> const &src) noexcept {
+        Size     = 0;
+        Capacity = src.Size;
+
+        Memory::Allocate<Type>(&Storage, Capacity);
+
+        for (UNumber i = 0; i < src.Size; i++) {
+            Storage[Size++] = src[i];
+        }
     }
 
     Array<Type> &Add(Array<Type> &&src) noexcept {
@@ -104,10 +118,8 @@ struct Array {
     }
 
     void Resize(UNumber const _size) noexcept {
-        Type *tmp = Storage;
         Capacity  = _size == 0 ? 2 : _size;
-
-        Storage = nullptr;
+        Type *tmp = Storage;
         Memory::Allocate<Type>(&Storage, Capacity);
 
         for (UNumber n = 0; n < Size; n++) {
@@ -119,7 +131,9 @@ struct Array {
 
     Array<Type> &operator=(Array<Type> &&src) noexcept {
         if (this != &src) {
-            Memory::Deallocate<Type>(&Storage);
+            if (Storage != nullptr) {
+                Memory::Deallocate<Type>(&Storage);
+            }
 
             Size         = src.Size;
             src.Size     = 0;

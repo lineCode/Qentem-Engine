@@ -17,14 +17,14 @@
 namespace Qentem {
 
 struct StringStream {
-    Array<wchar_t *> _strings;
-
     struct StringBit {
         UNumber        Length;
         wchar_t const *Str;
     };
-    Array<StringBit> Bits;
+
     UNumber          Length = 0;
+    Array<StringBit> Bits;
+    Array<wchar_t *> _strings;
 
     void operator+=(String &&src) noexcept {
         if (src.Length != 0) {

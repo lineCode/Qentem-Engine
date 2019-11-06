@@ -22,7 +22,7 @@ using Engine::Flags;
 using Engine::Match;
 
 static void NestNumber(double &number, wchar_t const *block, Match const &item) noexcept {
-    String r = Engine::Parse(block, item.NestMatch, item.Offset, item.Length);
+    String r(Engine::Parse(block, item.NestMatch, item.Offset, item.Length));
     if (r.Length != 0) {
         String::ToNumber(number, r.Str, 0, r.Length);
     }
@@ -304,10 +304,11 @@ static Expressions const &getMathExprs() noexcept {
         MathRem.ParseCB = &(MultiplicationCallback);
         ///////////////////////////////////////////
         MathAdd.SetKeyword(L"+");
-        MathAdd.ID        = 1;
-        MathAdd.Flag      = flags_ops;
-        MathAdd.ParseCB   = &(AdditionCallback);
-        MathAdd.NestExprs = Expressions().Add(&MathExp).Add(&MathRem).Add(&MathDiv).Add(&MathMul);
+        MathAdd.ID      = 1;
+        MathAdd.Flag    = flags_ops;
+        MathAdd.ParseCB = &(AdditionCallback);
+        MathAdd.NestExprs.SetCapacity(4);
+        MathAdd.NestExprs.Add(&MathExp).Add(&MathRem).Add(&MathDiv).Add(&MathMul);
 
         MathSub.SetKeyword(L"-");
         MathSub.ID        = 2;
@@ -316,10 +317,10 @@ static Expressions const &getMathExprs() noexcept {
         MathSub.NestExprs = MathAdd.NestExprs;
         ///////////////////////////////////////////
         MathEqu2.SetKeyword(L"==");
-        MathEqu2.ID        = 1;
-        MathEqu2.Flag      = flags_ops;
-        MathEqu2.ParseCB   = &(EqualCallback);
-        MathEqu2.NestExprs = Expressions().Add(&MathAdd).Add(&MathSub);
+        MathEqu2.ID      = 1;
+        MathEqu2.Flag    = flags_ops;
+        MathEqu2.ParseCB = &(EqualCallback);
+        MathEqu2.NestExprs.Add(&MathAdd).Add(&MathSub);
 
         MathEqu.SetKeyword(L"=");
         MathEqu.ID        = 2;
@@ -361,8 +362,8 @@ static Expressions const &getMathExprs() noexcept {
         LogicAnd.ID      = 1;
         LogicAnd.Flag    = flags_ops;
         LogicAnd.ParseCB = &(LogicCallback);
-        LogicAnd.NestExprs =
-            Expressions().Add(&MathEqu2).Add(&MathEqu).Add(&MathNEqu).Add(&MathLEqu).Add(&MathLess).Add(&MathBEqu).Add(&MathBig);
+        LogicAnd.NestExprs.SetCapacity(7);
+        LogicAnd.NestExprs.Add(&MathEqu2).Add(&MathEqu).Add(&MathNEqu).Add(&MathLEqu).Add(&MathLess).Add(&MathBEqu).Add(&MathBig);
 
         LogicOr.SetKeyword(L"||");
         LogicOr.ID        = 2;
@@ -371,7 +372,7 @@ static Expressions const &getMathExprs() noexcept {
         LogicOr.NestExprs = LogicAnd.NestExprs;
         ///////////////////////////////////////////
 
-        tags = Expressions().Add(&LogicAnd).Add(&LogicOr);
+        tags.Add(&LogicAnd).Add(&LogicOr);
     }
 
     return tags;
@@ -396,8 +397,10 @@ static Expressions const &getParensExprs() noexcept {
         ParensExpr.Connected = &ParensNext;
         ParensNext.Flag      = Flags::BUBBLE | Flags::TRIM;
         ParensNext.ParseCB   = &(ParenthesisCallback);
-        ParensNext.NestExprs += &ParensExpr;
-        tags = Expressions().Add(&ParensExpr);
+        ParensNext.NestExprs = Expressions().Add(&ParensExpr);
+
+        tags.SetCapacity(1);
+        tags.Add(&ParensExpr);
     }
 
     return tags;
@@ -409,26 +412,28 @@ static double Evaluate(wchar_t const *content, UNumber const offset, UNumber con
 
     /**
      *
-     * e.g. ((2* (1 * 3)) + 1 - 4) + ((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1) - (1) - (-1) + 2 = 14
-     * e.g. (6 + 1 - 4) + (5 - 6 + 4) * (8 / 4 + 1) - (1) - (-1) + 2 = 14 e.g. 3 + 3 * 3 - 1 + 1 + 2 = 14
-     * e.g. 3 + 9 - 1 - -1 + 2 = 14 e.g. 14 = 14
+     * e.g. ((2* (1 * 3)) + 1 - 4) + ((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1) - (1) - (-1) + 2 == 14
+     * e.g. (6 + 1 - 4) + (5 - 6 + 4) * (8 / 4 + 1) - (1) - (-1) + 2 = 14
+     * e.g. 3 + 3 * 3 - 1 + 1 + 2 = 14
+     * e.g. 3 + 9 - 1 - -1 + 2 == 14
+     * e.g. 14 = 14
      * 1 means true.
      *
      * Steps:
-     * First: Look for parenthesis ( operation ora  number )
-     * Second: Process opreations: * / % ^
-     * Third: Process : + and -
-     * Forth: Process logic ( = != > < ... )
-     * Fifth: Return final value or 0;
+     * 1: Look for parenthesis ( operation or number )
+     * 2: Process opreations: * / % ^
+     * 3: Process : + and -
+     * 4: Process logic ( = != > < ... )
+     * 5: Return final value or 0;
      */
 
-    // Stage one:
-    String _content = Engine::Parse(content, Engine::Search(content, _parensExprs, offset, limit), offset, limit);
+    // Parenthesis:
+    String _content(Engine::Parse(content, Engine::Search(content, _parensExprs, offset, limit), offset, limit));
     if ((_content.Length == 0) || (_content == L"0")) {
         return 0.0;
     }
 
-    // Stage two:
+    // The rest:
     double num = 0.0;
     _content   = Engine::Parse(_content.Str, Engine::Search(_content.Str, _mathExprs, 0, _content.Length), 0, _content.Length);
     if ((_content.Length != 0) && String::ToNumber(num, _content.Str, 0, _content.Length)) {
