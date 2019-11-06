@@ -1,4 +1,4 @@
-# Qentem Engine (v1.1.4)
+# Qentem Engine (v1.1.5)
 
 ## Introduction:
 Qentem Engine is an independent library that uses a fast algorithm for nest-searching/nest-matching. It can be used to match existing syntaxes or new ones, and with call-backs for post and per-parsing, It's posable to match almost any complex syntax. It is very efficient and has a small footprint on memory, and it's built using modern C++. It can be used to render complex templates that contains nested loop, nested if-else, inline if, math (+ * / - ^ %), logic (&& ||), and/or something simple: like replacing a text or splitting it. Also, it is capable of doing JSON, XML/HTML.
@@ -30,29 +30,33 @@ using Qentem::Array;
 using Qentem::Document;
 using Qentem::String;
 
-Document numbers = L"[1,1,2,3,4]"; // New document from JSON text
+Document numbers = L"[null,1,2,3,4]"; // New document from JSON text
 
-numbers += L"[5,6]";                      // Extanding JSON
+numbers += Document::FromJSON(L"[5,6]");  // Extanding JSON
 numbers += Array<double>().Add(7).Add(8); // Extanding win ordered array
 
 Document doc;              // New document
 doc[L"numbers"] = numbers; // assigning ordered numbers
-doc[L"numbers"] += 9;
-doc[L"numbers"][0] = 0; // Override
+doc[L"numbers"] += 9;      // Add
+doc[L"numbers"][0] = 0;    // Override
 
-doc += L"{\"strings\": { }}"; // Expanding document with unordered array
-doc[L"strings"][L"a"] = L"A";
-doc[L"strings"][L"b"] = L"O";
-doc[L"strings"][1]    = L"B"; // Override
+doc += Document::FromJSON(L"{\"strings\": { }}"); // Expanding document with unordered array
+
+doc[L"strings"][L"a"] = nullptr; // null
+doc[L"strings"][L"a"] = L"A";    // Override
+doc[L"strings"][L"b"] = true;    // Add & Set
+doc[L"strings"][L"b"] = false;   // Override
+doc[L"strings"][1]    = L"B";    // Override
 
 // Importing JSON with comments
 doc[L"strings"] += Document::FromJSON(L"{\"c\": \"C\", \"d\": \"D\"  /* \"e\": \"E\" */}", true);
 
-doc += L"{\"strings2\": [\"E\", \"F\"]}"; // Ordered strings
+doc += Document::FromJSON(L"{\"strings2\": [\"E\", \"F\"]}"); // Ordered strings
 doc[L"strings2"] += L"G";
 doc[L"strings2"] += Array<String>().Add(L"H").Add(L"I");
 
 String JSON = doc.ToJSON(); // Exporting document
+std::wcout << L"JSON:\n" << JSON.Str << L"\n\n";
 ```
 #### Output:
 ```json
@@ -93,6 +97,7 @@ using Qentem::String;
 String content = L"<loop set=\"strings\" value=\"s_value\" key=\"s_key\">s_key: s_value\n</loop>--\n";
 content += L"<loop set=\"strings2\" value=\"s_value\" key=\"s_key\">s_key: s_value\n</loop>";
 String rendered = Template::Render(content, &doc);
+std::wcout << L"Template:\n" << rendered.Str << L'\n';
 ```
 #### Output:
 ```txt

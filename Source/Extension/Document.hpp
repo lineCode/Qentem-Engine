@@ -1364,48 +1364,25 @@ struct Document {
     }
 
     Document &operator=(wchar_t const *str) noexcept {
-        Document doc;
-
-        if (str != nullptr) {
-            Array<Match> items = Engine::Search(str, _getJsonExpres(), 0, String::Count(str));
-
-            if (items.Size != 0) {
-                if ((doc.Ordered = (items[0].Expr->ID == 2))) {
-                    _makeOrderedList(doc, str, items[0]);
-                } else {
-                    _makeList(doc, str, items[0]);
-                }
-            }
-
-            items.Reset();
-        }
-
         if (LastKeyLen == 0) {
-            *this = doc;
-            return *this;
+            this->Reset();
+            this->Ordered = true;
+            LastKeyLen    = 1;
         }
 
         if (Ordered) {
             --LastKeyLen;
 
             if (str != nullptr) {
-                if (doc.Entries.Size != 0) {
-                    Insert(LastKeyLen, VType::DocumentT, &doc, true);
-                } else {
-                    String string = str;
-                    Insert(LastKeyLen, VType::StringT, &string, true);
-                }
+                String string = str;
+                Insert(LastKeyLen, VType::StringT, &string, true);
             } else {
                 Insert(LastKeyLen, VType::NullT, nullptr, false);
             }
         } else {
             if (str != nullptr) {
-                if (doc.Entries.Size != 0) {
-                    Insert(LastKey, 0, LastKeyLen, VType::DocumentT, &doc, true, true);
-                } else {
-                    String string = str;
-                    Insert(LastKey, 0, LastKeyLen, VType::StringT, &string, true, true);
-                }
+                String string = str;
+                Insert(LastKey, 0, LastKeyLen, VType::StringT, &string, true, true);
             } else {
                 Insert(LastKey, 0, LastKeyLen, VType::NullT, nullptr, false, true);
             }
@@ -1513,61 +1490,25 @@ struct Document {
     }
 
     void operator+=(wchar_t const *str) noexcept {
-        if (str != nullptr) {
-            Array<Match> const items = Engine::Search(str, _getJsonExpres(), 0, String::Count(str));
-
-            if (items.Size != 0) {
-                Document doc;
-
-                if ((doc.Ordered = (items[0].Expr->ID == 2))) {
-                    _makeOrderedList(doc, str, items[0]);
-                } else {
-                    _makeList(doc, str, items[0]);
-                }
-
-                *this += doc;
-            } else if (Ordered) {
+        if (Ordered) {
+            if (str != nullptr) {
                 Entries += Entry({VType::StringT, 0, Strings.Size});
                 Strings += str;
+            } else {
+                Entries += Entry({VType::NullT, 0, 0});
             }
-        } else if (Ordered) {
-            Entries += Entry({VType::NullT, 0, 0});
         }
     }
 
     void operator+=(String const &string) noexcept {
-        Array<Match> const items = Engine::Search(string.Str, _getJsonExpres(), 0, string.Length);
-
-        if (items.Size != 0) {
-            Document doc;
-
-            if (items[0].Expr->ID == 1) {
-                _makeList(doc, string.Str, items[0]);
-            } else {
-                _makeOrderedList(doc, string.Str, items[0]);
-            }
-
-            *this += doc;
-        } else if (Ordered) {
+        if (Ordered) {
             Entries += Entry({VType::StringT, 0, Strings.Size});
             Strings += string;
         }
     }
 
     void operator+=(String &&string) noexcept {
-        Array<Match> const items = Engine::Search(string.Str, _getJsonExpres(), 0, string.Length);
-
-        if (items.Size != 0) {
-            Document doc;
-
-            if (items[0].Expr->ID == 1) {
-                _makeList(doc, string.Str, items[0]);
-            } else if (items[0].NestMatch.Size != 0) {
-                _makeOrderedList(doc, string.Str, items[0]);
-            }
-
-            *this += doc;
-        } else if (Ordered) {
+        if (Ordered) {
             Entries += Entry({VType::StringT, 0, Strings.Size});
             Strings += static_cast<String &&>(string);
         }
