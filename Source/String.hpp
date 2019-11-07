@@ -188,7 +188,7 @@ struct String {
     }
 
     String operator+(wchar_t const *str) const noexcept {
-        UNumber _length = Count(str);
+        UNumber const _length = Count(str);
 
         String ns(Length + _length);
 
@@ -227,7 +227,7 @@ struct String {
     }
 
     bool operator==(wchar_t const *str) const noexcept { // Compare
-        UNumber _length = Count(str);
+        UNumber const _length = Count(str);
 
         if (Length != _length) {
             return false;
@@ -267,8 +267,8 @@ struct String {
     }
 
     static bool Compare(wchar_t const *left, wchar_t const *right) noexcept { // Compare
-        UNumber l_length = Count(left);
-        UNumber r_length = Count(right);
+        UNumber const l_length = Count(left);
+        UNumber const r_length = Count(right);
 
         if (r_length != l_length) {
             return false;
@@ -353,38 +353,16 @@ struct String {
         Str[0] = L'\0';
     }
 
-    inline void Resize(UNumber const _size) noexcept {
-        Capacity     = _size;
-        wchar_t *tmp = Str;
-
-        Memory::Allocate<wchar_t>(&Str, (_size + 1));
-
-        if (_size < Length) {
-            Length = _size;
-        }
-
-        for (UNumber n = 0; n < Length; n++) {
-            Str[n] = tmp[n];
-        }
-
-        Str[Length] = L'\0';
-
-        Memory::Deallocate<wchar_t>(&tmp);
-    }
-
     inline static String Part(wchar_t const *str, UNumber offset, UNumber const limit) noexcept {
-        String bit;
-        bit.Capacity = limit;
+        String _part(limit);
 
-        Memory::Allocate<wchar_t>(&bit.Str, (limit + 1));
-
-        while (bit.Length != limit) {
-            bit[bit.Length++] = str[offset++];
+        while (_part.Length != limit) {
+            _part[_part.Length++] = str[offset++];
         }
 
-        bit[bit.Length] = L'\0'; // To mark the end of a string.
+        _part[_part.Length] = L'\0'; // To mark the end of a string.
 
-        return bit;
+        return _part;
     }
 
     inline static UNumber Hash(wchar_t const *str, UNumber start, UNumber const end_offset) noexcept {
