@@ -23,7 +23,7 @@ enum VType { UndefinedT = 0, NumberT = 1, StringT = 2, DocumentT = 3, FalseT = 4
 
 struct Index {
     UNumber      Hash{0};
-    UNumber      EntryID;
+    UNumber      EntryID{0};
     Array<Index> Table;
 
     Index() = default;

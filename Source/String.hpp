@@ -22,8 +22,19 @@ struct String {
 
     explicit String() = default;
 
-    explicit String(UNumber const _size) noexcept : Capacity(_size) {
+    explicit String(UNumber const _capacity) noexcept : Capacity(_capacity) {
         Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
+    }
+
+    explicit String(wchar_t const *str, UNumber const _capacity) noexcept : Capacity(_capacity) {
+        Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
+
+        while (Length < Capacity) {
+            Str[Length] = str[Length];
+            ++Length;
+        }
+
+        Str[Length] = L'\0';
     }
 
     String(char const *str) noexcept {
@@ -408,73 +419,49 @@ struct String {
         return Part(str.Str, offset, limit);
     }
 
-    // Revers a string
-    inline static void Revers(wchar_t *str, UShort index, UShort limit) noexcept {
-        wchar_t ch;
+    static String FromNumber(unsigned long number, UShort min = 1) noexcept {
+        static UShort constexpr num_len = 20;
 
-        while (index < limit) {
-            ch           = str[limit];
-            str[limit--] = str[index];
-            str[index++] = ch;
-        }
-    }
-
-    static String FromNumber(unsigned long number, UShort const min = 1) noexcept {
-        wchar_t p1_str[23];
-        UShort  str1_len = 0;
+        UShort  __len = num_len;
+        wchar_t _str[num_len];
 
         while (number != 0) {
-            p1_str[str1_len] = wchar_t((number % 10) + 48);
-            ++str1_len;
+            _str[--__len] = wchar_t((number % 10) + 48);
             number /= 10;
         }
 
-        while (str1_len < min) {
-            p1_str[str1_len] = L'0';
-            ++str1_len;
+        min = static_cast<UShort>(num_len - min);
+
+        while (__len > min) {
+            _str[--__len] = L'0';
         }
 
-        p1_str[str1_len] = L'\0';
-        Revers(&(p1_str[0]), 0, (--str1_len));
-        return &(p1_str[0]);
+        return String(&(_str[__len]), static_cast<UNumber>(num_len - __len));
     }
 
-    inline static String FromNumber(UShort number, UShort const min = 1) noexcept {
-        return FromNumber(static_cast<unsigned long>(number), min);
-    }
+    static String FromNumber(double number, UShort min = 1, UShort r_min = 0, UShort r_max = 0) noexcept {
+        static UNumber constexpr num_len = 22;
 
-    inline static String FromNumber(unsigned int number, UShort const min = 1) noexcept {
-        return FromNumber(static_cast<unsigned long>(number), min);
-    }
+        UShort __len  = num_len;
+        UShort p1_len = 0;
 
-    static String FromNumber(double number, UShort const min = 1, UShort r_min = 0, UShort r_max = 0) noexcept {
-        UShort str1_len = 0;
-        UShort str2_len = 0;
+        wchar_t _str[num_len];
 
-        wchar_t p1_str[19];
-        wchar_t p2_str[23];
-
-        bool const negative  = (number < 0);
-        UShort     presision = 15;
+        bool const negative = (number < 0);
 
         if (negative) {
             number *= -1;
         }
 
         if (number != 0) {
-            unsigned long long num  = static_cast<unsigned long long>(number);
-            unsigned long long num2 = num;
-
-            while (num != 0) {
-                p1_str[str1_len] = wchar_t((num % 10) + 48);
-                ++str1_len;
-                num /= 10;
-            }
+            unsigned long num       = static_cast<unsigned long>(number);
+            unsigned long num2      = num;
+            UShort        presision = 15;
 
             number -= static_cast<double>(num2);
             if (number != 0) {
                 number *= 1e15;
-                num = static_cast<unsigned long int>(number);
+                num = static_cast<unsigned long>(number);
 
                 if (num != 0) {
                     while (((num % 10) == 0) && (presision != 0)) {
@@ -506,185 +493,167 @@ struct String {
 
                         if ((num == 1) && (presision == 0)) {
                             ++num2;
-                            str1_len = 0;
-
-                            while (num2 != 0) {
-                                p1_str[str1_len] = wchar_t((num2 % 10) + 48);
-                                ++str1_len;
-                                num2 /= 10;
-                            }
                         }
                     }
 
                     while (r_min > presision) {
-                        p2_str[str2_len] = L'0';
-                        ++str2_len;
+                        _str[--__len] = L'0';
                         --r_min;
                     }
+                    r_min = 0;
 
                     while (presision != 0) {
-                        p2_str[str2_len] = wchar_t((num % 10) + 48);
+                        _str[--__len] = wchar_t((num % 10) + 48);
                         num /= 10;
-                        ++str2_len;
                         --presision;
+                    }
+
+                    if (__len != num_len) {
+                        _str[--__len] = L'.';
                     }
                 }
             }
+
+            while (num2 != 0) {
+                _str[--__len] = wchar_t((num2 % 10) + 48);
+                num2 /= 10;
+                ++p1_len;
+            }
         }
 
-        while (str1_len < min) {
-            p1_str[str1_len] = L'0';
-            ++str1_len;
+        if (r_min != 0) {
+            do {
+                _str[--__len] = L'0';
+            } while (--r_min != 0);
+
+            _str[--__len] = L'.';
+        }
+
+        while (p1_len < min) {
+            _str[--__len] = L'0';
+            ++p1_len;
         }
 
         if (negative) {
-            p1_str[str1_len] = L'-';
-            ++str1_len;
+            _str[--__len] = L'-';
         }
 
-        while (str2_len < r_min) {
-            p2_str[str2_len] = L'0';
-            ++str2_len;
-        }
+        return String(&(_str[__len]), (num_len - __len));
+    }
 
-        if (str2_len != 0) {
-            p2_str[str2_len] = L'.';
-            ++str2_len;
+    inline static String FromNumber(UShort number, UShort const min = 1) noexcept {
+        return FromNumber(static_cast<unsigned long>(number), min);
+    }
 
-            for (UShort i = 0; i < str1_len; i++) {
-                p2_str[str2_len] = p1_str[i];
-                ++str2_len;
-            }
+    inline static String FromNumber(unsigned int number, UShort const min = 1) noexcept {
+        return FromNumber(static_cast<unsigned long>(number), min);
+    }
 
-            p2_str[str2_len] = L'\0';
-            Revers(&p2_str[0], 0, (--str2_len));
-            return &p2_str[0];
-        }
+    inline static String FromNumber(int number, UShort const min = 1) noexcept {
+        return FromNumber(static_cast<double>(number), min, 0, 0);
+    }
 
-        p1_str[str1_len] = L'\0';
-        Revers(&(p1_str[0]), 0, (--str1_len));
-        return &(p1_str[0]);
+    inline static String FromNumber(long number, UShort const min = 1) noexcept {
+        return FromNumber(static_cast<double>(number), min, 0, 0);
     }
 
     static bool ToNumber(UNumber &number, wchar_t const *str, UNumber const offset, UNumber limit) noexcept {
         limit += offset;
-
-        wchar_t c;
-        UNumber m        = 1;
-        UNumber exp      = 0;
-        bool    negative = false;
-
         number = 0;
-        for (;;) {
+
+        UNumber exp     = 0;
+        UNumber postion = 1;
+        wchar_t c;
+
+        while (limit != offset) {
             c = str[--limit];
 
             if ((c <= 47) || (c >= 58)) {
-                if ((c == L'e') || (c == L'E')) {
-                    exp    = number;
-                    number = 0;
-                    m      = 1;
-                    continue;
-                }
-
-                if ((c == L'+') || (negative = (c == L'-'))) {
-                    continue;
-                }
-
-                number = 0;
-                return false;
-            }
-
-            number += ((static_cast<UNumber>(c) - 48) * m);
-
-            if (limit == offset) {
-                break;
-            }
-
-            m *= 10;
-        }
-
-        if (exp != 0) {
-            if (!negative) {
-                for (UNumber i = 0; i < exp; i++) {
-                    number *= 10;
+                switch (c) {
+                    case L'e':
+                    case L'E': {
+                        exp     = number;
+                        number  = 0;
+                        postion = 1;
+                        break;
+                    }
+                    case L'+':
+                        break;
+                    default:
+                        return false;
                 }
             } else {
-                for (UNumber i = 0; i < exp; i++) {
-                    number /= 10;
-                }
+                number += ((static_cast<UNumber>(c) - 48) * postion);
+                postion *= 10;
             }
         }
 
-        return true;
+        while (exp != 0) {
+            number *= 10;
+            --exp;
+        }
+
+        return (postion > 1);
     }
 
-    // TODO: rewrite
     static bool ToNumber(double &number, wchar_t const *str, UNumber const offset, UNumber limit) noexcept {
+        number = 0.0;
         limit += offset;
 
+        bool    negative_exp = false;
+        UNumber exp          = 0;
+        double  postion      = 1.0;
         wchar_t c;
-        double  m        = 1.0;
-        UNumber exp      = 0;
-        bool    negative = false;
 
-        number = 0.0;
-        for (;;) {
+        while (limit != offset) {
             c = str[--limit];
 
             if ((c <= 47) || (c >= 58)) {
-                if (c == L'+') {
-                    continue;
-                }
-
-                if (c == L'-') {
-                    if (limit != offset) {
-                        negative = true;
-                        continue;
+                switch (c) {
+                    case L'.': {
+                        number /= postion;
+                        postion = 1.0;
+                        break;
                     }
-
-                    number *= -1.0;
-                    break;
-                }
-
-                if ((c == L'e') || (c == L'E')) {
-                    exp    = static_cast<UNumber>(number);
-                    number = 0.0;
-                    m      = 1.0;
-                    continue;
-                }
-
-                if (c == L'.') {
-                    number /= m;
-                    m = 1;
-                    continue;
-                }
-
-                number = 0.0;
-                return false;
-            }
-
-            number += static_cast<double>((static_cast<double>(c) - 48) * m);
-
-            if (limit == offset) {
-                break;
-            }
-
-            m *= 10;
-        }
-
-        if (exp != 0) {
-            if (!negative) {
-                for (UNumber i = 0; i < exp; i++) {
-                    number *= 10;
+                    case L'e':
+                    case L'E': {
+                        exp     = static_cast<UNumber>(number);
+                        number  = 0.0;
+                        postion = 1.0;
+                        break;
+                    }
+                    case L'+':
+                        break;
+                    case L'-': {
+                        if (limit != offset) {
+                            negative_exp = true;
+                        } else {
+                            number *= -1.0;
+                        }
+                        break;
+                    }
+                    default:
+                        return false;
                 }
             } else {
-                for (UNumber i = 0; i < exp; i++) {
-                    number /= 10;
-                }
+                number += ((static_cast<double>(c) - 48) * postion);
+                postion *= 10;
             }
         }
 
-        return true;
+        if (negative_exp) {
+            while (exp != 0) {
+                number /= 10;
+                --exp;
+            }
+        } else {
+            while (exp != 0) {
+                number *= 10;
+                --exp;
+            }
+        }
+
+        return (postion > 1.0);
     }
 };
 

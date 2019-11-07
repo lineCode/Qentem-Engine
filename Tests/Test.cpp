@@ -303,7 +303,7 @@ static bool NumbersConvTest() noexcept {
     bool          Pass        = false;
     ////////////////////////////////
     test.Add({0, L"0"}).Add({1, L"1"}).Add({-2, L"-2"}).Add({5, L"5"}).Add({9, L"9"}).Add({-3.1, L"-3.1"});
-    test.Add({1000000, L"1000000"}).Add({11, L"11"}).Add({22, L"22"}).Add({55, L"55"}).Add({199, L"199"});
+    test.Add({1000000, L"1000000"}).Add({12, L"12"}).Add({23, L"23"}).Add({55, L"55"}).Add({199, L"199"});
     test.Add({10.0, L"10"}).Add({11.00, L"11"}).Add({-22.87, L"-22.87", 2}).Add({-55.0055, L"-55.0055", 10});
 
     test.Add({-0.123455678987455, L"-0.123455678987455"}).Add({-0.123455678987452, L"-0.123455678987452"});
@@ -336,7 +336,7 @@ static bool NumbersConvTest() noexcept {
     std::wcout << L"\n #Number Conversion Tests:\n";
 
     for (UNumber i = 0; i < test.Size; i++) {
-        std::wcout << L" " << String::FromNumber((i + 1), 2).Str << L") ";
+        std::wcout << L" " << String::FromNumber((i + 1), 2).Str << L": ";
 
         ticks = static_cast<UNumber>(clock());
 
@@ -350,9 +350,9 @@ static bool NumbersConvTest() noexcept {
         if (Pass) {
             std::wcout << L"Pass " << String::FromNumber((static_cast<double>(ticks) / CLOCKS_PER_SEC), 2, 3, 3).Str << L'\n';
         } else {
-            std::wcout << L"Fail " << String::FromNumber(test[i].Number, 1, 0, test[i].Max).Str << L", Expected: " << test[i].Expected
+            std::wcout << L"Fail: " << String::FromNumber(test[i].Number, 1, 0, test[i].Max).Str << L" Expected: " << test[i].Expected
                        << L'\n';
-            std::wcout << L"\n Math failed to pass the test.\n";
+            std::wcout << L"\n Number Conversion failed to pass the test.\n";
 
             return false;
         }
