@@ -755,6 +755,42 @@ struct Document {
         return nullptr;
     }
 
+    bool GetString(String &value, UNumber entryID) const noexcept {
+        value.Reset();
+
+        if (entryID < Entries.Size) {
+            Entry const &_entry = Entries[entryID];
+
+            switch (_entry.Type) {
+                case VType::NumberT: {
+                    value = String::FromNumber(Numbers[_entry.ArrayID], 1, 0, 3);
+                    return true;
+                }
+                case VType::StringT: {
+                    value = Strings[_entry.ArrayID];
+                    return true;
+                }
+                case VType::FalseT: {
+                    value = L"false";
+                    return true;
+                }
+                case VType::TrueT: {
+                    value = L"true";
+                    return true;
+                }
+                case VType::NullT: {
+                    value = L"null";
+                    return true;
+                }
+                default: {
+                    return false;
+                }
+            }
+        }
+
+        return false;
+    }
+
     bool GetString(String &value, wchar_t const *key, UNumber const offset, UNumber const limit) noexcept {
         value.Reset();
 
@@ -762,29 +798,30 @@ struct Document {
         Document const *storage = GetSource(&_entry, key, offset, limit);
 
         if (storage != nullptr) {
-            if (_entry->Type == VType::StringT) {
-                value = storage->Strings[_entry->ArrayID];
-                return true;
-            }
-
-            if (_entry->Type == VType::NumberT) {
-                value = String::FromNumber(storage->Numbers[_entry->ArrayID], 1, 0, 3);
-                return true;
-            }
-
-            if (_entry->Type == VType::FalseT) {
-                value = L"false";
-                return true;
-            }
-
-            if (_entry->Type == VType::TrueT) {
-                value = L"true";
-                return true;
-            }
-
-            if (_entry->Type == VType::NullT) {
-                value = L"null";
-                return true;
+            switch (_entry->Type) {
+                case VType::NumberT: {
+                    value = String::FromNumber(storage->Numbers[_entry->ArrayID], 1, 0, 3);
+                    return true;
+                }
+                case VType::StringT: {
+                    value = storage->Strings[_entry->ArrayID];
+                    return true;
+                }
+                case VType::FalseT: {
+                    value = L"false";
+                    return true;
+                }
+                case VType::TrueT: {
+                    value = L"true";
+                    return true;
+                }
+                case VType::NullT: {
+                    value = L"null";
+                    return true;
+                }
+                default: {
+                    return false;
+                }
             }
         }
 
@@ -802,29 +839,28 @@ struct Document {
         Document const *storage = GetSource(&_entry, key, offset, limit);
 
         if (storage != nullptr) {
-            if (_entry->Type == VType::NumberT) {
-                value = static_cast<UNumber>(storage->Numbers[_entry->ArrayID]);
-                return true;
-            }
-
-            if (_entry->Type == VType::StringT) {
-                String const &st = storage->Strings[_entry->ArrayID];
-                return String::ToNumber(value, st.Str, 0, st.Length);
-            }
-
-            if (_entry->Type == VType::FalseT) {
-                value = 0;
-                return true;
-            }
-
-            if (_entry->Type == VType::TrueT) {
-                value = 1;
-                return true;
-            }
-
-            if (_entry->Type == VType::NullT) {
-                value = 0;
-                return true;
+            switch (_entry->Type) {
+                case VType::NumberT: {
+                    value = static_cast<UNumber>(storage->Numbers[_entry->ArrayID]);
+                    return true;
+                }
+                case VType::StringT: {
+                    String const &st = storage->Strings[_entry->ArrayID];
+                    return String::ToNumber(value, st.Str, 0, st.Length);
+                    return true;
+                }
+                case VType::FalseT:
+                case VType::NullT: {
+                    value = 0;
+                    return true;
+                }
+                case VType::TrueT: {
+                    value = 1;
+                    return true;
+                }
+                default: {
+                    return false;
+                }
             }
         }
 
@@ -838,29 +874,28 @@ struct Document {
         Document const *storage = GetSource(&_entry, key, offset, limit);
 
         if (storage != nullptr) {
-            if (_entry->Type == VType::NumberT) {
-                value = storage->Numbers[_entry->ArrayID];
-                return true;
-            }
-
-            if (_entry->Type == VType::StringT) {
-                String const &st = storage->Strings[_entry->ArrayID];
-                return String::ToNumber(value, st.Str, 0, st.Length);
-            }
-
-            if (_entry->Type == VType::NullT) {
-                value = 0;
-                return true;
-            }
-
-            if (_entry->Type == VType::FalseT) {
-                value = 0.0;
-                return true;
-            }
-
-            if (_entry->Type == VType::TrueT) {
-                value = 1.0;
-                return true;
+            switch (_entry->Type) {
+                case VType::NumberT: {
+                    value = storage->Numbers[_entry->ArrayID];
+                    return true;
+                }
+                case VType::StringT: {
+                    String const &st = storage->Strings[_entry->ArrayID];
+                    return String::ToNumber(value, st.Str, 0, st.Length);
+                    return true;
+                }
+                case VType::FalseT:
+                case VType::NullT: {
+                    value = 0;
+                    return true;
+                }
+                case VType::TrueT: {
+                    value = 1;
+                    return true;
+                }
+                default: {
+                    return false;
+                }
             }
         }
 
@@ -872,29 +907,27 @@ struct Document {
         Document const *storage = GetSource(&_entry, key, offset, limit);
 
         if (storage != nullptr) {
-            if (_entry->Type == VType::FalseT) {
-                value = false;
-                return true;
-            }
-
-            if (_entry->Type == VType::TrueT) {
-                value = true;
-                return true;
-            }
-
-            if (_entry->Type == VType::NumberT) {
-                value = (storage->Numbers[_entry->ArrayID] > 0.0);
-                return true;
-            }
-
-            if (_entry->Type == VType::StringT) {
-                value = (storage->Strings[_entry->ArrayID] == L"true");
-                return true;
-            }
-
-            if (_entry->Type == VType::NullT) {
-                value = false;
-                return true;
+            switch (_entry->Type) {
+                case VType::NumberT: {
+                    value = (storage->Numbers[_entry->ArrayID] > 0.0);
+                    return true;
+                }
+                case VType::StringT: {
+                    value = (storage->Strings[_entry->ArrayID] == L"true");
+                    return true;
+                }
+                case VType::FalseT:
+                case VType::NullT: {
+                    value = false;
+                    return true;
+                }
+                case VType::TrueT: {
+                    value = true;
+                    return true;
+                }
+                default: {
+                    return false;
+                }
             }
         }
 

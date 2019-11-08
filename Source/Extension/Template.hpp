@@ -171,79 +171,73 @@ static String RenderIF(wchar_t const *block, Match const &item, UNumber const le
     return String();
 }
 
-static String Repeat(String const &content, String const &name, String const &value_id, String const &key_id, void *other) noexcept {
-    Entry *   _entry;
-    Document *_storage = (static_cast<Document *>(other))->GetSource(&_entry, name.Str, 0, name.Length);
+static String Repeat(wchar_t const *block, UNumber offset, UNumber limit, Expression &key_expr, Expression &value_expr,
+                     Document const *_storage) noexcept {
+    Expressions loop_exprs(2);
 
-    if (_storage == nullptr) {
-        return String();
+    if (key_expr.Keyword != nullptr) {
+        loop_exprs.Add(&key_expr);
     }
+
+    loop_exprs.Add(&value_expr);
+
+    Array<Match> const items(Engine::Search(block, loop_exprs, offset, limit));
 
     StringStream rendered;
-    Expressions  loop_exp;
+    String *     str_ptr;
+    String       value;
+    String       key;
 
-    Expression value_ex;
-    value_ex.Keyword = value_id.Str;
-    value_ex.Length  = value_id.Length;
+    Entry *_entry;
+    for (UNumber i = 0; i < _storage->Entries.Size; i++) {
+        _entry = &(_storage->Entries[i]);
 
-    Expression key_ex;
-    key_ex.Keyword = key_id.Str;
-    key_ex.Length  = key_id.Length;
-
-    loop_exp.Add(&value_ex);
-
-    if (key_id.Length != 0) {
-        loop_exp.Add(&key_ex);
-    }
-
-    Array<Match> const items(Engine::Search(content.Str, loop_exp, 0, content.Length));
-    if (_entry->Type == VType::DocumentT) {
-        String tmpstr;
-        String tmpstr2;
-
-        if (_storage->Ordered) {
-            if (_storage->Strings.Size != 0) {
-                for (UNumber i = 0; i < _storage->Strings.Size; i++) {
-                    if (key_id.Length != 0) {
-                        tmpstr                   = String::FromNumber(i);
-                        loop_exp[1]->ReplaceWith = tmpstr.Str;
-                        loop_exp[1]->RLength     = tmpstr.Length;
-                    }
-
-                    loop_exp[0]->ReplaceWith = _storage->Strings[i].Str;
-                    loop_exp[0]->RLength     = _storage->Strings[i].Length;
-
-                    rendered += Engine::Parse(content.Str, items, 0, content.Length);
-                }
-            } else if (_storage->Numbers.Size != 0) {
-                for (UNumber i = 0; i < _storage->Numbers.Size; i++) {
-                    if (key_id.Length != 0) {
-                        tmpstr                   = String::FromNumber(i);
-                        loop_exp[1]->ReplaceWith = tmpstr.Str;
-                        loop_exp[1]->RLength     = tmpstr.Length;
-                    }
-
-                    tmpstr2                  = String::FromNumber(_storage->Numbers[i], 1, 0, 3);
-                    loop_exp[0]->ReplaceWith = tmpstr2.Str;
-                    loop_exp[0]->RLength     = tmpstr2.Length;
-
-                    rendered += Engine::Parse(content.Str, items, 0, content.Length, other);
-                }
-            }
-        } else {
-            for (UNumber i = 0; i < _storage->Keys.Size; i++) {
-                if (key_id.Length != 0) {
-                    loop_exp[1]->ReplaceWith = _storage->Keys[i].Str;
-                    loop_exp[1]->RLength     = _storage->Keys[i].Length;
-                }
-
-                _storage->GetString(tmpstr2, _storage->Keys[i].Str, 0, _storage->Keys[i].Length);
-                loop_exp[0]->ReplaceWith = tmpstr2.Str;
-                loop_exp[0]->RLength     = tmpstr2.Length;
-
-                rendered += Engine::Parse(content.Str, items, 0, content.Length, other);
+        if (key_expr.Keyword != nullptr) {
+            if (_storage->Ordered) {
+                key                  = String::FromNumber(i);
+                key_expr.ReplaceWith = key.Str;
+                key_expr.RLength     = key.Length;
+            } else {
+                str_ptr              = &(_storage->Keys[_entry->KeyID]);
+                key_expr.ReplaceWith = str_ptr->Str;
+                key_expr.RLength     = str_ptr->Length;
             }
         }
+
+        switch (_entry->Type) {
+            case VType::NumberT: {
+                value                  = String::FromNumber(_storage->Numbers[_entry->ArrayID], 1, 0, 3);
+                value_expr.ReplaceWith = value.Str;
+                value_expr.RLength     = value.Length;
+                break;
+            }
+            case VType::StringT: {
+                str_ptr                = &(_storage->Strings[_entry->ArrayID]);
+                value_expr.ReplaceWith = str_ptr->Str;
+                value_expr.RLength     = str_ptr->Length;
+                break;
+            }
+            case VType::FalseT: {
+                value_expr.ReplaceWith = L"false";
+                value_expr.RLength     = 5;
+                break;
+            }
+            case VType::TrueT: {
+                value_expr.ReplaceWith = L"true";
+                value_expr.RLength     = 4;
+                break;
+            }
+            case VType::NullT: {
+                value_expr.ReplaceWith = L"null";
+                value_expr.RLength     = 4;
+                break;
+            }
+            default: {
+                continue;
+            }
+        }
+
+        rendered += Engine::Parse(block, items, offset, limit);
     }
 
     return rendered.Eject();
@@ -259,9 +253,10 @@ static String RenderLoop(wchar_t const *block, Match const &item, UNumber const 
     Array<Match> const _subMatch(Engine::Search(block, _tagsHead, item.Offset, item.Length));
 
     if ((_subMatch.Size != 0) && (_subMatch[0].NestMatch.Size != 0)) {
-        String       name;
-        String       value_id;
-        String       key_id;
+        Document * _storage = nullptr;
+        Expression key_expr;
+        Expression value_expr;
+
         Match const *sm = &(_subMatch[0]);
 
         // set="(Array_name)" value="s_value" key="s_key"
@@ -277,26 +272,27 @@ static String RenderLoop(wchar_t const *block, Match const &item, UNumber const 
                     --start_at;
 
                     if (block[start_at] == L't') { // se[t]
-                        name = String::Part(block, (m->Offset + 1), (m->Length - 2));
+                        _storage = (static_cast<Document *>(other))->GetDocument(block, (m->Offset + 1), (m->Length - 2));
                         break;
                     }
 
                     if (block[start_at] == L'e') { // valu[e]
-                        value_id = String::Part(block, (m->Offset + 1), (m->Length - 2));
+                        value_expr.Keyword = &(block[(m->Offset + 1)]);
+                        value_expr.Length  = (m->Length - 2);
                         break;
                     }
 
                     if (block[start_at] == L'y') { // ke[y]
-                        key_id = String::Part(block, (m->Offset + 1), (m->Length - 2));
+                        key_expr.Keyword = &(block[(m->Offset + 1)]);
+                        key_expr.Length  = (m->Length - 2);
                         break;
                     }
                 }
             }
         }
 
-        if ((name.Length != 0) && (value_id.Length != 0)) {
-            String _content =
-                Repeat(String::Part(block, (sm->Offset + sm->Length), (item.Length - (sm->Length + 7))), name, value_id, key_id, other);
+        if ((value_expr.Keyword != nullptr) && (_storage != nullptr)) {
+            String _content(Repeat(block, (sm->Offset + sm->Length), (item.Length - (sm->Length + 7)), key_expr, value_expr, _storage));
             return Render(_content.Str, 0, _content.Length, other);
         }
     }

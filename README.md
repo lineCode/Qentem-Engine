@@ -1,4 +1,4 @@
-# Qentem Engine (v1.2.1)
+# Qentem Engine (v1.2.2)
 
 ## Introduction:
 Qentem Engine is an independent library that uses a fast algorithm for nest-searching/nest-matching. It can be used to match existing syntaxes or new ones, and with call-backs for post and per-parsing, It's posable to match almost any complex syntax. It is very efficient and has a small footprint on memory, and it's built using modern C++. It can be used to render complex templates that contains nested loop, nested if-else, inline if, math (+ * / - ^ %), logic (&& ||), and/or something simple: like replacing a text or splitting it. Also, it is capable of doing JSON, XML/HTML.
@@ -11,7 +11,7 @@ The library - at the moment - has String class (with number conversion), Array, 
 * (Optional) Emscripten: to compile into WebAssembly; to be used inside a web browser or with an independent JavaScript engine. This allows a web server to offload its rendering of templates to its clients. Also, I does integer calculations.
 
 ## Tests:
-This library includes over 350 tests; to insure that it's stable and functional. to compile the tests, use:
+This library includes over 350 tests; to insure that it's stable and functional. to compile the tests:
 ```txt
 c++ -I ./Source ./Tests/Test.cpp -o ./Tests/QTest.bin
 ```
@@ -20,7 +20,7 @@ c++ -I ./Source ./Tests/Test.cpp -o ./Tests/QTest.bin
 VS Code configrations are included for compiling and running tests.
 
 ## Template Demo:
-HTML, JavaScript and WebAssembly: [JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/releases/download/v1.2.1/JQen.zip)
+HTML, JavaScript and WebAssembly: [JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/releases/download/v1.2.2/JQen.zip)
 
 ## Examples:
 ### Document and JSON:
@@ -129,4 +129,4 @@ c++ -O3 -shared -fPIC -I ./Source ./Example/QLib.cpp -o ./Build/QLib.so
 ```
 
 ### Engine:
-More examples of the engine usage can be found @ [Tests/Test.hpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/Test.hpp) starting around line: 653.
+More examples of the engine usage can be found @ [Tests/Test.hpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Tests/Test.hpp)
