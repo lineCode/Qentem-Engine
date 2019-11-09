@@ -682,34 +682,38 @@ struct Document {
 
     // Key can be: name/is, [name/id], name/id[name/id], name[name/id][sub-name/id], name/id[name/id][sub-name/id][sub-sub-name/id]...
     // "name": a string a stored value in "Keys" array. "id" is the number of array index that starts with 0: Entries[id]
-    Document *GetSource(Entry **_entry, wchar_t const *key, UNumber const offset, UNumber const limit) noexcept {
+    Document *GetSource(Entry **_entry, wchar_t const *key, UNumber const offset, UNumber limit) noexcept {
         Document *doc = this;
 
-        UNumber       start;
-        UNumber       end;
-        UNumber const end_offset = (offset + limit);
+        UNumber start = offset;
+        UNumber end   = (offset + limit);
 
-        if (key[(end_offset - 1)] != L']') { // No [...]
-            start = offset;
-            end   = end_offset;
-        } else if (key[offset] == L'[') { // Starting with [..
-            start = offset + 1;
-            end   = start;
-            while ((end < end_offset) && (key[++end] != L']')) {
-            }
-        } else { // Starting with a string followed by [...]
-            start = offset;
-            end   = offset;
-            while ((end < end_offset) && (key[++end] != L'[')) {
+        if (key[(end - 1)] == L']') {
+            if (key[offset] != L'[') {
+                // Starting with a string followed by [...]
+                UNumber i = offset;
+                while ((i < end) && (key[++i] != L'[')) {
+                }
+
+                end = i;
+                --limit;
+            } else {
+                // Starting with [..
+                ++start;
+                UNumber i = start;
+                while ((i < end) && (key[++i] != L']')) {
+                }
+                end = i;
+                --limit;
             }
         }
+
+        UNumber const end_offset = (offset + limit);
 
         while (true) {
             if (doc->Ordered) {
                 UNumber ent_id;
-                String::ToNumber(ent_id, key, start, end - start);
-
-                if (doc->Entries.Size <= ent_id) {
+                if (!String::ToNumber(ent_id, key, start, end - start) || (doc->Entries.Size <= ent_id)) {
                     break;
                 }
 
@@ -721,7 +725,7 @@ struct Document {
             if ((*_entry)->Type == VType::DocumentT) {
                 doc = &(doc->Documents[(*_entry)->ArrayID]);
 
-                if (++end == end_offset) {
+                if (end == end_offset) {
                     return doc;
                 }
             } else {

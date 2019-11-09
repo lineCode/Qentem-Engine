@@ -182,11 +182,12 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
 
     static Expressions const &_tagsAll = Qentem::Template::_getTagsAll();
 
-    data[L"foo"] = L"FOO";
-    data[L"r1"]  = L"Familly";
-    data[L"e1"]  = L"";
-    data[L"e2"]  = L" ";
-    data[L"m"]   = L"  ((5^2) * 2) + 13 ";
+    data[L"foo"]  = L"FOO";
+    data[L"r1"]   = L"Familly";
+    data[L"e1"]   = L"";
+    data[L"e2"]   = L" ";
+    data[L"m"]    = L"  ((5^2) * 2) + 13 ";
+    data[L"abc1"] = Array<String>().Add(L"a").Add(L"b").Add(L"c");
 
     data[L"lvl2"] = Document();
 
@@ -298,6 +299,8 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
     bit.Expected.Add(L"It's FOO.");
 
     ////
+    bit.Content.Add(L"<loop set=\"abc1\" value=\"v\">v</loop>");
+    bit.Expected.Add(L"abc");
 
     bit.Content.Add(L"<loop set =\"lvl2[numbers]\" value =\"val\" key=\"id\">l-id): {v:lvl2[numbers][id]}\n </loop>");
     bit.Expected.Add(L"l-0): 1\n l-1): 2\n ");
