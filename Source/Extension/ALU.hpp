@@ -23,9 +23,7 @@ using Engine::Match;
 
 static void NestNumber(double &number, wchar_t const *block, Match const &item) noexcept {
     String r(Engine::Parse(block, item.NestMatch, item.Offset, item.Length));
-    if (r.Length != 0) {
-        String::ToNumber(number, r.Str, 0, r.Length);
-    }
+    String::ToNumber(number, r.Str, 0, r.Length);
 }
 
 static String LogicCallback(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {

@@ -680,76 +680,61 @@ struct Document {
         return FromJSON(content.Str, 0, content.Length, comments);
     }
 
-    static bool ExtractID(UNumber &id, wchar_t const *key, UNumber const offset, UNumber limit) noexcept {
-        UNumber end = (offset + (limit - 1));
+    // Key can be: name/is, [name/id], name/id[name/id], name[name/id][sub-name/id], name/id[name/id][sub-name/id][sub-sub-name/id]...
+    // "name": a string a stored value in "Keys" array. "id" is the number of array index that starts with 0: Entries[id]
+    Document *GetSource(Entry **_entry, wchar_t const *key, UNumber const offset, UNumber const limit) noexcept {
+        Document *doc = this;
 
-        while ((end > offset) && (key[--end] != L'[')) {
-        }
-        ++end;
-        --limit;
+        UNumber       start;
+        UNumber       end;
+        UNumber const end_offset = (offset + limit);
 
-        return String::ToNumber(id, key, end, (limit - (end - offset)));
-    }
-
-    // TODO: Rewrite
-    // Key form can be: name, name[id1], name[id1][sub-id2], name[id1][sub-id2][sub-sub-idx]...
-    Document *GetSource(Entry **_entry, wchar_t const *key, UNumber offset, UNumber limit) noexcept {
-        UNumber end_offset = (offset + limit);
-        UNumber _tmpOffset;
-        UNumber _id;
-
-        if (key[offset] == L'[') {
-            ++offset;
-            end_offset = offset;
-
-            _tmpOffset = (offset + limit);
-            while (key[end_offset] != L']') {
-                ++end_offset;
-
-                if (end_offset > _tmpOffset) {
-                    return nullptr;
-                }
+        if (key[(end_offset - 1)] != L']') { // No [...]
+            start = offset;
+            end   = end_offset;
+        } else if (key[offset] == L'[') { // Starting with [..
+            start = offset + 1;
+            end   = start;
+            while ((end < end_offset) && (key[++end] != L']')) {
             }
-
-            _id = String::Hash(key, offset, end_offset);
-            ++end_offset;
-            --offset;
-        } else if (key[(end_offset - 1)] == L']') {
-            end_offset = offset;
-
-            _tmpOffset = (offset + limit);
-            while (key[end_offset] != L'[') {
-                ++end_offset;
-
-                if (end_offset > _tmpOffset) {
-                    return nullptr;
-                }
+        } else { // Starting with a string followed by [...]
+            start = offset;
+            end   = offset;
+            while ((end < end_offset) && (key[++end] != L'[')) {
             }
-            _id = String::Hash(key, offset, end_offset);
-        } else {
-            _id = String::Hash(key, offset, end_offset);
         }
 
-        *_entry = Exist(_id, 0, Table);
-        if (*_entry != nullptr) {
+        while (true) {
+            if (doc->Ordered) {
+                UNumber ent_id;
+                String::ToNumber(ent_id, key, start, end - start);
+
+                if (doc->Entries.Size <= ent_id) {
+                    break;
+                }
+
+                *_entry = &(doc->Entries[ent_id]);
+            } else if ((*_entry = doc->Exist(String::Hash(key, start, end), 0, doc->Table)) == nullptr) {
+                break;
+            }
+
             if ((*_entry)->Type == VType::DocumentT) {
-                limit -= (end_offset - offset);
-                Document *doc = &(Documents[(*_entry)->ArrayID]);
+                doc = &(doc->Documents[(*_entry)->ArrayID]);
 
-                if (limit != 0) {
-                    if (doc->Ordered) {
-                        if (ExtractID(_id, key, end_offset, limit) && (doc->Entries.Size > _id)) {
-                            *_entry = &(doc->Entries[_id]);
-                        }
-                    } else {
-                        return doc->GetSource(_entry, key, end_offset, limit);
-                    }
+                if (++end == end_offset) {
+                    return doc;
                 }
-
+            } else {
                 return doc;
             }
 
-            return this;
+            // Next part
+            while ((++start < end_offset) && (key[start] != L'[')) {
+            }
+            end = ++start;
+
+            while ((end < end_offset) && (key[++end] != L']')) {
+            }
         }
 
         return nullptr;
@@ -1580,91 +1565,89 @@ struct Document {
     }
 
     Document &operator[](wchar_t const *key) noexcept {
-        UNumber const len = String::Count(key);
+        UNumber const str_len = String::Count(key);
 
-        Entry *   _entry;
-        Document *src = GetSource(&_entry, key, 0, len);
+        if (Ordered) {
+            UNumber __id;
+            String::ToNumber(__id, key, 0, str_len);
 
-        if ((src != nullptr) && (src != this)) {
-            src->LastKey    = key;
-            src->LastKeyLen = len;
+            Entry const &ent = Entries[__id];
 
-            LastKey    = nullptr;
-            LastKeyLen = 0;
+            if (ent.Type == VType::DocumentT) {
+                return Documents[ent.ArrayID];
+            }
 
-            return *src;
+            LastKeyLen = (__id + 1);
+        } else {
+            Entry const *ent = Exist(String::Hash(key, 0, str_len), 0, Table);
+
+            if ((ent != nullptr) && (ent->Type == VType::DocumentT)) {
+                return Documents[ent->ArrayID];
+            }
+
+            LastKey    = key;
+            LastKeyLen = str_len;
         }
-
-        LastKey    = key;
-        LastKeyLen = len;
 
         return *this;
     }
 
     Document &operator[](String const &key) noexcept {
-        Entry *   _entry;
-        Document *src = GetSource(&_entry, key.Str, 0, key.Length);
+        if (Ordered) {
+            UNumber __id;
+            String::ToNumber(__id, key.Str, 0, key.Length);
 
-        if ((src != nullptr) && (src != this)) {
-            src->LastKey    = key.Str;
-            src->LastKeyLen = key.Length;
+            Entry const &ent = Entries[__id];
 
-            LastKey    = nullptr;
-            LastKeyLen = 0;
+            if (ent.Type == VType::DocumentT) {
+                return Documents[ent.ArrayID];
+            }
 
-            return *src;
+            LastKeyLen = (__id + 1);
+        } else {
+            Entry const *ent = Exist(String::Hash(key.Str, 0, key.Length), 0, Table);
+
+            if ((ent != nullptr) && (ent->Type == VType::DocumentT)) {
+                return Documents[ent->ArrayID];
+            }
+
+            LastKey    = key.Str;
+            LastKeyLen = key.Length;
         }
-
-        LastKey    = key.Str;
-        LastKeyLen = key.Length;
 
         return *this;
     }
 
     Document &operator[](UNumber const id) noexcept {
+        Entry const &ent = Entries[id];
+
+        if (ent.Type == VType::DocumentT) {
+            return Documents[ent.ArrayID];
+        }
+
         if (Ordered) {
-            LastKeyLen = id + 1;
+            LastKeyLen = (id + 1);
         } else {
-            LastKey    = Keys[Entries[id].KeyID].Str;
-            LastKeyLen = Keys[Entries[id].KeyID].Length;
-
-            Entry *   _entry;
-            Document *src = GetSource(&_entry, LastKey, 0, LastKeyLen);
-
-            if ((src != nullptr) && (src != this)) {
-                src->LastKey    = LastKey;
-                src->LastKeyLen = LastKeyLen;
-
-                LastKey    = nullptr;
-                LastKeyLen = 0;
-
-                return *src;
-            }
+            LastKey    = Keys[ent.KeyID].Str;
+            LastKeyLen = Keys[ent.KeyID].Length;
         }
 
         return *this;
     }
 
     Document &operator[](int const id) noexcept {
+        UNumber const __id = static_cast<UNumber>(id);
+        Entry const & ent  = Entries[__id];
+
+        if (ent.Type == VType::DocumentT) {
+            return Documents[ent.ArrayID];
+        }
+
         if (Ordered) {
-            LastKeyLen = static_cast<UNumber>(id) + 1;
+            LastKeyLen = (__id + 1);
         } else {
-            LastKeyLen = static_cast<UNumber>(id);
-            LastKey    = Keys[Entries[LastKeyLen].KeyID].Str;
-            LastKeyLen = Keys[Entries[LastKeyLen].KeyID].Length;
-
-            Entry *   _entry;
-            Document *src = GetSource(&_entry, LastKey, 0, LastKeyLen);
-
-            if ((src != nullptr) && (src != this)) {
-                src->LastKey    = LastKey;
-                src->LastKeyLen = LastKeyLen;
-
-                LastKey    = nullptr;
-                LastKeyLen = 0;
-
-                return *src;
-            }
+            LastKey    = Keys[ent.KeyID].Str;
+            LastKeyLen = Keys[ent.KeyID].Length;
         }
 
         return *this;

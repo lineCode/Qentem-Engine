@@ -48,6 +48,10 @@
     </if>
 </div>
 
+<!---
+Note: if and inline if can have true="..." or false="..." only; both of them is not required.
+-->
+
 <!--- loops
     "set": is the name of the Array (collocation).
     "value": for the value of the current item.
@@ -79,3 +83,7 @@
 
     </loop>
 </div>
+
+<!---
+Note: loops key="..." is optional.
+-->
