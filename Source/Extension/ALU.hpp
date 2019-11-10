@@ -370,10 +370,10 @@ static Expressions const &getMathExprs() noexcept {
 
 // e.g. ( 4 + 3 ), ( 2 + ( 4 + ( 1 + 2 ) + 1 ) * 5 - 3 - 2 )
 static String ParenthesisCallback(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
-    static Expressions const &_mathExprs = getMathExprs();
+    static Expressions const &mathExprs = getMathExprs();
 
     UNumber const limit = (length - 2);
-    return Engine::Parse(block, Engine::Search(block, _mathExprs, 1, limit), 1, limit);
+    return Engine::Parse(block, Engine::Search(block, mathExprs, 1, limit), 1, limit);
 }
 
 static Expressions const &getParensExprs() noexcept {
@@ -397,8 +397,8 @@ static Expressions const &getParensExprs() noexcept {
 }
 
 static double Evaluate(wchar_t const *content, UNumber const offset, UNumber const limit) noexcept {
-    static Expressions const &_parensExprs = getParensExprs();
-    static Expressions const &_mathExprs   = getMathExprs();
+    static Expressions const &parensExprs = getParensExprs();
+    static Expressions const &mathExprs   = getMathExprs();
 
     /**
      *
@@ -418,15 +418,15 @@ static double Evaluate(wchar_t const *content, UNumber const offset, UNumber con
      */
 
     // Parenthesis:
-    String _content(Engine::Parse(content, Engine::Search(content, _parensExprs, offset, limit), offset, limit));
-    if ((_content.Length == 0) || (_content == L"0")) {
+    String n_content(Engine::Parse(content, Engine::Search(content, parensExprs, offset, limit), offset, limit));
+    if ((n_content.Length == 0) || (n_content == L"0")) {
         return 0.0;
     }
 
     // The rest:
     double num = 0.0;
-    _content   = Engine::Parse(_content.Str, Engine::Search(_content.Str, _mathExprs, 0, _content.Length), 0, _content.Length);
-    if ((_content.Length != 0) && String::ToNumber(num, _content.Str, 0, _content.Length)) {
+    n_content  = Engine::Parse(n_content.Str, Engine::Search(n_content.Str, mathExprs, 0, n_content.Length), 0, n_content.Length);
+    if ((n_content.Length != 0) && String::ToNumber(num, n_content.Str, 0, n_content.Length)) {
         return num;
     }
 

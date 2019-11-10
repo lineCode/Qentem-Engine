@@ -20,17 +20,16 @@ struct StringStream {
     struct StringBit {
         UNumber        Length;
         wchar_t const *Str;
+        wchar_t *      Collect;
     };
 
-    UNumber          Length = 0;
     Array<StringBit> Bits;
-    Array<wchar_t *> _strings;
+    UNumber          Length = 0;
 
     void operator+=(String &&src) noexcept {
         if (src.Length != 0) {
             Length += src.Length;
-            _strings += src.Str;
-            Bits += {src.Length, src.Str};
+            Bits += {src.Length, src.Str, src.Str};
             src.Str = nullptr;
         }
     }
@@ -38,7 +37,7 @@ struct StringStream {
     void operator+=(String const &src) noexcept {
         if (src.Length != 0) {
             Length += src.Length;
-            Bits += {src.Length, src.Str};
+            Bits += {src.Length, src.Str, nullptr};
         }
     }
 
@@ -46,31 +45,33 @@ struct StringStream {
         if (str != nullptr) {
             UNumber len = String::Count(str);
             Length += len;
-            Bits += {len, str};
+            Bits += {len, str, nullptr};
         }
     }
 
     void Add(wchar_t const *str, UNumber const len) noexcept {
         Length += len;
-        Bits += {len, str};
+        Bits += {len, str, nullptr};
     }
 
     String Eject() noexcept {
         String tmp(Length);
         Length = 0;
 
-        UNumber j;
+        StringBit *bit;
+        UNumber    j;
         for (UNumber i = 0; i < Bits.Size; i++) {
-            for (j = 0; j < Bits[i].Length; j++) {
-                tmp.Str[tmp.Length++] = Bits[i].Str[j];
+            bit = &(Bits[i]);
+
+            for (j = 0; j < bit->Length; j++) {
+                tmp.Str[tmp.Length++] = bit->Str[j];
+            }
+
+            if (bit->Collect != nullptr) {
+                Memory::Deallocate<wchar_t>(&(bit->Collect));
             }
         }
         Bits.Reset();
-
-        for (UNumber i = 0; i < _strings.Size; i++) {
-            Memory::Deallocate<wchar_t>(&_strings[i]);
-        }
-        _strings.Reset();
 
         tmp[tmp.Length] = L'\0'; // Null trimmming
 

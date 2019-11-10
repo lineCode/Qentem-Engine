@@ -86,30 +86,32 @@ static String DumpMatches(wchar_t const *content, Array<Match> const &matches, S
     if (matches.Size == 0) {
         return offset + L"No matches!\n";
     }
+    StringStream ss;
+    String       innoffset = L"    ";
 
     Array<String> items = Test::Extract(content, matches);
 
-    String innoffset = L"    ";
-    String _array    = offset + L"(" + String::FromNumber(static_cast<double>(matches.Size)) + L") => [\n";
+    ss += offset + L"(" + String::FromNumber(static_cast<double>(matches.Size)) + L") => [\n";
 
     for (UNumber i = index; i < matches.Size; i++) {
-        _array += innoffset + offset + L"[" + String::FromNumber(static_cast<double>(i)) + L"]: " + items[i] + L"\n";
+        ss += innoffset + offset + L"[" + String::FromNumber(static_cast<double>(i)) + L"]: " + items[i] + L"\n";
 
         if (matches[i].NestMatch.Size != 0) {
-            _array += (innoffset + offset + L"-NestMatch:\n");
-            _array += Test::DumpMatches(content, matches[i].NestMatch, (innoffset + innoffset + offset), 0);
+            ss += (innoffset + offset + L"-NestMatch:\n");
+            ss += Test::DumpMatches(content, matches[i].NestMatch, (innoffset + innoffset + offset), 0);
         }
     }
 
-    return _array + offset + L"]\n";
+    ss += offset + L"]\n";
+    return ss.Eject();
 }
 
 static Array<TestBit> GetALUBits() noexcept {
     Array<TestBit> bits = Array<TestBit>();
     TestBit        bit;
 
-    static Expressions const &_parensExprs = Qentem::ALU::getParensExprs();
-    static Expressions const &_mathExprs   = Qentem::ALU::getMathExprs();
+    static Expressions const &parensExprs = Qentem::ALU::getParensExprs();
+    static Expressions const &mathExprs   = Qentem::ALU::getMathExprs();
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -157,7 +159,7 @@ static Array<TestBit> GetALUBits() noexcept {
     bit.Content.Add(L"3 + 9 - 1 - -1 + 2 == 14");
     bit.Expected.Add(L"1");
     ////
-    bit.Exprs = _mathExprs;
+    bit.Exprs = mathExprs;
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -169,7 +171,7 @@ static Array<TestBit> GetALUBits() noexcept {
     bit.Content.Add(L"(((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) + (1) + 2 = 14)");
     bit.Expected.Add(L"1");
 
-    bit.Exprs = _parensExprs;
+    bit.Exprs = parensExprs;
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     return bits;
@@ -179,7 +181,7 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
     Array<TestBit> bits = Array<TestBit>();
     TestBit        bit;
 
-    static Expressions const &_tagsAll = Qentem::Template::_getTagsAll();
+    static Expressions const &tagsAll = Qentem::Template::getTagsAll();
 
     data[L"foo"]  = L"FOO";
     data[L"r1"]   = L"Familly";
@@ -346,7 +348,7 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
 
     ////
 
-    bit.Exprs = _tagsAll;
+    bit.Exprs = tagsAll;
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
 

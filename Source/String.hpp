@@ -22,11 +22,11 @@ struct String {
 
     explicit String() = default;
 
-    explicit String(UNumber const _capacity) noexcept : Capacity(_capacity) {
+    explicit String(UNumber const capacity) noexcept : Capacity(capacity) {
         Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
     }
 
-    explicit String(wchar_t const *str, UNumber const _capacity) noexcept : Capacity(_capacity) {
+    explicit String(wchar_t const *str, UNumber const capacity) noexcept : Capacity(capacity) {
         Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
 
         while (Length < Capacity) {
@@ -87,28 +87,28 @@ struct String {
     }
 
     static UNumber Count(wchar_t const *str) noexcept {
-        UNumber _length = 0;
-        while (str[_length] != L'\0') {
-            ++_length;
+        UNumber length = 0;
+        while (str[length] != L'\0') {
+            ++length;
         };
 
-        return _length;
+        return length;
     }
 
-    inline void Reset() noexcept {
+    void Reset() noexcept {
         Memory::Deallocate<wchar_t>(&Str);
 
         Length   = 0;
         Capacity = 0;
     }
 
-    inline wchar_t *Eject() noexcept {
-        wchar_t *_str = Str;
-        Str           = nullptr;
-        Length        = 0;
-        Capacity      = 0;
+    wchar_t *Eject() noexcept {
+        wchar_t *str = Str;
+        Str          = nullptr;
+        Length       = 0;
+        Capacity     = 0;
 
-        return _str;
+        return str;
     }
 
     String &operator=(wchar_t const *str) noexcept { // Copy
@@ -190,7 +190,7 @@ struct String {
         return *this;
     }
 
-    inline String &operator+=(String const &src) noexcept { // Appand a string
+    String &operator+=(String const &src) noexcept { // Appand a string
         if (src.Length != 0) {
             Copy(*this, src.Str, Length, src.Length);
         }
@@ -199,12 +199,12 @@ struct String {
     }
 
     String operator+(wchar_t const *str) const noexcept {
-        UNumber const _length = Count(str);
+        UNumber const length = Count(str);
 
-        String ns(Length + _length);
+        String ns(Length + length);
 
         Copy(ns, Str, 0, Length);
-        Copy(ns, str, ns.Length, _length);
+        Copy(ns, str, ns.Length, length);
 
         return ns;
     }
@@ -238,9 +238,9 @@ struct String {
     }
 
     bool operator==(wchar_t const *str) const noexcept { // Compare
-        UNumber const _length = Count(str);
+        UNumber const length = Count(str);
 
-        if (Length != _length) {
+        if (Length != length) {
             return false;
         }
 
@@ -273,8 +273,8 @@ struct String {
         return (!(*this == string));
     }
 
-    inline wchar_t &operator[](UNumber const __index) const noexcept {
-        return Str[__index];
+    inline wchar_t &operator[](UNumber const index) const noexcept {
+        return Str[index];
     }
 
     static bool Compare(wchar_t const *left, wchar_t const *right) noexcept { // Compare
@@ -331,15 +331,15 @@ struct String {
             // Copy any existing characters
             des.Capacity = newlen;
 
-            wchar_t *_tmp = des.Str;
+            wchar_t *tmp = des.Str;
             Memory::Allocate<wchar_t>(&des.Str, (des.Capacity + 1));
 
             while (i < des.Length) {
-                des[i] = _tmp[i];
+                des[i] = tmp[i];
                 ++i;
             }
 
-            Memory::Deallocate<wchar_t>(&_tmp);
+            Memory::Deallocate<wchar_t>(&tmp);
         }
 
         // Add the new characters
@@ -351,32 +351,32 @@ struct String {
         des.Length    = newlen;
     }
 
-    inline void SetLength(UNumber const _size) noexcept {
-        Capacity = _size;
+    void SetLength(UNumber const size) noexcept {
+        Capacity = size;
 
         if (Length != 0) {
             Length = 0;
             Memory::Deallocate<wchar_t>(&Str);
         }
 
-        Memory::Allocate<wchar_t>(&Str, (_size + 1));
+        Memory::Allocate<wchar_t>(&Str, (size + 1));
 
         Str[0] = L'\0';
     }
 
-    inline static String Part(wchar_t const *str, UNumber offset, UNumber const limit) noexcept {
-        String _part(limit);
+    static String Part(wchar_t const *str, UNumber offset, UNumber const limit) noexcept {
+        String s_part(limit);
 
-        while (_part.Length != limit) {
-            _part[_part.Length++] = str[offset++];
+        while (s_part.Length != limit) {
+            s_part[s_part.Length++] = str[offset++];
         }
 
-        _part[_part.Length] = L'\0'; // To mark the end of a string.
+        s_part[s_part.Length] = L'\0'; // To mark the end of a string.
 
-        return _part;
+        return s_part;
     }
 
-    inline static UNumber Hash(wchar_t const *str, UNumber offset, UNumber limit) noexcept {
+    static UNumber Hash(wchar_t const *str, UNumber offset, UNumber limit) noexcept {
         UNumber hash = 0;
         UNumber base = 1;
 
@@ -389,17 +389,18 @@ struct String {
         return hash;
     }
 
-    inline static void SoftTrim(wchar_t const *str, UNumber &start, UNumber &limit) noexcept {
+    static void SoftTrim(wchar_t const *str, UNumber &start, UNumber &limit) noexcept {
         UNumber end = limit + start;
 
         while ((str[start] == L' ') || (str[start] == L'\n') || (str[start] == L'\t') || (str[start] == L'\r')) {
             ++start;
-            --limit;
         }
 
-        while ((end > start) && ((str[--end] == L' ') || (str[end] == L'\n') || (str[end] == L'\t') || (str[end] == L'\r'))) {
-            --limit;
+        while ((--end > start) && ((str[end] == L' ') || (str[end] == L'\n') || (str[end] == L'\t') || (str[end] == L'\r'))) {
         }
+        ++end;
+
+        limit = end - start;
     }
 
     static String Trim(String const &str) noexcept {
@@ -414,30 +415,30 @@ struct String {
     static String FromNumber(unsigned long number, UShort min = 1) noexcept {
         static UShort constexpr num_len = 20;
 
-        UShort  __len = num_len;
-        wchar_t _str[num_len];
+        UShort  len = num_len;
+        wchar_t str[num_len];
 
         while (number != 0) {
-            _str[--__len] = wchar_t((number % 10) + 48);
+            str[--len] = wchar_t((number % 10) + 48);
             number /= 10;
         }
 
         min = static_cast<UShort>(num_len - min);
 
-        while (__len > min) {
-            _str[--__len] = L'0';
+        while (len > min) {
+            str[--len] = L'0';
         }
 
-        return String(&(_str[__len]), static_cast<UNumber>(num_len - __len));
+        return String(&(str[len]), static_cast<UNumber>(num_len - len));
     }
 
     static String FromNumber(double number, UShort min = 1, UShort r_min = 0, UShort r_max = 0) noexcept {
         static UNumber constexpr num_len = 22;
 
-        UShort __len  = num_len;
+        UShort len    = num_len;
         UShort p1_len = 0;
 
-        wchar_t _str[num_len];
+        wchar_t str[num_len];
 
         bool const negative = (number < 0);
 
@@ -489,25 +490,25 @@ struct String {
                     }
 
                     while (r_min > presision) {
-                        _str[--__len] = L'0';
+                        str[--len] = L'0';
                         --r_min;
                     }
                     r_min = 0;
 
                     while (presision != 0) {
-                        _str[--__len] = wchar_t((num % 10) + 48);
+                        str[--len] = wchar_t((num % 10) + 48);
                         num /= 10;
                         --presision;
                     }
 
-                    if (__len != num_len) {
-                        _str[--__len] = L'.';
+                    if (len != num_len) {
+                        str[--len] = L'.';
                     }
                 }
             }
 
             while (num2 != 0) {
-                _str[--__len] = wchar_t((num2 % 10) + 48);
+                str[--len] = wchar_t((num2 % 10) + 48);
                 num2 /= 10;
                 ++p1_len;
             }
@@ -515,22 +516,22 @@ struct String {
 
         if (r_min != 0) {
             do {
-                _str[--__len] = L'0';
+                str[--len] = L'0';
             } while (--r_min != 0);
 
-            _str[--__len] = L'.';
+            str[--len] = L'.';
         }
 
         while (p1_len < min) {
-            _str[--__len] = L'0';
+            str[--len] = L'0';
             ++p1_len;
         }
 
         if (negative) {
-            _str[--__len] = L'-';
+            str[--len] = L'-';
         }
 
-        return String(&(_str[__len]), (num_len - __len));
+        return String(&(str[len]), (num_len - len));
     }
 
     inline static String FromNumber(UShort number, UShort const min = 1) noexcept {

@@ -19,9 +19,9 @@ namespace Engine {
 struct Match;
 struct Expression;
 /////////////////////////////////
-static void _split(Array<Match> &items, wchar_t const *content, UNumber offset, UNumber endOffset, UNumber count) noexcept;
-using _ParseCB = String(wchar_t const *content, Match const &item, UNumber const length, void *other);
-using _MatchCB = void(wchar_t const *content, UNumber &offset, UNumber const endOffset, Match &item, Array<Match> &items);
+static void split(Array<Match> &items, wchar_t const *content, UNumber offset, UNumber endOffset, UNumber count) noexcept;
+using MatchCB_ = void(wchar_t const *content, UNumber &offset, UNumber const endOffset, Match &item, Array<Match> &items);
+using ParseCB_ = String(wchar_t const *content, Match const &item, UNumber const length, void *other);
 
 using Expressions = Array<Expression *>;
 /////////////////////////////////
@@ -49,11 +49,11 @@ struct Expression {
 
     Expressions NestExprs;        // Expressions for nesting Search().
     UShort      Flag{0};          // Flags for the expression.
-    _MatchCB *  MatchCB{nullptr}; // A callback function for a custom action on a match.
+    MatchCB_ *  MatchCB{nullptr}; // A callback function for a custom action on a match.
 
     // for after match
     UShort         ID{0};                // Expression ID.
-    _ParseCB *     ParseCB{nullptr};     // A callback function for custom rendering.
+    ParseCB_ *     ParseCB{nullptr};     // A callback function for custom rendering.
     wchar_t const *ReplaceWith{nullptr}; // A text to replace a match.
     UNumber        RLength{0};           // Keyword length.
 
@@ -75,8 +75,8 @@ struct Match {
     Expression const *Expr{nullptr};
 };
 /////////////////////////////////
-static UNumber _search(Array<Match> &items, wchar_t const *content, Expressions const &exprs, UNumber offset, UNumber const endOffset,
-                       UNumber const maxOffset, UShort &split) noexcept {
+static UNumber search(Array<Match> &items, wchar_t const *content, Expressions const &exprs, UNumber offset, UNumber const endOffset,
+                      UNumber const maxOffset, UShort &split_count) noexcept {
     UNumber const started = offset;
 
     Match item;
@@ -118,7 +118,7 @@ static UNumber _search(Array<Match> &items, wchar_t const *content, Expressions 
                     keyword_offset = 0;
                 } else if (expr->Length == keyword_offset) {
                     if ((expr->NestExprs.Size != 0) && ((sub_offset + keyword_offset) != current_offset)) {
-                        sub_offset = _search(item.NestMatch, content, expr->NestExprs, sub_offset, current_offset, maxOffset, split_nest);
+                        sub_offset = search(item.NestMatch, content, expr->NestExprs, sub_offset, current_offset, maxOffset, split_nest);
                     }
 
                     if (current_offset > sub_offset) {
@@ -131,7 +131,7 @@ static UNumber _search(Array<Match> &items, wchar_t const *content, Expressions 
             }
 
             if (split_nest != 0) {
-                _split(item.NestMatch, content, (offset + left_keyword_len), (current_offset - expr->Length), split_nest);
+                split(item.NestMatch, content, (offset + left_keyword_len), (current_offset - expr->Length), split_nest);
             }
 
             if (keyword_offset == 0) {
@@ -155,7 +155,7 @@ static UNumber _search(Array<Match> &items, wchar_t const *content, Expressions 
             item.Expr   = expr;
 
             if ((Flags::SPLIT & expr->Flag) != 0) {
-                ++split;
+                ++split_count;
             }
 
             if (expr->MatchCB == nullptr) {
@@ -174,21 +174,21 @@ static UNumber _search(Array<Match> &items, wchar_t const *content, Expressions 
     }
 
     if (((Flags::POP & exprs[0]->Flag) != 0) && (items.Size == 0)) {
-        return _search(items, content, exprs[0]->NestExprs, started, endOffset, endOffset, split);
+        return search(items, content, exprs[0]->NestExprs, started, endOffset, endOffset, split_count);
     }
 
     return current_offset;
 }
 /////////////////////////////////
 static Array<Match> Search(wchar_t const *content, Expressions const &exprs, UNumber const offset, UNumber const limit) noexcept {
-    UShort        split     = 0;
-    UNumber const endOffset = (offset + limit);
+    UShort        split_count = 0;
+    UNumber const endOffset   = (offset + limit);
     Array<Match>  items;
 
-    _search(items, content, exprs, offset, endOffset, endOffset, split);
+    search(items, content, exprs, offset, endOffset, endOffset, split_count);
 
-    if (split != 0) {
-        _split(items, content, offset, endOffset, split);
+    if (split_count != 0) {
+        split(items, content, offset, endOffset, split_count);
     }
 
     return items;
@@ -198,7 +198,6 @@ static String Parse(wchar_t const *content, Array<Match> const &items, UNumber o
     StringStream rendered; // Final content
     UNumber      tmp_limit;
     Match *      item;
-    String       tmp_string;
 
     for (UNumber id = 0; id < items.Size; id++) {
         // Current match
@@ -221,6 +220,9 @@ static String Parse(wchar_t const *content, Array<Match> const &items, UNumber o
             rendered += String::Part(content, offset, tmp_limit);
         }
 
+        offset = item->Offset + item->Length;
+        limit -= item->Length;
+
         if (item->Expr->ParseCB == nullptr) {
             // Defaults to replace: it can be empty.
             if (item->Expr->RLength != 0) {
@@ -229,14 +231,11 @@ static String Parse(wchar_t const *content, Array<Match> const &items, UNumber o
         } else if ((Flags::BUBBLE & item->Expr->Flag) == 0) {
             rendered += item->Expr->ParseCB(content, *item, item->Length, other);
         } else if (item->NestMatch.Size != 0) {
-            tmp_string = Parse(content, item->NestMatch, item->Offset, item->Length, other);
+            String tmp_string(Parse(content, item->NestMatch, item->Offset, item->Length, other));
             rendered += item->Expr->ParseCB(tmp_string.Str, *item, tmp_string.Length, other);
         } else {
             rendered += item->Expr->ParseCB(String::Part(content, item->Offset, item->Length).Str, *item, item->Length, other);
         }
-
-        offset = item->Offset + item->Length;
-        limit -= item->Length;
     }
 
     if (limit != 0) {
@@ -248,8 +247,8 @@ static String Parse(wchar_t const *content, Array<Match> const &items, UNumber o
 
 } // namespace Engine
 /////////////////////////////////
-static void Engine::_split(Array<Match> &items, wchar_t const *content, UNumber offset, UNumber const endOffset,
-                           UNumber const count) noexcept {
+static void Engine::split(Array<Match> &items, wchar_t const *content, UNumber offset, UNumber const endOffset,
+                          UNumber const count) noexcept {
     UNumber const started  = offset;
     Match *       item_ptr = nullptr;
 

@@ -17,25 +17,25 @@ namespace Qentem {
 namespace Memory {
 
 template <typename Type>
-static inline void Allocate(Type **_p, UNumber const size) noexcept {
-    *_p = new Type[size];
+static inline void Allocate(Type **pinter, UNumber const size) noexcept {
+    *pinter = new Type[size];
 }
 
 template <typename Type>
-static inline void Deallocate(Type **_p) noexcept {
-    delete[] * _p;
-    *_p = nullptr;
+static inline void Deallocate(Type **pinter) noexcept {
+    delete[] * pinter;
+    *pinter = nullptr;
 }
 
 template <typename Type>
-static inline void AllocateBit(Type **_p) noexcept {
-    *_p = new Type;
+static inline void AllocateBit(Type **pinter) noexcept {
+    *pinter = new Type;
 }
 
 template <typename Type>
-static inline void DeallocateBit(Type **_p) noexcept {
-    delete *_p;
-    *_p = nullptr;
+static inline void DeallocateBit(Type **pinter) noexcept {
+    delete *pinter;
+    *pinter = nullptr;
 }
 
 } // namespace Memory

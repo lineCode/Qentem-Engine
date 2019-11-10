@@ -71,66 +71,66 @@ struct Document {
     Document(Document &&doc)      = default;
     Document(Document const &doc) = default;
 
-    Document(Array<double> const &_numbers) noexcept {
-        Numbers = _numbers;
-        Entries.SetCapacity(_numbers.Size);
+    Document(Array<double> const &numbers) noexcept {
+        Numbers = numbers;
+        Entries.SetCapacity(numbers.Size);
 
-        for (UNumber i = 0; i < _numbers.Size; i++) {
+        for (UNumber i = 0; i < numbers.Size; i++) {
             Entries += Entry({VType::NumberT, 0, i});
         }
 
         Ordered = true;
     }
 
-    Document(Array<String> const &_strings) noexcept {
-        Strings = _strings;
-        Entries.SetCapacity(_strings.Size);
+    Document(Array<String> const &strings) noexcept {
+        Strings = strings;
+        Entries.SetCapacity(strings.Size);
 
-        for (UNumber i = 0; i < _strings.Size; i++) {
+        for (UNumber i = 0; i < strings.Size; i++) {
             Entries += Entry({VType::StringT, 0, i});
         }
 
         Ordered = true;
     }
 
-    Document(Array<Document> const &_documents) noexcept {
-        Documents = _documents;
-        Entries.SetCapacity(_documents.Size);
+    Document(Array<Document> const &documents) noexcept {
+        Documents = documents;
+        Entries.SetCapacity(documents.Size);
 
-        for (UNumber i = 0; i < _documents.Size; i++) {
+        for (UNumber i = 0; i < documents.Size; i++) {
             Entries += Entry({VType::DocumentT, 0, i});
         }
 
         Ordered = true;
     }
 
-    Document(Array<double> &&_numbers) noexcept {
-        Numbers = static_cast<Array<double> &&>(_numbers);
-        Entries.SetCapacity(_numbers.Size);
+    Document(Array<double> &&numbers) noexcept {
+        Numbers = static_cast<Array<double> &&>(numbers);
+        Entries.SetCapacity(numbers.Size);
 
-        for (UNumber i = 0; i < _numbers.Size; i++) {
+        for (UNumber i = 0; i < numbers.Size; i++) {
             Entries += Entry({VType::NumberT, 0, i});
         }
 
         Ordered = true;
     }
 
-    Document(Array<String> &&_strings) noexcept {
-        Strings = static_cast<Array<String> &&>(_strings);
-        Entries.SetCapacity(_strings.Size);
+    Document(Array<String> &&strings) noexcept {
+        Strings = static_cast<Array<String> &&>(strings);
+        Entries.SetCapacity(strings.Size);
 
-        for (UNumber i = 0; i < _strings.Size; i++) {
+        for (UNumber i = 0; i < strings.Size; i++) {
             Entries += Entry({VType::StringT, 0, i});
         }
 
         Ordered = true;
     }
 
-    Document(Array<Document> &&_documents) noexcept {
-        Documents = static_cast<Array<Document> &&>(_documents);
-        Entries.SetCapacity(_documents.Size);
+    Document(Array<Document> &&documents) noexcept {
+        Documents = static_cast<Array<Document> &&>(documents);
+        Entries.SetCapacity(documents.Size);
 
-        for (UNumber i = 0; i < _documents.Size; i++) {
+        for (UNumber i = 0; i < documents.Size; i++) {
             Entries += Entry({VType::DocumentT, 0, i});
         }
 
@@ -139,10 +139,10 @@ struct Document {
 
     Document(wchar_t const *value) noexcept {
         if (value != nullptr) {
-            Array<Match> const items(Engine::Search(value, _getJsonExpres(), 0, String::Count(value)));
+            Array<Match> const items(Engine::Search(value, getJsonExpres(), 0, String::Count(value)));
 
             if (items.Size != 0) {
-                *this = _makeList(value, items[0]);
+                *this = makeList(value, items[0]);
             } else {
                 // Just a string.
                 Ordered = true;
@@ -156,10 +156,10 @@ struct Document {
     }
 
     Document(String const &value) noexcept {
-        Array<Match> const items(Engine::Search(value.Str, _getJsonExpres(), 0, value.Length));
+        Array<Match> const items(Engine::Search(value.Str, getJsonExpres(), 0, value.Length));
 
         if (items.Size != 0) {
-            *this = _makeList(value.Str, items[0]);
+            *this = makeList(value.Str, items[0]);
         } else {
             Ordered = true;
             Strings += value;
@@ -168,10 +168,10 @@ struct Document {
     }
 
     Document(String &&value) noexcept {
-        Array<Match> const items(Engine::Search(value.Str, _getJsonExpres(), 0, value.Length));
+        Array<Match> const items(Engine::Search(value.Str, getJsonExpres(), 0, value.Length));
 
         if (items.Size != 0) {
-            *this = _makeList(value.Str, items[0]);
+            *this = makeList(value.Str, items[0]);
         } else {
             Ordered = true;
             Strings += static_cast<String &&>(value);
@@ -191,22 +191,22 @@ struct Document {
         LastKeyLen = 0;
     }
 
-    static void Drop(Entry &_entry, Document &storage) noexcept {
-        _entry.Type = VType::UndefinedT;
+    static void Drop(Entry &entry, Document &storage) noexcept {
+        entry.Type = VType::UndefinedT;
 
         if (!storage.Ordered) {
-            storage.Keys[_entry.KeyID].Reset();
+            storage.Keys[entry.KeyID].Reset();
         }
 
-        switch (_entry.Type) {
+        switch (entry.Type) {
             // case VType::NumberT:
-            //     storage.Numbers[_entry.ArrayID] = 0; // Waste of time.
+            //     storage.Numbers[entry.ArrayID] = 0; // Waste of time.
             //     break;
             case VType::StringT:
-                storage.Strings[_entry.ArrayID].Reset();
+                storage.Strings[entry.ArrayID].Reset();
                 break;
             case VType::DocumentT:
-                storage.Documents[_entry.ArrayID].Reset();
+                storage.Documents[entry.ArrayID].Reset();
                 break;
             default:
                 break;
@@ -214,39 +214,39 @@ struct Document {
     }
 
     void Drop(wchar_t const *key) noexcept {
-        Entry *   _entry;
-        Document *storage = GetSource(&_entry, key, 0, String::Count(key));
+        Entry *   entry;
+        Document *storage = GetSource(&entry, key, 0, String::Count(key));
 
-        if (_entry != nullptr) {
-            Drop(*_entry, *storage);
+        if (entry != nullptr) {
+            Drop(*entry, *storage);
         }
     }
 
-    void InsertIndex(Index const &_index, UNumber const level, Array<Index> &_table) noexcept {
-        UNumber const id = ((_index.Hash + level) % HashBase);
+    static void InsertIndex(Index const &index, UNumber const hashBase, UNumber const level, Array<Index> &table) noexcept {
+        UNumber const id = ((index.Hash + level) % hashBase);
 
-        if (_table.Capacity <= id) {
-            _table.Resize(id + 1);
-            _table.Size = _table.Capacity;
+        if (table.Capacity <= id) {
+            table.Resize(id + 1);
+            table.Size = table.Capacity;
         }
 
-        if (_table[id].Hash == 0) {
-            _table[id] = _index;
+        if (table[id].Hash == 0) {
+            table[id] = index;
             return;
         }
 
-        InsertIndex(_index, (level + id + 2), _table[id].Table);
+        InsertIndex(index, hashBase, (level + id + 2), table[id].Table);
     }
 
-    Entry *Exist(UNumber hash, UNumber const level, Array<Index> const &_table) const noexcept {
+    Entry *Exist(UNumber hash, UNumber const level, Array<Index> const &table) const noexcept {
         UNumber const id = ((hash + level) % HashBase);
 
-        if ((_table.Size > id) && (_table[id].Hash != 0)) {
-            if (_table[id].Hash == hash) {
-                return &(Entries[_table[id].EntryID]);
+        if ((table.Size > id) && (table[id].Hash != 0)) {
+            if (table[id].Hash == hash) {
+                return &(Entries[table[id].EntryID]);
             }
 
-            return Exist(hash, (level + id + 2), _table[id].Table);
+            return Exist(hash, (level + id + 2), table[id].Table);
         }
 
         return nullptr;
@@ -256,15 +256,15 @@ struct Document {
         Table.Reset();
         HashBase = newBase;
 
-        Index   _index;
+        Index   index;
         String *key;
 
         for (UNumber i = 0; i < Keys.Size; i++) {
-            key            = &(Keys[Entries[i].KeyID]);
-            _index.Hash    = String::Hash(key->Str, 0, key->Length);
-            _index.EntryID = i;
+            key           = &(Keys[Entries[i].KeyID]);
+            index.Hash    = String::Hash(key->Str, 0, key->Length);
+            index.EntryID = i;
 
-            InsertIndex(_index, 0, Table);
+            InsertIndex(index, HashBase, 0, Table);
 
             if (children && (Entries[i].Type == VType::DocumentT)) {
                 Documents[Entries[i].ArrayID].Rehash(HashBase, true);
@@ -274,10 +274,10 @@ struct Document {
 
     void Insert(UNumber entryID, VType const type, void *ptr, bool const move) noexcept {
         if (entryID < Entries.Size) {
-            Entry & _ent = Entries[entryID];
-            UNumber id   = 0;
+            Entry & entry = Entries[entryID];
+            UNumber id    = 0;
 
-            if (_ent.Type != type) {
+            if (entry.Type != type) {
                 // New item.
                 switch (type) {
                     case VType::NumberT: {
@@ -308,39 +308,39 @@ struct Document {
                 }
 
                 // Clearing any existing value.
-                switch (_ent.Type) {
+                switch (entry.Type) {
                     case VType::StringT: {
-                        Strings[_ent.ArrayID].Reset();
+                        Strings[entry.ArrayID].Reset();
                     } break;
                     case VType::DocumentT: {
-                        Documents[_ent.ArrayID].Reset();
+                        Documents[entry.ArrayID].Reset();
                     } break;
                     default:
                         break;
                 }
 
-                _ent.ArrayID = id;
-                _ent.Type    = type;
+                entry.ArrayID = id;
+                entry.Type    = type;
             } else {
                 // Updating existing item.
                 switch (type) {
                     case VType::NumberT: {
-                        Numbers[_ent.ArrayID] = *(static_cast<double *>(ptr));
+                        Numbers[entry.ArrayID] = *(static_cast<double *>(ptr));
                         break;
                     }
                     case VType::StringT: {
                         if (move) {
-                            Strings[_ent.ArrayID] = static_cast<String &&>(*(static_cast<String *>(ptr)));
+                            Strings[entry.ArrayID] = static_cast<String &&>(*(static_cast<String *>(ptr)));
                         } else {
-                            Strings[_ent.ArrayID] = *(static_cast<String *>(ptr));
+                            Strings[entry.ArrayID] = *(static_cast<String *>(ptr));
                         }
                         break;
                     }
                     case VType::DocumentT: {
                         if (move) {
-                            Documents[_ent.ArrayID] = static_cast<Document &&>(*(static_cast<Document *>(ptr)));
+                            Documents[entry.ArrayID] = static_cast<Document &&>(*(static_cast<Document *>(ptr)));
                         } else {
-                            Documents[_ent.ArrayID] = *(static_cast<Document *>(ptr));
+                            Documents[entry.ArrayID] = *(static_cast<Document *>(ptr));
                         }
                         break;
                     }
@@ -352,17 +352,17 @@ struct Document {
     }
 
     void InsertHash(UNumber id, wchar_t const *key, UNumber const offset, UNumber const limit, VType const type) noexcept {
-        InsertIndex({String::Hash(key, offset, limit), Entries.Size}, 0, Table);
+        InsertIndex({String::Hash(key, offset, limit), Entries.Size}, HashBase, 0, Table);
         Entries += Entry({type, Keys.Size, id});
         Keys += String::Part(key, offset, limit);
     }
 
     void Insert(wchar_t const *key, UNumber const offset, UNumber const limit, VType const type, void *ptr, bool const move) noexcept {
         UNumber       id    = 0;
-        UNumber const _hash = String::Hash(key, offset, limit);
-        Entry *       _ent  = Exist(_hash, 0, Table);
+        UNumber const hash  = String::Hash(key, offset, limit);
+        Entry *       entry = Exist(hash, 0, Table);
 
-        if ((_ent == nullptr) || (_ent->Type != type)) {
+        if ((entry == nullptr) || (entry->Type != type)) {
             // New item.
             switch (type) {
                 case VType::NumberT: {
@@ -395,22 +395,22 @@ struct Document {
             // Updating existing item.
             switch (type) {
                 case VType::NumberT: {
-                    Numbers[_ent->ArrayID] = *(static_cast<double *>(ptr));
+                    Numbers[entry->ArrayID] = *(static_cast<double *>(ptr));
                     break;
                 }
                 case VType::StringT: {
                     if (move) {
-                        Strings[_ent->ArrayID] = static_cast<String &&>(*(static_cast<String *>(ptr)));
+                        Strings[entry->ArrayID] = static_cast<String &&>(*(static_cast<String *>(ptr)));
                     } else {
-                        Strings[_ent->ArrayID] = *(static_cast<String *>(ptr));
+                        Strings[entry->ArrayID] = *(static_cast<String *>(ptr));
                     }
                     break;
                 }
                 case VType::DocumentT: {
                     if (move) {
-                        Documents[_ent->ArrayID] = static_cast<Document &&>(*(static_cast<Document *>(ptr)));
+                        Documents[entry->ArrayID] = static_cast<Document &&>(*(static_cast<Document *>(ptr)));
                     } else {
-                        Documents[_ent->ArrayID] = *(static_cast<Document *>(ptr));
+                        Documents[entry->ArrayID] = *(static_cast<Document *>(ptr));
                     }
                     break;
                 }
@@ -419,53 +419,53 @@ struct Document {
             }
         }
 
-        if (_ent != nullptr) {
+        if (entry != nullptr) {
             // If exists ...
-            if (_ent->Type != type) {
+            if (entry->Type != type) {
                 // Clearing any existing value.
-                switch (_ent->Type) {
+                switch (entry->Type) {
                     case VType::StringT: {
-                        Strings[_ent->ArrayID].Reset();
+                        Strings[entry->ArrayID].Reset();
                     } break;
                     case VType::DocumentT: {
-                        Documents[_ent->ArrayID].Reset();
+                        Documents[entry->ArrayID].Reset();
                     } break;
                     default:
                         break;
                 }
 
-                _ent->ArrayID = id;
-                _ent->Type    = type;
+                entry->ArrayID = id;
+                entry->Type    = type;
             }
 
             return;
         }
 
-        InsertIndex({_hash, Entries.Size}, 0, Table);
+        InsertIndex({hash, Entries.Size}, HashBase, 0, Table);
         Entries += Entry({type, Keys.Size, id});
         Keys += String::Part(key, offset, limit);
     }
 
-    static Document _makeList(wchar_t const *content, Match const &item) noexcept {
-        Array<Match> const &_items = item.NestMatch;
+    static Document makeList(wchar_t const *content, Match const &match) noexcept {
         Document            document;
+        Array<Match> const &items = match.NestMatch;
 
-        Match *_item;
+        Match *item;
 
         bool          done    = false;
-        UNumber       _itemID = 0;
-        UNumber       offset  = (item.Offset + 1); // the starting char [
+        UNumber       item_id = 0;
+        UNumber       offset  = (match.Offset + 1); // the starting char [
         UNumber       start   = offset;
-        UNumber const _length = (item.Length + item.Offset);
+        UNumber const length  = (match.Length + match.Offset);
 
-        if (item.Expr->ID == 1) {
+        if (match.Expr->ID == 1) {
             UNumber j;
 
-            for (UNumber i = 0; i < _items.Size; i++) {
-                _item = &(_items[i]);
-                j     = (_item->Offset + _item->Length);
+            for (UNumber i = 0; i < items.Size; i++) {
+                item = &(items[i]);
+                j    = (item->Offset + item->Length);
 
-                for (; j < _length; j++) {
+                for (; j < length; j++) {
                     while (content[j] == L' ') {
                         ++j;
                     }
@@ -480,25 +480,25 @@ struct Document {
                             switch (content[start]) {
                                 case L'f': {
                                     // False
-                                    document.InsertHash(0, content, (_item->Offset + 1), (_item->Length - 2), VType::FalseT);
+                                    document.InsertHash(0, content, (item->Offset + 1), (item->Length - 2), VType::FalseT);
                                     break;
                                 }
                                 case L't': {
                                     // True
 
-                                    document.InsertHash(0, content, (_item->Offset + 1), (_item->Length - 2), VType::TrueT);
+                                    document.InsertHash(0, content, (item->Offset + 1), (item->Length - 2), VType::TrueT);
                                     break;
                                 }
                                 case L'n': {
                                     // Null
-                                    document.InsertHash(0, content, (_item->Offset + 1), (_item->Length - 2), VType::NullT);
+                                    document.InsertHash(0, content, (item->Offset + 1), (item->Length - 2), VType::NullT);
                                     break;
                                 }
                                 default: {
                                     double number;
                                     if (String::ToNumber(number, content, start, limit)) {
                                         // Number
-                                        document.InsertHash(document.Numbers.Size, content, (_item->Offset + 1), (_item->Length - 2),
+                                        document.InsertHash(document.Numbers.Size, content, (item->Offset + 1), (item->Length - 2),
                                                             VType::NumberT);
                                         document.Numbers += number;
                                     }
@@ -512,13 +512,13 @@ struct Document {
                         case L'"': {
                             ++i;
 
-                            document.InsertHash(document.Strings.Size, content, (_item->Offset + 1), (_item->Length - 2), VType::StringT);
+                            document.InsertHash(document.Strings.Size, content, (item->Offset + 1), (item->Length - 2), VType::StringT);
 
-                            if (_items[i].NestMatch.Size == 0) {
-                                document.Strings += String::Part(content, (_items[i].Offset + 1), (_items[i].Length - 2));
+                            if (items[i].NestMatch.Size == 0) {
+                                document.Strings += String::Part(content, (items[i].Offset + 1), (items[i].Length - 2));
                             } else {
                                 document.Strings +=
-                                    Engine::Parse(content, _items[i].NestMatch, (_items[i].Offset + 1), (_items[i].Length - 2));
+                                    Engine::Parse(content, items[i].NestMatch, (items[i].Offset + 1), (items[i].Length - 2));
                             }
 
                             done = true;
@@ -532,9 +532,8 @@ struct Document {
                         case L'[': {
                             ++i;
 
-                            document.InsertHash(document.Documents.Size, content, (_item->Offset + 1), (_item->Length - 2),
-                                                VType::DocumentT);
-                            document.Documents += _makeList(content, _items[i]);
+                            document.InsertHash(document.Documents.Size, content, (item->Offset + 1), (item->Length - 2), VType::DocumentT);
+                            document.Documents += makeList(content, items[i]);
 
                             done = true;
                             break;
@@ -550,7 +549,7 @@ struct Document {
         } else {
             document.Ordered = true;
 
-            for (; offset < _length; offset++) {
+            for (; offset < length; offset++) {
                 while (content[offset] == L' ') {
                     ++offset;
                 }
@@ -597,29 +596,29 @@ struct Document {
                         break;
                     }
                     case L'"': {
-                        _item = &(_items[_itemID++]);
+                        item = &(items[item_id++]);
 
                         document.Entries += Entry({VType::StringT, 0, document.Strings.Size});
 
-                        if (_item->NestMatch.Size == 0) {
-                            document.Strings += String::Part(content, (_item->Offset + 1), (_item->Length - 2));
+                        if (item->NestMatch.Size == 0) {
+                            document.Strings += String::Part(content, (item->Offset + 1), (item->Length - 2));
                         } else {
-                            document.Strings += Engine::Parse(content, _item->NestMatch, (_item->Offset + 1), (_item->Length - 2));
+                            document.Strings += Engine::Parse(content, item->NestMatch, (item->Offset + 1), (item->Length - 2));
                         }
 
-                        offset = (_item->Offset + _item->Length) - 1;
+                        offset = (item->Offset + item->Length) - 1;
                         done   = true;
                         break;
                     }
                     case L'{':
                     case L'[': {
-                        _item = &(_items[_itemID++]);
+                        item = &(items[item_id++]);
 
                         document.Entries += Entry({VType::DocumentT, 0, document.Documents.Size});
 
-                        document.Documents += _makeList(content, *_item);
+                        document.Documents += makeList(content, *item);
 
-                        offset = (_item->Offset + _item->Length) - 1;
+                        offset = (item->Offset + item->Length) - 1;
                         done   = true;
                         break;
                     }
@@ -640,14 +639,14 @@ struct Document {
 
         String n_content;
 
-        static Expressions const &json_expres = _getJsonExpres();
+        static Expressions const &json_expres = getJsonExpres();
 
         // C style comments
         if (!comments) {
             items = Engine::Search(content, json_expres, offset, limit);
         } else {
-            static Expressions __comments;
-            if (__comments.Size == 0) {
+            static Expressions comments_exprs;
+            if (comments_exprs.Size == 0) {
                 static Expression comment1;
                 static Expression comment1_end;
                 comment1.SetKeyword(L"/*");
@@ -662,15 +661,15 @@ struct Document {
                 comment2_end.SetReplace(L"\n");
                 comment2.Connected = &comment2_end;
 
-                __comments.Add(&comment1).Add(&comment2);
+                comments_exprs.Add(&comment1).Add(&comment2);
             }
 
-            n_content = Engine::Parse(content, Engine::Search(content, __comments, offset, limit), offset, limit);
+            n_content = Engine::Parse(content, Engine::Search(content, comments_exprs, offset, limit), offset, limit);
             items     = Engine::Search(n_content.Str, json_expres, 0, n_content.Length);
         }
 
         if (items.Size != 0) {
-            document = _makeList((n_content.Length == 0) ? content : n_content.Str, items[0]);
+            document = makeList((n_content.Length == 0) ? content : n_content.Str, items[0]);
         }
 
         return document;
@@ -682,7 +681,7 @@ struct Document {
 
     // Key can be: name/is, [name/id], name/id[name/id], name[name/id][sub-name/id], name/id[name/id][sub-name/id][sub-sub-name/id]...
     // "name": a string a stored value in "Keys" array. "id" is the number of array index that starts with 0: Entries[id]
-    Document *GetSource(Entry **_entry, wchar_t const *key, UNumber const offset, UNumber limit) noexcept {
+    Document *GetSource(Entry **entry, wchar_t const *key, UNumber const offset, UNumber limit) noexcept {
         Document *doc = this;
 
         UNumber start = offset;
@@ -708,13 +707,13 @@ struct Document {
                     return nullptr;
                 }
 
-                *_entry = &(doc->Entries[ent_id]);
-            } else if ((*_entry = doc->Exist(String::Hash(key, start, (end - start)), 0, doc->Table)) == nullptr) {
+                *entry = &(doc->Entries[ent_id]);
+            } else if ((*entry = doc->Exist(String::Hash(key, start, (end - start)), 0, doc->Table)) == nullptr) {
                 return nullptr;
             }
 
-            if ((*_entry)->Type == VType::DocumentT) {
-                doc = &(doc->Documents[(*_entry)->ArrayID]);
+            if ((*entry)->Type == VType::DocumentT) {
+                doc = &(doc->Documents[(*entry)->ArrayID]);
             }
 
             if (end == end_offset) {
@@ -738,15 +737,15 @@ struct Document {
         value.Reset();
 
         if (entryID < Entries.Size) {
-            Entry const &_entry = Entries[entryID];
+            Entry const &entry = Entries[entryID];
 
-            switch (_entry.Type) {
+            switch (entry.Type) {
                 case VType::NumberT: {
-                    value = String::FromNumber(Numbers[_entry.ArrayID], 1, 0, 3);
+                    value = String::FromNumber(Numbers[entry.ArrayID], 1, 0, 3);
                     return true;
                 }
                 case VType::StringT: {
-                    value = Strings[_entry.ArrayID];
+                    value = Strings[entry.ArrayID];
                     return true;
                 }
                 case VType::FalseT: {
@@ -773,17 +772,17 @@ struct Document {
     bool GetString(String &value, wchar_t const *key, UNumber const offset, UNumber const limit) noexcept {
         value.Reset();
 
-        Entry *         _entry;
-        Document const *storage = GetSource(&_entry, key, offset, limit);
+        Entry *         entry;
+        Document const *storage = GetSource(&entry, key, offset, limit);
 
         if (storage != nullptr) {
-            switch (_entry->Type) {
+            switch (entry->Type) {
                 case VType::NumberT: {
-                    value = String::FromNumber(storage->Numbers[_entry->ArrayID], 1, 0, 3);
+                    value = String::FromNumber(storage->Numbers[entry->ArrayID], 1, 0, 3);
                     return true;
                 }
                 case VType::StringT: {
-                    value = storage->Strings[_entry->ArrayID];
+                    value = storage->Strings[entry->ArrayID];
                     return true;
                 }
                 case VType::FalseT: {
@@ -814,17 +813,17 @@ struct Document {
     bool GetNumber(UNumber &value, wchar_t const *key, UNumber const offset, UNumber const limit) noexcept {
         value = 0;
 
-        Entry *         _entry;
-        Document const *storage = GetSource(&_entry, key, offset, limit);
+        Entry *         entry;
+        Document const *storage = GetSource(&entry, key, offset, limit);
 
         if (storage != nullptr) {
-            switch (_entry->Type) {
+            switch (entry->Type) {
                 case VType::NumberT: {
-                    value = static_cast<UNumber>(storage->Numbers[_entry->ArrayID]);
+                    value = static_cast<UNumber>(storage->Numbers[entry->ArrayID]);
                     return true;
                 }
                 case VType::StringT: {
-                    String const &st = storage->Strings[_entry->ArrayID];
+                    String const &st = storage->Strings[entry->ArrayID];
                     return String::ToNumber(value, st.Str, 0, st.Length);
                     return true;
                 }
@@ -849,17 +848,17 @@ struct Document {
     bool GetDouble(double &value, wchar_t const *key, UNumber const offset, UNumber const limit) noexcept {
         value = 0.0;
 
-        Entry *         _entry;
-        Document const *storage = GetSource(&_entry, key, offset, limit);
+        Entry *         entry;
+        Document const *storage = GetSource(&entry, key, offset, limit);
 
         if (storage != nullptr) {
-            switch (_entry->Type) {
+            switch (entry->Type) {
                 case VType::NumberT: {
-                    value = storage->Numbers[_entry->ArrayID];
+                    value = storage->Numbers[entry->ArrayID];
                     return true;
                 }
                 case VType::StringT: {
-                    String const &st = storage->Strings[_entry->ArrayID];
+                    String const &st = storage->Strings[entry->ArrayID];
                     return String::ToNumber(value, st.Str, 0, st.Length);
                     return true;
                 }
@@ -882,17 +881,17 @@ struct Document {
     }
 
     bool GetBool(bool &value, wchar_t const *key, UNumber const offset, UNumber const limit) noexcept {
-        Entry *         _entry;
-        Document const *storage = GetSource(&_entry, key, offset, limit);
+        Entry *         entry;
+        Document const *storage = GetSource(&entry, key, offset, limit);
 
         if (storage != nullptr) {
-            switch (_entry->Type) {
+            switch (entry->Type) {
                 case VType::NumberT: {
-                    value = (storage->Numbers[_entry->ArrayID] > 0.0);
+                    value = (storage->Numbers[entry->ArrayID] > 0.0);
                     return true;
                 }
                 case VType::StringT: {
-                    value = (storage->Strings[_entry->ArrayID] == L"true");
+                    value = (storage->Strings[entry->ArrayID] == L"true");
                     return true;
                 }
                 case VType::FalseT:
@@ -914,10 +913,10 @@ struct Document {
     }
 
     Document *GetDocument(wchar_t const *key, UNumber const offset, UNumber const limit) noexcept {
-        Entry *   _entry;
-        Document *storage = GetSource(&_entry, key, offset, limit);
+        Entry *   entry;
+        Document *storage = GetSource(&entry, key, offset, limit);
 
-        if ((storage != nullptr) && (_entry->Type == VType::DocumentT)) {
+        if ((storage != nullptr) && (entry->Type == VType::DocumentT)) {
             return storage;
         }
 
@@ -925,33 +924,33 @@ struct Document {
     }
 
     String ToJSON() const noexcept {
-        static Expressions const &to_json_expres = _getToJsonExpres();
+        static Expressions const &to_json_expres = getToJsonExpres();
 
         StringStream ss;
-        Entry *      _entry;
+        Entry *      entry;
 
         if (Ordered) {
             ss.Bits.SetCapacity(2 + (Entries.Size * 2) + (Strings.Size * 2));
-            ss._strings.SetCapacity(Documents.Size + Numbers.Size);
 
             ss += JFX.fss4;
 
             for (UNumber i = 0; i < Entries.Size; i++) {
-                _entry = &(Entries[i]);
+                entry = &(Entries[i]);
 
                 if (ss.Length != 1) {
                     ss += JFX.fss3;
                 }
 
-                switch (_entry->Type) {
+                switch (entry->Type) {
                     case VType::NumberT: {
-                        ss += String::FromNumber(Numbers[_entry->ArrayID]);
+                        ss += String::FromNumber(Numbers[entry->ArrayID]);
                         break;
                     }
                     case VType::StringT: {
                         ss += JFX.fss6;
 
-                        String const &     es = Strings[_entry->ArrayID];
+                        String const &es = Strings[entry->ArrayID];
+
                         Array<Match> const tmpMatchs(Engine::Search(es.Str, to_json_expres, 0, es.Length));
                         if (tmpMatchs.Size == 0) {
                             ss += es;
@@ -963,7 +962,7 @@ struct Document {
                         break;
                     }
                     case VType::DocumentT: {
-                        ss += Documents[_entry->ArrayID].ToJSON();
+                        ss += Documents[entry->ArrayID].ToJSON();
                         break;
                     }
                     case VType::FalseT: {
@@ -984,34 +983,34 @@ struct Document {
             ss += JFX.fss5;
         } else {
             ss.Bits.SetCapacity(2 + (Entries.Size * 6) + (Strings.Size * 2));
-            ss._strings.SetCapacity(Documents.Size + Numbers.Size);
 
             ss += JFX.fss1;
 
             for (UNumber i = 0; i < Entries.Size; i++) {
-                _entry = &(Entries[i]);
+                entry = &(Entries[i]);
 
                 if (ss.Length != 1) {
                     ss += JFX.fss3;
                 }
 
-                switch (_entry->Type) {
+                switch (entry->Type) {
                     case VType::NumberT: {
                         ss += JFX.fss6;
-                        ss += Keys[_entry->KeyID];
+                        ss += Keys[entry->KeyID];
                         ss += JFX.fss6;
                         ss += JFX.fsc1;
-                        ss += String::FromNumber(Numbers[_entry->ArrayID]);
+                        ss += String::FromNumber(Numbers[entry->ArrayID]);
                         break;
                     }
                     case VType::StringT: {
                         ss += JFX.fss6;
-                        ss += Keys[_entry->KeyID];
+                        ss += Keys[entry->KeyID];
                         ss += JFX.fss6;
                         ss += JFX.fsc1;
                         ss += JFX.fss6;
 
-                        String const &     es = Strings[_entry->ArrayID];
+                        String const &es = Strings[entry->ArrayID];
+
                         Array<Match> const tmpMatchs(Engine::Search(es.Str, to_json_expres, 0, es.Length));
                         if (tmpMatchs.Size == 0) {
                             ss += es;
@@ -1024,15 +1023,15 @@ struct Document {
                     }
                     case VType::DocumentT: {
                         ss += JFX.fss6;
-                        ss += Keys[_entry->KeyID];
+                        ss += Keys[entry->KeyID];
                         ss += JFX.fss6;
                         ss += JFX.fsc1;
-                        ss += Documents[_entry->ArrayID].ToJSON();
+                        ss += Documents[entry->ArrayID].ToJSON();
                         break;
                     }
                     case VType::FalseT: {
                         ss += JFX.fss6;
-                        ss += Keys[_entry->KeyID];
+                        ss += Keys[entry->KeyID];
                         ss += JFX.fss6;
                         ss += JFX.fsc1;
                         ss += JFX.fFalse;
@@ -1040,7 +1039,7 @@ struct Document {
                     }
                     case VType::TrueT: {
                         ss += JFX.fss6;
-                        ss += Keys[_entry->KeyID];
+                        ss += Keys[entry->KeyID];
                         ss += JFX.fss6;
                         ss += JFX.fsc1;
                         ss += JFX.fTrue;
@@ -1048,7 +1047,7 @@ struct Document {
                     }
                     default: {
                         ss += JFX.fss6;
-                        ss += Keys[_entry->KeyID];
+                        ss += Keys[entry->KeyID];
                         ss += JFX.fss6;
                         ss += JFX.fsc1;
                         ss += JFX.fNull;
@@ -1063,33 +1062,33 @@ struct Document {
         return ss.Eject();
     }
 
-    static Expressions const &_getToJsonExpres() noexcept {
-        static Expression  _JsonEsc;
-        static Expression  _JsonQuot;
+    static Expressions const &getToJsonExpres() noexcept {
+        static Expression  esc;
+        static Expression  quot;
         static Expressions tags;
 
         if (tags.Size == 0) {
-            _JsonEsc.SetKeyword(L"\\");
-            _JsonEsc.MatchCB =
+            esc.SetKeyword(L"\\");
+            esc.MatchCB =
                 ([](wchar_t const *content, UNumber &offset, UNumber const endOffset, Match &item, Array<Match> &items) noexcept -> void {
                     if ((content[offset] == L'\\') || (content[offset] == L' ') || (offset == endOffset)) {
                         // If there is a space after \ or \ or it's at the end, then it's a match.
                         items += static_cast<Match &&>(item);
                     }
                 });
-            _JsonEsc.SetReplace(L"\\\\");
+            esc.SetReplace(L"\\\\");
 
-            _JsonQuot.SetKeyword(L"\"");
-            _JsonQuot.SetReplace(L"\\\"");
+            quot.SetKeyword(L"\"");
+            quot.SetReplace(L"\\\"");
 
-            tags += &_JsonEsc;
-            tags += &_JsonQuot;
+            tags += &esc;
+            tags += &quot;
         }
 
         return tags;
     }
 
-    static Expressions const &_getJsonExpres() noexcept {
+    static Expressions const &getJsonExpres() noexcept {
         static Expression esc_quotation;
         static Expression esc_esc;
 
@@ -1147,56 +1146,56 @@ struct Document {
             return;
         }
 
-        Entry *_entry;
+        Entry *entry;
 
         if (Ordered) {
             for (UNumber i = 0; i < doc.Entries.Size; i++) {
-                _entry = &(doc.Entries[i]);
+                entry = &(doc.Entries[i]);
 
-                switch (_entry->Type) {
+                switch (entry->Type) {
                     case VType::NumberT: {
-                        Entries += Entry({_entry->Type, 0, Numbers.Size});
-                        Numbers += doc.Numbers[_entry->ArrayID];
+                        Entries += Entry({entry->Type, 0, Numbers.Size});
+                        Numbers += doc.Numbers[entry->ArrayID];
                         break;
                     }
                     case VType::StringT: {
-                        Entries += Entry({_entry->Type, 0, Strings.Size});
-                        Strings += doc.Strings[_entry->ArrayID];
+                        Entries += Entry({entry->Type, 0, Strings.Size});
+                        Strings += doc.Strings[entry->ArrayID];
                         break;
                     }
                     case VType::DocumentT: {
-                        Entries += Entry({_entry->Type, 0, Documents.Size});
-                        Documents += doc.Documents[_entry->ArrayID];
+                        Entries += Entry({entry->Type, 0, Documents.Size});
+                        Documents += doc.Documents[entry->ArrayID];
                         break;
                     }
                     default: {
-                        Entries += Entry({_entry->Type, 0, 0});
+                        Entries += Entry({entry->Type, 0, 0});
                         break;
                     }
                 }
             }
         } else {
-            String *_key;
+            String *key;
 
             for (UNumber i = 0; i < doc.Entries.Size; i++) {
-                _entry = &(doc.Entries[i]);
-                _key   = &(doc.Keys[doc.Entries[i].KeyID]);
+                entry = &(doc.Entries[i]);
+                key   = &(doc.Keys[doc.Entries[i].KeyID]);
 
-                switch (_entry->Type) {
+                switch (entry->Type) {
                     case VType::NumberT: {
-                        Insert(_key->Str, 0, _key->Length, _entry->Type, &doc.Numbers[_entry->ArrayID], false);
+                        Insert(key->Str, 0, key->Length, entry->Type, &doc.Numbers[entry->ArrayID], false);
                         break;
                     }
                     case VType::StringT: {
-                        Insert(_key->Str, 0, _key->Length, _entry->Type, &doc.Strings[_entry->ArrayID], false);
+                        Insert(key->Str, 0, key->Length, entry->Type, &doc.Strings[entry->ArrayID], false);
                         break;
                     }
                     case VType::DocumentT: {
-                        Insert(_key->Str, 0, _key->Length, _entry->Type, &doc.Documents[_entry->ArrayID], false);
+                        Insert(key->Str, 0, key->Length, entry->Type, &doc.Documents[entry->ArrayID], false);
                         break;
                     }
                     default: {
-                        Insert(_key->Str, 0, _key->Length, _entry->Type, nullptr, false);
+                        Insert(key->Str, 0, key->Length, entry->Type, nullptr, false);
                         break;
                     }
                 }
@@ -1210,56 +1209,56 @@ struct Document {
             return;
         }
 
-        Entry *_entry;
+        Entry *entry;
 
         if (Ordered) {
             for (UNumber i = 0; i < doc.Entries.Size; i++) {
-                _entry = &(doc.Entries[i]);
+                entry = &(doc.Entries[i]);
 
-                switch (_entry->Type) {
+                switch (entry->Type) {
                     case VType::NumberT: {
-                        Entries += Entry({_entry->Type, 0, Numbers.Size});
-                        Numbers += doc.Numbers[_entry->ArrayID];
+                        Entries += Entry({entry->Type, 0, Numbers.Size});
+                        Numbers += doc.Numbers[entry->ArrayID];
                         break;
                     }
                     case VType::StringT: {
-                        Entries += Entry({_entry->Type, 0, Strings.Size});
-                        Strings += static_cast<String &&>(doc.Strings[_entry->ArrayID]);
+                        Entries += Entry({entry->Type, 0, Strings.Size});
+                        Strings += static_cast<String &&>(doc.Strings[entry->ArrayID]);
                         break;
                     }
                     case VType::DocumentT: {
-                        Entries += Entry({_entry->Type, 0, Documents.Size});
-                        Documents += static_cast<Document &&>(doc.Documents[_entry->ArrayID]);
+                        Entries += Entry({entry->Type, 0, Documents.Size});
+                        Documents += static_cast<Document &&>(doc.Documents[entry->ArrayID]);
                         break;
                     }
                     default: {
-                        Entries += Entry({_entry->Type, 0, 0});
+                        Entries += Entry({entry->Type, 0, 0});
                         break;
                     }
                 }
             }
         } else {
-            String *_key;
+            String *key;
 
             for (UNumber i = 0; i < doc.Entries.Size; i++) {
-                _entry = &(doc.Entries[i]);
-                _key   = &(doc.Keys[doc.Entries[i].KeyID]);
+                entry = &(doc.Entries[i]);
+                key   = &(doc.Keys[doc.Entries[i].KeyID]);
 
-                switch (_entry->Type) {
+                switch (entry->Type) {
                     case VType::NumberT: {
-                        Insert(_key->Str, 0, _key->Length, _entry->Type, &doc.Numbers[_entry->ArrayID], false);
+                        Insert(key->Str, 0, key->Length, entry->Type, &doc.Numbers[entry->ArrayID], false);
                         break;
                     }
                     case VType::StringT: {
-                        Insert(_key->Str, 0, _key->Length, _entry->Type, &doc.Strings[_entry->ArrayID], true);
+                        Insert(key->Str, 0, key->Length, entry->Type, &doc.Strings[entry->ArrayID], true);
                         break;
                     }
                     case VType::DocumentT: {
-                        Insert(_key->Str, 0, _key->Length, _entry->Type, &doc.Documents[_entry->ArrayID], true);
+                        Insert(key->Str, 0, key->Length, entry->Type, &doc.Documents[entry->ArrayID], true);
                         break;
                     }
                     default: {
-                        Insert(_key->Str, 0, _key->Length, _entry->Type, nullptr, false);
+                        Insert(key->Str, 0, key->Length, entry->Type, nullptr, false);
                         break;
                     }
                 }
@@ -1291,8 +1290,8 @@ struct Document {
             }
         } else {
             Insert(LastKey, 0, LastKeyLen, VType::DocumentT, &doc, true);
-            Entry *_entry;
-            storage = GetSource(&_entry, LastKey, 0, LastKeyLen);
+            Entry *entry;
+            storage = GetSource(&entry, LastKey, 0, LastKeyLen);
         }
 
         LastKey    = nullptr;
@@ -1327,8 +1326,8 @@ struct Document {
         } else {
             Insert(LastKey, 0, LastKeyLen, VType::DocumentT, &doc_copy, true);
 
-            Entry *_entry;
-            storage = GetSource(&_entry, LastKey, 0, LastKeyLen);
+            Entry *entry;
+            storage = GetSource(&entry, LastKey, 0, LastKeyLen);
         }
 
         LastKey    = nullptr;
@@ -1486,75 +1485,75 @@ struct Document {
         }
     }
 
-    void operator+=(Array<double> const &_numbers) noexcept {
+    void operator+=(Array<double> const &numbers) noexcept {
         if (Ordered) {
             UNumber id = Numbers.Size;
 
-            for (UNumber i = 0; i < _numbers.Size; i++) {
+            for (UNumber i = 0; i < numbers.Size; i++) {
                 Entries += Entry({VType::NumberT, 0, id++});
             }
 
-            Numbers += _numbers;
+            Numbers += numbers;
         }
     }
 
-    void operator+=(Array<String> const &_strings) noexcept {
+    void operator+=(Array<String> const &strings) noexcept {
         if (Ordered) {
             UNumber id = Strings.Size;
 
-            for (UNumber i = 0; i < _strings.Size; i++) {
+            for (UNumber i = 0; i < strings.Size; i++) {
                 Entries += Entry({VType::StringT, 0, id++});
             }
 
-            Strings += _strings;
+            Strings += strings;
         }
     }
 
-    void operator+=(Array<Document> const &_documents) noexcept {
+    void operator+=(Array<Document> const &documents) noexcept {
         if (Ordered) {
             UNumber id = Documents.Size;
 
-            for (UNumber i = 0; i < _documents.Size; i++) {
+            for (UNumber i = 0; i < documents.Size; i++) {
                 Entries += Entry({VType::DocumentT, 0, id++});
             }
 
-            Documents += _documents;
+            Documents += documents;
         }
     }
 
-    void operator+=(Array<double> &&_numbers) noexcept {
+    void operator+=(Array<double> &&numbers) noexcept {
         if (Ordered) {
             UNumber id = Numbers.Size;
 
-            for (UNumber i = 0; i < _numbers.Size; i++) {
+            for (UNumber i = 0; i < numbers.Size; i++) {
                 Entries += Entry({VType::NumberT, 0, id++});
             }
 
-            Numbers += _numbers;
+            Numbers += numbers;
         }
     }
 
-    void operator+=(Array<String> &&_strings) noexcept {
+    void operator+=(Array<String> &&strings) noexcept {
         if (Ordered) {
             UNumber id = Strings.Size;
 
-            for (UNumber i = 0; i < _strings.Size; i++) {
+            for (UNumber i = 0; i < strings.Size; i++) {
                 Entries += Entry({VType::StringT, 0, id++});
             }
 
-            Strings += static_cast<Array<String> &&>(_strings);
+            Strings += static_cast<Array<String> &&>(strings);
         }
     }
 
-    void operator+=(Array<Document> &&_documents) noexcept {
+    void operator+=(Array<Document> &&documents) noexcept {
         if (Ordered) {
             UNumber id = Documents.Size;
 
-            for (UNumber i = 0; i < _documents.Size; i++) {
+            for (UNumber i = 0; i < documents.Size; i++) {
                 Entries += Entry({VType::DocumentT, 0, id++});
             }
 
-            Documents += static_cast<Array<Document> &&>(_documents);
+            Documents += static_cast<Array<Document> &&>(documents);
         }
     }
 
@@ -1562,21 +1561,19 @@ struct Document {
         UNumber const str_len = String::Count(key);
 
         if (Ordered) {
-            UNumber __id;
-            String::ToNumber(__id, key, 0, str_len);
+            UNumber id;
+            if (String::ToNumber(id, key, 0, str_len)) {
+                if (Entries[id].Type == VType::DocumentT) {
+                    return Documents[Entries[id].ArrayID];
+                }
 
-            Entry const &ent = Entries[__id];
-
-            if (ent.Type == VType::DocumentT) {
-                return Documents[ent.ArrayID];
+                LastKeyLen = (id + 1);
             }
-
-            LastKeyLen = (__id + 1);
         } else {
-            Entry const *ent = Exist(String::Hash(key, 0, str_len), 0, Table);
+            Entry const *entry = Exist(String::Hash(key, 0, str_len), 0, Table);
 
-            if ((ent != nullptr) && (ent->Type == VType::DocumentT)) {
-                return Documents[ent->ArrayID];
+            if ((entry != nullptr) && (entry->Type == VType::DocumentT)) {
+                return Documents[entry->ArrayID];
             }
 
             LastKey    = key;
@@ -1588,21 +1585,19 @@ struct Document {
 
     Document &operator[](String const &key) noexcept {
         if (Ordered) {
-            UNumber __id;
-            String::ToNumber(__id, key.Str, 0, key.Length);
+            UNumber id;
+            if (String::ToNumber(id, key.Str, 0, key.Length)) {
+                if (Entries[id].Type == VType::DocumentT) {
+                    return Documents[Entries[id].ArrayID];
+                }
 
-            Entry const &ent = Entries[__id];
-
-            if (ent.Type == VType::DocumentT) {
-                return Documents[ent.ArrayID];
+                LastKeyLen = (id + 1);
             }
-
-            LastKeyLen = (__id + 1);
         } else {
-            Entry const *ent = Exist(String::Hash(key.Str, 0, key.Length), 0, Table);
+            Entry const *entry = Exist(String::Hash(key.Str, 0, key.Length), 0, Table);
 
-            if ((ent != nullptr) && (ent->Type == VType::DocumentT)) {
-                return Documents[ent->ArrayID];
+            if ((entry != nullptr) && (entry->Type == VType::DocumentT)) {
+                return Documents[entry->ArrayID];
             }
 
             LastKey    = key.Str;
@@ -1613,35 +1608,35 @@ struct Document {
     }
 
     Document &operator[](UNumber const id) noexcept {
-        Entry const &ent = Entries[id];
+        Entry const &entry = Entries[id];
 
-        if (ent.Type == VType::DocumentT) {
-            return Documents[ent.ArrayID];
+        if (entry.Type == VType::DocumentT) {
+            return Documents[entry.ArrayID];
         }
 
         if (Ordered) {
             LastKeyLen = (id + 1);
         } else {
-            LastKey    = Keys[ent.KeyID].Str;
-            LastKeyLen = Keys[ent.KeyID].Length;
+            LastKey    = Keys[entry.KeyID].Str;
+            LastKeyLen = Keys[entry.KeyID].Length;
         }
 
         return *this;
     }
 
     Document &operator[](int const id) noexcept {
-        UNumber const __id = static_cast<UNumber>(id);
-        Entry const & ent  = Entries[__id];
+        UNumber const ID    = static_cast<UNumber>(id);
+        Entry const & entry = Entries[ID];
 
-        if (ent.Type == VType::DocumentT) {
-            return Documents[ent.ArrayID];
+        if (entry.Type == VType::DocumentT) {
+            return Documents[entry.ArrayID];
         }
 
         if (Ordered) {
-            LastKeyLen = (__id + 1);
+            LastKeyLen = (ID + 1);
         } else {
-            LastKey    = Keys[ent.KeyID].Str;
-            LastKeyLen = Keys[ent.KeyID].Length;
+            LastKey    = Keys[entry.KeyID].Str;
+            LastKeyLen = Keys[entry.KeyID].Length;
         }
 
         return *this;

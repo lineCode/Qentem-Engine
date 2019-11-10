@@ -90,10 +90,10 @@ static Expressions const &getPropertiesExprs() noexcept {
 
 static Array<XTag> parseTags(String const &content, Array<Match> const &items, UNumber id, UNumber const count) noexcept {
 
-    static Expressions const &_propertiesExprs = getPropertiesExprs();
+    static Expressions const &propertiesExprs = getPropertiesExprs();
 
     Array<XTag> tags;
-    XTag        _tag;
+    XTag        x_tag;
 
     UNumber startAt;
     UNumber tagLen;
@@ -102,7 +102,7 @@ static Array<XTag> parseTags(String const &content, Array<Match> const &items, U
     UNumber      matchStart = 0;
     UNumber      tmpIndex   = 0;
     UNumber      remlen;
-    Array<Match> _properties;
+    Array<Match> x_properties;
 
     Match *item;
     bool   tagged = false;
@@ -119,11 +119,11 @@ static Array<XTag> parseTags(String const &content, Array<Match> const &items, U
         }
 
         if (tagged) {
-            if (content[startAt] != L'/') {                        // If it's not a closing tag.
-                if (_tag.Name.Compare(content, startAt, tagLen)) { // If it's equal to the current one.
-                    ++repeated;                                    // then it's a chiled tag.
+            if (content[startAt] != L'/') {                         // If it's not a closing tag.
+                if (x_tag.Name.Compare(content, startAt, tagLen)) { // If it's equal to the current one.
+                    ++repeated;                                     // then it's a chiled tag.
                 }
-            } else if (_tag.Name.Compare(content, (startAt + 1), (tagLen - 1))) {
+            } else if (x_tag.Name.Compare(content, (startAt + 1), (tagLen - 1))) {
                 // A closing tag and it's equal to the current one.
                 if (repeated != 0) {
                     // if it has a chiled of the same tag, then the closing tag is
@@ -147,7 +147,7 @@ static Array<XTag> parseTags(String const &content, Array<Match> const &items, U
                 }
             }
         } else if (content[startAt] != L'/') { // A new tag that is not a closing one.
-            _tag.Name = String::Part(content.Str, startAt, tagLen);
+            x_tag.Name = String::Part(content.Str, startAt, tagLen);
             // TODO: Add inline HTML tag list
 
             matchStart = id;
@@ -166,14 +166,14 @@ static Array<XTag> parseTags(String const &content, Array<Match> const &items, U
             XProperty xp;
             Match *   xpMatch;
 
-            _properties = Qentem::Engine::Search(content.Str, _propertiesExprs, startIndex, remlen);
+            x_properties = Qentem::Engine::Search(content.Str, propertiesExprs, startIndex, remlen);
 
-            for (UNumber p = 0; p < _properties.Size;) {
-                xpMatch = &_properties[p];
+            for (UNumber p = 0; p < x_properties.Size;) {
+                xpMatch = &x_properties[p];
                 xp.Name = String::Part(content.Str, xpMatch->Offset, xpMatch->Length);
                 ++p;
 
-                xpMatch = &_properties[p];
+                xpMatch = &x_properties[p];
                 if (content[xpMatch->Offset] == L'"') {
                     xp.Value = String::Part(content.Str, (xpMatch->Offset + 1), (xpMatch->Length - 2));
                 } else {
@@ -181,10 +181,10 @@ static Array<XTag> parseTags(String const &content, Array<Match> const &items, U
                 }
 
                 ++p;
-                _tag.Properties.Add(xp);
+                x_tag.Properties.Add(xp);
             }
 
-            tags.Add(_tag);
+            tags.Add(x_tag);
         }
 
         ++index;
@@ -204,9 +204,9 @@ static Array<XTag> parseTags(String const &content, Array<Match> const &items, U
 }
 
 static Array<XTag> Parse(String const &content) noexcept {
-    static Expressions const &_xmlExprs = getXMLExprs();
+    static Expressions const &xmlExprs = getXMLExprs();
 
-    Array<Match> const items = Qentem::Engine::Search(content.Str, _xmlExprs, 0, content.Length);
+    Array<Match> const items = Qentem::Engine::Search(content.Str, xmlExprs, 0, content.Length);
 
     return parseTags(content, items, 0, items.Size);
 }
