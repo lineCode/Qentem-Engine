@@ -376,22 +376,14 @@ struct String {
         return _part;
     }
 
-    inline static UNumber Hash(wchar_t const *str, UNumber start, UNumber const end_offset) noexcept {
+    inline static UNumber Hash(wchar_t const *str, UNumber offset, UNumber limit) noexcept {
         UNumber hash = 0;
-        UNumber j    = 1;
-        UNumber i    = 0;
-        bool    fl   = false;
+        UNumber base = 1;
 
-        while (start < end_offset) {
-            if (fl) {
-                j *= (++i);
-            } else {
-                ++j;
-            }
-
-            fl = !fl;
-
-            hash += (((static_cast<UNumber>(str[start++]))) * (j++));
+        while (limit != 0) {
+            hash += (static_cast<UNumber>(str[offset++]) + base);
+            base += 256;
+            --limit;
         }
 
         return hash;

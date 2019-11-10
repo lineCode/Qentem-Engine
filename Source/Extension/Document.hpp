@@ -352,14 +352,14 @@ struct Document {
     }
 
     void InsertHash(UNumber id, wchar_t const *key, UNumber const offset, UNumber const limit, VType const type) noexcept {
-        InsertIndex({String::Hash(key, offset, (offset + limit)), Entries.Size}, 0, Table);
+        InsertIndex({String::Hash(key, offset, limit), Entries.Size}, 0, Table);
         Entries += Entry({type, Keys.Size, id});
         Keys += String::Part(key, offset, limit);
     }
 
     void Insert(wchar_t const *key, UNumber const offset, UNumber const limit, VType const type, void *ptr, bool const move) noexcept {
         UNumber       id    = 0;
-        UNumber const _hash = String::Hash(key, offset, (offset + limit));
+        UNumber const _hash = String::Hash(key, offset, limit);
         Entry *       _ent  = Exist(_hash, 0, Table);
 
         if ((_ent == nullptr) || (_ent->Type != type)) {
@@ -713,12 +713,12 @@ struct Document {
         while (true) {
             if (doc->Ordered) {
                 UNumber ent_id;
-                if (!String::ToNumber(ent_id, key, start, end - start) || (doc->Entries.Size <= ent_id)) {
+                if (!String::ToNumber(ent_id, key, start, (end - start)) || (doc->Entries.Size <= ent_id)) {
                     break;
                 }
 
                 *_entry = &(doc->Entries[ent_id]);
-            } else if ((*_entry = doc->Exist(String::Hash(key, start, end), 0, doc->Table)) == nullptr) {
+            } else if ((*_entry = doc->Exist(String::Hash(key, start, (end - start)), 0, doc->Table)) == nullptr) {
                 break;
             }
 
