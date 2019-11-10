@@ -39,8 +39,7 @@ static void CleanBits(Array<TestBit> &bits) noexcept {
 }
 
 static Array<String> Extract(wchar_t const *content, Array<Match> const &items) noexcept {
-    Array<String> matches;
-    matches.SetCapacity(items.Size);
+    Array<String> matches(items.Size);
 
     for (UNumber i = 0; i < items.Size; i++) {
         matches.Add(String::Part(content, items[i].Offset, items[i].Length) + L" -> O:" + String::FromNumber(items[i].Offset) + L" L:" +

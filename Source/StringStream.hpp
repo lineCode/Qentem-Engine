@@ -51,10 +51,8 @@ struct StringStream {
     }
 
     void Add(wchar_t const *str, UNumber const len) noexcept {
-        if (len != 0) {
-            Length += len;
-            Bits += {len, str};
-        }
+        Length += len;
+        Bits += {len, str};
     }
 
     String Eject() noexcept {

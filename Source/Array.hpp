@@ -111,7 +111,7 @@ struct Array {
     }
 
     void Resize(UNumber const _size) noexcept {
-        Capacity  = _size == 0 ? 2 : _size;
+        Capacity  = ((_size == 0) ? 2 : _size);
         Type *tmp = Storage;
         Memory::Allocate<Type>(&Storage, Capacity);
 

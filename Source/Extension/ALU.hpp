@@ -35,12 +35,10 @@ static String LogicCallback(wchar_t const *block, Match const &item, UNumber con
     Match const *m1    = &(item.NestMatch[0]);
     UShort       op_id = m1->Expr->ID;
 
-    if (m1->Length != 0) {
-        if (m1->NestMatch.Size != 0) {
-            NestNumber(number1, block, *m1);
-        } else {
-            String::ToNumber(number1, block, m1->Offset, m1->Length);
-        }
+    if (m1->NestMatch.Size != 0) {
+        NestNumber(number1, block, *m1);
+    } else {
+        String::ToNumber(number1, block, m1->Offset, m1->Length);
     }
 
     for (UNumber i = 1; i < item.NestMatch.Size; i++) {
@@ -81,20 +79,18 @@ static String EqualCallback(wchar_t const *block, Match const &item, UNumber con
     Match const *m1    = &(item.NestMatch[0]);
     UShort       op_id = m1->Expr->ID;
 
-    if (m1->Length != 0) {
-        if (m1->NestMatch.Size != 0) {
-            NestNumber(number1, block, *m1);
-        } else {
-            wchar_t const c = block[m1->Offset];
-            if (((c <= 57) && (c >= 48)) || ((c == L'+') || (c == L'-'))) {
-                String::ToNumber(number1, block, m1->Offset, m1->Length);
-            } else if (item.NestMatch.Size == 2) { // String
-                if (String::Compare(block, m1->Offset, m1->Length, block, item.NestMatch[1].Offset, item.NestMatch[1].Length)) {
-                    return L"1";
-                }
-
-                return L"0";
+    if (m1->NestMatch.Size != 0) {
+        NestNumber(number1, block, *m1);
+    } else {
+        wchar_t const c = block[m1->Offset];
+        if (((c <= 57) && (c >= 48)) || ((c == L'+') || (c == L'-'))) {
+            String::ToNumber(number1, block, m1->Offset, m1->Length);
+        } else if (item.NestMatch.Size == 2) { // String
+            if (String::Compare(block, m1->Offset, m1->Length, block, item.NestMatch[1].Offset, item.NestMatch[1].Length)) {
+                return L"1";
             }
+
+            return L"0";
         }
     }
 
@@ -149,9 +145,7 @@ static String MultiplicationCallback(wchar_t const *block, Match const &item, UN
     Match const *m1    = &(item.NestMatch[0]);
     UShort       op_id = m1->Expr->ID;
 
-    if (m1->Length != 0) {
-        String::ToNumber(number1, block, m1->Offset, m1->Length);
-    }
+    String::ToNumber(number1, block, m1->Offset, m1->Length);
 
     for (UNumber i = 1; i < item.NestMatch.Size; i++) {
         m2 = &(item.NestMatch[i]);
@@ -213,12 +207,10 @@ static String AdditionCallback(wchar_t const *block, Match const &item, UNumber 
     Match const *m1    = &(item.NestMatch[0]);
     UShort       op_id = m1->Expr->ID;
 
-    if (m1->Length != 0) {
-        if (m1->NestMatch.Size != 0) {
-            NestNumber(number1, block, *m1);
-        } else {
-            String::ToNumber(number1, block, m1->Offset, m1->Length);
-        }
+    if (m1->NestMatch.Size != 0) {
+        NestNumber(number1, block, *m1);
+    } else {
+        String::ToNumber(number1, block, m1->Offset, m1->Length);
     }
 
     for (UNumber i = 1; i < item.NestMatch.Size; i++) {
@@ -386,16 +378,17 @@ static String ParenthesisCallback(wchar_t const *block, Match const &item, UNumb
 
 static Expressions const &getParensExprs() noexcept {
     static Expression  ParensExpr;
-    static Expression  ParensNext;
+    static Expression  ParensCLose;
     static Expressions tags(1);
 
     if (tags.Size == 0) {
         ParensExpr.SetKeyword(L"(");
-        ParensNext.SetKeyword(L")");
-        ParensExpr.Connected = &ParensNext;
-        ParensNext.Flag      = Flags::BUBBLE | Flags::TRIM;
-        ParensNext.ParseCB   = &(ParenthesisCallback);
-        ParensNext.NestExprs = Expressions().Add(&ParensExpr);
+        ParensCLose.SetKeyword(L")");
+        ParensExpr.Connected = &ParensCLose;
+        ParensCLose.Flag     = Flags::BUBBLE | Flags::TRIM;
+        ParensCLose.ParseCB  = &(ParenthesisCallback);
+        ParensCLose.NestExprs.SetCapacity(1);
+        ParensCLose.NestExprs.Add(&ParensExpr);
 
         tags.Add(&ParensExpr);
     }

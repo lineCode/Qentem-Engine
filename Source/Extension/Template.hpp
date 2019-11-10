@@ -302,17 +302,17 @@ static String RenderLoop(wchar_t const *block, Match const &item, UNumber const 
 
 static Expressions const &_getTagsVara() noexcept {
     static Expression  TagVar;
-    static Expression  VarTail;
+    static Expression  VarEnd;
     static Expressions tags(1);
 
     if (tags.Size == 0) {
         // Variables evaluation.
-        VarTail.ParseCB = &(Template::RenderVar);
+        VarEnd.ParseCB = &(Template::RenderVar);
         // {v:var_name}
         TagVar.SetKeyword(L"{v:");
-        VarTail.SetKeyword(L"}");
-        TagVar.Connected = &VarTail;
-        VarTail.Flag     = Flags::TRIM;
+        VarEnd.SetKeyword(L"}");
+        TagVar.Connected = &VarEnd;
+        VarEnd.Flag      = Flags::TRIM;
 
         tags.Add(&TagVar);
     }
@@ -322,13 +322,13 @@ static Expressions const &_getTagsVara() noexcept {
 
 static Expressions const &_getTagsQuotes() noexcept {
     static Expression  TagQuote;
-    static Expression  QuoteTail;
+    static Expression  QuoteEnd;
     static Expressions tags(1);
 
     if (tags.Size == 0) {
         TagQuote.SetKeyword(L"\"");
-        QuoteTail.SetKeyword(L"\"");
-        TagQuote.Connected = &QuoteTail;
+        QuoteEnd.SetKeyword(L"\"");
+        TagQuote.Connected = &QuoteEnd;
 
         tags.Add(&TagQuote);
     }
@@ -357,82 +357,82 @@ static Expressions const &_getTagsHead() noexcept {
 
 static Expressions const &_getTagsAll() noexcept {
     static Expression TagIif;
-    static Expression IifTail;
+    static Expression IifEnd;
 
     static Expression TagIf;
-    static Expression IfTail;
+    static Expression IfEnd;
 
     static Expression ShallowTagIf;
-    static Expression ShallowIfTail;
+    static Expression ShallowIfEnd;
 
     static Expression TagELseIf;
-    static Expression ELseIfTail;
+    static Expression ELseIfEnd;
 
     static Expression TagLoop;
-    static Expression LoopTail;
+    static Expression LoopEnd;
 
     static Expression TagMath;
-    static Expression MathTail;
+    static Expression MathEnd;
 
     static Expressions tags(5);
 
     if (tags.Size == 0) {
         // Inline if evaluation.
-        IifTail.ParseCB = &(Template::RenderIIF);
+        IifEnd.ParseCB = &(Template::RenderIIF);
         //{iif case="3 == 3" true="Yes" false="No"}
         TagIif.SetKeyword(L"{iif");
-        IifTail.SetKeyword(L"}");
-        TagIif.Connected = &IifTail;
-        IifTail.Flag     = Flags::BUBBLE;
-        IifTail.NestExprs.Add(&TagIif).Add(_getTagsVara()); // Nested by itself and TagVars
+        IifEnd.SetKeyword(L"}");
+        TagIif.Connected = &IifEnd;
+        IifEnd.Flag      = Flags::BUBBLE;
+        IifEnd.NestExprs.Add(&TagIif).Add(_getTagsVara()); // Nested by itself and TagVars
         /////////////////////////////////
 
         // If spliter.
         // <else />
         TagELseIf.SetKeyword(L"<else");
-        ELseIfTail.SetKeyword(L"/>");
-        ELseIfTail.Flag     = Flags::SPLIT;
-        TagELseIf.Connected = &ELseIfTail;
+        ELseIfEnd.SetKeyword(L"/>");
+        ELseIfEnd.Flag      = Flags::SPLIT;
+        TagELseIf.Connected = &ELseIfEnd;
         /////////////////////////////////
 
         // Shallow IF
         // To not match anything inside inner if until it's needed.
         ShallowTagIf.SetKeyword(L"<if");
-        ShallowIfTail.SetKeyword(L"</if>");
-        ShallowTagIf.Connected = &ShallowIfTail;
-        ShallowIfTail.NestExprs.SetCapacity(1);
-        ShallowIfTail.NestExprs.Add(&ShallowTagIf);
+        ShallowIfEnd.SetKeyword(L"</if>");
+        ShallowTagIf.Connected = &ShallowIfEnd;
+        ShallowIfEnd.NestExprs.SetCapacity(1);
+        ShallowIfEnd.NestExprs.Add(&ShallowTagIf);
 
         // If evaluation.
-        IfTail.ParseCB = &(Template::RenderIF);
+        IfEnd.ParseCB = &(Template::RenderIF);
         // <if case="{case}">html code</if>
         TagIf.SetKeyword(L"<if");
-        IfTail.SetKeyword(L"</if>");
-        TagIf.Connected = &IfTail;
-        IfTail.NestExprs.Add(&ShallowTagIf).Add(&TagELseIf);
+        IfEnd.SetKeyword(L"</if>");
+        TagIf.Connected = &IfEnd;
+        IfEnd.NestExprs.Add(&ShallowTagIf).Add(&TagELseIf);
         /////////////////////////////////
 
         // Loop evaluation.
-        LoopTail.ParseCB = &(Template::RenderLoop);
+        LoopEnd.ParseCB = &(Template::RenderLoop);
         // <loop set="abc2" var="loopId">
         //     <span>loopId): -{v:abc2[loopId]}</span>
         // </loop>
         TagLoop.SetKeyword(L"<loop");
-        LoopTail.SetKeyword(L"</loop>");
-        TagLoop.Connected = &LoopTail;
-        LoopTail.NestExprs.SetCapacity(1);
-        LoopTail.NestExprs.Add(&TagLoop); // Nested by itself
+        LoopEnd.SetKeyword(L"</loop>");
+        TagLoop.Connected = &LoopEnd;
+        LoopEnd.NestExprs.SetCapacity(1);
+        LoopEnd.NestExprs.Add(&TagLoop); // Nested by itself
         /////////////////////////////////
 
         // Math Tag.
-        MathTail.ParseCB = &(Template::RenderMath);
+        MathEnd.ParseCB = &(Template::RenderMath);
         // {math:5+6*8*(8+3)}
         TagMath.SetKeyword(L"{math:");
-        MathTail.SetKeyword(L"}");
-        TagMath.Connected = &MathTail;
-        MathTail.Flag     = Flags::TRIM | Flags::BUBBLE;
-        MathTail.NestExprs.SetCapacity(1);
-        MathTail.NestExprs.Add(_getTagsVara());
+        MathEnd.SetKeyword(L"}");
+        TagMath.Connected = &MathEnd;
+        MathEnd.Flag      = Flags::TRIM | Flags::BUBBLE;
+        MathEnd.NestExprs.SetCapacity(1);
+        MathEnd.NestExprs.Add(_getTagsVara());
         /////////////////////////////////
 
         tags.Add(_getTagsVara()).Add(&TagMath).Add(&TagIif).Add(&TagIf).Add(&TagLoop);

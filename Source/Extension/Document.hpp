@@ -649,18 +649,18 @@ struct Document {
             static Expressions __comments;
             if (__comments.Size == 0) {
                 static Expression comment1;
-                static Expression comment_next1;
+                static Expression comment1_end;
                 comment1.SetKeyword(L"/*");
-                comment_next1.SetKeyword(L"*/");
-                comment_next1.SetReplace(L"\n");
-                comment1.Connected = &comment_next1;
+                comment1_end.SetKeyword(L"*/");
+                comment1_end.SetReplace(L"\n");
+                comment1.Connected = &comment1_end;
 
                 static Expression comment2;
-                static Expression comment_next2;
+                static Expression comment2_end;
                 comment2.SetKeyword(L"//");
-                comment_next2.SetKeyword(L"\n");
-                comment_next2.SetReplace(L"\n");
-                comment2.Connected = &comment_next2;
+                comment2_end.SetKeyword(L"\n");
+                comment2_end.SetReplace(L"\n");
+                comment2.Connected = &comment2_end;
 
                 __comments.Add(&comment1).Add(&comment2);
             }
@@ -688,25 +688,16 @@ struct Document {
         UNumber start = offset;
         UNumber end   = (offset + limit);
 
-        if (key[(end - 1)] == L']') {
-            if (key[offset] != L'[') {
-                // Starting with a string followed by [...]
-                UNumber i = offset;
-                while ((i < end) && (key[++i] != L'[')) {
-                }
-
-                end = i;
-                --limit;
-            } else {
-                // Starting with [..
-                ++start;
-                UNumber i = start;
-                while ((i < end) && (key[++i] != L']')) {
-                }
-                end = i;
-                --limit;
-            }
+        while ((start < end) && (key[++start] != L'[')) {
         }
+
+        if (end != start) {
+            // Starting with a string followed by [...]
+            end = start;
+            --limit;
+        }
+
+        start = offset;
 
         UNumber const end_offset = (offset + limit);
 
@@ -714,27 +705,26 @@ struct Document {
             if (doc->Ordered) {
                 UNumber ent_id;
                 if (!String::ToNumber(ent_id, key, start, (end - start)) || (doc->Entries.Size <= ent_id)) {
-                    break;
+                    return nullptr;
                 }
 
                 *_entry = &(doc->Entries[ent_id]);
             } else if ((*_entry = doc->Exist(String::Hash(key, start, (end - start)), 0, doc->Table)) == nullptr) {
-                break;
+                return nullptr;
             }
 
             if ((*_entry)->Type == VType::DocumentT) {
                 doc = &(doc->Documents[(*_entry)->ArrayID]);
+            }
 
-                if (end == end_offset) {
-                    return doc;
-                }
-            } else {
+            if (end == end_offset) {
                 return doc;
             }
 
             // Next part
             while ((++start < end_offset) && (key[start] != L'[')) {
             }
+
             end = ++start;
 
             while ((end < end_offset) && (key[++end] != L']')) {

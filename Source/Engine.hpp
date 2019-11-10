@@ -43,13 +43,13 @@ struct Flags {
 };
 /////////////////////////////////
 struct Expression {
-    UNumber        Length{0};        // Keyword length.
-    wchar_t const *Keyword{nullptr}; // What to search for.
+    UNumber           Length{0};          // Keyword length.
+    wchar_t const *   Keyword{nullptr};   // What to search for.
+    Expression const *Connected{nullptr}; // The next part of the match (the next keyword).
 
-    Expression *Connected{nullptr}; // The next part of the match (the next keyword).
-    Expressions NestExprs;          // Expressions for nesting Search().
-    UShort      Flag{0};            // Flags for the expression.
-    _MatchCB *  MatchCB{nullptr};   // A callback function for a custom action on a match.
+    Expressions NestExprs;        // Expressions for nesting Search().
+    UShort      Flag{0};          // Flags for the expression.
+    _MatchCB *  MatchCB{nullptr}; // A callback function for a custom action on a match.
 
     // for after match
     UShort         ID{0};                // Expression ID.
@@ -69,10 +69,10 @@ struct Expression {
 };
 /////////////////////////////////
 struct Match {
-    UNumber      Offset{0}; // The start position of the matched string.
-    UNumber      Length{0}; // The length of the entire match.
-    Array<Match> NestMatch; // To hold sub matches inside a match.
-    Expression * Expr{nullptr};
+    UNumber           Offset{0}; // The start position of the matched string.
+    UNumber           Length{0}; // The length of the entire match.
+    Array<Match>      NestMatch; // To hold sub matches inside a match.
+    Expression const *Expr{nullptr};
 };
 /////////////////////////////////
 static UNumber _search(Array<Match> &items, wchar_t const *content, Expressions const &exprs, UNumber offset, UNumber const endOffset,
@@ -81,10 +81,10 @@ static UNumber _search(Array<Match> &items, wchar_t const *content, Expressions 
 
     Match item;
 
-    UShort      keyword_offset;
-    Expression *expr;
-    UShort      expr_id        = 0;
-    UNumber     current_offset = 0;
+    UShort            keyword_offset;
+    Expression const *expr;
+    UShort            expr_id        = 0;
+    UNumber           current_offset = 0;
 
     while (offset < endOffset) {
         current_offset = offset;
@@ -253,9 +253,8 @@ static void Engine::_split(Array<Match> &items, wchar_t const *content, UNumber 
     UNumber const started  = offset;
     Match *       item_ptr = nullptr;
 
-    Array<Match> splitted;
-    splitted.SetCapacity(count + 1);
-    Match item;
+    Array<Match> splitted(count + 1);
+    Match        item;
 
     for (UNumber i = 0; i <= items.Size; i++) {
         if (i != items.Size) {
