@@ -43,54 +43,53 @@ static void InfinitSpaceCallback(wchar_t const *content, UNumber &offset, UNumbe
     items += static_cast<Match &&>(item);
 }
 
-static Expressions const &getXMLExprs() noexcept {
-    static Expression xStart;
-    static Expression xEnd;
+static Expressions const &getXMLExpres() noexcept {
+    static Expressions expres(1);
 
-    static Expressions tags(1);
+    if (expres.Size == 0) {
+        static Expression tag_end;
+        tag_end.SetKeyword(L">");
 
-    if (tags.Size == 0) {
-        xStart.SetKeyword(L"<");
-        xEnd.SetKeyword(L">");
-        xStart.Connected = &xEnd;
+        static Expression tag_start;
+        tag_start.SetKeyword(L"<");
+        tag_start.Connected = &tag_end;
 
-        tags += &xStart;
+        expres += &tag_start;
     }
 
-    return tags;
+    return expres;
 }
 
-static Expressions const &getPropertiesExprs() noexcept {
-    static Expression equalExpr;
-    static Expression spaceExpr;
+static Expressions const &getPropertiesExpres() noexcept {
+    static Expressions expres(3);
 
-    static Expression quotExpr;
-    static Expression endQuotExpr;
+    if (expres.Size == 0) {
+        static Expression equal;
+        equal.SetKeyword(L"=");
+        equal.Flag = Flags::SPLIT | Flags::DROPEMPTY;
 
-    static Expressions tags(3);
+        static Expression space;
+        space.SetKeyword(L" ");
+        space.Flag    = Flags::SPLIT | Flags::DROPEMPTY;
+        space.MatchCB = &(InfinitSpaceCallback);
 
-    if (tags.Size == 0) {
-        equalExpr.SetKeyword(L"=");
-        equalExpr.Flag = Flags::SPLIT | Flags::DROPEMPTY;
+        static Expression quot_end;
+        quot_end.SetKeyword(L"\"");
+        quot_end.Flag = Flags::IGNORE;
 
-        spaceExpr.SetKeyword(L" ");
-        spaceExpr.Flag    = Flags::SPLIT | Flags::DROPEMPTY;
-        spaceExpr.MatchCB = &(InfinitSpaceCallback);
+        static Expression quot;
+        quot.SetKeyword(L"\"");
+        quot.Connected = &quot_end;
 
-        quotExpr.SetKeyword(L"\"");
-        endQuotExpr.SetKeyword(L"\"");
-        quotExpr.Connected = &endQuotExpr;
-        endQuotExpr.Flag   = Flags::IGNORE;
-
-        tags.Add(&equalExpr).Add(&quotExpr).Add(&spaceExpr);
+        expres.Add(&equal).Add(&quot).Add(&space);
     }
 
-    return tags;
+    return expres;
 }
 
 static Array<XTag> parseTags(String const &content, Array<Match> const &items, UNumber id, UNumber const count) noexcept {
 
-    static Expressions const &propertiesExprs = getPropertiesExprs();
+    static Expressions const &propertiesExprs = getPropertiesExpres();
 
     Array<XTag> tags;
     XTag        x_tag;
@@ -166,7 +165,7 @@ static Array<XTag> parseTags(String const &content, Array<Match> const &items, U
             XProperty xp;
             Match *   xpMatch;
 
-            x_properties = Qentem::Engine::Search(content.Str, propertiesExprs, startIndex, remlen);
+            x_properties = Qentem::Engine::Search(propertiesExprs, content.Str, startIndex, remlen);
 
             for (UNumber p = 0; p < x_properties.Size;) {
                 xpMatch = &x_properties[p];
@@ -204,9 +203,7 @@ static Array<XTag> parseTags(String const &content, Array<Match> const &items, U
 }
 
 static Array<XTag> Parse(String const &content) noexcept {
-    static Expressions const &xmlExprs = getXMLExprs();
-
-    Array<Match> const items = Qentem::Engine::Search(content.Str, xmlExprs, 0, content.Length);
+    Array<Match> const items = Qentem::Engine::Search(getXMLExpres(), content.Str, 0, content.Length);
 
     return parseTags(content, items, 0, items.Size);
 }

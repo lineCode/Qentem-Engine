@@ -203,7 +203,7 @@ static bool runTests(wchar_t const *name, Array<TestBit> const &bits, bool break
 
             search_ticks = static_cast<UNumber>(clock());
             for (UNumber x = 0; x < times; x++) {
-                matches = Qentem::Engine::Search(bits[i].Content[t], bits[i].Exprs, 0, length);
+                matches = Qentem::Engine::Search(bits[i].Exprs, bits[i].Content[t], 0, length);
             }
             search_ticks = (static_cast<UNumber>(clock()) - search_ticks);
             total_search += search_ticks;
@@ -211,7 +211,7 @@ static bool runTests(wchar_t const *name, Array<TestBit> const &bits, bool break
             String rendered;
             parse_ticks = static_cast<UNumber>(clock());
             for (UNumber y = 0; y < times; y++) {
-                rendered = Qentem::Engine::Parse(bits[i].Content[t], matches, 0, length, other);
+                rendered = Qentem::Engine::Parse(matches, bits[i].Content[t], 0, length, other);
             }
             parse_ticks = (static_cast<UNumber>(clock()) - parse_ticks);
             total_parse += parse_ticks;
@@ -496,7 +496,7 @@ static bool JSONTests() noexcept {
         took = static_cast<UNumber>(clock());
         for (UNumber y = 1; y <= times; y++) {
             data = Document::FromJSON(json_content);
-            // Qentem::Engine::Search(json_content, Document::_getJsonExpres(), 0, json_content.Length);
+            // Qentem::Engine::Search(json_content.Str, Document::getJsonExpres(), 0, json_content.Length);
         }
         took = (static_cast<UNumber>(clock()) - took);
         std::wcout << String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << L" ";
@@ -579,19 +579,19 @@ static Document getDocument() noexcept {
 }
 
 static String readFile(char const *path) noexcept {
-    std::wifstream file(path, std::ios::ate | std::ios::out);
-
+    std::ifstream file(path, std::ios::ate | std::ios::out);
     if (file.is_open()) {
         std::streampos size = file.tellg();
         file.seekg(0, std::ios::beg);
 
-        String content(static_cast<UNumber>(size));
-
-        content.Length = content.Capacity;
-
-        file.read(content.Str, size);
+        char *file_content;
+        Qentem::Memory::Allocate<char>(&file_content, UNumber(size));
+        file.read(file_content, size);
 
         file.close();
+
+        String content(file_content);
+        Qentem::Memory::Deallocate<char>(&file_content);
 
         return content;
     }

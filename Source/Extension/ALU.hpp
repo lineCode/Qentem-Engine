@@ -22,7 +22,7 @@ using Engine::Flags;
 using Engine::Match;
 
 static void NestNumber(double &number, wchar_t const *block, Match const &item) noexcept {
-    String r(Engine::Parse(block, item.NestMatch, item.Offset, item.Length));
+    String r(Engine::Parse(item.NestMatch, block, item.Offset, item.Length));
     String::ToNumber(number, r.Str, 0, r.Length);
 }
 
@@ -247,141 +247,141 @@ static String AdditionCallback(wchar_t const *block, Match const &item, UNumber 
     return String::FromNumber(number1, 1, 0, 3);
 }
 
-static Expressions const &getMathExprs() noexcept {
-    static Expression MathExp;
-    static Expression MathRem;
-    static Expression MathDiv;
-    static Expression MathMul;
-
-    static Expression MathAdd;
-    static Expression MathSub;
-
-    static Expression MathEqu2;
-    static Expression MathEqu;
-    static Expression MathNEqu;
-    static Expression MathLEqu;
-    static Expression MathLess;
-    static Expression MathBEqu;
-    static Expression MathBig;
-
-    static Expression LogicAnd;
-    static Expression LogicOr;
-
+static Expressions const &getMathExpres() noexcept {
     static constexpr UNumber flags_no_pop = Flags::SPLIT | Flags::GROUPED | Flags::TRIM;
     static constexpr UNumber flags_ops    = flags_no_pop | Flags::POP;
 
-    static Expressions tags(2);
+    static Expressions expres(2);
 
-    if (tags.Size == 0) {
-        MathMul.SetKeyword(L"*");
-        MathMul.ID      = 1;
-        MathMul.Flag    = flags_no_pop;
-        MathMul.ParseCB = &(MultiplicationCallback);
+    if (expres.Size == 0) {
+        static Expression math_mul;
+        math_mul.SetKeyword(L"*");
+        math_mul.ID      = 1;
+        math_mul.Flag    = flags_no_pop;
+        math_mul.ParseCB = &(MultiplicationCallback);
 
-        MathDiv.SetKeyword(L"/");
-        MathDiv.ID      = 2;
-        MathDiv.Flag    = flags_no_pop;
-        MathDiv.ParseCB = &(MultiplicationCallback);
+        static Expression math_div;
+        math_div.SetKeyword(L"/");
+        math_div.ID      = 2;
+        math_div.Flag    = flags_no_pop;
+        math_div.ParseCB = &(MultiplicationCallback);
 
-        MathExp.SetKeyword(L"^");
-        MathExp.ID      = 3;
-        MathExp.Flag    = flags_no_pop;
-        MathExp.ParseCB = &(MultiplicationCallback);
+        static Expression math_exp;
+        math_exp.SetKeyword(L"^");
+        math_exp.ID      = 3;
+        math_exp.Flag    = flags_no_pop;
+        math_exp.ParseCB = &(MultiplicationCallback);
 
-        MathRem.SetKeyword(L"%");
-        MathRem.ID      = 4;
-        MathRem.Flag    = flags_no_pop;
-        MathRem.ParseCB = &(MultiplicationCallback);
+        static Expression math_rem;
+        math_rem.SetKeyword(L"%");
+        math_rem.ID      = 4;
+        math_rem.Flag    = flags_no_pop;
+        math_rem.ParseCB = &(MultiplicationCallback);
         ///////////////////////////////////////////
-        MathAdd.SetKeyword(L"+");
-        MathAdd.ID      = 1;
-        MathAdd.Flag    = flags_ops;
-        MathAdd.ParseCB = &(AdditionCallback);
-        MathAdd.NestExprs.SetCapacity(4);
-        MathAdd.NestExprs.Add(&MathExp).Add(&MathRem).Add(&MathDiv).Add(&MathMul);
+        static Expression math_add;
+        math_add.SetKeyword(L"+");
+        math_add.ID      = 1;
+        math_add.Flag    = flags_ops;
+        math_add.ParseCB = &(AdditionCallback);
+        math_add.NestExprs.SetCapacity(4);
+        math_add.NestExprs.Add(&math_exp).Add(&math_rem).Add(&math_div).Add(&math_mul);
 
-        MathSub.SetKeyword(L"-");
-        MathSub.ID        = 2;
-        MathSub.Flag      = flags_no_pop;
-        MathSub.ParseCB   = &(AdditionCallback);
-        MathSub.NestExprs = MathAdd.NestExprs;
+        static Expression math_sub;
+        math_sub.SetKeyword(L"-");
+        math_sub.ID        = 2;
+        math_sub.Flag      = flags_no_pop;
+        math_sub.ParseCB   = &(AdditionCallback);
+        math_sub.NestExprs = math_add.NestExprs;
         ///////////////////////////////////////////
-        MathEqu2.SetKeyword(L"==");
-        MathEqu2.ID      = 1;
-        MathEqu2.Flag    = flags_ops;
-        MathEqu2.ParseCB = &(EqualCallback);
-        MathEqu2.NestExprs.Add(&MathAdd).Add(&MathSub);
+        static Expression logic_equ2;
+        logic_equ2.SetKeyword(L"==");
+        logic_equ2.ID      = 1;
+        logic_equ2.Flag    = flags_ops;
+        logic_equ2.ParseCB = &(EqualCallback);
+        logic_equ2.NestExprs.Add(&math_add).Add(&math_sub);
 
-        MathEqu.SetKeyword(L"=");
-        MathEqu.ID        = 2;
-        MathEqu.Flag      = flags_ops;
-        MathEqu.ParseCB   = &(EqualCallback);
-        MathEqu.NestExprs = MathEqu2.NestExprs;
+        static Expression logic_equ;
+        logic_equ.SetKeyword(L"=");
+        logic_equ.ID        = 2;
+        logic_equ.Flag      = flags_ops;
+        logic_equ.ParseCB   = &(EqualCallback);
+        logic_equ.NestExprs = logic_equ2.NestExprs;
 
-        MathNEqu.SetKeyword(L"!=");
-        MathNEqu.ID        = 3;
-        MathNEqu.Flag      = flags_no_pop;
-        MathNEqu.ParseCB   = &(EqualCallback);
-        MathNEqu.NestExprs = MathEqu2.NestExprs;
+        static Expression logic_not_equ;
+        logic_not_equ.SetKeyword(L"!=");
+        logic_not_equ.ID        = 3;
+        logic_not_equ.Flag      = flags_no_pop;
+        logic_not_equ.ParseCB   = &(EqualCallback);
+        logic_not_equ.NestExprs = logic_equ2.NestExprs;
 
-        MathLEqu.SetKeyword(L"<=");
-        MathLEqu.ID        = 4;
-        MathLEqu.Flag      = flags_no_pop;
-        MathLEqu.ParseCB   = &(EqualCallback);
-        MathLEqu.NestExprs = MathEqu2.NestExprs;
+        static Expression logic_less_equ;
+        logic_less_equ.SetKeyword(L"<=");
+        logic_less_equ.ID        = 4;
+        logic_less_equ.Flag      = flags_no_pop;
+        logic_less_equ.ParseCB   = &(EqualCallback);
+        logic_less_equ.NestExprs = logic_equ2.NestExprs;
 
-        MathLess.SetKeyword(L"<");
-        MathLess.ID        = 5;
-        MathLess.Flag      = flags_no_pop;
-        MathLess.ParseCB   = &(EqualCallback);
-        MathLess.NestExprs = MathEqu2.NestExprs;
+        static Expression logic_less;
+        logic_less.SetKeyword(L"<");
+        logic_less.ID        = 5;
+        logic_less.Flag      = flags_no_pop;
+        logic_less.ParseCB   = &(EqualCallback);
+        logic_less.NestExprs = logic_equ2.NestExprs;
 
-        MathBEqu.SetKeyword(L">=");
-        MathBEqu.ID        = 6;
-        MathBEqu.Flag      = flags_no_pop;
-        MathBEqu.ParseCB   = &(EqualCallback);
-        MathBEqu.NestExprs = MathEqu2.NestExprs;
+        static Expression logic_big_equ;
+        logic_big_equ.SetKeyword(L">=");
+        logic_big_equ.ID        = 6;
+        logic_big_equ.Flag      = flags_no_pop;
+        logic_big_equ.ParseCB   = &(EqualCallback);
+        logic_big_equ.NestExprs = logic_equ2.NestExprs;
 
-        MathBig.SetKeyword(L">");
-        MathBig.ID        = 7;
-        MathBig.Flag      = flags_no_pop;
-        MathBig.ParseCB   = &(EqualCallback);
-        MathBig.NestExprs = MathEqu2.NestExprs;
+        static Expression logic_big;
+        logic_big.SetKeyword(L">");
+        logic_big.ID        = 7;
+        logic_big.Flag      = flags_no_pop;
+        logic_big.ParseCB   = &(EqualCallback);
+        logic_big.NestExprs = logic_equ2.NestExprs;
         ///////////////////////////////////////////
-        LogicAnd.SetKeyword(L"&&");
-        LogicAnd.ID      = 1;
-        LogicAnd.Flag    = flags_ops;
-        LogicAnd.ParseCB = &(LogicCallback);
-        LogicAnd.NestExprs.SetCapacity(7);
-        LogicAnd.NestExprs.Add(&MathEqu2).Add(&MathEqu).Add(&MathNEqu).Add(&MathLEqu).Add(&MathLess).Add(&MathBEqu).Add(&MathBig);
+        static Expression logic_and;
+        logic_and.SetKeyword(L"&&");
+        logic_and.ID      = 1;
+        logic_and.Flag    = flags_ops;
+        logic_and.ParseCB = &(LogicCallback);
+        logic_and.NestExprs.SetCapacity(7);
+        logic_and.NestExprs.Add(&logic_equ2)
+            .Add(&logic_equ)
+            .Add(&logic_not_equ)
+            .Add(&logic_less_equ)
+            .Add(&logic_less)
+            .Add(&logic_big_equ)
+            .Add(&logic_big);
 
-        LogicOr.SetKeyword(L"||");
-        LogicOr.ID        = 2;
-        LogicOr.Flag      = flags_no_pop;
-        LogicOr.ParseCB   = &(LogicCallback);
-        LogicOr.NestExprs = LogicAnd.NestExprs;
+        static Expression logic_or;
+        logic_or.SetKeyword(L"||");
+        logic_or.ID        = 2;
+        logic_or.Flag      = flags_no_pop;
+        logic_or.ParseCB   = &(LogicCallback);
+        logic_or.NestExprs = logic_and.NestExprs;
         ///////////////////////////////////////////
 
-        tags.Add(&LogicAnd).Add(&LogicOr);
+        expres.Add(&logic_and).Add(&logic_or);
     }
 
-    return tags;
+    return expres;
 }
 
 // e.g. ( 4 + 3 ), ( 2 + ( 4 + ( 1 + 2 ) + 1 ) * 5 - 3 - 2 )
 static String ParenthesisCallback(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
-    static Expressions const &mathExprs = getMathExprs();
-
     UNumber const limit = (length - 2);
-    return Engine::Parse(block, Engine::Search(block, mathExprs, 1, limit), 1, limit);
+    return Engine::Parse(Engine::Search(getMathExpres(), block, 1, limit), block, 1, limit);
 }
 
-static Expressions const &getParensExprs() noexcept {
+static Expressions const &getParensExpres() noexcept {
     static Expression  ParensExpr;
     static Expression  ParensCLose;
-    static Expressions tags(1);
+    static Expressions expres(1);
 
-    if (tags.Size == 0) {
+    if (expres.Size == 0) {
         ParensExpr.SetKeyword(L"(");
         ParensCLose.SetKeyword(L")");
         ParensExpr.Connected = &ParensCLose;
@@ -390,18 +390,14 @@ static Expressions const &getParensExprs() noexcept {
         ParensCLose.NestExprs.SetCapacity(1);
         ParensCLose.NestExprs.Add(&ParensExpr);
 
-        tags.Add(&ParensExpr);
+        expres.Add(&ParensExpr);
     }
 
-    return tags;
+    return expres;
 }
 
 static double Evaluate(wchar_t const *content, UNumber const offset, UNumber const limit) noexcept {
-    static Expressions const &parensExprs = getParensExprs();
-    static Expressions const &mathExprs   = getMathExprs();
-
     /**
-     *
      * e.g. ((2* (1 * 3)) + 1 - 4) + ((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1) - (1) - (-1) + 2 == 14
      * e.g. (6 + 1 - 4) + (5 - 6 + 4) * (8 / 4 + 1) - (1) - (-1) + 2 = 14
      * e.g. 3 + 3 * 3 - 1 + 1 + 2 = 14
@@ -418,14 +414,14 @@ static double Evaluate(wchar_t const *content, UNumber const offset, UNumber con
      */
 
     // Parenthesis:
-    String n_content(Engine::Parse(content, Engine::Search(content, parensExprs, offset, limit), offset, limit));
+    String n_content(Engine::Parse(Engine::Search(getParensExpres(), content, offset, limit), content, offset, limit));
     if ((n_content.Length == 0) || (n_content == L"0")) {
         return 0.0;
     }
 
     // The rest:
     double num = 0.0;
-    n_content  = Engine::Parse(n_content.Str, Engine::Search(n_content.Str, mathExprs, 0, n_content.Length), 0, n_content.Length);
+    n_content  = Engine::Parse(Engine::Search(getMathExpres(), n_content.Str, 0, n_content.Length), n_content.Str, 0, n_content.Length);
     if ((n_content.Length != 0) && String::ToNumber(num, n_content.Str, 0, n_content.Length)) {
         return num;
     }

@@ -19,14 +19,13 @@ namespace Template {
 
 using Qentem::Engine::Flags;
 
-static Expressions const &getTagsAll() noexcept;
-static Expressions const &getTagsVara() noexcept;
-static Expressions const &getTagsQuotes() noexcept;
-static Expressions const &getTagsHead() noexcept;
+static Expressions const &getExpres() noexcept;
+static Expressions const &getVarExpres() noexcept;
+static Expressions const &getQuotesExpres() noexcept;
+static Expressions const &getHeadExpres() noexcept;
 
 static String Render(wchar_t const *content, UNumber const offset, UNumber const limit, void *data) noexcept {
-    static Expressions const &tagsAll = getTagsAll();
-    return Engine::Parse(content, Engine::Search(content, tagsAll, offset, limit), offset, limit, static_cast<void *>(data));
+    return Engine::Parse(Engine::Search(getExpres(), content, offset, limit), content, offset, limit, data);
 }
 
 inline static String Render(String const &content, Document *data) noexcept {
@@ -55,9 +54,7 @@ static String RenderMath(wchar_t const *block, Match const &item, UNumber const 
 // {iif case="{v:var_five} == 5" true="{v:var_five} is equal to 5" false="no"}
 // {iif case="3 == 3" true="Yes" false="No"}
 static String RenderIIF(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
-    static Expressions const &tagsQuotes = getTagsQuotes();
-
-    Array<Match> const items(Engine::Search(block, tagsQuotes, 0, length));
+    Array<Match> const items(Engine::Search(getQuotesExpres(), block, 0, length));
 
     Match * m;
     bool    iif_case  = false;
@@ -109,12 +106,10 @@ static String RenderIIF(wchar_t const *block, Match const &item, UNumber const l
 // <if case="{case1}">html code1 <elseif case={case2} /> html code2</if>
 // <if case="{case}">html code <if case="{case2}" />additional html code</if></if>
 static bool EvaluateIF(wchar_t const *block, Match const &item, void *other) noexcept {
-    static Expressions const &tagsVars = getTagsVara();
-
     UNumber const offset = (item.Offset + 1);
     UNumber const limit  = (item.Length - 2);
 
-    String const content(Engine::Parse(block, Engine::Search(block, tagsVars, offset, limit), offset, limit, other));
+    String const content(Engine::Parse(Engine::Search(getVarExpres(), block, offset, limit), block, offset, limit, other));
 
     return (ALU::Evaluate(content.Str, 0, content.Length) > 0.0);
 }
@@ -123,9 +118,7 @@ static String RenderIF(wchar_t const *block, Match const &item, UNumber const le
     // Nothing is processed inside the match before checking if the condition is TRUE.
     bool is_true = false;
 
-    static Expressions const &tagsHead = getTagsHead();
-
-    Array<Match> subMatch(Engine::Search(block, tagsHead, item.Offset, item.Length));
+    Array<Match> subMatch(Engine::Search(getHeadExpres(), block, item.Offset, item.Length));
 
     if (subMatch.Size != 0) {
         Match *sm = &(subMatch[0]);
@@ -146,7 +139,7 @@ static String RenderIF(wchar_t const *block, Match const &item, UNumber const le
                 } else {
                     for (UNumber i = 1; i < item.NestMatch.Size; i++) {
                         offset   = (nm->Offset + nm->Length);
-                        subMatch = Engine::Search(block, tagsHead, offset, (length - nm->Length));
+                        subMatch = Engine::Search(getHeadExpres(), block, offset, (length - nm->Length));
 
                         // inner content of the next part.
                         nm     = &(item.NestMatch[i]);
@@ -181,7 +174,7 @@ static String Repeat(wchar_t const *block, UNumber offset, UNumber limit, Expres
 
     loop_exprs.Add(&value_expr);
 
-    Array<Match> const items(Engine::Search(block, loop_exprs, offset, limit));
+    Array<Match> const items(Engine::Search(loop_exprs, block, offset, limit));
 
     StringStream rendered;
     String *     str_ptr;
@@ -237,7 +230,7 @@ static String Repeat(wchar_t const *block, UNumber offset, UNumber limit, Expres
             }
         }
 
-        rendered += Engine::Parse(block, items, offset, limit);
+        rendered += Engine::Parse(items, block, offset, limit);
     }
 
     return rendered.Eject();
@@ -248,9 +241,7 @@ static String Repeat(wchar_t const *block, UNumber offset, UNumber limit, Expres
 // </loop>
 static String RenderLoop(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
     // To match: <loop (set="abc2" value="s_value" key="s_key")>
-    static Expressions const &tagsHead = getTagsHead();
-
-    Array<Match> const subMatch(Engine::Search(block, tagsHead, item.Offset, item.Length));
+    Array<Match> const subMatch(Engine::Search(getHeadExpres(), block, item.Offset, item.Length));
 
     if ((subMatch.Size != 0) && (subMatch[0].NestMatch.Size != 0)) {
         Document * storage = nullptr;
@@ -300,12 +291,12 @@ static String RenderLoop(wchar_t const *block, Match const &item, UNumber const 
     return String();
 }
 
-static Expressions const &getTagsVara() noexcept {
+static Expressions const &getVarExpres() noexcept {
     static Expression  TagVar;
     static Expression  VarEnd;
-    static Expressions tags(1);
+    static Expressions expres(1);
 
-    if (tags.Size == 0) {
+    if (expres.Size == 0) {
         // Variables evaluation.
         VarEnd.ParseCB = &(Template::RenderVar);
         // {v:var_name}
@@ -314,131 +305,132 @@ static Expressions const &getTagsVara() noexcept {
         TagVar.Connected = &VarEnd;
         VarEnd.Flag      = Flags::TRIM;
 
-        tags.Add(&TagVar);
+        expres.Add(&TagVar);
     }
 
-    return tags;
+    return expres;
 }
 
-static Expressions const &getTagsQuotes() noexcept {
+static Expressions const &getQuotesExpres() noexcept {
     static Expression  TagQuote;
     static Expression  QuoteEnd;
-    static Expressions tags(1);
+    static Expressions expres(1);
 
-    if (tags.Size == 0) {
+    if (expres.Size == 0) {
         TagQuote.SetKeyword(L"\"");
         QuoteEnd.SetKeyword(L"\"");
         TagQuote.Connected = &QuoteEnd;
 
-        tags.Add(&TagQuote);
+        expres.Add(&TagQuote);
     }
 
-    return tags;
+    return expres;
 }
 
-static Expressions const &getTagsHead() noexcept {
-    static Expression  TagHead;
-    static Expression  TagHead_T;
-    static Expressions tags(1);
+static Expressions const &getHeadExpres() noexcept {
+    static Expression  tag_head;
+    static Expression  tag_head_end;
+    static Expressions expres(1);
 
-    if (tags.Size == 0) {
-        TagHead.SetKeyword(L"<");
-        TagHead_T.SetKeyword(L">");
-        TagHead_T.Flag    = Flags::ONCE;
-        TagHead.Connected = &TagHead_T;
+    if (expres.Size == 0) {
+        tag_head.SetKeyword(L"<");
+        tag_head_end.SetKeyword(L">");
+        tag_head_end.Flag  = Flags::ONCE;
+        tag_head.Connected = &tag_head_end;
         // Nest to prevent matching ">" bigger sign inside if statement.
-        TagHead_T.NestExprs = getTagsQuotes();
+        tag_head_end.NestExprs = getQuotesExpres();
 
-        tags.Add(&TagHead);
+        expres.Add(&tag_head);
     }
 
-    return tags;
+    return expres;
 }
 
-static Expressions const &getTagsAll() noexcept {
-    static Expression TagIif;
-    static Expression IifEnd;
+static Expressions const &getExpres() noexcept {
+    static Expressions expres(5);
 
-    static Expression TagIf;
-    static Expression IfEnd;
-
-    static Expression ShallowTagIf;
-    static Expression ShallowIfEnd;
-
-    static Expression TagELseIf;
-    static Expression ELseIfEnd;
-
-    static Expression TagLoop;
-    static Expression LoopEnd;
-
-    static Expression TagMath;
-    static Expression MathEnd;
-
-    static Expressions tags(5);
-
-    if (tags.Size == 0) {
-        // Inline if evaluation.
-        IifEnd.ParseCB = &(Template::RenderIIF);
+    if (expres.Size == 0) {
         //{iif case="3 == 3" true="Yes" false="No"}
-        TagIif.SetKeyword(L"{iif");
-        IifEnd.SetKeyword(L"}");
-        TagIif.Connected = &IifEnd;
-        IifEnd.Flag      = Flags::BUBBLE;
-        IifEnd.NestExprs.Add(&TagIif).Add(getTagsVara()); // Nested by itself and TagVars
+        static Expression tag_iif_end;
+        tag_iif_end.SetKeyword(L"}");
+        tag_iif_end.Flag    = Flags::BUBBLE;
+        tag_iif_end.ParseCB = &(Template::RenderIIF);
+
+        static Expression tag_iif;
+        tag_iif.SetKeyword(L"{iif");
+        tag_iif.Connected = &tag_iif_end;
+
+        tag_iif_end.NestExprs.Add(&tag_iif).Add(getVarExpres()); // Nested by itself and TagVars
         /////////////////////////////////
 
-        // If spliter.
         // <else />
-        TagELseIf.SetKeyword(L"<else");
-        ELseIfEnd.SetKeyword(L"/>");
-        ELseIfEnd.Flag      = Flags::SPLIT;
-        TagELseIf.Connected = &ELseIfEnd;
+        static Expression tag_else_if_end;
+        tag_else_if_end.SetKeyword(L"/>");
+        tag_else_if_end.Flag = Flags::SPLIT;
+
+        static Expression tag_else_if;
+        tag_else_if.SetKeyword(L"<else");
+        tag_else_if.Connected = &tag_else_if_end;
         /////////////////////////////////
 
         // Shallow IF
         // To not match anything inside inner if until it's needed.
-        ShallowTagIf.SetKeyword(L"<if");
-        ShallowIfEnd.SetKeyword(L"</if>");
-        ShallowTagIf.Connected = &ShallowIfEnd;
-        ShallowIfEnd.NestExprs.SetCapacity(1);
-        ShallowIfEnd.NestExprs.Add(&ShallowTagIf);
+        static Expression tag_empty_if_end;
+        tag_empty_if_end.SetKeyword(L"</if>");
 
-        // If evaluation.
-        IfEnd.ParseCB = &(Template::RenderIF);
-        // <if case="{case}">html code</if>
-        TagIf.SetKeyword(L"<if");
-        IfEnd.SetKeyword(L"</if>");
-        TagIf.Connected = &IfEnd;
-        IfEnd.NestExprs.Add(&ShallowTagIf).Add(&TagELseIf);
+        static Expression tag_empty_if;
+        tag_empty_if.SetKeyword(L"<if");
+        tag_empty_if.Connected = &tag_empty_if_end;
+
+        tag_empty_if_end.NestExprs.SetCapacity(1);
+        tag_empty_if_end.NestExprs.Add(&tag_empty_if);
         /////////////////////////////////
 
-        // Loop evaluation.
-        LoopEnd.ParseCB = &(Template::RenderLoop);
+        // <if case="{case}">html code</if>
+        static Expression tag_if_end;
+        tag_if_end.SetKeyword(L"</if>");
+        tag_if_end.ParseCB = &(Template::RenderIF);
+
+        static Expression tag_if;
+        tag_if.SetKeyword(L"<if");
+        tag_if.Connected = &tag_if_end;
+
+        tag_if_end.NestExprs.Add(&tag_empty_if).Add(&tag_else_if);
+        /////////////////////////////////
+
         // <loop set="abc2" var="loopId">
         //     <span>loopId): -{v:abc2[loopId]}</span>
         // </loop>
-        TagLoop.SetKeyword(L"<loop");
-        LoopEnd.SetKeyword(L"</loop>");
-        TagLoop.Connected = &LoopEnd;
-        LoopEnd.NestExprs.SetCapacity(1);
-        LoopEnd.NestExprs.Add(&TagLoop); // Nested by itself
+        static Expression tag_loop_end;
+        tag_loop_end.ParseCB = &(Template::RenderLoop);
+        tag_loop_end.SetKeyword(L"</loop>");
+
+        static Expression tag_loop;
+        tag_loop.SetKeyword(L"<loop");
+        tag_loop.Connected = &tag_loop_end;
+
+        tag_loop_end.NestExprs.SetCapacity(1);
+        tag_loop_end.NestExprs.Add(&tag_loop); // Nested by itself
         /////////////////////////////////
 
         // Math Tag.
-        MathEnd.ParseCB = &(Template::RenderMath);
         // {math:5+6*8*(8+3)}
-        TagMath.SetKeyword(L"{math:");
-        MathEnd.SetKeyword(L"}");
-        TagMath.Connected = &MathEnd;
-        MathEnd.Flag      = Flags::TRIM | Flags::BUBBLE;
-        MathEnd.NestExprs.SetCapacity(1);
-        MathEnd.NestExprs.Add(getTagsVara());
+        static Expression tag_math_end;
+        tag_math_end.SetKeyword(L"}");
+        tag_math_end.Flag    = Flags::TRIM | Flags::BUBBLE;
+        tag_math_end.ParseCB = &(Template::RenderMath);
+        tag_math_end.NestExprs.SetCapacity(1);
+        tag_math_end.NestExprs.Add(getVarExpres());
+
+        static Expression tag_math;
+        tag_math.SetKeyword(L"{math:");
+        tag_math.Connected = &tag_math_end;
         /////////////////////////////////
 
-        tags.Add(getTagsVara()).Add(&TagMath).Add(&TagIif).Add(&TagIf).Add(&TagLoop);
+        expres.Add(getVarExpres()).Add(&tag_math).Add(&tag_iif).Add(&tag_if).Add(&tag_loop);
     }
 
-    return tags;
+    return expres;
 }
 
 } // namespace Template

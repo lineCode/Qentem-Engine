@@ -55,7 +55,7 @@ static String Replace(wchar_t const *content, UNumber length, wchar_t const *_fi
     find_key.SetKeyword(_find);
     find_key.SetReplace(_replace);
 
-    return Engine::Parse(content, Engine::Search(content, Expressions().Add(&find_key), 0, length), 0, length);
+    return Engine::Parse(Engine::Search(Expressions().Add(&find_key), content, 0, length), content, 0, length);
 }
 
 static String ReplaceNewLine(wchar_t const *content, UNumber length, wchar_t const *_replace) {
@@ -79,7 +79,7 @@ static String ReplaceNewLine(wchar_t const *content, UNumber length, wchar_t con
         find_keys.Add(&find_key1).Add(&find_key2).Add(&find_key3).Add(&find_key4);
     }
 
-    return Engine::Parse(content, Engine::Search(content, find_keys, 0, length), 0, length);
+    return Engine::Parse(Engine::Search(find_keys, content, 0, length), content, 0, length);
 }
 
 static String DumpMatches(wchar_t const *content, Array<Match> const &matches, String const &offset, UNumber index = 0) noexcept {
@@ -107,11 +107,9 @@ static String DumpMatches(wchar_t const *content, Array<Match> const &matches, S
 }
 
 static Array<TestBit> GetALUBits() noexcept {
-    Array<TestBit> bits = Array<TestBit>();
+    Array<TestBit> bits;
     TestBit        bit;
 
-    static Expressions const &parensExprs = Qentem::ALU::getParensExprs();
-    static Expressions const &mathExprs   = Qentem::ALU::getMathExprs();
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -159,7 +157,7 @@ static Array<TestBit> GetALUBits() noexcept {
     bit.Content.Add(L"3 + 9 - 1 - -1 + 2 == 14");
     bit.Expected.Add(L"1");
     ////
-    bit.Exprs = mathExprs;
+    bit.Exprs = Qentem::ALU::getMathExpres();
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -171,17 +169,15 @@ static Array<TestBit> GetALUBits() noexcept {
     bit.Content.Add(L"(((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) + (1) + 2 = 14)");
     bit.Expected.Add(L"1");
 
-    bit.Exprs = parensExprs;
+    bit.Exprs = Qentem::ALU::getParensExpres();
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     return bits;
 }
 
 static Array<TestBit> GetTemplateBits(Document &data) noexcept {
-    Array<TestBit> bits = Array<TestBit>();
+    Array<TestBit> bits;
     TestBit        bit;
-
-    static Expressions const &tagsAll = Qentem::Template::getTagsAll();
 
     data[L"foo"]  = L"FOO";
     data[L"r1"]   = L"Familly";
@@ -348,7 +344,7 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
 
     ////
 
-    bit.Exprs = tagsAll;
+    bit.Exprs = Qentem::Template::getExpres();
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
 
@@ -356,7 +352,7 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
 }
 
 static Array<TestBit> GetEngineBits() noexcept {
-    Array<TestBit> bits = Array<TestBit>();
+    Array<TestBit> bits;
     TestBit        bit;
 
     Expression *x1;
@@ -894,7 +890,7 @@ static Array<TestBit> GetEngineBits() noexcept {
             nm = &(item.NestMatch[i]);
 
             if (nm->NestMatch.Size != 0) {
-                r = Engine::Parse(block, nm->NestMatch, nm->Offset, nm->Length);
+                r = Engine::Parse(nm->NestMatch, block, nm->Offset, nm->Length);
             } else {
                 r = String::Part(block, nm->Offset, nm->Length);
             }
@@ -1004,7 +1000,7 @@ static Array<TestBit> GetEngineBits() noexcept {
             nm = &(item.NestMatch[i]);
 
             if (nm->NestMatch.Size != 0) {
-                r = Engine::Parse(block, nm->NestMatch, nm->Offset, nm->Length);
+                r = Engine::Parse(nm->NestMatch, block, nm->Offset, nm->Length);
             } else {
                 r = String::Part(block, nm->Offset, nm->Length);
             }

@@ -139,7 +139,7 @@ struct Document {
 
     Document(wchar_t const *value) noexcept {
         if (value != nullptr) {
-            Array<Match> const items(Engine::Search(value, getJsonExpres(), 0, String::Count(value)));
+            Array<Match> const items(Engine::Search(getJsonExpres(), value, 0, String::Count(value)));
 
             if (items.Size != 0) {
                 *this = makeList(value, items[0]);
@@ -156,7 +156,7 @@ struct Document {
     }
 
     Document(String const &value) noexcept {
-        Array<Match> const items(Engine::Search(value.Str, getJsonExpres(), 0, value.Length));
+        Array<Match> const items(Engine::Search(getJsonExpres(), value.Str, 0, value.Length));
 
         if (items.Size != 0) {
             *this = makeList(value.Str, items[0]);
@@ -168,7 +168,7 @@ struct Document {
     }
 
     Document(String &&value) noexcept {
-        Array<Match> const items(Engine::Search(value.Str, getJsonExpres(), 0, value.Length));
+        Array<Match> const items(Engine::Search(getJsonExpres(), value.Str, 0, value.Length));
 
         if (items.Size != 0) {
             *this = makeList(value.Str, items[0]);
@@ -518,7 +518,7 @@ struct Document {
                                 document.Strings += String::Part(content, (items[i].Offset + 1), (items[i].Length - 2));
                             } else {
                                 document.Strings +=
-                                    Engine::Parse(content, items[i].NestMatch, (items[i].Offset + 1), (items[i].Length - 2));
+                                    Engine::Parse(items[i].NestMatch, content, (items[i].Offset + 1), (items[i].Length - 2));
                             }
 
                             done = true;
@@ -603,7 +603,7 @@ struct Document {
                         if (item->NestMatch.Size == 0) {
                             document.Strings += String::Part(content, (item->Offset + 1), (item->Length - 2));
                         } else {
-                            document.Strings += Engine::Parse(content, item->NestMatch, (item->Offset + 1), (item->Length - 2));
+                            document.Strings += Engine::Parse(item->NestMatch, content, (item->Offset + 1), (item->Length - 2));
                         }
 
                         offset = (item->Offset + item->Length) - 1;
@@ -643,7 +643,7 @@ struct Document {
 
         // C style comments
         if (!comments) {
-            items = Engine::Search(content, json_expres, offset, limit);
+            items = Engine::Search(json_expres, content, offset, limit);
         } else {
             static Expressions comments_exprs;
             if (comments_exprs.Size == 0) {
@@ -664,8 +664,8 @@ struct Document {
                 comments_exprs.Add(&comment1).Add(&comment2);
             }
 
-            n_content = Engine::Parse(content, Engine::Search(content, comments_exprs, offset, limit), offset, limit);
-            items     = Engine::Search(n_content.Str, json_expres, 0, n_content.Length);
+            n_content = Engine::Parse(Engine::Search(comments_exprs, content, offset, limit), content, offset, limit);
+            items     = Engine::Search(json_expres, n_content.Str, 0, n_content.Length);
         }
 
         if (items.Size != 0) {
@@ -951,11 +951,11 @@ struct Document {
 
                         String const &es = Strings[entry->ArrayID];
 
-                        Array<Match> const tmpMatchs(Engine::Search(es.Str, to_json_expres, 0, es.Length));
+                        Array<Match> const tmpMatchs(Engine::Search(to_json_expres, es.Str, 0, es.Length));
                         if (tmpMatchs.Size == 0) {
                             ss += es;
                         } else {
-                            ss += Engine::Parse(es.Str, tmpMatchs, 0, es.Length);
+                            ss += Engine::Parse(tmpMatchs, es.Str, 0, es.Length);
                         }
 
                         ss += JFX.fss6;
@@ -1011,11 +1011,11 @@ struct Document {
 
                         String const &es = Strings[entry->ArrayID];
 
-                        Array<Match> const tmpMatchs(Engine::Search(es.Str, to_json_expres, 0, es.Length));
+                        Array<Match> const tmpMatchs(Engine::Search(to_json_expres, es.Str, 0, es.Length));
                         if (tmpMatchs.Size == 0) {
                             ss += es;
                         } else {
-                            ss += Engine::Parse(es.Str, tmpMatchs, 0, es.Length);
+                            ss += Engine::Parse(tmpMatchs, es.Str, 0, es.Length);
                         }
 
                         ss += JFX.fss6;
@@ -1063,11 +1063,10 @@ struct Document {
     }
 
     static Expressions const &getToJsonExpres() noexcept {
-        static Expression  esc;
-        static Expression  quot;
-        static Expressions tags;
+        static Expressions expres;
 
-        if (tags.Size == 0) {
+        if (expres.Size == 0) {
+            static Expression esc;
             esc.SetKeyword(L"\\");
             esc.MatchCB =
                 ([](wchar_t const *content, UNumber &offset, UNumber const endOffset, Match &item, Array<Match> &items) noexcept -> void {
@@ -1078,66 +1077,64 @@ struct Document {
                 });
             esc.SetReplace(L"\\\\");
 
+            static Expression quot;
             quot.SetKeyword(L"\"");
             quot.SetReplace(L"\\\"");
 
-            tags += &esc;
-            tags += &quot;
+            expres.Add(&esc).Add(&quot);
         }
 
-        return tags;
+        return expres;
     }
 
     static Expressions const &getJsonExpres() noexcept {
-        static Expression esc_quotation;
-        static Expression esc_esc;
+        static Expressions expres;
 
-        static Expression quotation_start;
-        static Expression quotation_end;
-
-        static Expression opened_square_bracket;
-        static Expression closed_square_bracket;
-
-        static Expression opened_curly_bracket;
-        static Expression closed_curly_bracket;
-
-        static Expressions tags;
-
-        if (tags.Size == 0) {
+        if (expres.Size == 0) {
+            static Expression esc_esc;
             esc_esc.SetKeyword(L"\\\\");
             esc_esc.SetReplace(L"\\");
 
+            static Expression esc_quotation;
             esc_quotation.SetKeyword(L"\\\"");
             esc_quotation.SetReplace(L"\"");
 
-            quotation_start.SetKeyword(L"\"");
+            static Expression quotation_end;
             quotation_end.SetKeyword(L"\"");
-            quotation_end.ID          = 3;
-            quotation_start.Connected = &quotation_end;
+            quotation_end.ID = 3;
             quotation_end.NestExprs += &esc_esc;
             quotation_end.NestExprs += &esc_quotation;
 
-            opened_curly_bracket.SetKeyword(L"{");
+            static Expression quotation_start;
+            quotation_start.SetKeyword(L"\"");
+            quotation_start.Connected = &quotation_end;
+
+            static Expression closed_curly_bracket;
             closed_curly_bracket.SetKeyword(L"}");
-            closed_curly_bracket.ID        = 1;
+            closed_curly_bracket.ID = 1;
+
+            static Expression opened_curly_bracket;
+            opened_curly_bracket.SetKeyword(L"{");
             opened_curly_bracket.Connected = &closed_curly_bracket;
 
-            closed_curly_bracket.NestExprs.SetCapacity(3);
-            closed_curly_bracket.NestExprs.Add(&opened_curly_bracket).Add(&quotation_start).Add(&opened_square_bracket);
-
-            opened_square_bracket.SetKeyword(L"[");
+            static Expression closed_square_bracket;
             closed_square_bracket.SetKeyword(L"]");
-            closed_square_bracket.ID        = 2;
+            closed_square_bracket.ID = 2;
+
+            static Expression opened_square_bracket;
+            opened_square_bracket.SetKeyword(L"[");
             opened_square_bracket.Connected = &closed_square_bracket;
 
             closed_square_bracket.NestExprs.SetCapacity(3);
             closed_square_bracket.NestExprs.Add(&opened_square_bracket).Add(&quotation_start).Add(&opened_curly_bracket);
 
-            tags += &opened_curly_bracket;
-            tags += &opened_square_bracket;
+            closed_curly_bracket.NestExprs.SetCapacity(3);
+            closed_curly_bracket.NestExprs.Add(&opened_curly_bracket).Add(&quotation_start).Add(&opened_square_bracket);
+
+            expres.Add(&opened_curly_bracket).Add(&opened_square_bracket);
         }
 
-        return tags;
+        return expres;
     }
 
     void operator+=(Document const &doc) noexcept {

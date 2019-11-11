@@ -75,7 +75,7 @@ struct Match {
     Expression const *Expr{nullptr};
 };
 /////////////////////////////////
-static UNumber search(Array<Match> &items, wchar_t const *content, Expressions const &exprs, UNumber offset, UNumber const endOffset,
+static UNumber search(Array<Match> &items, Expressions const &exprs, wchar_t const *content, UNumber offset, UNumber const endOffset,
                       UNumber const maxOffset, UShort &split_count) noexcept {
     UNumber const started = offset;
 
@@ -118,7 +118,7 @@ static UNumber search(Array<Match> &items, wchar_t const *content, Expressions c
                     keyword_offset = 0;
                 } else if (expr->Length == keyword_offset) {
                     if ((expr->NestExprs.Size != 0) && ((sub_offset + keyword_offset) != current_offset)) {
-                        sub_offset = search(item.NestMatch, content, expr->NestExprs, sub_offset, current_offset, maxOffset, split_nest);
+                        sub_offset = search(item.NestMatch, expr->NestExprs, content, sub_offset, current_offset, maxOffset, split_nest);
                     }
 
                     if (current_offset > sub_offset) {
@@ -174,18 +174,18 @@ static UNumber search(Array<Match> &items, wchar_t const *content, Expressions c
     }
 
     if (((Flags::POP & exprs[0]->Flag) != 0) && (items.Size == 0)) {
-        return search(items, content, exprs[0]->NestExprs, started, endOffset, endOffset, split_count);
+        return search(items, exprs[0]->NestExprs, content, started, endOffset, endOffset, split_count);
     }
 
     return current_offset;
 }
 /////////////////////////////////
-static Array<Match> Search(wchar_t const *content, Expressions const &exprs, UNumber const offset, UNumber const limit) noexcept {
+static Array<Match> Search(Expressions const &exprs, wchar_t const *content, UNumber const offset, UNumber const limit) noexcept {
     UShort        split_count = 0;
     UNumber const endOffset   = (offset + limit);
     Array<Match>  items;
 
-    search(items, content, exprs, offset, endOffset, endOffset, split_count);
+    search(items, exprs, content, offset, endOffset, endOffset, split_count);
 
     if (split_count != 0) {
         split(items, content, offset, endOffset, split_count);
@@ -194,7 +194,7 @@ static Array<Match> Search(wchar_t const *content, Expressions const &exprs, UNu
     return items;
 }
 /////////////////////////////////
-static String Parse(wchar_t const *content, Array<Match> const &items, UNumber offset, UNumber limit, void *other = nullptr) noexcept {
+static String Parse(Array<Match> const &items, wchar_t const *content, UNumber offset, UNumber limit, void *other = nullptr) noexcept {
     StringStream rendered; // Final content
     UNumber      tmp_limit;
     Match *      item;
@@ -231,7 +231,7 @@ static String Parse(wchar_t const *content, Array<Match> const &items, UNumber o
         } else if ((Flags::BUBBLE & item->Expr->Flag) == 0) {
             rendered += item->Expr->ParseCB(content, *item, item->Length, other);
         } else if (item->NestMatch.Size != 0) {
-            String tmp_string(Parse(content, item->NestMatch, item->Offset, item->Length, other));
+            String tmp_string(Parse(item->NestMatch, content, item->Offset, item->Length, other));
             rendered += item->Expr->ParseCB(tmp_string.Str, *item, tmp_string.Length, other);
         } else {
             rendered += item->Expr->ParseCB(String::Part(content, item->Offset, item->Length).Str, *item, item->Length, other);
@@ -280,7 +280,7 @@ static void Engine::split(Array<Match> &items, wchar_t const *content, UNumber o
 
         if (((Flags::DROPEMPTY & item.Expr->Flag) == 0) || (item.Length != 0)) {
             if (item.Expr->NestExprs.Size != 0) {
-                item.NestMatch = Search(content, item.Expr->NestExprs, item.Offset, item.Length);
+                item.NestMatch = Search(item.Expr->NestExprs, content, item.Offset, item.Length);
             }
 
             splitted += static_cast<Match &&>(item);
