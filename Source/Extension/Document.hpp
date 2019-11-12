@@ -274,81 +274,92 @@ struct Document {
         }
     }
 
-    void Update(UNumber entryID, VType const type, void *ptr, bool const move) noexcept {
-        if (entryID < Entries.Size) {
-            Entry & entry = Entries[entryID];
-            UNumber id    = 0;
+    void Insert(UNumber entryID, VType const type, void *ptr, bool const move) noexcept {
+        if (entryID >= Entries.Size) {
+            // Filling the gap with the same value.
 
-            if (entry.Type != type) {
-                // New item.
-                switch (type) {
-                    case VType::NumberT: {
-                        id = Numbers.Size;
-                        Numbers += *(static_cast<double *>(ptr));
-                        break;
-                    }
-                    case VType::StringT: {
-                        id = Strings.Size;
-                        if (move) {
-                            Strings += static_cast<String &&>(*(static_cast<String *>(ptr)));
-                        } else {
-                            Strings += *(static_cast<String *>(ptr));
-                        }
-                        break;
-                    }
-                    case VType::DocumentT: {
-                        id = Documents.Size;
-                        if (move) {
-                            Documents += static_cast<Document &&>(*(static_cast<Document *>(ptr)));
-                        } else {
-                            Documents += *(static_cast<Document *>(ptr));
-                        }
-                        break;
-                    }
-                    default:
-                        break;
-                }
+            UNumber nid = Entries.Size;
 
-                // Clearing any existing value.
-                switch (entry.Type) {
-                    case VType::StringT: {
-                        Strings[entry.ArrayID].Reset();
-                    } break;
-                    case VType::DocumentT: {
-                        Documents[entry.ArrayID].Reset();
-                    } break;
-                    default:
-                        break;
-                }
+            Entries.Resize(entryID + 1);
+            Entries.Size = Entries.Capacity;
 
-                entry.ArrayID = id;
-                entry.Type    = type;
-            } else {
-                // Updating existing item.
-                switch (type) {
-                    case VType::NumberT: {
-                        Numbers[entry.ArrayID] = *(static_cast<double *>(ptr));
-                        break;
-                    }
-                    case VType::StringT: {
-                        if (move) {
-                            Strings[entry.ArrayID] = static_cast<String &&>(*(static_cast<String *>(ptr)));
-                        } else {
-                            Strings[entry.ArrayID] = *(static_cast<String *>(ptr));
-                        }
-                        break;
-                    }
-                    case VType::DocumentT: {
-                        if (move) {
-                            Documents[entry.ArrayID] = static_cast<Document &&>(*(static_cast<Document *>(ptr)));
-                        } else {
-                            Documents[entry.ArrayID] = *(static_cast<Document *>(ptr));
-                        }
-                        break;
-                    }
-                    default:
-                        break;
+            while (nid < entryID) {
+                Insert(nid++, type, ptr, false);
+            }
+        }
+
+        Entry & entry = Entries[entryID];
+        UNumber id    = 0;
+
+        if (entry.Type != type) {
+            // New item.
+            switch (type) {
+                case VType::NumberT: {
+                    id = Numbers.Size;
+                    Numbers += *(static_cast<double *>(ptr));
+                    break;
                 }
+                case VType::StringT: {
+                    id = Strings.Size;
+                    if (move) {
+                        Strings += static_cast<String &&>(*(static_cast<String *>(ptr)));
+                    } else {
+                        Strings += *(static_cast<String *>(ptr));
+                    }
+                    break;
+                }
+                case VType::DocumentT: {
+                    id = Documents.Size;
+                    if (move) {
+                        Documents += static_cast<Document &&>(*(static_cast<Document *>(ptr)));
+                    } else {
+                        Documents += *(static_cast<Document *>(ptr));
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
+
+            // Clearing any existing value.
+            switch (entry.Type) {
+                case VType::StringT: {
+                    Strings[entry.ArrayID].Reset();
+                } break;
+                case VType::DocumentT: {
+                    Documents[entry.ArrayID].Reset();
+                } break;
+                default:
+                    break;
+            }
+
+            entry.ArrayID = id;
+            entry.Type    = type;
+        } else {
+            // Updating existing item.
+            switch (type) {
+                case VType::NumberT: {
+                    Numbers[entry.ArrayID] = *(static_cast<double *>(ptr));
+                    break;
+                }
+                case VType::StringT: {
+                    if (move) {
+                        Strings[entry.ArrayID] = static_cast<String &&>(*(static_cast<String *>(ptr)));
+                    } else {
+                        Strings[entry.ArrayID] = *(static_cast<String *>(ptr));
+                    }
+                    break;
+                }
+                case VType::DocumentT: {
+                    if (move) {
+                        Documents[entry.ArrayID] = static_cast<Document &&>(*(static_cast<Document *>(ptr)));
+                    } else {
+                        Documents[entry.ArrayID] = *(static_cast<Document *>(ptr));
+                    }
+                    break;
+                }
+                default:
+                    break;
             }
         }
     }
@@ -1328,7 +1339,7 @@ struct Document {
 
         if (Ordered) {
             if (LastKeyLen < Entries.Size) {
-                Update(--LastKeyLen, VType::DocumentT, &doc, true);
+                Insert(--LastKeyLen, VType::DocumentT, &doc, true);
                 storage = &(Documents[Entries[LastKeyLen].ArrayID]);
             } else {
                 storage = this;
@@ -1363,7 +1374,7 @@ struct Document {
 
         if (Ordered) {
             if (LastKeyLen < Entries.Size) {
-                Update(--LastKeyLen, VType::DocumentT, &doc_copy, true);
+                Insert(--LastKeyLen, VType::DocumentT, &doc_copy, true);
                 storage = &(Documents[Entries[LastKeyLen].ArrayID]);
             } else {
                 storage = this;
@@ -1393,9 +1404,9 @@ struct Document {
 
             if (str != nullptr) {
                 String string = str;
-                Update(LastKeyLen, VType::StringT, &string, true);
+                Insert(LastKeyLen, VType::StringT, &string, true);
             } else {
-                Update(LastKeyLen, VType::NullT, nullptr, false);
+                Insert(LastKeyLen, VType::NullT, nullptr, false);
             }
         } else {
             if (str != nullptr) {
@@ -1416,7 +1427,7 @@ struct Document {
         if (LastKeyLen != 0) {
 
             if (Ordered) {
-                Update(--LastKeyLen, VType::NumberT, &number, false);
+                Insert(--LastKeyLen, VType::NumberT, &number, false);
             } else {
                 Insert(LastKey, 0, LastKeyLen, VType::NumberT, &number, false);
             }
@@ -1433,7 +1444,7 @@ struct Document {
             double number = static_cast<double>(num);
 
             if (Ordered) {
-                Update(--LastKeyLen, VType::NumberT, &number, false);
+                Insert(--LastKeyLen, VType::NumberT, &number, false);
             } else {
                 Insert(LastKey, 0, LastKeyLen, VType::NumberT, &number, false);
             }
@@ -1450,7 +1461,7 @@ struct Document {
             double number = static_cast<double>(num);
 
             if (Ordered) {
-                Update(--LastKeyLen, VType::NumberT, &number, false);
+                Insert(--LastKeyLen, VType::NumberT, &number, false);
             } else {
                 Insert(LastKey, 0, LastKeyLen, VType::NumberT, &number, false);
             }
@@ -1465,7 +1476,7 @@ struct Document {
     Document &operator=(bool const value) noexcept {
         if (LastKeyLen != 0) {
             if (Ordered) {
-                Update(--LastKeyLen, (value ? VType::TrueT : VType::FalseT), nullptr, false);
+                Insert(--LastKeyLen, (value ? VType::TrueT : VType::FalseT), nullptr, false);
             } else {
                 Insert(LastKey, 0, LastKeyLen, (value ? VType::TrueT : VType::FalseT), nullptr, false);
             }
@@ -1718,35 +1729,50 @@ struct Document {
     }
 
     Document &operator[](UNumber const id) noexcept {
-        Entry const &entry = Entries[id];
+        if (id < Entries.Size) {
+            Entry const &entry = Entries[id];
 
-        if (entry.Type == VType::DocumentT) {
-            return Documents[entry.ArrayID];
-        }
+            if (entry.Type == VType::DocumentT) {
+                return Documents[entry.ArrayID];
+            }
 
-        if (Ordered) {
+            if (Ordered) {
+                LastKeyLen = (id + 1);
+            } else {
+                LastKey    = Keys[entry.KeyID].Str;
+                LastKeyLen = Keys[entry.KeyID].Length;
+            }
+        } else if (Ordered) {
             LastKeyLen = (id + 1);
-        } else {
-            LastKey    = Keys[entry.KeyID].Str;
-            LastKeyLen = Keys[entry.KeyID].Length;
+        } else if (Entries.Size == 0) {
+            Ordered    = true;
+            LastKeyLen = (id + 1);
         }
 
         return *this;
     }
 
     Document &operator[](int const id) noexcept {
-        UNumber const ID    = static_cast<UNumber>(id);
-        Entry const & entry = Entries[ID];
+        UNumber const ID = static_cast<UNumber>(id);
 
-        if (entry.Type == VType::DocumentT) {
-            return Documents[entry.ArrayID];
-        }
+        if (ID < Entries.Size) {
+            Entry const &entry = Entries[ID];
 
-        if (Ordered) {
+            if (entry.Type == VType::DocumentT) {
+                return Documents[entry.ArrayID];
+            }
+
+            if (Ordered) {
+                LastKeyLen = (ID + 1);
+            } else {
+                LastKey    = Keys[entry.KeyID].Str;
+                LastKeyLen = Keys[entry.KeyID].Length;
+            }
+        } else if (Ordered) {
             LastKeyLen = (ID + 1);
-        } else {
-            LastKey    = Keys[entry.KeyID].Str;
-            LastKeyLen = Keys[entry.KeyID].Length;
+        } else if (Entries.Size == 0) {
+            Ordered    = true;
+            LastKeyLen = (ID + 1);
         }
 
         return *this;
