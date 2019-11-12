@@ -26,6 +26,19 @@ struct StringStream {
     Array<StringBit> Bits;
     UNumber          Length = 0;
 
+    void operator+=(wchar_t const *str) noexcept {
+        if (str != nullptr) {
+            UNumber len = String::Count(str);
+            Length += len;
+            Bits += {len, str, nullptr};
+        }
+    }
+
+    void Add(wchar_t const *str, UNumber const len) noexcept {
+        Length += len;
+        Bits += {len, str, nullptr};
+    }
+
     void operator+=(String &&src) noexcept {
         if (src.Length != 0) {
             Length += src.Length;
@@ -39,19 +52,6 @@ struct StringStream {
             Length += src.Length;
             Bits += {src.Length, src.Str, nullptr};
         }
-    }
-
-    void operator+=(wchar_t const *str) noexcept {
-        if (str != nullptr) {
-            UNumber len = String::Count(str);
-            Length += len;
-            Bits += {len, str, nullptr};
-        }
-    }
-
-    void Add(wchar_t const *str, UNumber const len) noexcept {
-        Length += len;
-        Bits += {len, str, nullptr};
     }
 
     String Eject() noexcept {
@@ -71,9 +71,9 @@ struct StringStream {
                 Memory::Deallocate<wchar_t>(&(bit->Collect));
             }
         }
-        Bits.Reset();
+        tmp.Str[tmp.Length] = L'\0'; // Null trimmming
 
-        tmp[tmp.Length] = L'\0'; // Null trimmming
+        Bits.Reset();
 
         return tmp;
     }

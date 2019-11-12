@@ -66,6 +66,8 @@ struct Document {
     UNumber        LastKeyLen{0};
     wchar_t const *LastKey{nullptr};
 
+    static wchar_t constexpr const *char_list = L"{[]}\\\\\"";
+
     Document()                    = default;
     virtual ~Document()           = default;
     Document(Document &&doc)      = default;
@@ -929,6 +931,7 @@ struct Document {
     String ToJSON() const noexcept {
         StringStream ss;
         Entry *      entry;
+        UNumber      counter;
 
         if (Ordered) {
             ss.Bits.SetCapacity(2 + (Entries.Size * 2) + (Strings.Size * 2));
@@ -952,11 +955,17 @@ struct Document {
 
                         String const &es = Strings[entry->ArrayID];
 
-                        Array<MatchBit> const tmpMatchs(Engine::Match(getToJsonExpres(), es.Str, 0, es.Length));
-                        if (tmpMatchs.Size == 0) {
+                        for (counter = 0; counter < es.Length; counter++) {
+                            if (es.Str[counter] == L'\\' || es.Str[counter] == L'"') {
+                                counter = 0;
+                                break;
+                            }
+                        }
+
+                        if (counter == es.Length) {
                             ss += es;
                         } else {
-                            ss += Engine::Parse(tmpMatchs, es.Str, 0, es.Length);
+                            ss += Engine::Parse(Engine::Match(getToJsonExpres(), es.Str, 0, es.Length), es.Str, 0, es.Length);
                         }
 
                         ss += JFX.fss6;
@@ -1012,11 +1021,17 @@ struct Document {
 
                         String const &es = Strings[entry->ArrayID];
 
-                        Array<MatchBit> const tmpMatchs(Engine::Match(getToJsonExpres(), es.Str, 0, es.Length));
-                        if (tmpMatchs.Size == 0) {
+                        for (counter = 0; counter < es.Length; counter++) {
+                            if (es.Str[counter] == L'\\' || es.Str[counter] == L'"') {
+                                counter = 0;
+                                break;
+                            }
+                        }
+
+                        if (counter == es.Length) {
                             ss += es;
                         } else {
-                            ss += Engine::Parse(tmpMatchs, es.Str, 0, es.Length);
+                            ss += Engine::Parse(Engine::Match(getToJsonExpres(), es.Str, 0, es.Length), es.Str, 0, es.Length);
                         }
 
                         ss += JFX.fss6;
@@ -1068,7 +1083,9 @@ struct Document {
 
         if (expres.Size == 0) {
             static Expression esc;
-            esc.SetKeyword(L"\\");
+            // esc.SetKeyword(L"\\");
+            esc.Keyword = &(char_list[4]);
+            esc.Length  = 1;
             esc.MatchCB = ([](wchar_t const *content, UNumber &offset, UNumber const endOffset, MatchBit &item,
                               Array<MatchBit> &items) noexcept -> void {
                 if ((content[offset] == L'\\') || (content[offset] == L' ') || (offset == endOffset)) {
@@ -1076,11 +1093,17 @@ struct Document {
                     items += static_cast<MatchBit &&>(item);
                 }
             });
-            esc.SetReplace(L"\\\\");
+            // esc.SetReplace(L"\\\\");
+            esc.ReplaceWith = &(char_list[4]);
+            esc.RLength     = 2;
 
             static Expression quot;
-            quot.SetKeyword(L"\"");
-            quot.SetReplace(L"\\\"");
+            // quot.SetKeyword(L"\"");
+            quot.Keyword = &(char_list[6]);
+            quot.Length  = 1;
+            // quot.SetReplace(L"\\\"");
+            quot.ReplaceWith = &(char_list[5]);
+            quot.RLength     = 2;
 
             expres.Add(&esc).Add(&quot);
         }
@@ -1092,35 +1115,56 @@ struct Document {
         static Expressions expres;
 
         if (expres.Size == 0) {
+
             static Expression esc_esc;
-            esc_esc.SetKeyword(L"\\\\");
-            esc_esc.SetReplace(L"\\");
+            // esc_esc.SetKeyword(L"\\\\");
+            esc_esc.Keyword = &(char_list[4]);
+            esc_esc.Length  = 2;
+            // esc_esc.SetReplace(L"\\");
+            esc_esc.ReplaceWith = &(char_list[4]);
+            esc_esc.RLength     = 1;
 
             static Expression esc_quotation;
-            esc_quotation.SetKeyword(L"\\\"");
-            esc_quotation.SetReplace(L"\"");
+            // esc_quotation.SetKeyword(L"\\\"");
+            esc_quotation.Keyword = &(char_list[5]);
+            esc_quotation.Length  = 2;
+            // esc_quotation.SetReplace(L"\"");
+            esc_quotation.ReplaceWith = &(char_list[6]);
+            esc_quotation.RLength     = 1;
 
             static Expression quotation_end;
-            quotation_end.SetKeyword(L"\"");
+            // quotation_end.SetKeyword(L"\"");
+            quotation_end.Keyword = &(char_list[6]);
+            quotation_end.Length  = 1;
             quotation_end.NestExprs += &esc_esc;
             quotation_end.NestExprs += &esc_quotation;
 
             static Expression quotation_start;
-            quotation_start.SetKeyword(L"\"");
+            // quotation_start.SetKeyword(L"\"");
+            quotation_start.Keyword   = &(char_list[6]);
+            quotation_start.Length    = 1;
             quotation_start.Connected = &quotation_end;
 
             static Expression closed_curly_bracket;
-            closed_curly_bracket.SetKeyword(L"}");
+            // closed_curly_bracket.SetKeyword(L"}");
+            closed_curly_bracket.Keyword = &(char_list[3]);
+            closed_curly_bracket.Length  = 1;
 
             static Expression opened_curly_bracket;
-            opened_curly_bracket.SetKeyword(L"{");
+            // opened_curly_bracket.SetKeyword(L"{");
+            opened_curly_bracket.Keyword   = &(char_list[0]);
+            opened_curly_bracket.Length    = 1;
             opened_curly_bracket.Connected = &closed_curly_bracket;
 
             static Expression closed_square_bracket;
-            closed_square_bracket.SetKeyword(L"]");
+            // closed_square_bracket.SetKeyword(L"]");
+            closed_square_bracket.Keyword = &(char_list[2]);
+            closed_square_bracket.Length  = 1;
 
             static Expression opened_square_bracket;
-            opened_square_bracket.SetKeyword(L"[");
+            // opened_square_bracket.SetKeyword(L"[");
+            opened_square_bracket.Keyword   = &(char_list[1]);
+            opened_square_bracket.Length    = 1;
             opened_square_bracket.Connected = &closed_square_bracket;
 
             closed_square_bracket.NestExprs.SetCapacity(3);
