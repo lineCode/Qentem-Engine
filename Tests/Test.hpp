@@ -21,7 +21,7 @@ using Qentem::Engine::Flags;
 
 struct TestBit {
     UNumber                Line = 0;
-    Expressions            Exprs;
+    Expressions            Expres;
     Expressions            Collect;
     Array<wchar_t const *> Content;
     Array<wchar_t const *> Expected;
@@ -157,7 +157,7 @@ static Array<TestBit> GetALUBits() noexcept {
     bit.Content.Add(L"3 + 9 - 1 - -1 + 2 == 14");
     bit.Expected.Add(L"1");
     ////
-    bit.Exprs = Qentem::ALU::getMathExpres();
+    bit.Expres = Qentem::ALU::getMathExpres();
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -169,7 +169,7 @@ static Array<TestBit> GetALUBits() noexcept {
     bit.Content.Add(L"(((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) + (1) + 2 = 14)");
     bit.Expected.Add(L"1");
 
-    bit.Exprs = Qentem::ALU::getParensExpres();
+    bit.Expres = Qentem::ALU::getParensExpres();
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     return bits;
@@ -344,7 +344,7 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
 
     ////
 
-    bit.Exprs = Qentem::Template::getExpres();
+    bit.Expres = Qentem::Template::getExpres();
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
 
@@ -371,7 +371,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     x1->SetKeyword(L"-");
     x1->SetReplace(L"*");
 
-    bit.Exprs.Add(x1);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
@@ -388,7 +388,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     x1->ParseCB = ([](wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept -> String { return L"*"; });
 
-    bit.Exprs.Add(x1).Add(x2);
+    bit.Expres.Add(x1).Add(x2);
     bit.Collect.Add(x1).Add(x2);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
@@ -415,7 +415,7 @@ static Array<TestBit> GetEngineBits() noexcept {
             return String::FromNumber(item.Offset) + L"-" + String::FromNumber(item.Length);
         });
 
-    bit.Exprs.Add(x2).Add(x1).Add(x3);
+    bit.Expres.Add(x2).Add(x1).Add(x3);
     bit.Collect.Add(x1).Add(x2).Add(x3).Add(y3);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
@@ -434,7 +434,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     x1->Connected = y1;
     y1->SetReplace(L"-");
 
-    bit.Exprs.Add(x1);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1).Add(y1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
@@ -453,7 +453,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     x1->Connected = y1;
     y1->SetReplace(L"-");
 
-    bit.Exprs.Add(x1);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1).Add(y1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
@@ -479,7 +479,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     x2->Connected = y2;
     y1->SetReplace(L"-");
 
-    bit.Exprs.Add(x1).Add(x2);
+    bit.Expres.Add(x1).Add(x2);
     bit.Collect.Add(x1).Add(x2).Add(y1).Add(y2);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
@@ -498,7 +498,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     x1->Connected = y1;
     y1->SetReplace(L"-");
 
-    bit.Exprs.Add(x1);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1).Add(y1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
@@ -515,7 +515,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     x1->Connected = y1;
     y1->SetReplace(L"=");
 
-    bit.Exprs.Add(x1);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1).Add(y1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
@@ -533,7 +533,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     y1->Flag      = Flags::ONCE;
     y1->SetReplace(L"=");
 
-    bit.Exprs.Add(x1);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1).Add(y1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
@@ -559,9 +559,9 @@ static Array<TestBit> GetEngineBits() noexcept {
     y1->SetKeyword(L">");
     x1->Connected = y1;
     y1->SetReplace(L"=");
-    y1->NestExprs.Add(x1);
+    y1->NestExpres.Add(x1);
 
-    bit.Exprs.Add(x1);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1).Add(y1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
@@ -580,9 +580,9 @@ static Array<TestBit> GetEngineBits() noexcept {
     y1->SetKeyword(L"X>");
     x1->Connected = y1;
     y1->SetReplace(L"W");
-    y1->NestExprs.Add(x1);
+    y1->NestExpres.Add(x1);
 
-    bit.Exprs.Add(x1);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1).Add(y1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
@@ -597,9 +597,9 @@ static Array<TestBit> GetEngineBits() noexcept {
     y1->SetKeyword(L"X>");
     x1->Connected = y1;
     y1->SetReplace(L"W");
-    y1->NestExprs.Add(x1);
+    y1->NestExpres.Add(x1);
 
-    bit.Exprs.Add(x1);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1).Add(y1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
@@ -619,9 +619,9 @@ static Array<TestBit> GetEngineBits() noexcept {
     y1->SetKeyword(L">");
     x1->Connected = y1;
     y1->SetReplace(L"+");
-    y1->NestExprs.Add(x1);
+    y1->NestExpres.Add(x1);
 
-    bit.Exprs.Add(x1);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1).Add(y1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
@@ -639,9 +639,9 @@ static Array<TestBit> GetEngineBits() noexcept {
     y1->SetKeyword(L">>");
     x1->Connected = y1;
     y1->SetReplace(L"_");
-    y1->NestExprs.Add(x1);
+    y1->NestExpres.Add(x1);
 
-    bit.Exprs.Add(x1);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1).Add(y1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
@@ -659,9 +659,9 @@ static Array<TestBit> GetEngineBits() noexcept {
     y1->SetKeyword(L">>");
     x1->Connected = y1;
     y1->SetReplace(L"_");
-    y1->NestExprs.Add(x1);
+    y1->NestExpres.Add(x1);
 
-    bit.Exprs.Add(x1);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1).Add(y1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
@@ -679,9 +679,9 @@ static Array<TestBit> GetEngineBits() noexcept {
     y1->SetKeyword(L">");
     x1->Connected = y1;
     y1->Flag      = Flags::BUBBLE;
-    y1->NestExprs.Add(x1);
+    y1->NestExpres.Add(x1);
 
-    bit.Exprs.Add(x1);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1).Add(y1);
     bits += static_cast<TestBit &&>(bit);
 
@@ -713,11 +713,11 @@ static Array<TestBit> GetEngineBits() noexcept {
     y2->SetKeyword(L">");
     x2->Connected = y2;
     y2->Flag      = Flags::BUBBLE;
-    y2->NestExprs.Add(x2); // Nest itself
+    y2->NestExpres.Add(x2); // Nest itself
 
-    y1->NestExprs.Add(x2); // Nested by x2
+    y1->NestExpres.Add(x2); // Nested by x2
 
-    bit.Exprs.Add(x1);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1).Add(x2).Add(y1).Add(y2);
     bits += static_cast<TestBit &&>(bit);
 
@@ -781,12 +781,12 @@ static Array<TestBit> GetEngineBits() noexcept {
     x3->Connected = y3;
     y3->SetReplace(L"u");
 
-    x1->NestExprs.Add(x2);
-    y1->NestExprs.Add(x2);
-    x2->NestExprs.Add(x3);
-    y2->NestExprs.Add(x3);
+    x1->NestExpres.Add(x2);
+    y1->NestExpres.Add(x2);
+    x2->NestExpres.Add(x3);
+    y2->NestExpres.Add(x3);
 
-    bit.Exprs.Add(x1);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1).Add(x2).Add(x3).Add(y1).Add(y2).Add(y3);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
@@ -800,7 +800,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     x1->SetKeyword(L"<>");
     x1->Flag = Flags::SPLIT;
 
-    bit.Exprs.Add(x1);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1);
 
     bits += static_cast<TestBit &&>(bit);
@@ -825,10 +825,10 @@ static Array<TestBit> GetEngineBits() noexcept {
     Memory::AllocateBit<Expression>(&y2);
     y1->SetKeyword(L"(");
     y2->SetKeyword(L")");
-    y2->NestExprs.Add(x1);
+    y2->NestExpres.Add(x1);
     y1->Connected = y2;
 
-    bit.Exprs.Add(y1);
+    bit.Expres.Add(y1);
     bit.Collect.Add(x1).Add(y1).Add(y2);
 
     bits += static_cast<TestBit &&>(bit);
@@ -875,8 +875,8 @@ static Array<TestBit> GetEngineBits() noexcept {
     x2->SetKeyword(L"*");
     x2->Flag = Flags::SPLIT | Flags::GROUPED;
 
-    x1->NestExprs.Add(x2);
-    bit.Exprs.Add(x1);
+    x1->NestExpres.Add(x2);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1).Add(x2);
     bits += static_cast<TestBit &&>(bit);
 
@@ -936,10 +936,10 @@ static Array<TestBit> GetEngineBits() noexcept {
     Memory::AllocateBit<Expression>(&y2);
     y1->SetKeyword(L"(");
     y2->SetKeyword(L")");
-    y2->NestExprs.Add(x1);
+    y2->NestExpres.Add(x1);
     y1->Connected = y2;
 
-    bit.Exprs.Add(y1);
+    bit.Expres.Add(y1);
     bit.Collect.Add(x1).Add(y1).Add(y2);
     bits += static_cast<TestBit &&>(bit);
 
@@ -986,7 +986,7 @@ static Array<TestBit> GetEngineBits() noexcept {
         return L"7";
     });
 
-    bit.Exprs.Add(x1).Add(x2).Add(x3);
+    bit.Expres.Add(x1).Add(x2).Add(x3);
     bit.Collect.Add(x1).Add(x2).Add(x3);
     bits += static_cast<TestBit &&>(bit);
 
@@ -1034,8 +1034,8 @@ static Array<TestBit> GetEngineBits() noexcept {
     y2->Flag      = Flags::SPLIT;
     x2->Connected = y2;
 
-    y1->NestExprs.Add(x2);
-    bit.Exprs.Add(x1);
+    y1->NestExpres.Add(x2);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1).Add(x2).Add(y1).Add(y2);
     bits += static_cast<TestBit &&>(bit);
 
@@ -1073,8 +1073,8 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     y1->ParseCB = &(FlipSplit);
 
-    y1->NestExprs.Add(x1).Add(x2);
-    bit.Exprs.Add(x1);
+    y1->NestExpres.Add(x1).Add(x2);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1).Add(x2).Add(y1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
@@ -1092,12 +1092,12 @@ static Array<TestBit> GetEngineBits() noexcept {
     y1->SetKeyword(L"}");
     x1->Connected = y1;
     y1->Flag      = Flags::BUBBLE | Flags::TRIM | Flags::DROPEMPTY;
-    y1->NestExprs.Add(x1);
+    y1->NestExpres.Add(x1);
 
     x2->SetKeyword(L"&");
     x2->Flag = Flags::SPLIT | Flags::GROUPED | Flags::TRIM | Flags::DROPEMPTY;
 
-    bit.Exprs.Add(x1).Add(x2);
+    bit.Expres.Add(x1).Add(x2);
     bit.Collect.Add(x1).Add(x2).Add(y1);
     bits += static_cast<TestBit &&>(bit);
 
@@ -1140,9 +1140,9 @@ static Array<TestBit> GetEngineBits() noexcept {
     y1->SetKeyword(L"</div>");
 
     x1->Connected = y1;
-    y1->NestExprs.Add(x1);
+    y1->NestExpres.Add(x1);
 
-    bit.Exprs.Add(x1);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1).Add(y1);
     bits += static_cast<TestBit &&>(bit);
 
@@ -1166,7 +1166,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     x2->SetKeyword(L"-");
     x2->SetReplace(L"1");
 
-    bit.Exprs.Add(x1).Add(x2);
+    bit.Expres.Add(x1).Add(x2);
     bit.Collect.Add(x1).Add(x2);
     bits += static_cast<TestBit &&>(bit);
 
@@ -1190,7 +1190,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     x1->SetKeyword(L"/");
     x1->SetReplace(L"//");
 
-    bit.Exprs.Add(x1);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1);
     bits += static_cast<TestBit &&>(bit);
 
@@ -1220,9 +1220,9 @@ static Array<TestBit> GetEngineBits() noexcept {
     y1->SetKeyword(L"}");
     x1->Connected = y1;
     y1->Flag      = Flags::BUBBLE;
-    y1->NestExprs += x1;
-    y1->NestExprs += x2;
-    y1->NestExprs += x3;
+    y1->NestExpres += x1;
+    y1->NestExpres += x2;
+    y1->NestExpres += x3;
 
     x2->SetKeyword(L"'");
     y2->SetKeyword(L"'");
@@ -1233,11 +1233,11 @@ static Array<TestBit> GetEngineBits() noexcept {
     y3->SetKeyword(L"]");
     y3->SetReplace(L"1");
     x3->Connected = y3;
-    y3->NestExprs += x1;
-    y3->NestExprs += x2;
-    y3->NestExprs += x3;
+    y3->NestExpres += x1;
+    y3->NestExpres += x2;
+    y3->NestExpres += x3;
 
-    bit.Exprs.Add(x1);
+    bit.Expres.Add(x1);
     bit.Collect.Add(x1).Add(x2).Add(x3).Add(y1).Add(y2).Add(y3);
     bits += static_cast<TestBit &&>(bit);
 

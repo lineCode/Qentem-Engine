@@ -283,72 +283,72 @@ static Expressions const &getMathExpres() noexcept {
         math_add.ID      = 1;
         math_add.Flag    = flags_ops;
         math_add.ParseCB = &(AdditionCallback);
-        math_add.NestExprs.SetCapacity(4);
-        math_add.NestExprs.Add(&math_exp).Add(&math_rem).Add(&math_div).Add(&math_mul);
+        math_add.NestExpres.SetCapacity(4);
+        math_add.NestExpres.Add(&math_exp).Add(&math_rem).Add(&math_div).Add(&math_mul);
 
         static Expression math_sub;
         math_sub.SetKeyword(L"-");
-        math_sub.ID        = 2;
-        math_sub.Flag      = flags_no_pop;
-        math_sub.ParseCB   = &(AdditionCallback);
-        math_sub.NestExprs = math_add.NestExprs;
+        math_sub.ID         = 2;
+        math_sub.Flag       = flags_no_pop;
+        math_sub.ParseCB    = &(AdditionCallback);
+        math_sub.NestExpres = math_add.NestExpres;
         ///////////////////////////////////////////
         static Expression logic_equ2;
         logic_equ2.SetKeyword(L"==");
         logic_equ2.ID      = 1;
         logic_equ2.Flag    = flags_ops;
         logic_equ2.ParseCB = &(EqualCallback);
-        logic_equ2.NestExprs.Add(&math_add).Add(&math_sub);
+        logic_equ2.NestExpres.Add(&math_add).Add(&math_sub);
 
         static Expression logic_equ;
         logic_equ.SetKeyword(L"=");
-        logic_equ.ID        = 2;
-        logic_equ.Flag      = flags_ops;
-        logic_equ.ParseCB   = &(EqualCallback);
-        logic_equ.NestExprs = logic_equ2.NestExprs;
+        logic_equ.ID         = 2;
+        logic_equ.Flag       = flags_ops;
+        logic_equ.ParseCB    = &(EqualCallback);
+        logic_equ.NestExpres = logic_equ2.NestExpres;
 
         static Expression logic_not_equ;
         logic_not_equ.SetKeyword(L"!=");
-        logic_not_equ.ID        = 3;
-        logic_not_equ.Flag      = flags_no_pop;
-        logic_not_equ.ParseCB   = &(EqualCallback);
-        logic_not_equ.NestExprs = logic_equ2.NestExprs;
+        logic_not_equ.ID         = 3;
+        logic_not_equ.Flag       = flags_no_pop;
+        logic_not_equ.ParseCB    = &(EqualCallback);
+        logic_not_equ.NestExpres = logic_equ2.NestExpres;
 
         static Expression logic_less_equ;
         logic_less_equ.SetKeyword(L"<=");
-        logic_less_equ.ID        = 4;
-        logic_less_equ.Flag      = flags_no_pop;
-        logic_less_equ.ParseCB   = &(EqualCallback);
-        logic_less_equ.NestExprs = logic_equ2.NestExprs;
+        logic_less_equ.ID         = 4;
+        logic_less_equ.Flag       = flags_no_pop;
+        logic_less_equ.ParseCB    = &(EqualCallback);
+        logic_less_equ.NestExpres = logic_equ2.NestExpres;
 
         static Expression logic_less;
         logic_less.SetKeyword(L"<");
-        logic_less.ID        = 5;
-        logic_less.Flag      = flags_no_pop;
-        logic_less.ParseCB   = &(EqualCallback);
-        logic_less.NestExprs = logic_equ2.NestExprs;
+        logic_less.ID         = 5;
+        logic_less.Flag       = flags_no_pop;
+        logic_less.ParseCB    = &(EqualCallback);
+        logic_less.NestExpres = logic_equ2.NestExpres;
 
         static Expression logic_big_equ;
         logic_big_equ.SetKeyword(L">=");
-        logic_big_equ.ID        = 6;
-        logic_big_equ.Flag      = flags_no_pop;
-        logic_big_equ.ParseCB   = &(EqualCallback);
-        logic_big_equ.NestExprs = logic_equ2.NestExprs;
+        logic_big_equ.ID         = 6;
+        logic_big_equ.Flag       = flags_no_pop;
+        logic_big_equ.ParseCB    = &(EqualCallback);
+        logic_big_equ.NestExpres = logic_equ2.NestExpres;
 
         static Expression logic_big;
         logic_big.SetKeyword(L">");
-        logic_big.ID        = 7;
-        logic_big.Flag      = flags_no_pop;
-        logic_big.ParseCB   = &(EqualCallback);
-        logic_big.NestExprs = logic_equ2.NestExprs;
+        logic_big.ID         = 7;
+        logic_big.Flag       = flags_no_pop;
+        logic_big.ParseCB    = &(EqualCallback);
+        logic_big.NestExpres = logic_equ2.NestExpres;
         ///////////////////////////////////////////
         static Expression logic_and;
         logic_and.SetKeyword(L"&&");
         logic_and.ID      = 1;
         logic_and.Flag    = flags_ops;
         logic_and.ParseCB = &(LogicCallback);
-        logic_and.NestExprs.SetCapacity(7);
-        logic_and.NestExprs.Add(&logic_equ2)
+        logic_and.NestExpres.SetCapacity(7);
+        logic_and.NestExpres.Add(&logic_equ2)
             .Add(&logic_equ)
             .Add(&logic_not_equ)
             .Add(&logic_less_equ)
@@ -358,10 +358,10 @@ static Expressions const &getMathExpres() noexcept {
 
         static Expression logic_or;
         logic_or.SetKeyword(L"||");
-        logic_or.ID        = 2;
-        logic_or.Flag      = flags_no_pop;
-        logic_or.ParseCB   = &(LogicCallback);
-        logic_or.NestExprs = logic_and.NestExprs;
+        logic_or.ID         = 2;
+        logic_or.Flag       = flags_no_pop;
+        logic_or.ParseCB    = &(LogicCallback);
+        logic_or.NestExpres = logic_and.NestExpres;
         ///////////////////////////////////////////
 
         expres.Add(&logic_and).Add(&logic_or);
@@ -387,8 +387,8 @@ static Expressions const &getParensExpres() noexcept {
         ParensExpr.Connected = &ParensCLose;
         ParensCLose.Flag     = Flags::BUBBLE | Flags::TRIM;
         ParensCLose.ParseCB  = &(ParenthesisCallback);
-        ParensCLose.NestExprs.SetCapacity(1);
-        ParensCLose.NestExprs.Add(&ParensExpr);
+        ParensCLose.NestExpres.SetCapacity(1);
+        ParensCLose.NestExpres.Add(&ParensExpr);
 
         expres.Add(&ParensExpr);
     }

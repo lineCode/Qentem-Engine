@@ -203,7 +203,7 @@ static bool runTests(wchar_t const *name, Array<TestBit> const &bits, bool break
 
             search_ticks = static_cast<UNumber>(clock());
             for (UNumber x = 0; x < times; x++) {
-                matches = Qentem::Engine::Match(bits[i].Exprs, bits[i].Content[t], 0, length);
+                matches = Qentem::Engine::Match(bits[i].Expres, bits[i].Content[t], 0, length);
             }
             search_ticks = (static_cast<UNumber>(clock()) - search_ticks);
             total_search += search_ticks;

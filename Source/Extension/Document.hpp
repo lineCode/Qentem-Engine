@@ -655,8 +655,8 @@ struct Document {
                 return makeList(items[0].NestMatch, content, items[0].Offset, items[0].Length);
             }
         } else {
-            static Expressions comments_exprs;
-            if (comments_exprs.Size == 0) {
+            static Expressions comments_expres;
+            if (comments_expres.Size == 0) {
                 static Expression comment1_end;
                 comment1_end.SetKeyword(L"*/");
                 comment1_end.SetReplace(L"\n");
@@ -673,10 +673,10 @@ struct Document {
                 comment2.SetKeyword(L"//");
                 comment2.Connected = &comment2_end;
 
-                comments_exprs.Add(&comment1).Add(&comment2);
+                comments_expres.Add(&comment1).Add(&comment2);
             }
 
-            String n_content(Engine::Parse(Engine::Match(comments_exprs, content, offset, limit), content, offset, limit));
+            String n_content(Engine::Parse(Engine::Match(comments_expres, content, offset, limit), content, offset, limit));
             items = Engine::Match(getJsonExpres(), n_content.Str, 0, n_content.Length);
 
             if (items.Size != 0) {
@@ -1147,8 +1147,8 @@ struct Document {
             // quotation_end.SetKeyword(L"\"");
             quotation_end.Keyword = &(char_list[6]);
             quotation_end.Length  = 1;
-            quotation_end.NestExprs += &esc_esc;
-            quotation_end.NestExprs += &esc_quotation;
+            quotation_end.NestExpres += &esc_esc;
+            quotation_end.NestExpres += &esc_quotation;
 
             static Expression quotation_start;
             // quotation_start.SetKeyword(L"\"");
@@ -1178,11 +1178,11 @@ struct Document {
             opened_square_bracket.Length    = 1;
             opened_square_bracket.Connected = &closed_square_bracket;
 
-            closed_square_bracket.NestExprs.SetCapacity(3);
-            closed_square_bracket.NestExprs.Add(&opened_square_bracket).Add(&quotation_start).Add(&opened_curly_bracket);
+            closed_square_bracket.NestExpres.SetCapacity(3);
+            closed_square_bracket.NestExpres.Add(&opened_square_bracket).Add(&quotation_start).Add(&opened_curly_bracket);
 
-            closed_curly_bracket.NestExprs.SetCapacity(3);
-            closed_curly_bracket.NestExprs.Add(&opened_curly_bracket).Add(&quotation_start).Add(&opened_square_bracket);
+            closed_curly_bracket.NestExpres.SetCapacity(3);
+            closed_curly_bracket.NestExpres.Add(&opened_curly_bracket).Add(&quotation_start).Add(&opened_square_bracket);
 
             expres.Add(&opened_curly_bracket).Add(&opened_square_bracket);
         }

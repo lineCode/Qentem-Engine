@@ -39,7 +39,7 @@ struct Flags {
     static UShort const SPLIT  = 16;  // Split a match at with the specified keyword.
     static UShort const ONCE   = 32;  // Will stop searching after the first match.
     static UShort const IGNORE = 64;  // Igoring a match after finding it.
-    static UShort const POP    = 128; // Match again with NestExprs if there is no match.
+    static UShort const POP    = 128; // Match again with NestExpres if there is no match.
 };
 /////////////////////////////////
 struct Expression {
@@ -47,7 +47,7 @@ struct Expression {
     wchar_t const *   Keyword{nullptr};   // What to search for.
     Expression const *Connected{nullptr}; // The next part of the match (the next keyword).
 
-    Expressions NestExprs;        // Expressions for nesting Match().
+    Expressions NestExpres;       // Expressions for nesting Match().
     UShort      Flag{0};          // Flags for the expression.
     MatchCB_ *  MatchCB{nullptr}; // A callback function for a custom action on a match.
 
@@ -75,7 +75,7 @@ struct MatchBit {
     Expression const *Expr{nullptr};
 };
 /////////////////////////////////
-static UNumber match(Array<MatchBit> &items, Expressions const &exprs, wchar_t const *content, UNumber offset, UNumber const endOffset,
+static UNumber match(Array<MatchBit> &items, Expressions const &expres, wchar_t const *content, UNumber offset, UNumber const endOffset,
                      UNumber const maxOffset, UShort &split_count) noexcept {
     UNumber const started = offset;
 
@@ -88,7 +88,7 @@ static UNumber match(Array<MatchBit> &items, Expressions const &exprs, wchar_t c
 
     while (offset < endOffset) {
         current_offset = offset;
-        expr           = exprs[expr_id];
+        expr           = expres[expr_id];
         keyword_offset = 0;
 
         while ((keyword_offset < expr->Length) && (expr->Keyword[keyword_offset] == content[current_offset])) {
@@ -97,7 +97,7 @@ static UNumber match(Array<MatchBit> &items, Expressions const &exprs, wchar_t c
         }
 
         if ((keyword_offset == 0) || (keyword_offset != expr->Length)) {
-            if (exprs.Size == (++expr_id)) {
+            if (expres.Size == (++expr_id)) {
                 expr_id = 0;
                 ++offset;
             }
@@ -117,8 +117,8 @@ static UNumber match(Array<MatchBit> &items, Expressions const &exprs, wchar_t c
                 if (expr->Keyword[keyword_offset++] != content[current_offset++]) {
                     keyword_offset = 0;
                 } else if (expr->Length == keyword_offset) {
-                    if ((expr->NestExprs.Size != 0) && ((sub_offset + keyword_offset) != current_offset)) {
-                        sub_offset = match(item.NestMatch, expr->NestExprs, content, sub_offset, current_offset, maxOffset, split_nest);
+                    if ((expr->NestExpres.Size != 0) && ((sub_offset + keyword_offset) != current_offset)) {
+                        sub_offset = match(item.NestMatch, expr->NestExpres, content, sub_offset, current_offset, maxOffset, split_nest);
                     }
 
                     if (current_offset > sub_offset) {
@@ -140,7 +140,7 @@ static UNumber match(Array<MatchBit> &items, Expressions const &exprs, wchar_t c
                     items += static_cast<Array<MatchBit> &&>(item.NestMatch);
                     expr_id = 0;
                     offset  = (sub_match->Offset + sub_match->Length);
-                } else if (exprs.Size == (++expr_id)) {
+                } else if (expres.Size == (++expr_id)) {
                     expr_id = 0;
                     ++offset;
                 }
@@ -173,19 +173,19 @@ static UNumber match(Array<MatchBit> &items, Expressions const &exprs, wchar_t c
         offset  = current_offset;
     }
 
-    if (((Flags::POP & exprs[0]->Flag) != 0) && (items.Size == 0)) {
-        return match(items, exprs[0]->NestExprs, content, started, endOffset, endOffset, split_count);
+    if (((Flags::POP & expres[0]->Flag) != 0) && (items.Size == 0)) {
+        return match(items, expres[0]->NestExpres, content, started, endOffset, endOffset, split_count);
     }
 
     return current_offset;
 }
 /////////////////////////////////
-static Array<MatchBit> Match(Expressions const &exprs, wchar_t const *content, UNumber const offset, UNumber const limit) noexcept {
+static Array<MatchBit> Match(Expressions const &expres, wchar_t const *content, UNumber const offset, UNumber const limit) noexcept {
     UShort          split_count = 0;
     UNumber const   endOffset   = (offset + limit);
     Array<MatchBit> items;
 
-    match(items, exprs, content, offset, endOffset, endOffset, split_count);
+    match(items, expres, content, offset, endOffset, endOffset, split_count);
 
     if (split_count != 0) {
         split(items, content, offset, endOffset, split_count);
@@ -279,8 +279,8 @@ static void Engine::split(Array<MatchBit> &items, wchar_t const *content, UNumbe
         }
 
         if (((Flags::DROPEMPTY & item.Expr->Flag) == 0) || (item.Length != 0)) {
-            if (item.Expr->NestExprs.Size != 0) {
-                item.NestMatch = Match(item.Expr->NestExprs, content, item.Offset, item.Length);
+            if (item.Expr->NestExpres.Size != 0) {
+                item.NestMatch = Match(item.Expr->NestExpres, content, item.Offset, item.Length);
             }
 
             splitted += static_cast<MatchBit &&>(item);

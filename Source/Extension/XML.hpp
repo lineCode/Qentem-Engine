@@ -89,7 +89,7 @@ static Expressions const &getPropertiesExpres() noexcept {
 
 static Array<XTag> parseTags(String const &content, Array<MatchBit> const &items, UNumber id, UNumber const count) noexcept {
 
-    static Expressions const &propertiesExprs = getPropertiesExpres();
+    static Expressions const &propertiesExpres = getPropertiesExpres();
 
     Array<XTag> tags;
     XTag        x_tag;
@@ -165,7 +165,7 @@ static Array<XTag> parseTags(String const &content, Array<MatchBit> const &items
             XProperty xp;
             MatchBit *xpMatch;
 
-            x_properties = Qentem::Engine::Match(propertiesExprs, content.Str, startIndex, remlen);
+            x_properties = Qentem::Engine::Match(propertiesExpres, content.Str, startIndex, remlen);
 
             for (UNumber p = 0; p < x_properties.Size;) {
                 xpMatch = &x_properties[p];

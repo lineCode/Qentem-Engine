@@ -166,15 +166,15 @@ static String RenderIF(wchar_t const *block, MatchBit const &item, UNumber const
 
 static String Repeat(wchar_t const *block, UNumber offset, UNumber limit, Expression &key_expr, Expression &value_expr,
                      Document const *storage) noexcept {
-    Expressions loop_exprs(2);
+    Expressions loop_expres(2);
 
     if (key_expr.Keyword != nullptr) {
-        loop_exprs.Add(&key_expr);
+        loop_expres.Add(&key_expr);
     }
 
-    loop_exprs.Add(&value_expr);
+    loop_expres.Add(&value_expr);
 
-    Array<MatchBit> const items(Engine::Match(loop_exprs, block, offset, limit));
+    Array<MatchBit> const items(Engine::Match(loop_expres, block, offset, limit));
 
     StringStream rendered;
     String *     str_ptr;
@@ -292,54 +292,55 @@ static String RenderLoop(wchar_t const *block, MatchBit const &item, UNumber con
 }
 
 static Expressions const &getVarExpres() noexcept {
-    static Expression  TagVar;
-    static Expression  VarEnd;
     static Expressions expres(1);
 
     if (expres.Size == 0) {
-        // Variables evaluation.
-        VarEnd.ParseCB = &(Template::RenderVar);
         // {v:var_name}
-        TagVar.SetKeyword(L"{v:");
-        VarEnd.SetKeyword(L"}");
-        TagVar.Connected = &VarEnd;
-        VarEnd.Flag      = Flags::TRIM;
+        static Expression var_end;
+        var_end.SetKeyword(L"}");
+        var_end.Flag    = Flags::TRIM;
+        var_end.ParseCB = &(Template::RenderVar);
 
-        expres.Add(&TagVar);
+        static Expression var_;
+        var_.SetKeyword(L"{v:");
+        var_.Connected = &var_end;
+
+        expres.Add(&var_);
     }
 
     return expres;
 }
 
 static Expressions const &getQuotesExpres() noexcept {
-    static Expression  TagQuote;
-    static Expression  QuoteEnd;
     static Expressions expres(1);
 
     if (expres.Size == 0) {
-        TagQuote.SetKeyword(L"\"");
-        QuoteEnd.SetKeyword(L"\"");
-        TagQuote.Connected = &QuoteEnd;
+        static Expression quote_end;
+        quote_end.SetKeyword(L"\"");
 
-        expres.Add(&TagQuote);
+        static Expression quote;
+        quote.SetKeyword(L"\"");
+        quote.Connected = &quote_end;
+
+        expres.Add(&quote);
     }
 
     return expres;
 }
 
 static Expressions const &getHeadExpres() noexcept {
-    static Expression  tag_head;
-    static Expression  tag_head_end;
     static Expressions expres(1);
 
     if (expres.Size == 0) {
-        tag_head.SetKeyword(L"<");
+        static Expression tag_head_end;
         tag_head_end.SetKeyword(L">");
-        tag_head_end.Flag  = Flags::ONCE;
-        tag_head.Connected = &tag_head_end;
+        tag_head_end.Flag = Flags::ONCE;
         // Nest to prevent matching ">" bigger sign inside if statement.
-        tag_head_end.NestExprs = getQuotesExpres();
+        tag_head_end.NestExpres = getQuotesExpres();
 
+        static Expression tag_head;
+        tag_head.SetKeyword(L"<");
+        tag_head.Connected = &tag_head_end;
         expres.Add(&tag_head);
     }
 
@@ -360,7 +361,7 @@ static Expressions const &getExpres() noexcept {
         tag_iif.SetKeyword(L"{iif");
         tag_iif.Connected = &tag_iif_end;
 
-        tag_iif_end.NestExprs.Add(&tag_iif).Add(getVarExpres()); // Nested by itself and TagVars
+        tag_iif_end.NestExpres.Add(&tag_iif).Add(getVarExpres()); // Nested by itself and TagVars
         /////////////////////////////////
 
         // <else />
@@ -382,8 +383,8 @@ static Expressions const &getExpres() noexcept {
         tag_empty_if.SetKeyword(L"<if");
         tag_empty_if.Connected = &tag_empty_if_end;
 
-        tag_empty_if_end.NestExprs.SetCapacity(1);
-        tag_empty_if_end.NestExprs.Add(&tag_empty_if);
+        tag_empty_if_end.NestExpres.SetCapacity(1);
+        tag_empty_if_end.NestExpres.Add(&tag_empty_if);
         /////////////////////////////////
 
         // <if case="{case}">html code</if>
@@ -395,7 +396,7 @@ static Expressions const &getExpres() noexcept {
         tag_if.SetKeyword(L"<if");
         tag_if.Connected = &tag_if_end;
 
-        tag_if_end.NestExprs.Add(&tag_empty_if).Add(&tag_else_if);
+        tag_if_end.NestExpres.Add(&tag_empty_if).Add(&tag_else_if);
         /////////////////////////////////
 
         // <loop set="abc2" var="loopId">
@@ -409,8 +410,8 @@ static Expressions const &getExpres() noexcept {
         tag_loop.SetKeyword(L"<loop");
         tag_loop.Connected = &tag_loop_end;
 
-        tag_loop_end.NestExprs.SetCapacity(1);
-        tag_loop_end.NestExprs.Add(&tag_loop); // Nested by itself
+        tag_loop_end.NestExpres.SetCapacity(1);
+        tag_loop_end.NestExpres.Add(&tag_loop); // Nested by itself
         /////////////////////////////////
 
         // Math Tag.
@@ -419,8 +420,8 @@ static Expressions const &getExpres() noexcept {
         tag_math_end.SetKeyword(L"}");
         tag_math_end.Flag    = Flags::TRIM | Flags::BUBBLE;
         tag_math_end.ParseCB = &(Template::RenderMath);
-        tag_math_end.NestExprs.SetCapacity(1);
-        tag_math_end.NestExprs.Add(getVarExpres());
+        tag_math_end.NestExpres.SetCapacity(1);
+        tag_math_end.NestExpres.Add(getVarExpres());
 
         static Expression tag_math;
         tag_math.SetKeyword(L"{math:");
