@@ -1,8 +1,8 @@
 from ctypes import c_wchar_p, CDLL, c_bool
 
-QLib_render = CDLL("./Build/QLib.so").renderTemplate_w
-QLib_render.restype = c_wchar_p
-QLib_render.argtypes = [c_wchar_p, c_wchar_p, c_bool]
+q_template = CDLL("./Build/QLib.so").qentem_render_template_w
+q_template.restype = c_wchar_p
+q_template.argtypes = [c_wchar_p, c_wchar_p, c_bool]
 
 file_tempale = open("./Tests/test.qtml", "r")
 tempale_text = file_tempale.read()
@@ -15,7 +15,7 @@ file_json.close()
 enable_comments = False
 
 # Randering
-rendered = QLib_render(c_wchar_p(tempale_text),
-                       c_wchar_p(json_text), enable_comments)
+rendered = q_template(c_wchar_p(tempale_text),
+                      c_wchar_p(json_text), enable_comments)
 
 print(rendered)
