@@ -28,7 +28,7 @@ struct TestBit {
 };
 
 /////////////////////////////////////////////
-static String FlipSplit(wchar_t const *block, Match const &item, UNumber length, void *ptr) noexcept;
+static String FlipSplit(wchar_t const *block, MatchBit const &item, UNumber length, void *ptr) noexcept;
 
 static void CleanBits(Array<TestBit> &bits) noexcept {
     for (UNumber i = 0; i < bits.Size; i++) {
@@ -38,7 +38,7 @@ static void CleanBits(Array<TestBit> &bits) noexcept {
     }
 }
 
-static Array<String> Extract(wchar_t const *content, Array<Match> const &items) noexcept {
+static Array<String> Extract(wchar_t const *content, Array<MatchBit> const &items) noexcept {
     Array<String> matches(items.Size);
 
     for (UNumber i = 0; i < items.Size; i++) {
@@ -55,7 +55,7 @@ static String Replace(wchar_t const *content, UNumber length, wchar_t const *_fi
     find_key.SetKeyword(_find);
     find_key.SetReplace(_replace);
 
-    return Engine::Parse(Engine::Search(Expressions().Add(&find_key), content, 0, length), content, 0, length);
+    return Engine::Parse(Engine::Match(Expressions().Add(&find_key), content, 0, length), content, 0, length);
 }
 
 static String ReplaceNewLine(wchar_t const *content, UNumber length, wchar_t const *_replace) {
@@ -79,10 +79,10 @@ static String ReplaceNewLine(wchar_t const *content, UNumber length, wchar_t con
         find_keys.Add(&find_key1).Add(&find_key2).Add(&find_key3).Add(&find_key4);
     }
 
-    return Engine::Parse(Engine::Search(find_keys, content, 0, length), content, 0, length);
+    return Engine::Parse(Engine::Match(find_keys, content, 0, length), content, 0, length);
 }
 
-static String DumpMatches(wchar_t const *content, Array<Match> const &matches, String const &offset, UNumber index = 0) noexcept {
+static String DumpMatches(wchar_t const *content, Array<MatchBit> const &matches, String const &offset, UNumber index = 0) noexcept {
     if (matches.Size == 0) {
         return offset + L"No matches!\n";
     }
@@ -386,7 +386,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     Memory::AllocateBit<Expression>(&x2);
     x2->SetKeyword(L"--");
 
-    x1->ParseCB = ([](wchar_t const *block, Match const &item, UNumber const length, void *ptr) noexcept -> String { return L"*"; });
+    x1->ParseCB = ([](wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept -> String { return L"*"; });
 
     bit.Exprs.Add(x1).Add(x2);
     bit.Collect.Add(x1).Add(x2);
@@ -411,7 +411,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     x3->Connected = y3;
 
     x1->ParseCB = x2->ParseCB = y3->ParseCB =
-        ([](wchar_t const *block, Match const &item, UNumber const length, void *ptr) noexcept -> String {
+        ([](wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept -> String {
             return String::FromNumber(item.Offset) + L"-" + String::FromNumber(item.Length);
         });
 
@@ -685,7 +685,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Collect.Add(x1).Add(y1);
     bits += static_cast<TestBit &&>(bit);
 
-    y1->ParseCB = ([](wchar_t const *block, Match const &item, UNumber const length, void *ptr) noexcept -> String {
+    y1->ParseCB = ([](wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept -> String {
         String nc = L"(";
         nc += String::Part(block, 1, (length - 2));
         nc += L")";
@@ -721,14 +721,14 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Collect.Add(x1).Add(x2).Add(y1).Add(y2);
     bits += static_cast<TestBit &&>(bit);
 
-    y1->ParseCB = ([](wchar_t const *block, Match const &item, UNumber const length, void *ptr) noexcept -> String {
+    y1->ParseCB = ([](wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept -> String {
         String nc = L"=";
         nc += block;
         nc += L"=";
         return nc;
     });
 
-    y2->ParseCB = ([](wchar_t const *block, Match const &item, UNumber const length, void *ptr) noexcept -> String {
+    y2->ParseCB = ([](wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept -> String {
         if (String::Compare(block, L"<3-U>")) {
             return L"A";
         }
@@ -757,7 +757,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     x1->Connected = y1;
     x1->Flag      = Flags::POP;
     y1->Flag      = Flags::BUBBLE;
-    y1->ParseCB   = ([](wchar_t const *block, Match const &item, UNumber const length, void *ptr) noexcept -> String {
+    y1->ParseCB   = ([](wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept -> String {
         //
         return block;
     });
@@ -769,7 +769,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     x2->Flag      = Flags::POP;
     y2->Flag      = Flags::BUBBLE;
     x2->Connected = y2;
-    y2->ParseCB   = ([](wchar_t const *block, Match const &item, UNumber const length, void *ptr) noexcept -> String {
+    y2->ParseCB   = ([](wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept -> String {
         //
         return block;
     });
@@ -805,7 +805,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bits += static_cast<TestBit &&>(bit);
 
-    x1->ParseCB = ([](wchar_t const *block, Match const &item, UNumber const length, void *ptr) noexcept -> String {
+    x1->ParseCB = ([](wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept -> String {
         return String::FromNumber(item.Offset + item.Length);
     });
     ///////////////////////////////////////////
@@ -833,7 +833,7 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     bits += static_cast<TestBit &&>(bit);
 
-    y2->ParseCB = ([](wchar_t const *block, Match const &item, UNumber const length, void *ptr) noexcept -> String {
+    y2->ParseCB = ([](wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept -> String {
         double number = 0.0;
 
         if (item.NestMatch.Size != 0) {
@@ -845,7 +845,7 @@ static Array<TestBit> GetEngineBits() noexcept {
                 i = 1;
             }
 
-            Match *nm;
+            MatchBit *nm;
             for (; i < item.NestMatch.Size; i++) {
                 nm = &(item.NestMatch[i]);
                 if ((nm->Length == 0) || !String::ToNumber(temnum, block, nm->Offset, nm->Length)) {
@@ -880,12 +880,12 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Collect.Add(x1).Add(x2);
     bits += static_cast<TestBit &&>(bit);
 
-    x1->ParseCB = ([](wchar_t const *block, Match const &item, UNumber const length, void *ptr) noexcept -> String {
+    x1->ParseCB = ([](wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept -> String {
         double number = 0.0;
         double temnum = 0.0;
         String r;
 
-        Match *nm;
+        MatchBit *nm;
         for (UNumber i = 0; i < item.NestMatch.Size; i++) {
             nm = &(item.NestMatch[i]);
 
@@ -904,11 +904,11 @@ static Array<TestBit> GetEngineBits() noexcept {
         return String::FromNumber(number);
     });
 
-    x2->ParseCB = ([](wchar_t const *block, Match const &item, UNumber const length, void *ptr) noexcept -> String {
+    x2->ParseCB = ([](wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept -> String {
         double number = 1.0;
         double temnum = 1.0;
 
-        Match *nm;
+        MatchBit *nm;
         for (UNumber i = 0; i < item.NestMatch.Size; i++) {
             nm = &(item.NestMatch[i]);
             if ((nm->Length == 0) || !String::ToNumber(temnum, block, nm->Offset, nm->Length)) {
@@ -943,11 +943,11 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Collect.Add(x1).Add(y1).Add(y2);
     bits += static_cast<TestBit &&>(bit);
 
-    y2->ParseCB = ([](wchar_t const *block, Match const &item, UNumber const length, void *ptr) noexcept -> String {
+    y2->ParseCB = ([](wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept -> String {
         double number = 0.0;
         double temnum = 0.0;
 
-        Match *nm;
+        MatchBit *nm;
         for (UNumber i = 0; i < item.NestMatch.Size; i++) {
             nm = &(item.NestMatch[i]);
             if ((nm->Length == 0) || !String::ToNumber(temnum, block, nm->Offset, nm->Length)) {
@@ -974,14 +974,14 @@ static Array<TestBit> GetEngineBits() noexcept {
 
     Memory::AllocateBit<Expression>(&x2);
     x2->SetKeyword(L"x");
-    x2->ParseCB = ([](wchar_t const *block, Match const &item, UNumber const length, void *ptr) noexcept -> String {
+    x2->ParseCB = ([](wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept -> String {
         //
         return L"3";
     });
 
     Memory::AllocateBit<Expression>(&x3);
     x3->SetKeyword(L"y");
-    x3->ParseCB = ([](wchar_t const *block, Match const &item, UNumber const length, void *ptr) noexcept -> String {
+    x3->ParseCB = ([](wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept -> String {
         //
         return L"7";
     });
@@ -990,12 +990,12 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Collect.Add(x1).Add(x2).Add(x3);
     bits += static_cast<TestBit &&>(bit);
 
-    x1->ParseCB = ([](wchar_t const *block, Match const &item, UNumber const length, void *ptr) noexcept -> String {
+    x1->ParseCB = ([](wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept -> String {
         double number = 0.0;
         double temnum = 0.0;
         String r      = L"";
 
-        Match *nm;
+        MatchBit *nm;
         for (UNumber i = 0; i < item.NestMatch.Size; i++) {
             nm = &(item.NestMatch[i]);
 
@@ -1039,7 +1039,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Collect.Add(x1).Add(x2).Add(y1).Add(y2);
     bits += static_cast<TestBit &&>(bit);
 
-    y1->ParseCB = ([](wchar_t const *block, Match const &item, UNumber const length, void *ptr) noexcept -> String {
+    y1->ParseCB = ([](wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept -> String {
         String nc = L"";
 
         for (UNumber i = 0; i < item.NestMatch.Size; i++) {
@@ -1101,7 +1101,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Collect.Add(x1).Add(x2).Add(y1);
     bits += static_cast<TestBit &&>(bit);
 
-    y1->ParseCB = ([](wchar_t const *block, Match const &item, UNumber const length, void *ptr) noexcept -> String {
+    y1->ParseCB = ([](wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept -> String {
         if (length > 2) {
             UNumber start = 1;
             UNumber limit = length - 2;
@@ -1115,7 +1115,7 @@ static Array<TestBit> GetEngineBits() noexcept {
         return block;
     });
 
-    x2->ParseCB = ([](wchar_t const *block, Match const &item, UNumber const length, void *ptr) noexcept -> String {
+    x2->ParseCB = ([](wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept -> String {
         String nc = L"";
 
         for (UNumber i = 0; i < item.NestMatch.Size; i++) {
@@ -1146,7 +1146,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Collect.Add(x1).Add(y1);
     bits += static_cast<TestBit &&>(bit);
 
-    y1->ParseCB = ([](wchar_t const *block, Match const &item, UNumber const length, void *ptr) noexcept -> String {
+    y1->ParseCB = ([](wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept -> String {
         String nc = L"(";
         nc += String::Part(block, 5, (length - 11));
         nc += L")";
@@ -1170,13 +1170,14 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Collect.Add(x1).Add(x2);
     bits += static_cast<TestBit &&>(bit);
 
-    x1->MatchCB = ([](wchar_t const *content, UNumber &offset, UNumber const endOffset, Match &item, Array<Match> &items) noexcept -> void {
-        if (content[offset] == L'-') {
-            // ++item.Length;
-            ++offset;
-            items += static_cast<Match &&>(item);
-        }
-    });
+    x1->MatchCB =
+        ([](wchar_t const *content, UNumber &offset, UNumber const endOffset, MatchBit &item, Array<MatchBit> &items) noexcept -> void {
+            if (content[offset] == L'-') {
+                // ++item.Length;
+                ++offset;
+                items += static_cast<MatchBit &&>(item);
+            }
+        });
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -1193,12 +1194,13 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Collect.Add(x1);
     bits += static_cast<TestBit &&>(bit);
 
-    x1->MatchCB = ([](wchar_t const *content, UNumber &offset, UNumber const endOffset, Match &item, Array<Match> &items) noexcept -> void {
-        if ((content[offset] == L'/') || (content[offset] == L' ') || (offset == endOffset)) {
-            // If there is a space after \ or \ or it's at the end, then it's a match.
-            items += static_cast<Match &&>(item);
-        }
-    });
+    x1->MatchCB =
+        ([](wchar_t const *content, UNumber &offset, UNumber const endOffset, MatchBit &item, Array<MatchBit> &items) noexcept -> void {
+            if ((content[offset] == L'/') || (content[offset] == L' ') || (offset == endOffset)) {
+                // If there is a space after \ or \ or it's at the end, then it's a match.
+                items += static_cast<MatchBit &&>(item);
+            }
+        });
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -1239,7 +1241,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Collect.Add(x1).Add(x2).Add(x3).Add(y1).Add(y2).Add(y3);
     bits += static_cast<TestBit &&>(bit);
 
-    y1->ParseCB = ([](wchar_t const *block, Match const &item, UNumber const length, void *ptr) noexcept -> String {
+    y1->ParseCB = ([](wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept -> String {
         //
         return block;
     });
@@ -1247,7 +1249,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     return bits;
 }
 
-static String FlipSplit(wchar_t const *block, Match const &item, UNumber const length, void *ptr) noexcept {
+static String FlipSplit(wchar_t const *block, MatchBit const &item, UNumber const length, void *ptr) noexcept {
     String nc = L"";
 
     if (item.NestMatch.Size != 0) {

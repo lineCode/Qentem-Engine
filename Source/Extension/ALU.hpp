@@ -19,21 +19,21 @@ namespace ALU {
 using Engine::Expression;
 using Engine::Expressions;
 using Engine::Flags;
-using Engine::Match;
+using Engine::MatchBit;
 
-static void NestNumber(double &number, wchar_t const *block, Match const &item) noexcept {
+static void NestNumber(double &number, wchar_t const *block, MatchBit const &item) noexcept {
     String r(Engine::Parse(item.NestMatch, block, item.Offset, item.Length));
     String::ToNumber(number, r.Str, 0, r.Length);
 }
 
-static String LogicCallback(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
+static String LogicCallback(wchar_t const *block, MatchBit const &item, UNumber const length, void *other) noexcept {
     double number1 = 0.0;
     double number2 = 0.0;
 
-    Match *m2;
+    MatchBit *m2;
 
-    Match const *m1    = &(item.NestMatch[0]);
-    UShort       op_id = m1->Expr->ID;
+    MatchBit const *m1    = &(item.NestMatch[0]);
+    UShort          op_id = m1->Expr->ID;
 
     if (m1->NestMatch.Size != 0) {
         NestNumber(number1, block, *m1);
@@ -70,14 +70,14 @@ static String LogicCallback(wchar_t const *block, Match const &item, UNumber con
     return String::FromNumber(number1, 1, 0, 3);
 }
 
-static String EqualCallback(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
+static String EqualCallback(wchar_t const *block, MatchBit const &item, UNumber const length, void *other) noexcept {
     double number1 = 0.0;
     double number2 = 0.0;
 
-    Match *m2;
+    MatchBit *m2;
 
-    Match const *m1    = &(item.NestMatch[0]);
-    UShort       op_id = m1->Expr->ID;
+    MatchBit const *m1    = &(item.NestMatch[0]);
+    UShort          op_id = m1->Expr->ID;
 
     if (m1->NestMatch.Size != 0) {
         NestNumber(number1, block, *m1);
@@ -136,14 +136,14 @@ static String EqualCallback(wchar_t const *block, Match const &item, UNumber con
     return String::FromNumber(number1, 1, 0, 3);
 }
 
-static String MultiplicationCallback(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
+static String MultiplicationCallback(wchar_t const *block, MatchBit const &item, UNumber const length, void *other) noexcept {
     double number1 = 0.0;
     double number2 = 0.0;
 
-    Match *m2;
+    MatchBit *m2;
 
-    Match const *m1    = &(item.NestMatch[0]);
-    UShort       op_id = m1->Expr->ID;
+    MatchBit const *m1    = &(item.NestMatch[0]);
+    UShort          op_id = m1->Expr->ID;
 
     String::ToNumber(number1, block, m1->Offset, m1->Length);
 
@@ -198,14 +198,14 @@ static String MultiplicationCallback(wchar_t const *block, Match const &item, UN
     return String::FromNumber(number1, 1, 0, 3);
 }
 
-static String AdditionCallback(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
+static String AdditionCallback(wchar_t const *block, MatchBit const &item, UNumber const length, void *other) noexcept {
     double number1 = 0.0;
     double number2 = 0.0;
 
-    Match *m2;
+    MatchBit *m2;
 
-    Match const *m1    = &(item.NestMatch[0]);
-    UShort       op_id = m1->Expr->ID;
+    MatchBit const *m1    = &(item.NestMatch[0]);
+    UShort          op_id = m1->Expr->ID;
 
     if (m1->NestMatch.Size != 0) {
         NestNumber(number1, block, *m1);
@@ -371,9 +371,9 @@ static Expressions const &getMathExpres() noexcept {
 }
 
 // e.g. ( 4 + 3 ), ( 2 + ( 4 + ( 1 + 2 ) + 1 ) * 5 - 3 - 2 )
-static String ParenthesisCallback(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
+static String ParenthesisCallback(wchar_t const *block, MatchBit const &item, UNumber const length, void *other) noexcept {
     UNumber const limit = (length - 2);
-    return Engine::Parse(Engine::Search(getMathExpres(), block, 1, limit), block, 1, limit);
+    return Engine::Parse(Engine::Match(getMathExpres(), block, 1, limit), block, 1, limit);
 }
 
 static Expressions const &getParensExpres() noexcept {
@@ -414,14 +414,14 @@ static double Evaluate(wchar_t const *content, UNumber const offset, UNumber con
      */
 
     // Parenthesis:
-    String n_content(Engine::Parse(Engine::Search(getParensExpres(), content, offset, limit), content, offset, limit));
+    String n_content(Engine::Parse(Engine::Match(getParensExpres(), content, offset, limit), content, offset, limit));
     if ((n_content.Length == 0) || (n_content == L"0")) {
         return 0.0;
     }
 
     // The rest:
     double num = 0.0;
-    n_content  = Engine::Parse(Engine::Search(getMathExpres(), n_content.Str, 0, n_content.Length), n_content.Str, 0, n_content.Length);
+    n_content  = Engine::Parse(Engine::Match(getMathExpres(), n_content.Str, 0, n_content.Length), n_content.Str, 0, n_content.Length);
     if ((n_content.Length != 0) && String::ToNumber(num, n_content.Str, 0, n_content.Length)) {
         return num;
     }

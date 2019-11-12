@@ -25,7 +25,7 @@ static Expressions const &getQuotesExpres() noexcept;
 static Expressions const &getHeadExpres() noexcept;
 
 static String Render(wchar_t const *content, UNumber const offset, UNumber const limit, void *data) noexcept {
-    return Engine::Parse(Engine::Search(getExpres(), content, offset, limit), content, offset, limit, data);
+    return Engine::Parse(Engine::Match(getExpres(), content, offset, limit), content, offset, limit, data);
 }
 
 inline static String Render(String const &content, Document *data) noexcept {
@@ -35,7 +35,7 @@ inline static String Render(String const &content, Document *data) noexcept {
 // e.g. {v:var_name}
 // e.g. {v:var_name[id]}
 // Nest: {v:var_{v:var2_{v:var3_id}}}
-static String RenderVar(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
+static String RenderVar(wchar_t const *block, MatchBit const &item, UNumber const length, void *other) noexcept {
     String value;
 
     if (!(static_cast<Document *>(other))->GetString(value, block, (item.Offset + 3), (item.Length - 4))) {
@@ -45,7 +45,7 @@ static String RenderVar(wchar_t const *block, Match const &item, UNumber const l
     return value;
 }
 
-static String RenderMath(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
+static String RenderMath(wchar_t const *block, MatchBit const &item, UNumber const length, void *other) noexcept {
     return String::FromNumber(ALU::Evaluate(block, 6, (length - 7)), 1, 0, 3);
 }
 
@@ -53,14 +53,14 @@ static String RenderMath(wchar_t const *block, Match const &item, UNumber const 
 // {iif case="{v:var_five} == 5" true="5" false="no"}
 // {iif case="{v:var_five} == 5" true="{v:var_five} is equal to 5" false="no"}
 // {iif case="3 == 3" true="Yes" false="No"}
-static String RenderIIF(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
-    Array<Match> const items(Engine::Search(getQuotesExpres(), block, 0, length));
+static String RenderIIF(wchar_t const *block, MatchBit const &item, UNumber const length, void *other) noexcept {
+    Array<MatchBit> const items(Engine::Match(getQuotesExpres(), block, 0, length));
 
-    Match * m;
-    bool    iif_case  = false;
-    Match * iif_true  = nullptr;
-    Match * iif_false = nullptr;
-    UNumber start_at;
+    MatchBit *m;
+    bool      iif_case  = false;
+    MatchBit *iif_true  = nullptr;
+    MatchBit *iif_false = nullptr;
+    UNumber   start_at;
 
     // case="[statement]" true="[Yes]" false="[No]"
     for (UNumber i = 0; i < items.Size; i++) {
@@ -105,27 +105,27 @@ static String RenderIIF(wchar_t const *block, Match const &item, UNumber const l
 // <if case="{case}">html code1 <else /> html code2</if>
 // <if case="{case1}">html code1 <elseif case={case2} /> html code2</if>
 // <if case="{case}">html code <if case="{case2}" />additional html code</if></if>
-static bool EvaluateIF(wchar_t const *block, Match const &item, void *other) noexcept {
+static bool EvaluateIF(wchar_t const *block, MatchBit const &item, void *other) noexcept {
     UNumber const offset = (item.Offset + 1);
     UNumber const limit  = (item.Length - 2);
 
-    String const content(Engine::Parse(Engine::Search(getVarExpres(), block, offset, limit), block, offset, limit, other));
+    String const content(Engine::Parse(Engine::Match(getVarExpres(), block, offset, limit), block, offset, limit, other));
 
     return (ALU::Evaluate(content.Str, 0, content.Length) > 0.0);
 }
 
-static String RenderIF(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
+static String RenderIF(wchar_t const *block, MatchBit const &item, UNumber const length, void *other) noexcept {
     // Nothing is processed inside the match before checking if the condition is TRUE.
     bool is_true = false;
 
-    Array<Match> subMatch(Engine::Search(getHeadExpres(), block, item.Offset, item.Length));
+    Array<MatchBit> subMatch(Engine::Match(getHeadExpres(), block, item.Offset, item.Length));
 
     if (subMatch.Size != 0) {
-        Match *sm = &(subMatch[0]);
+        MatchBit *sm = &(subMatch[0]);
 
         if (sm->NestMatch.Size != 0) {
-            Match *nm = &(sm->NestMatch[0]);
-            is_true   = Template::EvaluateIF(block, *nm, other);
+            MatchBit *nm = &(sm->NestMatch[0]);
+            is_true      = Template::EvaluateIF(block, *nm, other);
 
             // inner content of if
             UNumber offset = (sm->Offset + sm->Length);
@@ -139,7 +139,7 @@ static String RenderIF(wchar_t const *block, Match const &item, UNumber const le
                 } else {
                     for (UNumber i = 1; i < item.NestMatch.Size; i++) {
                         offset   = (nm->Offset + nm->Length);
-                        subMatch = Engine::Search(getHeadExpres(), block, offset, (length - nm->Length));
+                        subMatch = Engine::Match(getHeadExpres(), block, offset, (length - nm->Length));
 
                         // inner content of the next part.
                         nm     = &(item.NestMatch[i]);
@@ -174,7 +174,7 @@ static String Repeat(wchar_t const *block, UNumber offset, UNumber limit, Expres
 
     loop_exprs.Add(&value_expr);
 
-    Array<Match> const items(Engine::Search(loop_exprs, block, offset, limit));
+    Array<MatchBit> const items(Engine::Match(loop_exprs, block, offset, limit));
 
     StringStream rendered;
     String *     str_ptr;
@@ -239,20 +239,20 @@ static String Repeat(wchar_t const *block, UNumber offset, UNumber limit, Expres
 // <loop set="abc2" value="s_value" key="s_key">
 //     <span>s_key: s_value</span>
 // </loop>
-static String RenderLoop(wchar_t const *block, Match const &item, UNumber const length, void *other) noexcept {
+static String RenderLoop(wchar_t const *block, MatchBit const &item, UNumber const length, void *other) noexcept {
     // To match: <loop (set="abc2" value="s_value" key="s_key")>
-    Array<Match> const subMatch(Engine::Search(getHeadExpres(), block, item.Offset, item.Length));
+    Array<MatchBit> const subMatch(Engine::Match(getHeadExpres(), block, item.Offset, item.Length));
 
     if ((subMatch.Size != 0) && (subMatch[0].NestMatch.Size != 0)) {
         Document * storage = nullptr;
         Expression key_expr;
         Expression value_expr;
 
-        Match const *sm = &(subMatch[0]);
+        MatchBit const *sm = &(subMatch[0]);
 
         // set="(Array_name)" value="s_value" key="s_key"
-        Match * m;
-        UNumber start_at;
+        MatchBit *m;
+        UNumber   start_at;
 
         for (UNumber i = 0; i < sm->NestMatch.Size; i++) {
             m = &(sm->NestMatch[i]);

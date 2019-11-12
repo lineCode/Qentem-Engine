@@ -440,26 +440,25 @@ struct String {
 
         wchar_t str[num_len];
 
-        bool const negative = (number < 0);
+        bool const negative = (number < 0.0);
 
         if (negative) {
             number *= -1;
         }
 
         if (number != 0) {
-            unsigned long num       = static_cast<unsigned long>(number);
-            unsigned long num2      = num;
-            UShort        presision = 15;
+            unsigned long left = static_cast<unsigned long>(number);
+            number -= static_cast<double>(left);
 
-            number -= static_cast<double>(num2);
             if (number != 0) {
                 number *= 1e15;
-                num = static_cast<unsigned long>(number);
+                unsigned long right = static_cast<unsigned long>(number);
 
-                if (num != 0) {
-                    while (((num % 10) == 0) && (presision != 0)) {
+                if (right != 0) {
+                    UShort presision = 15;
+                    while (((right % 10) == 0) && (presision != 0)) {
                         --presision;
-                        num /= 10;
+                        right /= 10;
                     }
 
                     if ((r_max != 0) && (r_max < presision)) {
@@ -467,25 +466,25 @@ struct String {
 
                         while (r_max < presision) {
                             --presision;
-                            num /= 10;
+                            right /= 10;
                         }
 
-                        if ((num % 10) >= 5) {
-                            num /= 10;
-                            ++num;
+                        if ((right % 10) >= 5) {
+                            right /= 10;
+                            ++right;
                         } else {
-                            num /= 10;
+                            right /= 10;
                         }
 
                         --presision;
 
-                        while (((num % 10) == 0) && (presision != 0)) {
+                        while (((right % 10) == 0) && (presision != 0)) {
                             --presision;
-                            num /= 10;
+                            right /= 10;
                         }
 
-                        if ((num == 1) && (presision == 0)) {
-                            ++num2;
+                        if ((right == 1) && (presision == 0)) {
+                            ++left;
                         }
                     }
 
@@ -496,8 +495,8 @@ struct String {
                     r_min = 0;
 
                     while (presision != 0) {
-                        str[--len] = wchar_t((num % 10) + 48);
-                        num /= 10;
+                        str[--len] = wchar_t((right % 10) + 48);
+                        right /= 10;
                         --presision;
                     }
 
@@ -507,9 +506,9 @@ struct String {
                 }
             }
 
-            while (num2 != 0) {
-                str[--len] = wchar_t((num2 % 10) + 48);
-                num2 /= 10;
+            while (left != 0) {
+                str[--len] = wchar_t((left % 10) + 48);
+                left /= 10;
                 ++p1_len;
             }
         }

@@ -20,7 +20,7 @@ using Qentem::String;
 using Qentem::StringStream;
 using Qentem::UNumber;
 using Qentem::UShort;
-using Qentem::Engine::Match;
+using Qentem::Engine::MatchBit;
 using Qentem::Test::TestBit;
 using Qentem::XMLParser::XTag;
 
@@ -169,8 +169,8 @@ static bool runTests(wchar_t const *name, Array<TestBit> const &bits, bool break
     UNumber       length       = 0;
     bool          Pass         = false;
 
-    StringStream ss;
-    Array<Match> matches;
+    StringStream    ss;
+    Array<MatchBit> matches;
 
     ss += L"\n #";
     ss += name;
@@ -203,7 +203,7 @@ static bool runTests(wchar_t const *name, Array<TestBit> const &bits, bool break
 
             search_ticks = static_cast<UNumber>(clock());
             for (UNumber x = 0; x < times; x++) {
-                matches = Qentem::Engine::Search(bits[i].Exprs, bits[i].Content[t], 0, length);
+                matches = Qentem::Engine::Match(bits[i].Exprs, bits[i].Content[t], 0, length);
             }
             search_ticks = (static_cast<UNumber>(clock()) - search_ticks);
             total_search += search_ticks;
@@ -231,7 +231,7 @@ static bool runTests(wchar_t const *name, Array<TestBit> const &bits, bool break
                 ss += L"Fail";
             }
 
-            ss += L" (Search: ";
+            ss += L" (Match: ";
             ss += String::FromNumber((static_cast<double>(search_ticks) / CLOCKS_PER_SEC), 2, 3, 3) + L")";
             ss += L" (Parse: ";
             ss += String::FromNumber((static_cast<double>(parse_ticks) / CLOCKS_PER_SEC), 2, 3, 3) + L")\n";
@@ -285,7 +285,7 @@ static bool runTests(wchar_t const *name, Array<TestBit> const &bits, bool break
         ss += String::FromNumber(total) + L")";
     }
 
-    ss += L", Total Search: ";
+    ss += L", Total Match: ";
     ss += String::FromNumber((static_cast<double>(total_search) / CLOCKS_PER_SEC), 2, 3, 3);
     ss += L"s Total Parse: ";
     ss += String::FromNumber((static_cast<double>(total_parse) / CLOCKS_PER_SEC), 2, 3, 3) + L"s\n";
@@ -496,7 +496,7 @@ static bool JSONTests() noexcept {
         took = static_cast<UNumber>(clock());
         for (UNumber y = 1; y <= times; y++) {
             data = Document::FromJSON(json_content);
-            // Qentem::Engine::Search(json_content.Str, Document::getJsonExpres(), 0, json_content.Length);
+            // Qentem::Engine::Match(json_content.Str, Document::getJsonExpres(), 0, json_content.Length);
         }
         took = (static_cast<UNumber>(clock()) - took);
         std::wcout << String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << L" ";

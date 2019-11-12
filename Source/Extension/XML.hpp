@@ -19,7 +19,7 @@ namespace XMLParser {
 using Qentem::Engine::Expression;
 using Qentem::Engine::Expressions;
 using Qentem::Engine::Flags;
-using Qentem::Engine::Match;
+using Qentem::Engine::MatchBit;
 
 struct XProperty {
     String Name;
@@ -33,14 +33,14 @@ struct XTag {
     Array<XTag>      InnerNodes;
 };
 
-static void InfinitSpaceCallback(wchar_t const *content, UNumber &offset, UNumber const endOffset, Match &item,
-                                 Array<Match> &items) noexcept {
+static void InfinitSpaceCallback(wchar_t const *content, UNumber &offset, UNumber const endOffset, MatchBit &item,
+                                 Array<MatchBit> &items) noexcept {
     while (content[offset] == L' ') {
         ++offset;
         ++item.Length;
     }
 
-    items += static_cast<Match &&>(item);
+    items += static_cast<MatchBit &&>(item);
 }
 
 static Expressions const &getXMLExpres() noexcept {
@@ -87,7 +87,7 @@ static Expressions const &getPropertiesExpres() noexcept {
     return expres;
 }
 
-static Array<XTag> parseTags(String const &content, Array<Match> const &items, UNumber id, UNumber const count) noexcept {
+static Array<XTag> parseTags(String const &content, Array<MatchBit> const &items, UNumber id, UNumber const count) noexcept {
 
     static Expressions const &propertiesExprs = getPropertiesExpres();
 
@@ -98,13 +98,13 @@ static Array<XTag> parseTags(String const &content, Array<Match> const &items, U
     UNumber tagLen;
     UNumber repeated = 0;
 
-    UNumber      matchStart = 0;
-    UNumber      tmpIndex   = 0;
-    UNumber      remlen;
-    Array<Match> x_properties;
+    UNumber         matchStart = 0;
+    UNumber         tmpIndex   = 0;
+    UNumber         remlen;
+    Array<MatchBit> x_properties;
 
-    Match *item;
-    bool   tagged = false;
+    MatchBit *item;
+    bool      tagged = false;
 
     for (UNumber index = 0; index < count;) {
         item = &items[id];
@@ -132,11 +132,11 @@ static Array<XTag> parseTags(String const &content, Array<Match> const &items, U
                     tagged = false; // The opening and the ending tag has been found.
 
                     // Subtags
-                    UNumber subStart  = matchStart + 1;
-                    UNumber subCount  = id - subStart;
-                    UNumber lastTag   = (tags.Size - 1);
-                    Match * headItem  = &(items[matchStart]);
-                    UNumber headStart = (headItem->Offset + headItem->Length);
+                    UNumber   subStart  = matchStart + 1;
+                    UNumber   subCount  = id - subStart;
+                    UNumber   lastTag   = (tags.Size - 1);
+                    MatchBit *headItem  = &(items[matchStart]);
+                    UNumber   headStart = (headItem->Offset + headItem->Length);
 
                     tags[lastTag].InnerText = String::Part(content.Str, headStart, (items[id].Offset - headStart));
 
@@ -163,9 +163,9 @@ static Array<XTag> parseTags(String const &content, Array<Match> const &items, U
 
             UNumber   startIndex = (startAt + tagLen);
             XProperty xp;
-            Match *   xpMatch;
+            MatchBit *xpMatch;
 
-            x_properties = Qentem::Engine::Search(propertiesExprs, content.Str, startIndex, remlen);
+            x_properties = Qentem::Engine::Match(propertiesExprs, content.Str, startIndex, remlen);
 
             for (UNumber p = 0; p < x_properties.Size;) {
                 xpMatch = &x_properties[p];
@@ -203,7 +203,7 @@ static Array<XTag> parseTags(String const &content, Array<Match> const &items, U
 }
 
 static Array<XTag> Parse(String const &content) noexcept {
-    Array<Match> const items = Qentem::Engine::Search(getXMLExpres(), content.Str, 0, content.Length);
+    Array<MatchBit> const items = Qentem::Engine::Match(getXMLExpres(), content.Str, 0, content.Length);
 
     return parseTags(content, items, 0, items.Size);
 }
