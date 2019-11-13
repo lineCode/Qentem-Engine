@@ -64,14 +64,14 @@ struct StringStream {
             bit = &(Bits[i]);
 
             for (j = 0; j < bit->Length; j++) {
-                tmp.Str[tmp.Length++] = bit->Str[j];
+                tmp[tmp.Length++] = bit->Str[j];
             }
 
             if (bit->Collect != nullptr) {
                 Memory::Deallocate<wchar_t>(&(bit->Collect));
             }
         }
-        tmp.Str[tmp.Length] = L'\0'; // Null trimmming
+        tmp[tmp.Length] = L'\0';
 
         Bits.Reset();
 

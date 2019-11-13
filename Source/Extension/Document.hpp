@@ -370,7 +370,7 @@ struct Document {
         Keys += String::Part(key, offset, limit);
     }
 
-    void Insert(wchar_t const *key, UNumber const offset, UNumber const limit, VType const type, void *ptr, bool const move) noexcept {
+    UNumber Insert(wchar_t const *key, UNumber const offset, UNumber const limit, VType const type, void *ptr, bool const move) noexcept {
         UNumber       id    = 0;
         UNumber const hash  = String::Hash(key, offset, limit);
         Entry *       entry = Exist(hash, 0, Table);
@@ -406,6 +406,7 @@ struct Document {
             }
         } else {
             // Updating existing item.
+            id = entry->ArrayID;
             switch (type) {
                 case VType::NumberT: {
                     Numbers[entry->ArrayID] = *(static_cast<double *>(ptr));
@@ -451,12 +452,14 @@ struct Document {
                 entry->Type    = type;
             }
 
-            return;
+            return id;
         }
 
         InsertIndex({hash, Entries.Size}, HashBase, 0, Table);
         Entries += Entry({type, Keys.Size, id});
         Keys += String::Part(key, offset, limit);
+
+        return id;
     }
 
     static Document makeList(Array<MatchBit> &items, wchar_t const *content, UNumber const offset, UNumber const length) noexcept {
@@ -967,7 +970,7 @@ struct Document {
                         String const &es = Strings[entry->ArrayID];
 
                         for (counter = 0; counter < es.Length; counter++) {
-                            if (es.Str[counter] == L'\\' || es.Str[counter] == L'"') {
+                            if (es[counter] == L'\\' || es[counter] == L'"') {
                                 counter = 0;
                                 break;
                             }
@@ -1033,7 +1036,7 @@ struct Document {
                         String const &es = Strings[entry->ArrayID];
 
                         for (counter = 0; counter < es.Length; counter++) {
-                            if (es.Str[counter] == L'\\' || es.Str[counter] == L'"') {
+                            if (es[counter] == L'\\' || es[counter] == L'"') {
                                 counter = 0;
                                 break;
                             }
@@ -1338,16 +1341,15 @@ struct Document {
         Document *storage = nullptr;
 
         if (Ordered) {
-            if (LastKeyLen < Entries.Size) {
-                Insert(--LastKeyLen, VType::DocumentT, &doc, true);
-                storage = &(Documents[Entries[LastKeyLen].ArrayID]);
-            } else {
-                storage = this;
-            }
+            Insert(--LastKeyLen, VType::DocumentT, &doc, true);
+            storage = &(Documents[Entries[LastKeyLen].ArrayID]);
         } else {
-            Insert(LastKey, 0, LastKeyLen, VType::DocumentT, &doc, true);
-            Entry *entry;
-            storage = GetSource(&entry, LastKey, 0, LastKeyLen);
+            if (LastKey != nullptr) {
+                storage = &(Documents[Insert(LastKey, 0, LastKeyLen, VType::DocumentT, &doc, true)]);
+            } else {
+                String key_ = String::FromNumber(--LastKeyLen);
+                storage     = &(Documents[Insert(key_.Str, 0, key_.Length, VType::DocumentT, &doc, true)]);
+            }
         }
 
         LastKey    = nullptr;
@@ -1373,17 +1375,15 @@ struct Document {
         Document  doc_copy = doc;
 
         if (Ordered) {
-            if (LastKeyLen < Entries.Size) {
-                Insert(--LastKeyLen, VType::DocumentT, &doc_copy, true);
-                storage = &(Documents[Entries[LastKeyLen].ArrayID]);
-            } else {
-                storage = this;
-            }
+            Insert(--LastKeyLen, VType::DocumentT, &doc_copy, true);
+            storage = &(Documents[Entries[LastKeyLen].ArrayID]);
         } else {
-            Insert(LastKey, 0, LastKeyLen, VType::DocumentT, &doc_copy, true);
-
-            Entry *entry;
-            storage = GetSource(&entry, LastKey, 0, LastKeyLen);
+            if (LastKey != nullptr) {
+                storage = &(Documents[Insert(LastKey, 0, LastKeyLen, VType::DocumentT, &doc_copy, true)]);
+            } else {
+                String key_ = String::FromNumber(--LastKeyLen);
+                storage     = &(Documents[Insert(key_.Str, 0, key_.Length, VType::DocumentT, &doc_copy, true)]);
+            }
         }
 
         LastKey    = nullptr;
@@ -1409,11 +1409,21 @@ struct Document {
                 Insert(LastKeyLen, VType::NullT, nullptr, false);
             }
         } else {
-            if (str != nullptr) {
-                String string = str;
-                Insert(LastKey, 0, LastKeyLen, VType::StringT, &string, true);
+            if (LastKey != nullptr) {
+                if (str != nullptr) {
+                    String string = str;
+                    Insert(LastKey, 0, LastKeyLen, VType::StringT, &string, true);
+                } else {
+                    Insert(LastKey, 0, LastKeyLen, VType::NullT, nullptr, false);
+                }
             } else {
-                Insert(LastKey, 0, LastKeyLen, VType::NullT, nullptr, false);
+                String key_ = String::FromNumber(--LastKeyLen);
+                if (str != nullptr) {
+                    String string = str;
+                    Insert(key_.Str, 0, key_.Length, VType::StringT, &string, true);
+                } else {
+                    Insert(key_.Str, 0, key_.Length, VType::NullT, nullptr, false);
+                }
             }
         }
 
@@ -1429,7 +1439,12 @@ struct Document {
             if (Ordered) {
                 Insert(--LastKeyLen, VType::NumberT, &number, false);
             } else {
-                Insert(LastKey, 0, LastKeyLen, VType::NumberT, &number, false);
+                if (LastKey != nullptr) {
+                    Insert(LastKey, 0, LastKeyLen, VType::NumberT, &number, false);
+                } else {
+                    String key_ = String::FromNumber(--LastKeyLen);
+                    Insert(key_.Str, 0, key_.Length, VType::NumberT, &number, false);
+                }
             }
 
             LastKey    = nullptr;
@@ -1446,7 +1461,12 @@ struct Document {
             if (Ordered) {
                 Insert(--LastKeyLen, VType::NumberT, &number, false);
             } else {
-                Insert(LastKey, 0, LastKeyLen, VType::NumberT, &number, false);
+                if (LastKey != nullptr) {
+                    Insert(LastKey, 0, LastKeyLen, VType::NumberT, &number, false);
+                } else {
+                    String key_ = String::FromNumber(--LastKeyLen);
+                    Insert(key_.Str, 0, key_.Length, VType::NumberT, &number, false);
+                }
             }
 
             LastKey    = nullptr;
@@ -1463,7 +1483,12 @@ struct Document {
             if (Ordered) {
                 Insert(--LastKeyLen, VType::NumberT, &number, false);
             } else {
-                Insert(LastKey, 0, LastKeyLen, VType::NumberT, &number, false);
+                if (LastKey != nullptr) {
+                    Insert(LastKey, 0, LastKeyLen, VType::NumberT, &number, false);
+                } else {
+                    String key_ = String::FromNumber(--LastKeyLen);
+                    Insert(key_.Str, 0, key_.Length, VType::NumberT, &number, false);
+                }
             }
 
             LastKey    = nullptr;
@@ -1478,7 +1503,12 @@ struct Document {
             if (Ordered) {
                 Insert(--LastKeyLen, (value ? VType::TrueT : VType::FalseT), nullptr, false);
             } else {
-                Insert(LastKey, 0, LastKeyLen, (value ? VType::TrueT : VType::FalseT), nullptr, false);
+                if (LastKey != nullptr) {
+                    Insert(LastKey, 0, LastKeyLen, (value ? VType::TrueT : VType::FalseT), nullptr, false);
+                } else {
+                    String key_ = String::FromNumber(--LastKeyLen);
+                    Insert(key_.Str, 0, key_.Length, (value ? VType::TrueT : VType::FalseT), nullptr, false);
+                }
             }
 
             LastKey    = nullptr;
@@ -1742,10 +1772,11 @@ struct Document {
                 LastKey    = Keys[entry.KeyID].Str;
                 LastKeyLen = Keys[entry.KeyID].Length;
             }
-        } else if (Ordered) {
-            LastKeyLen = (id + 1);
-        } else if (Entries.Size == 0) {
-            Ordered    = true;
+        } else {
+            if (Entries.Size == 0) {
+                Ordered = true;
+            }
+
             LastKeyLen = (id + 1);
         }
 
@@ -1768,10 +1799,11 @@ struct Document {
                 LastKey    = Keys[entry.KeyID].Str;
                 LastKeyLen = Keys[entry.KeyID].Length;
             }
-        } else if (Ordered) {
-            LastKeyLen = (ID + 1);
-        } else if (Entries.Size == 0) {
-            Ordered    = true;
+        } else {
+            if (Entries.Size == 0) {
+                Ordered = true;
+            }
+
             LastKeyLen = (ID + 1);
         }
 
