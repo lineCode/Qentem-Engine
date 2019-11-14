@@ -389,18 +389,18 @@ struct String {
         return hash;
     }
 
-    static void SoftTrim(wchar_t const *str, UNumber &start, UNumber &limit) noexcept {
-        UNumber end = limit + start;
+    static void SoftTrim(wchar_t const *str, UNumber &offset, UNumber &limit) noexcept {
+        UNumber end = limit + offset;
 
-        while ((str[start] == L' ') || (str[start] == L'\n') || (str[start] == L'\t') || (str[start] == L'\r')) {
-            ++start;
+        while ((str[offset] == L' ') || (str[offset] == L'\n') || (str[offset] == L'\t') || (str[offset] == L'\r')) {
+            ++offset;
         }
 
-        while ((--end > start) && ((str[end] == L' ') || (str[end] == L'\n') || (str[end] == L'\t') || (str[end] == L'\r'))) {
+        while ((--end > offset) && ((str[end] == L' ') || (str[end] == L'\n') || (str[end] == L'\t') || (str[end] == L'\r'))) {
         }
         ++end;
 
-        limit = end - start;
+        limit = end - offset;
     }
 
     static String Trim(String const &str) noexcept {

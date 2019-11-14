@@ -167,12 +167,12 @@
     <ClInclude Include="Source\Engine.hpp" />
     <ClInclude Include="Source\Extension\XML.hpp" />
     <ClInclude Include="Source\Extension\Document.hpp" />
-    <ClInclude Include="Source\Extension\ALU.hpp" />
+    <ClInclude Include="Source\Extension\ALE.hpp" />
     <ClInclude Include="Source\Extension\Template.hpp" />
-    <ClInclude Include="Tests\Test.hpp" />
+    <ClInclude Include="Test\Test.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Tests\Test.cpp" />
+    <ClCompile Include="Test\Test.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -8,7 +8,7 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include "Extension/ALU.hpp"
+#include "Extension/ALE.hpp"
 #include "Extension/Document.hpp"
 
 #ifndef QENTEM_TEMPLATE_H
@@ -46,7 +46,7 @@ static String RenderVar(wchar_t const *block, MatchBit const &item, UNumber cons
 }
 
 static String RenderMath(wchar_t const *block, MatchBit const &item, UNumber const length, void *other) noexcept {
-    return String::FromNumber(ALU::Evaluate(block, 6, (length - 7)), 1, 0, 3);
+    return String::FromNumber(ALE::Evaluate(block, 6, (length - 7)), 1, 0, 3);
 }
 
 // {iif case="3 == 3" true="Yes" false="No"}
@@ -73,7 +73,7 @@ static String RenderIIF(wchar_t const *block, MatchBit const &item, UNumber cons
                 --start_at;
 
                 if (block[start_at] == L'a') { // c[a]se
-                    iif_case = (ALU::Evaluate(block, (m->Offset + 1), (m->Length - 2)) > 0.0);
+                    iif_case = (ALE::Evaluate(block, (m->Offset + 1), (m->Length - 2)) > 0.0);
                     break;
                 }
 
@@ -111,7 +111,7 @@ static bool EvaluateIF(wchar_t const *block, MatchBit const &item, void *other) 
 
     String const content(Engine::Parse(Engine::Match(getVarExpres(), block, offset, limit), block, offset, limit, other));
 
-    return (ALU::Evaluate(content.Str, 0, content.Length) > 0.0);
+    return (ALE::Evaluate(content.Str, 0, content.Length) > 0.0);
 }
 
 static String RenderIF(wchar_t const *block, MatchBit const &item, UNumber const length, void *other) noexcept {
@@ -165,7 +165,7 @@ static String RenderIF(wchar_t const *block, MatchBit const &item, UNumber const
 }
 
 static String Repeat(wchar_t const *block, UNumber offset, UNumber limit, Expression &key_expr, Expression &value_expr,
-                     Document const *storage) noexcept {
+                     MatchBit const *set_, void *other) noexcept {
     Expressions loop_expres(2);
 
     if (key_expr.Keyword != nullptr) {
@@ -181,56 +181,60 @@ static String Repeat(wchar_t const *block, UNumber offset, UNumber limit, Expres
     String       value;
     String       key;
 
-    Entry *entry;
-    for (UNumber i = 0; i < storage->Entries.Size; i++) {
-        entry = &(storage->Entries[i]);
+    Entry *   entry;
+    Document *storage = (static_cast<Document *>(other))->GetDocument(block, (set_->Offset + 1), (set_->Length - 2));
 
-        if (key_expr.Keyword != nullptr) {
-            if (storage->Ordered) {
-                key                  = String::FromNumber(i);
-                key_expr.ReplaceWith = key.Str;
-                key_expr.RLength     = key.Length;
-            } else {
-                str_ptr              = &(storage->Keys[entry->KeyID]);
-                key_expr.ReplaceWith = str_ptr->Str;
-                key_expr.RLength     = str_ptr->Length;
+    if (storage != nullptr) {
+        for (UNumber i = 0; i < storage->Entries.Size; i++) {
+            entry = &(storage->Entries[i]);
+
+            if (key_expr.Keyword != nullptr) {
+                if (storage->Ordered) {
+                    key                  = String::FromNumber(i);
+                    key_expr.ReplaceWith = key.Str;
+                    key_expr.RLength     = key.Length;
+                } else {
+                    str_ptr              = &(storage->Keys[entry->KeyID]);
+                    key_expr.ReplaceWith = str_ptr->Str;
+                    key_expr.RLength     = str_ptr->Length;
+                }
             }
+
+            switch (entry->Type) {
+                case VType::NumberT: {
+                    value                  = String::FromNumber(storage->Numbers[entry->ArrayID], 1, 0, 3);
+                    value_expr.ReplaceWith = value.Str;
+                    value_expr.RLength     = value.Length;
+                    break;
+                }
+                case VType::StringT: {
+                    str_ptr                = &(storage->Strings[entry->ArrayID]);
+                    value_expr.ReplaceWith = str_ptr->Str;
+                    value_expr.RLength     = str_ptr->Length;
+                    break;
+                }
+                case VType::FalseT: {
+                    value_expr.ReplaceWith = L"false";
+                    value_expr.RLength     = 5;
+                    break;
+                }
+                case VType::TrueT: {
+                    value_expr.ReplaceWith = L"true";
+                    value_expr.RLength     = 4;
+                    break;
+                }
+                case VType::NullT: {
+                    value_expr.ReplaceWith = L"null";
+                    value_expr.RLength     = 4;
+                    break;
+                }
+                default: {
+                    continue;
+                }
+            }
+
+            rendered += Engine::Parse(items, block, offset, limit);
         }
-
-        switch (entry->Type) {
-            case VType::NumberT: {
-                value                  = String::FromNumber(storage->Numbers[entry->ArrayID], 1, 0, 3);
-                value_expr.ReplaceWith = value.Str;
-                value_expr.RLength     = value.Length;
-                break;
-            }
-            case VType::StringT: {
-                str_ptr                = &(storage->Strings[entry->ArrayID]);
-                value_expr.ReplaceWith = str_ptr->Str;
-                value_expr.RLength     = str_ptr->Length;
-                break;
-            }
-            case VType::FalseT: {
-                value_expr.ReplaceWith = L"false";
-                value_expr.RLength     = 5;
-                break;
-            }
-            case VType::TrueT: {
-                value_expr.ReplaceWith = L"true";
-                value_expr.RLength     = 4;
-                break;
-            }
-            case VType::NullT: {
-                value_expr.ReplaceWith = L"null";
-                value_expr.RLength     = 4;
-                break;
-            }
-            default: {
-                continue;
-            }
-        }
-
-        rendered += Engine::Parse(items, block, offset, limit);
     }
 
     return rendered.Eject();
@@ -244,7 +248,7 @@ static String RenderLoop(wchar_t const *block, MatchBit const &item, UNumber con
     Array<MatchBit> const subMatch(Engine::Match(getHeadExpres(), block, item.Offset, item.Length));
 
     if ((subMatch.Size != 0) && (subMatch[0].NestMatch.Size != 0)) {
-        Document * storage = nullptr;
+        MatchBit * set_ = nullptr;
         Expression key_expr;
         Expression value_expr;
 
@@ -263,7 +267,7 @@ static String RenderLoop(wchar_t const *block, MatchBit const &item, UNumber con
                     --start_at;
 
                     if (block[start_at] == L't') { // se[t]
-                        storage = (static_cast<Document *>(other))->GetDocument(block, (m->Offset + 1), (m->Length - 2));
+                        set_ = m;
                         break;
                     }
 
@@ -282,8 +286,8 @@ static String RenderLoop(wchar_t const *block, MatchBit const &item, UNumber con
             }
         }
 
-        if ((value_expr.Keyword != nullptr) && (storage != nullptr)) {
-            String n_content(Repeat(block, (sm->Offset + sm->Length), (item.Length - (sm->Length + 7)), key_expr, value_expr, storage));
+        if ((value_expr.Keyword != nullptr) && (set_ != nullptr)) {
+            String n_content(Repeat(block, (sm->Offset + sm->Length), (item.Length - (sm->Length + 7)), key_expr, value_expr, set_, other));
             return Render(n_content.Str, 0, n_content.Length, other);
         }
     }

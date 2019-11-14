@@ -106,7 +106,7 @@ static String DumpMatches(wchar_t const *content, Array<MatchBit> const &matches
     return ss.Eject();
 }
 
-static Array<TestBit> GetALUBits() noexcept {
+static Array<TestBit> GetALEBits() noexcept {
     Array<TestBit> bits;
     TestBit        bit;
 
@@ -157,19 +157,19 @@ static Array<TestBit> GetALUBits() noexcept {
     bit.Content.Add(L"3 + 9 - 1 - -1 + 2 == 14");
     bit.Expected.Add(L"1");
     ////
-    bit.Expres = Qentem::ALU::getMathExpres();
+    bit.Expres = Qentem::ALE::getMathExpres();
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
 
-    bit.Content.Add(L"(2*(1+1))").Add(L"((1+10)+(5*5))");
-    bit.Expected.Add(L"4").Add(L"36");
+    bit.Content.Add(L"(   5   )").Add(L"(2*(1+1))").Add(L"((1+10)+(5*5))");
+    bit.Expected.Add(L"5").Add(L"4").Add(L"36");
 
     bit.Content.Add(L"(((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) + (1) + 2 = 14)");
     bit.Expected.Add(L"1");
 
-    bit.Expres = Qentem::ALU::getParensExpres();
+    bit.Expres = Qentem::ALE::getParensExpres();
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     return bits;

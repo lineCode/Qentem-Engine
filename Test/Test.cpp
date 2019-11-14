@@ -32,10 +32,10 @@ static bool const BigJSON = false;
 
 static String   readFile(char const *path) noexcept;
 static Document getDocument() noexcept;
-static bool     runTests(wchar_t const *name, Array<TestBit> const &bits, bool break_on_err, Document *other = nullptr) noexcept;
+static bool     runTest(wchar_t const *name, Array<TestBit> const &bits, bool break_on_err, Document *other = nullptr) noexcept;
 static bool     NumbersConvTest() noexcept;
-static bool     JSONTests() noexcept;
-static bool     XMLTests() noexcept;
+static bool     JSONTest() noexcept;
+static bool     XMLTest() noexcept;
 
 struct NCTest {
     double         Number{0};
@@ -57,7 +57,7 @@ int main() {
 
     bool TestEngine   = false;
     bool NumbersConv  = false;
-    bool TestALU      = false;
+    bool TestALE      = false;
     bool TestTemplate = false;
     bool TestXML      = false;
     bool TestJSON     = false;
@@ -68,7 +68,7 @@ int main() {
     if (!BigJSON) {
         TestEngine   = true;
         NumbersConv  = true;
-        TestALU      = true;
+        TestALE      = true;
         TestTemplate = true;
         TestXML      = true;
     }
@@ -81,9 +81,9 @@ int main() {
 
     for (UNumber i = 0; i < TimesToRun; i++) {
         if (TestEngine) {
-            // Core Engine Tests
+            // Core Engine Test
             bits = Qentem::Test::GetEngineBits();
-            Pass = runTests(L"Engine", bits, true);
+            Pass = runTest(L"Engine", bits, true);
             Qentem::Test::CleanBits(bits);
             if (!Pass) {
                 break;
@@ -92,7 +92,7 @@ int main() {
         }
 
         if (NumbersConv) {
-            // Number Conversion Tests
+            // Number Conversion Test
             Pass = NumbersConvTest();
             if (!Pass) {
                 break;
@@ -100,10 +100,10 @@ int main() {
             std::wcout << L"\n///////////////////////////////////////////////\n";
         }
 
-        if (TestALU) {
-            // Arithmetic & logic Evaluation Tests
-            bits = Qentem::Test::GetALUBits();
-            Pass = runTests(L"Arithmetic & Logic Evaluation", bits, true);
+        if (TestALE) {
+            // Arithmetic & logic Evaluation Test
+            bits = Qentem::Test::GetALEBits();
+            Pass = runTest(L"Arithmetic & Logic Evaluation", bits, true);
             if (!Pass) {
                 break;
             }
@@ -111,10 +111,10 @@ int main() {
         }
 
         if (TestTemplate) {
-            // Template Tests
+            // Template Test
             Document data;
             bits = Qentem::Test::GetTemplateBits(data);
-            Pass = runTests(L"Template", bits, true, &data);
+            Pass = runTest(L"Template", bits, true, &data);
             if (!Pass) {
                 break;
             }
@@ -122,8 +122,8 @@ int main() {
         }
 
         if (TestXML) {
-            // JSON Tests
-            Pass = XMLTests();
+            // JSON Test
+            Pass = XMLTest();
             if (!Pass) {
                 break;
             }
@@ -131,8 +131,8 @@ int main() {
         }
 
         if (TestJSON) {
-            // JSON Tests
-            Pass = JSONTests();
+            // JSON Test
+            Pass = JSONTest();
             if (!Pass) {
                 break;
             }
@@ -155,7 +155,7 @@ int main() {
     return 0;
 }
 
-static bool runTests(wchar_t const *name, Array<TestBit> const &bits, bool break_on_err, Document *other) noexcept {
+static bool runTest(wchar_t const *name, Array<TestBit> const &bits, bool break_on_err, Document *other) noexcept {
     UNumber const times        = StreasTest ? 10000 : 1;
     UNumber const start_at     = 0;
     UNumber       counter      = 0;
@@ -174,7 +174,7 @@ static bool runTests(wchar_t const *name, Array<TestBit> const &bits, bool break
 
     ss += L"\n #";
     ss += name;
-    ss += L" Tests:\n";
+    ss += L" Test:\n";
 
     if (start_at != 0) {
         ss += L"\n Starting at ";
@@ -333,7 +333,7 @@ static bool NumbersConvTest() noexcept {
     test.Add({0.00056599999999999999, L"0.001", 3});
     ////////////////////////////////
 
-    std::wcout << L"\n #Number Conversion Tests:\n";
+    std::wcout << L"\n #Number Conversion Test:\n";
 
     for (UNumber i = 0; i < test.Size; i++) {
         std::wcout << L" " << String::FromNumber((i + 1), 2).Str << L": ";
@@ -365,14 +365,14 @@ static bool NumbersConvTest() noexcept {
     return true;
 }
 
-static bool XMLTests() noexcept {
+static bool XMLTest() noexcept {
     Array<XTag>   tags;
     UNumber const times = StreasTest ? 30000 : 1;
     UNumber       ticks = 0;
     bool          Pass  = false;
-    std::wcout << L"\n #XML Tests:\n";
+    std::wcout << L"\n #XML Test:\n";
 
-    String XMLContent = readFile("./Tests/test.html");
+    String XMLContent = readFile("./Test/test.html");
     if (XMLContent.Length == 0) {
         XMLContent = readFile("./test.html");
     }
@@ -466,14 +466,14 @@ static bool XMLTests() noexcept {
     return Pass;
 }
 
-static bool JSONTests() noexcept {
+static bool JSONTest() noexcept {
     UNumber const times = ((StreasTest && !BigJSON) ? 1000 : 1);
     UNumber       took  = 0;
     String        final = L"";
     Document      data;
-    std::wcout << L"\n #JSON Tests:\n";
+    std::wcout << L"\n #JSON Test:\n";
 
-    String json_content = readFile(!BigJSON ? "./Tests/test.json" : "./Tests/bigjson.json");
+    String json_content = readFile(!BigJSON ? "./Test/test.json" : "./Test/bigjson.json");
     if (json_content.Length == 0) {
         json_content = readFile(!BigJSON ? "./test.json" : "./bigjson.json");
     }

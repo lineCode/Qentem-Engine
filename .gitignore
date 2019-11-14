@@ -6,9 +6,9 @@
 /.vs/*
 /.vscode/settings.json
 /.vscode/ipch
-/Tests/bigjson*
-/Tests/*.bin
-/Tests/*.exe
+/Test/bigjson*
+/Test/*.bin
+/Test/*.exe
 *vcxproj.user
 /clean.sh
 /ec.sh

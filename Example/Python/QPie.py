@@ -4,11 +4,11 @@ q_template = CDLL("./Build/QLib.so").qentem_render_template_w
 q_template.restype = c_wchar_p
 q_template.argtypes = [c_wchar_p, c_wchar_p, c_bool]
 
-file_tempale = open("./Tests/test.qtml", "r")
+file_tempale = open("./Test/test.qtml", "r")
 tempale_text = file_tempale.read()
 file_tempale.close()
 
-file_json = open("./Tests/test.json", "r")
+file_json = open("./Test/test.json", "r")
 json_text = file_json.read()
 file_json.close()
 

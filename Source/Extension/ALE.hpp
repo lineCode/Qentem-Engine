@@ -1,5 +1,5 @@
 /**
- * Qentem ALU
+ * Qentem Arithmetic & logic Evaluator
  *
  * @brief     For arithmetic and logic evaluation.
  *
@@ -10,11 +10,11 @@
 
 #include "Engine.hpp"
 
-#ifndef QENTEM_ALU_H
-#define QENTEM_ALU_H
+#ifndef QENTEM_ALE_H
+#define QENTEM_ALE_H
 
 namespace Qentem {
-namespace ALU {
+namespace ALE {
 
 using Engine::Expression;
 using Engine::Expressions;
@@ -30,25 +30,23 @@ static String LogicCallback(wchar_t const *block, MatchBit const &item, UNumber 
     double number1 = 0.0;
     double number2 = 0.0;
 
-    MatchBit *m2;
+    MatchBit const *mb    = &(item.NestMatch[0]);
+    UShort          op_id = mb->Expr->ID;
 
-    MatchBit const *m1    = &(item.NestMatch[0]);
-    UShort          op_id = m1->Expr->ID;
-
-    if (m1->NestMatch.Size != 0) {
-        NestNumber(number1, block, *m1);
+    if (mb->NestMatch.Size != 0) {
+        NestNumber(number1, block, *mb);
     } else {
-        String::ToNumber(number1, block, m1->Offset, m1->Length);
+        String::ToNumber(number1, block, mb->Offset, mb->Length);
     }
 
     for (UNumber i = 1; i < item.NestMatch.Size; i++) {
-        m2 = &(item.NestMatch[i]);
+        mb = &(item.NestMatch[i]);
 
-        if (m2->Length != 0) {
-            if (m2->NestMatch.Size != 0) {
-                NestNumber(number2, block, *m2);
+        if (mb->Length != 0) {
+            if (mb->NestMatch.Size != 0) {
+                NestNumber(number2, block, *mb);
             } else {
-                String::ToNumber(number2, block, m2->Offset, m2->Length);
+                String::ToNumber(number2, block, mb->Offset, mb->Length);
             }
 
             switch (op_id) {
@@ -64,7 +62,7 @@ static String LogicCallback(wchar_t const *block, MatchBit const &item, UNumber 
             }
         }
 
-        op_id = m2->Expr->ID;
+        op_id = mb->Expr->ID;
     }
 
     return String::FromNumber(number1, 1, 0, 3);
@@ -74,19 +72,17 @@ static String EqualCallback(wchar_t const *block, MatchBit const &item, UNumber 
     double number1 = 0.0;
     double number2 = 0.0;
 
-    MatchBit *m2;
+    MatchBit const *mb    = &(item.NestMatch[0]);
+    UShort          op_id = mb->Expr->ID;
 
-    MatchBit const *m1    = &(item.NestMatch[0]);
-    UShort          op_id = m1->Expr->ID;
-
-    if (m1->NestMatch.Size != 0) {
-        NestNumber(number1, block, *m1);
+    if (mb->NestMatch.Size != 0) {
+        NestNumber(number1, block, *mb);
     } else {
-        wchar_t const c = block[m1->Offset];
+        wchar_t const c = block[mb->Offset];
         if (((c <= 57) && (c >= 48)) || ((c == L'+') || (c == L'-'))) {
-            String::ToNumber(number1, block, m1->Offset, m1->Length);
+            String::ToNumber(number1, block, mb->Offset, mb->Length);
         } else if (item.NestMatch.Size == 2) { // String
-            if (String::Compare(block, m1->Offset, m1->Length, block, item.NestMatch[1].Offset, item.NestMatch[1].Length)) {
+            if (String::Compare(block, mb->Offset, mb->Length, block, item.NestMatch[1].Offset, item.NestMatch[1].Length)) {
                 return L"1";
             }
 
@@ -95,13 +91,13 @@ static String EqualCallback(wchar_t const *block, MatchBit const &item, UNumber 
     }
 
     for (UNumber i = 1; i < item.NestMatch.Size; i++) {
-        m2 = &(item.NestMatch[i]);
+        mb = &(item.NestMatch[i]);
 
-        if (m2->Length != 0) {
-            if (m2->NestMatch.Size != 0) {
-                NestNumber(number2, block, *m2);
+        if (mb->Length != 0) {
+            if (mb->NestMatch.Size != 0) {
+                NestNumber(number2, block, *mb);
             } else {
-                String::ToNumber(number2, block, m2->Offset, m2->Length);
+                String::ToNumber(number2, block, mb->Offset, mb->Length);
             }
 
             switch (op_id) {
@@ -130,7 +126,7 @@ static String EqualCallback(wchar_t const *block, MatchBit const &item, UNumber 
             }
         }
 
-        op_id = m2->Expr->ID;
+        op_id = mb->Expr->ID;
     }
 
     return String::FromNumber(number1, 1, 0, 3);
@@ -140,19 +136,17 @@ static String MultiplicationCallback(wchar_t const *block, MatchBit const &item,
     double number1 = 0.0;
     double number2 = 0.0;
 
-    MatchBit *m2;
+    MatchBit const *mb    = &(item.NestMatch[0]);
+    UShort          op_id = mb->Expr->ID;
 
-    MatchBit const *m1    = &(item.NestMatch[0]);
-    UShort          op_id = m1->Expr->ID;
-
-    String::ToNumber(number1, block, m1->Offset, m1->Length);
+    String::ToNumber(number1, block, mb->Offset, mb->Length);
 
     for (UNumber i = 1; i < item.NestMatch.Size; i++) {
-        m2 = &(item.NestMatch[i]);
+        mb = &(item.NestMatch[i]);
 
-        if (m2->Length != 0) {
+        if (mb->Length != 0) {
 
-            String::ToNumber(number2, block, m2->Offset, m2->Length);
+            String::ToNumber(number2, block, mb->Offset, mb->Length);
 
             switch (op_id) {
                 case 1: // *
@@ -192,7 +186,7 @@ static String MultiplicationCallback(wchar_t const *block, MatchBit const &item,
             return L"0";
         }
 
-        op_id = m2->Expr->ID;
+        op_id = mb->Expr->ID;
     }
 
     return String::FromNumber(number1, 1, 0, 3);
@@ -202,26 +196,24 @@ static String AdditionCallback(wchar_t const *block, MatchBit const &item, UNumb
     double number1 = 0.0;
     double number2 = 0.0;
 
-    MatchBit *m2;
+    MatchBit const *mb    = &(item.NestMatch[0]);
+    UShort          op_id = mb->Expr->ID;
 
-    MatchBit const *m1    = &(item.NestMatch[0]);
-    UShort          op_id = m1->Expr->ID;
-
-    if (m1->NestMatch.Size != 0) {
-        NestNumber(number1, block, *m1);
+    if (mb->NestMatch.Size != 0) {
+        NestNumber(number1, block, *mb);
     } else {
-        String::ToNumber(number1, block, m1->Offset, m1->Length);
+        String::ToNumber(number1, block, mb->Offset, mb->Length);
     }
 
     for (UNumber i = 1; i < item.NestMatch.Size; i++) {
-        m2 = &(item.NestMatch[i]);
+        mb = &(item.NestMatch[i]);
 
-        if (m2->Length != 0) {
+        if (mb->Length != 0) {
 
-            if (m2->NestMatch.Size != 0) {
-                NestNumber(number2, block, *m2);
+            if (mb->NestMatch.Size != 0) {
+                NestNumber(number2, block, *mb);
             } else {
-                String::ToNumber(number2, block, m2->Offset, m2->Length);
+                String::ToNumber(number2, block, mb->Offset, mb->Length);
             }
 
             switch (op_id) {
@@ -236,11 +228,11 @@ static String AdditionCallback(wchar_t const *block, MatchBit const &item, UNumb
                     break;
             }
 
-            op_id = m2->Expr->ID;
-        } else if ((op_id == 2) && (op_id == m2->Expr->ID)) {
+            op_id = mb->Expr->ID;
+        } else if ((op_id == 2) && (op_id == mb->Expr->ID)) {
             op_id = 1; // Two --
         } else {
-            op_id = m2->Expr->ID;
+            op_id = mb->Expr->ID;
         }
     }
 
@@ -249,7 +241,7 @@ static String AdditionCallback(wchar_t const *block, MatchBit const &item, UNumb
 
 static Expressions const &getMathExpres() noexcept {
     static constexpr UNumber flags_no_pop = Flags::SPLIT | Flags::GROUPED | Flags::TRIM;
-    static constexpr UNumber flags_ops    = flags_no_pop | Flags::POP;
+    static constexpr UNumber flags_pop    = flags_no_pop | Flags::POP;
 
     static Expressions expres(2);
 
@@ -281,7 +273,7 @@ static Expressions const &getMathExpres() noexcept {
         static Expression math_add;
         math_add.SetKeyword(L"+");
         math_add.ID      = 1;
-        math_add.Flag    = flags_ops;
+        math_add.Flag    = flags_pop;
         math_add.ParseCB = &(AdditionCallback);
         math_add.NestExpres.SetCapacity(4);
         math_add.NestExpres.Add(&math_exp).Add(&math_rem).Add(&math_div).Add(&math_mul);
@@ -296,14 +288,14 @@ static Expressions const &getMathExpres() noexcept {
         static Expression logic_equ2;
         logic_equ2.SetKeyword(L"==");
         logic_equ2.ID      = 1;
-        logic_equ2.Flag    = flags_ops;
+        logic_equ2.Flag    = flags_pop;
         logic_equ2.ParseCB = &(EqualCallback);
         logic_equ2.NestExpres.Add(&math_add).Add(&math_sub);
 
         static Expression logic_equ;
         logic_equ.SetKeyword(L"=");
         logic_equ.ID         = 2;
-        logic_equ.Flag       = flags_ops;
+        logic_equ.Flag       = flags_pop;
         logic_equ.ParseCB    = &(EqualCallback);
         logic_equ.NestExpres = logic_equ2.NestExpres;
 
@@ -345,7 +337,7 @@ static Expressions const &getMathExpres() noexcept {
         static Expression logic_and;
         logic_and.SetKeyword(L"&&");
         logic_and.ID      = 1;
-        logic_and.Flag    = flags_ops;
+        logic_and.Flag    = flags_pop;
         logic_and.ParseCB = &(LogicCallback);
         logic_and.NestExpres.SetCapacity(7);
         logic_and.NestExpres.Add(&logic_equ2)
@@ -372,25 +364,31 @@ static Expressions const &getMathExpres() noexcept {
 
 // e.g. ( 4 + 3 ), ( 2 + ( 4 + ( 1 + 2 ) + 1 ) * 5 - 3 - 2 )
 static String ParenthesisCallback(wchar_t const *block, MatchBit const &item, UNumber const length, void *other) noexcept {
-    UNumber const limit = (length - 2);
-    return Engine::Parse(Engine::Match(getMathExpres(), block, 1, limit), block, 1, limit);
+    UNumber offset = 1;
+    UNumber limit  = (length - 2);
+
+    String::SoftTrim(block, offset, limit);
+
+    return Engine::Parse(Engine::Match(getMathExpres(), block, offset, limit), block, offset, limit);
 }
 
 static Expressions const &getParensExpres() noexcept {
-    static Expression  ParensExpr;
-    static Expression  ParensCLose;
     static Expressions expres(1);
 
     if (expres.Size == 0) {
-        ParensExpr.SetKeyword(L"(");
-        ParensCLose.SetKeyword(L")");
-        ParensExpr.Connected = &ParensCLose;
-        ParensCLose.Flag     = Flags::BUBBLE | Flags::TRIM;
-        ParensCLose.ParseCB  = &(ParenthesisCallback);
-        ParensCLose.NestExpres.SetCapacity(1);
-        ParensCLose.NestExpres.Add(&ParensExpr);
+        static Expression paren;
+        static Expression paren_end;
 
-        expres.Add(&ParensExpr);
+        paren_end.SetKeyword(L")");
+        paren_end.Flag    = Flags::BUBBLE;
+        paren_end.ParseCB = &(ParenthesisCallback);
+        paren_end.NestExpres.SetCapacity(1);
+        paren_end.NestExpres.Add(&paren);
+
+        paren.SetKeyword(L"(");
+        paren.Connected = &paren_end;
+
+        expres.Add(&paren);
     }
 
     return expres;
@@ -429,7 +427,7 @@ static double Evaluate(wchar_t const *content, UNumber const offset, UNumber con
     return 0.0;
 }
 
-} // namespace ALU
+} // namespace ALE
 } // namespace Qentem
 
 #endif
