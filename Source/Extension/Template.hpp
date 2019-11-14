@@ -101,10 +101,6 @@ static String RenderIIF(wchar_t const *block, MatchBit const &item, UNumber cons
     return String();
 }
 
-// <if case="{case}">html code</if>
-// <if case="{case}">html code1 <else /> html code2</if>
-// <if case="{case1}">html code1 <elseif case={case2} /> html code2</if>
-// <if case="{case}">html code <if case="{case2}" />additional html code</if></if>
 static bool EvaluateIF(wchar_t const *block, MatchBit const &item, void *other) noexcept {
     UNumber const offset = (item.Offset + 1);
     UNumber const limit  = (item.Length - 2);
@@ -114,6 +110,10 @@ static bool EvaluateIF(wchar_t const *block, MatchBit const &item, void *other) 
     return (ALE::Evaluate(content.Str, 0, content.Length) > 0.0);
 }
 
+// <if case="{case}">html code</if>
+// <if case="{case}">html code1 <else /> html code2</if>
+// <if case="{case1}">html code1 <elseif case={case2} /> html code2</if>
+// <if case="{case}">html code <if case="{case2}" />additional html code</if></if>
 static String RenderIF(wchar_t const *block, MatchBit const &item, UNumber const length, void *other) noexcept {
     // Nothing is processed inside the match before checking if the condition is TRUE.
     bool is_true = false;
@@ -360,12 +360,12 @@ static Expressions const &getExpres() noexcept {
         tag_iif_end.SetKeyword(L"}");
         tag_iif_end.Flag    = Flags::BUBBLE;
         tag_iif_end.ParseCB = &(Template::RenderIIF);
+        tag_iif_end.NestExpres.SetCapacity(1);
+        tag_iif_end.NestExpres.Add(getVarExpres());
 
         static Expression tag_iif;
         tag_iif.SetKeyword(L"{iif");
         tag_iif.Connected = &tag_iif_end;
-
-        tag_iif_end.NestExpres.Add(&tag_iif).Add(getVarExpres()); // Nested by itself and TagVars
         /////////////////////////////////
 
         // <else />

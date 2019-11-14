@@ -394,7 +394,7 @@ static Expressions const &getParensExpres() noexcept {
     return expres;
 }
 
-static double Evaluate(wchar_t const *content, UNumber const offset, UNumber const limit) noexcept {
+static double Evaluate(wchar_t const *content, UNumber offset, UNumber limit) noexcept {
     /**
      * e.g. ((2* (1 * 3)) + 1 - 4) + ((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1) - (1) - (-1) + 2 == 14
      * e.g. (6 + 1 - 4) + (5 - 6 + 4) * (8 / 4 + 1) - (1) - (-1) + 2 = 14
@@ -410,21 +410,23 @@ static double Evaluate(wchar_t const *content, UNumber const offset, UNumber con
      * 4: Process logic ( = != > < ... )
      * 5: Return final value or 0;
      */
+    double num;
 
-    // Parenthesis:
-    String n_content(Engine::Parse(Engine::Match(getParensExpres(), content, offset, limit), content, offset, limit));
-    if ((n_content.Length == 0) || (n_content == L"0")) {
-        return 0.0;
+    Array<MatchBit> items(Engine::Match(getParensExpres(), content, offset, limit));
+
+    if (items.Size != 0) {
+        String n_content(Engine::Parse(items, content, offset, limit));
+        n_content = Engine::Parse(Engine::Match(getMathExpres(), n_content.Str, 0, n_content.Length), n_content.Str, 0, n_content.Length);
+        String::ToNumber(num, n_content.Str, 0, n_content.Length);
+    } else if ((items = Engine::Match(getMathExpres(), content, offset, limit)).Size != 0) {
+        String n_content = Engine::Parse(items, content, offset, limit);
+        String::ToNumber(num, n_content.Str, 0, n_content.Length);
+    } else {
+        String::SoftTrim(content, offset, limit);
+        String::ToNumber(num, content, offset, limit);
     }
 
-    // The rest:
-    double num = 0.0;
-    n_content  = Engine::Parse(Engine::Match(getMathExpres(), n_content.Str, 0, n_content.Length), n_content.Str, 0, n_content.Length);
-    if ((n_content.Length != 0) && String::ToNumber(num, n_content.Str, 0, n_content.Length)) {
-        return num;
-    }
-
-    return 0.0;
+    return num;
 }
 
 } // namespace ALE

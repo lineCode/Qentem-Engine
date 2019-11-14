@@ -1,4 +1,4 @@
-# Qentem Engine (v1.4.0)
+# Qentem Engine (v1.4.1)
 
 ## Introduction:
 Qentem Engine is an independent library that uses a fast algorithm for nest-searching/nest-matching. It can be used to match existing syntaxes or new ones, and with call-backs for post and per-parsing, It's posable to match almost any complex syntax. It is very efficient and has a small footprint on memory, and it's built using modern C++. It can be used to render complex templates that contains nested loop, nested if-else, inline if, math (+ * / - ^ %), logic (&& ||), and/or something simple: like replacing a text or splitting it. Also, it is capable of doing JSON, XML/HTML.
@@ -13,7 +13,7 @@ The library - at the moment - has String class (with number conversion), Array, 
 ## Template Demo:
 HTML, JavaScript and WebAssembly: [JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/releases/download/v1.3.6/JQen.zip)
 
-## Examples:
+## Example:
 ### Document and JSON:
 ```cpp
 #include <Extension/Document.hpp>
@@ -86,18 +86,19 @@ d: D
 The complete example is located @ [Example/Example1.cpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Example/Example1.cpp). For more about template syntax, see [Test/test.qtml](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Test/test.qtml).
 
 
-### Compiling:
-The example:
+## Compiling:
+
+### The example:
 ```txt
 c++ -I ./Source ./Example/Example1.cpp -o ./Test/QExample1.bin
 ```
 
-QLib (Template library):
+### QLib (Template library):
 ```txt
 c++ -O3 -shared -fPIC -I ./Source ./Example/QLib.cpp -o ./Build/QLib.so
 ```
 
-QLib (WebAssembly):
+### QLib (WebAssembly):
 ```txt
 em++ -Os -Wall -std=c++11 -I ./Source ./Example/QLib.cpp -s WASM=1 -s 'EXTRA_EXPORTED_RUNTIME_METHODS=['ccall', 'cwrap']' -o ./Example/JQen/JQen.js
 ```

@@ -236,7 +236,7 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
     bit.Expected.Add(L"63");
     ////
 
-    bit.Content.Add(L"{iif case=\"987\" true =\"{iif case =\"1\" true=\"5\"}\"}");
+    bit.Content.Add(L"{iif case=\"987\" true =\"5\"}");
     bit.Expected.Add(L"5");
 
     bit.Content.Add(L"{iif case=\"1\" false=\"10\"}");
@@ -258,11 +258,11 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
     bit.Content.Add(L"{iif case=\"{v:lvl2[numbers][1]} = 2\" true=\"it's true! \" false =\"it's false\"}");
     bit.Expected.Add(L"it's true! ");
 
-    bit.Content.Add(L"{iif case=\"0\" true=\"{iif case=\"1\" true=\"5\"}\"}");
+    bit.Content.Add(L"{iif case=\"      0    \" true=\"5\"}");
     bit.Expected.Add(L"");
 
-    bit.Content.Add(L"{iif case=\"0\" false=\"{iif case=\"1\" true=\"35.5\"}\"}");
-    bit.Expected.Add(L"35.5");
+    bit.Content.Add(L"{iif case=\"      1    \" false=\"35.5\"}");
+    bit.Expected.Add(L"");
 
     bit.Content.Add(L"{iif case = \"5<1\" true = \"1\" false = \"0\"}");
     bit.Expected.Add(L"0");
