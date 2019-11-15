@@ -24,6 +24,8 @@ using Qentem::Engine::MatchBit;
 using Qentem::Test::TestBit;
 using Qentem::XMLParser::XTag;
 
+enum ParseType { Engine = 0, ALE = 1 };
+
 static UNumber const TimesToRun = 1;
 // static bool const    StreasTest = true;
 static bool const StreasTest = false;
@@ -32,7 +34,8 @@ static bool const BigJSON = false;
 
 static String   readFile(char const *path) noexcept;
 static Document getDocument() noexcept;
-static bool     runTest(wchar_t const *name, Array<TestBit> const &bits, bool break_on_err, Document *other = nullptr) noexcept;
+static bool     runTest(wchar_t const *name, Array<TestBit> const &bits, bool break_on_err, Document *other = nullptr,
+                        ParseType parse_type = ParseType::Engine) noexcept;
 static bool     NumbersConvTest() noexcept;
 static bool     JSONTest() noexcept;
 static bool     XMLTest() noexcept;
@@ -103,7 +106,7 @@ int main() {
         if (TestALE) {
             // Arithmetic & logic Evaluation Test
             bits = Qentem::Test::GetALEBits();
-            Pass = runTest(L"Arithmetic & Logic Evaluation", bits, true);
+            Pass = runTest(L"Arithmetic & Logic Evaluation", bits, true, nullptr, ParseType::ALE);
             if (!Pass) {
                 break;
             }
@@ -155,7 +158,8 @@ int main() {
     return 0;
 }
 
-static bool runTest(wchar_t const *name, Array<TestBit> const &bits, bool break_on_err, Document *other) noexcept {
+static bool runTest(wchar_t const *name, Array<TestBit> const &bits, bool break_on_err, Document *other,
+                    ParseType const parse_type) noexcept {
     UNumber const times        = StreasTest ? 10000 : 1;
     UNumber const start_at     = 0;
     UNumber       counter      = 0;
@@ -209,17 +213,42 @@ static bool runTest(wchar_t const *name, Array<TestBit> const &bits, bool break_
             total_search += search_ticks;
 
             String rendered;
-            parse_ticks = static_cast<UNumber>(clock());
-            for (UNumber y = 0; y < times; y++) {
-                rendered = Qentem::Engine::Parse(matches, bits[i].Content[t], 0, length, other);
+
+            switch (parse_type) {
+                case ParseType::ALE:
+                    double ALE_num;
+                    if (i == 0) {
+                        parse_ticks = static_cast<UNumber>(clock());
+                        for (UNumber y = 0; y < times; y++) {
+                            ALE_num = Qentem::ALE::Calculate(matches, bits[i].Content[t], 0, length);
+                        }
+                        parse_ticks = (static_cast<UNumber>(clock()) - parse_ticks);
+                        rendered    = String::FromNumber(ALE_num, 1, 0, 3);
+                    } else {
+                        parse_ticks = static_cast<UNumber>(clock());
+                        for (UNumber y = 0; y < times; y++) {
+                            rendered = Qentem::Engine::Parse(matches, bits[i].Content[t], 0, length, other);
+                        }
+                        parse_ticks = (static_cast<UNumber>(clock()) - parse_ticks);
+                    }
+                    break;
+
+                default: {
+                    parse_ticks = static_cast<UNumber>(clock());
+                    for (UNumber y = 0; y < times; y++) {
+                        rendered = Qentem::Engine::Parse(matches, bits[i].Content[t], 0, length, other);
+                    }
+                    parse_ticks = (static_cast<UNumber>(clock()) - parse_ticks);
+                } break;
             }
-            parse_ticks = (static_cast<UNumber>(clock()) - parse_ticks);
+
             total_parse += parse_ticks;
+
+            Pass = (rendered == bits[i].Expected[t]);
 
             ++counter;
             ++total;
 
-            Pass = (rendered == bits[i].Expected[t]);
             ss += Pass ? L" " : L"\n ";
 
             ss += String::FromNumber(count, 2) + L"-";

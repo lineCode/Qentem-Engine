@@ -195,9 +195,9 @@ static Array<MatchBit> Match(Expressions const &expres, wchar_t const *content, 
 }
 /////////////////////////////////
 static String Parse(Array<MatchBit> const &items, wchar_t const *content, UNumber offset, UNumber limit, void *other = nullptr) noexcept {
-    StringStream rendered; // Final content
-    UNumber      tmp_limit;
-    MatchBit *   item;
+    StringStream    rendered; // Final content
+    UNumber         tmp_limit;
+    MatchBit const *item;
 
     for (UNumber id = 0; id < items.Size; id++) {
         // Current match
