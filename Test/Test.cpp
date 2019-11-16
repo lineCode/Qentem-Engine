@@ -215,31 +215,28 @@ static bool runTest(wchar_t const *name, Array<TestBit> const &bits, bool break_
             String rendered;
 
             switch (parse_type) {
-                case ParseType::ALE:
-                    double ALE_num;
-                    if (i == 0) {
-                        parse_ticks = static_cast<UNumber>(clock());
-                        for (UNumber y = 0; y < times; y++) {
-                            ALE_num = Qentem::ALE::Calculate(matches, bits[i].Content[t], 0, length);
-                        }
-                        parse_ticks = (static_cast<UNumber>(clock()) - parse_ticks);
-                        rendered    = String::FromNumber(ALE_num, 1, 0, 3);
-                    } else {
-                        parse_ticks = static_cast<UNumber>(clock());
-                        for (UNumber y = 0; y < times; y++) {
-                            rendered = Qentem::Engine::Parse(matches, bits[i].Content[t], 0, length, other);
-                        }
-                        parse_ticks = (static_cast<UNumber>(clock()) - parse_ticks);
-                    }
-                    break;
+                case ParseType::ALE: {
+                    double  ALE_num;
+                    UNumber offset = 0;
+                    UNumber limit  = length;
+                    String::SoftTrim(bits[i].Content[t], offset, limit);
 
+                    parse_ticks = static_cast<UNumber>(clock());
+                    for (UNumber y = 0; y < times; y++) {
+                        Qentem::ALE::Process(ALE_num, matches, bits[i].Content[t], offset, limit);
+                    }
+                    parse_ticks = (static_cast<UNumber>(clock()) - parse_ticks);
+                    rendered    = String::FromNumber(ALE_num, 1, 0, 3);
+                    break;
+                }
                 default: {
                     parse_ticks = static_cast<UNumber>(clock());
                     for (UNumber y = 0; y < times; y++) {
                         rendered = Qentem::Engine::Parse(matches, bits[i].Content[t], 0, length, other);
                     }
                     parse_ticks = (static_cast<UNumber>(clock()) - parse_ticks);
-                } break;
+                    break;
+                }
             }
 
             total_parse += parse_ticks;
@@ -280,7 +277,7 @@ static bool runTest(wchar_t const *name, Array<TestBit> const &bits, bool break_
                 ss += L"  Expected: \"";
                 ss += Qentem::Test::ReplaceNewLine(bits[i].Expected[t], String::Count(bits[i].Expected[t]), L"\\n") + L"\"\n";
                 ss += L"  Matches:\n";
-                ss += Qentem::Test::DumpMatches(bits[i].Content[t], matches, L"    ");
+                ss += Qentem::Test::DumpMatches(matches, bits[i].Content[t], L"    ");
 
                 ss += L"\n  ---------- End debug ";
                 ss += String::FromNumber(count) + L"-";

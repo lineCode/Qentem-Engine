@@ -38,17 +38,6 @@ static void CleanBits(Array<TestBit> &bits) noexcept {
     }
 }
 
-static Array<String> Extract(wchar_t const *content, Array<MatchBit> const &items) noexcept {
-    Array<String> matches(items.Size);
-
-    for (UNumber i = 0; i < items.Size; i++) {
-        matches.Add(String::Part(content, items[i].Offset, items[i].Length) + L" -> O:" + String::FromNumber(items[i].Offset) + L" L:" +
-                    String::FromNumber(items[i].Length));
-    }
-
-    return matches;
-}
-
 static String Replace(wchar_t const *content, UNumber length, wchar_t const *_find, wchar_t const *_replace) {
     static Expression find_key;
 
@@ -82,14 +71,25 @@ static String ReplaceNewLine(wchar_t const *content, UNumber length, wchar_t con
     return Engine::Parse(Engine::Match(find_keys, content, 0, length), content, 0, length);
 }
 
-static String DumpMatches(wchar_t const *content, Array<MatchBit> const &matches, String const &offset, UNumber index = 0) noexcept {
+static Array<String> Extract(Array<MatchBit> const &items, wchar_t const *content) noexcept {
+    Array<String> matches(items.Size);
+
+    for (UNumber i = 0; i < items.Size; i++) {
+        matches.Add(String::Part(content, items[i].Offset, items[i].Length) + L" -> O:" + String::FromNumber(items[i].Offset) + L" L:" +
+                    String::FromNumber(items[i].Length));
+    }
+
+    return matches;
+}
+
+static String DumpMatches(Array<MatchBit> const &matches, wchar_t const *content, String const &offset, UNumber index = 0) noexcept {
     if (matches.Size == 0) {
         return offset + L"No matches!\n";
     }
     StringStream ss;
     String       innoffset = L"    ";
 
-    Array<String> items = Test::Extract(content, matches);
+    Array<String> items = Extract(matches, content);
 
     ss += offset + L"(" + String::FromNumber(static_cast<double>(matches.Size)) + L") => [\n";
 
@@ -98,7 +98,7 @@ static String DumpMatches(wchar_t const *content, Array<MatchBit> const &matches
 
         if (matches[i].NestMatch.Size != 0) {
             ss += (innoffset + offset + L"-NestMatch:\n");
-            ss += Test::DumpMatches(content, matches[i].NestMatch, (innoffset + innoffset + offset), 0);
+            ss += DumpMatches(matches[i].NestMatch, content, (innoffset + innoffset + offset), 0);
         }
     }
 
@@ -114,8 +114,8 @@ static Array<TestBit> GetALEBits() noexcept {
     bit      = TestBit();
     bit.Line = __LINE__;
 
-    bit.Content.Add(L"+1").Add(L" +1 ").Add(L"1+").Add(L" 1+ ").Add(L"1+ ").Add(L" 1+").Add(L"1+1").Add(L" 1 + 1 ");
-    bit.Expected.Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"2").Add(L"2");
+    bit.Content.Add(L"  1  ").Add(L"+1").Add(L" +1 ").Add(L"1+").Add(L" 1+ ").Add(L"1+ ").Add(L" 1+").Add(L"1+1").Add(L" 1 + 1 ");
+    bit.Expected.Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"2").Add(L"2");
 
     bit.Content.Add(L" -1 ").Add(L"-1").Add(L"1-").Add(L" 1- ").Add(L"1- ").Add(L" 1-").Add(L"1-1").Add(L" 1 - 1 ");
     bit.Expected.Add(L"-1").Add(L"-1").Add(L"1").Add(L"1").Add(L"1").Add(L"1").Add(L"0").Add(L"0");
@@ -156,20 +156,28 @@ static Array<TestBit> GetALEBits() noexcept {
 
     bit.Content.Add(L"3 + 9 - 1 - -1 + 2 == 14");
     bit.Expected.Add(L"1");
-    ////
-    bit.Expres = Qentem::ALE::getMathExpres();
-    bits += static_cast<TestBit &&>(bit);
-    ///////////////////////////////////////////
-    bit      = TestBit();
-    bit.Line = __LINE__;
 
-    bit.Content.Add(L"(   5   )").Add(L"(2*(1+1))").Add(L"((1+10)+(5*5))");
-    bit.Expected.Add(L"5").Add(L"4").Add(L"36");
+    ////
+    bit.Content.Add(L"(   5   )").Add(L"  2 * (1+ 1  )  ").Add(L" (  1  +1)  +  5 ").Add(L"  2 * (1+1) - 1 ");
+    bit.Expected.Add(L"5").Add(L"4").Add(L"7").Add(L"3");
+
+    bit.Content.Add(L"(5)+(6)").Add(L"  (  5   )  +  (  6  )  ").Add(L" ( 5 ) + ( 6 ) + ( 6 ) ").Add(L" ( 5 ) * ( 6 ) + ( 6 ) + (1)");
+    bit.Expected.Add(L"11").Add(L"11").Add(L"17").Add(L"37");
+
+    bit.Content.Add(L"2*(5)+(6)+1").Add(L"2*(5)+2*2+(6)+1");
+    bit.Expected.Add(L"17").Add(L"21");
+
+    bit.Content.Add(L" (1+   1  ) / 2 + ((  2  *  4   ) - 1) / (2)  ");
+    bit.Expected.Add(L"4.5");
+
+    bit.Content.Add(L"(2*(1+1))").Add(L"((1+10)+(5*5))");
+    bit.Expected.Add(L"4").Add(L"36");
 
     bit.Content.Add(L"(((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) + (1) + 2 = 14)");
     bit.Expected.Add(L"1");
 
-    bit.Expres = Qentem::ALE::getParensExpres();
+    ////
+    bit.Expres = Qentem::ALE::getMathExpres();
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     return bits;
@@ -1254,7 +1262,7 @@ static String FlipSplit(wchar_t const *block, MatchBit const &item, UNumber cons
 
     if (item.NestMatch.Size != 0) {
         for (UNumber i = 0; i < item.NestMatch.Size; i++) {
-            nc = Test::FlipSplit(block, item.NestMatch[i], length, nullptr) + nc;
+            nc = FlipSplit(block, item.NestMatch[i], length, nullptr) + nc;
         }
 
         if (item.NestMatch.Size > 1) {

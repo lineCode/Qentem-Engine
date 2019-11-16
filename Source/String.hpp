@@ -571,6 +571,7 @@ struct String {
                     case L'+':
                         break;
                     default:
+                        number = 0.0;
                         return false;
                 }
             } else {
@@ -624,6 +625,7 @@ struct String {
                         break;
                     }
                     default:
+                        number = 0.0;
                         return false;
                 }
             } else {
