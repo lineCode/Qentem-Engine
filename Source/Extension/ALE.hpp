@@ -1,5 +1,5 @@
 /**
- * Qentem Arithmetic & logic Evaluator
+ * Qentem Arithmetic & Logic Evaluator
  *
  * @brief     For arithmetic and logic evaluation.
  *
@@ -198,9 +198,9 @@ static double Multiply(wchar_t const *content, Array<MatchBit> const &items) noe
 }
 
 static double Add(wchar_t const *content, Array<MatchBit> const &items) noexcept {
-    MatchBit const *mb    = &(items[0]);
-    UShort          op_id = mb->Expr->ID;
-    double          number1;
+    MatchBit const *mb      = &(items[0]);
+    UShort          op_id   = mb->Expr->ID;
+    double          number1 = 0.0;
     double          number2;
 
     Process(number1, mb->NestMatch, content, mb->Offset, mb->Length);
@@ -236,7 +236,7 @@ static double Add(wchar_t const *content, Array<MatchBit> const &items) noexcept
 }
 
 static double Equal(wchar_t const *content, Array<MatchBit> const &items) noexcept {
-    double number1;
+    double number1 = 0.0;
     double number2;
 
     MatchBit const *mb    = &(items[0]);
@@ -343,38 +343,38 @@ static bool Process(double &number, Array<MatchBit> const &items, wchar_t const 
         }
 
         return String::ToNumber(number, content, offset, limit);
-    } else {
-        switch (items[0].Expr->ID) {
-            case 2:
-            case 3:
-            case 4:
-            case 5:
-                number = Multiply(content, items);
-                return true;
+    }
 
-            case 6:
-            case 7:
-                number = Add(content, items);
-                return true;
+    switch (items[0].Expr->ID) {
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+            number = Multiply(content, items);
+            return true;
 
-            case 8:
-            case 9:
-            case 10:
-            case 11:
-            case 12:
-            case 13:
-            case 14:
-                number = Equal(content, items);
-                return true;
+        case 6:
+        case 7:
+            number = Add(content, items);
+            return true;
 
-            case 15:
-            case 16:
-                number = LogicAnd(content, items);
-                return true;
+        case 8:
+        case 9:
+        case 10:
+        case 11:
+        case 12:
+        case 13:
+        case 14:
+            number = Equal(content, items);
+            return true;
 
-            default:
-                return false;
-        }
+        case 15:
+        case 16:
+            number = LogicAnd(content, items);
+            return true;
+
+        default:
+            return false;
     }
 }
 

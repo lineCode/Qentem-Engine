@@ -56,11 +56,11 @@ static String RenderMath(wchar_t const *block, MatchBit const &item, UNumber con
 static String RenderIIF(wchar_t const *block, MatchBit const &item, UNumber const length, void *other) noexcept {
     Array<MatchBit> const items(Engine::Match(getQuotesExpres(), block, 0, length));
 
-    MatchBit *m;
-    bool      iif_case  = false;
-    MatchBit *iif_true  = nullptr;
-    MatchBit *iif_false = nullptr;
-    UNumber   start_at;
+    bool            iif_case = false;
+    MatchBit const *m;
+    MatchBit const *iif_true  = nullptr;
+    MatchBit const *iif_false = nullptr;
+    UNumber         start_at;
 
     // case="[statement]" true="[Yes]" false="[No]"
     for (UNumber i = 0; i < items.Size; i++) {
@@ -124,8 +124,8 @@ static String RenderIF(wchar_t const *block, MatchBit const &item, UNumber const
         MatchBit *sm = &(subMatch[0]);
 
         if (sm->NestMatch.Size != 0) {
-            MatchBit *nm = &(sm->NestMatch[0]);
-            is_true      = Template::EvaluateIF(block, *nm, other);
+            MatchBit const *nm = &(sm->NestMatch[0]);
+            is_true            = Template::EvaluateIF(block, *nm, other);
 
             // inner content of if
             UNumber offset = (sm->Offset + sm->Length);
@@ -164,7 +164,7 @@ static String RenderIF(wchar_t const *block, MatchBit const &item, UNumber const
     return String();
 }
 
-static String Repeat(wchar_t const *block, UNumber offset, UNumber limit, Expression &key_expr, Expression &value_expr,
+static String Repeat(wchar_t const *block, UNumber const offset, UNumber const limit, Expression &key_expr, Expression &value_expr,
                      MatchBit const *set_, void *other) noexcept {
     Expressions loop_expres(2);
 
@@ -176,13 +176,13 @@ static String Repeat(wchar_t const *block, UNumber offset, UNumber limit, Expres
 
     Array<MatchBit> const items(Engine::Match(loop_expres, block, offset, limit));
 
-    StringStream rendered;
-    String *     str_ptr;
-    String       value;
-    String       key;
+    StringStream  rendered;
+    String const *str_ptr;
+    String        value;
+    String        key;
 
-    Entry *   entry;
-    Document *storage = (static_cast<Document *>(other))->GetDocument(block, (set_->Offset + 1), (set_->Length - 2));
+    Entry const *   entry;
+    Document const *storage = (static_cast<Document *>(other))->GetDocument(block, (set_->Offset + 1), (set_->Length - 2));
 
     if (storage != nullptr) {
         for (UNumber i = 0; i < storage->Entries.Size; i++) {
@@ -248,15 +248,15 @@ static String RenderLoop(wchar_t const *block, MatchBit const &item, UNumber con
     Array<MatchBit> const subMatch(Engine::Match(getHeadExpres(), block, item.Offset, item.Length));
 
     if ((subMatch.Size != 0) && (subMatch[0].NestMatch.Size != 0)) {
-        MatchBit * set_ = nullptr;
-        Expression key_expr;
-        Expression value_expr;
+        MatchBit const *set_ = nullptr;
+        Expression      key_expr;
+        Expression      value_expr;
 
         MatchBit const *sm = &(subMatch[0]);
 
         // set="(Array_name)" value="s_value" key="s_key"
-        MatchBit *m;
-        UNumber   start_at;
+        MatchBit const *m;
+        UNumber         start_at;
 
         for (UNumber i = 0; i < sm->NestMatch.Size; i++) {
             m = &(sm->NestMatch[i]);

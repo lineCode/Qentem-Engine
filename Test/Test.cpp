@@ -216,9 +216,9 @@ static bool runTest(wchar_t const *name, Array<TestBit> const &bits, bool break_
 
             switch (parse_type) {
                 case ParseType::ALE: {
-                    double  ALE_num;
-                    UNumber offset = 0;
-                    UNumber limit  = length;
+                    double  ALE_num = 0.0;
+                    UNumber offset  = 0;
+                    UNumber limit   = length;
                     String::SoftTrim(bits[i].Content[t], offset, limit);
 
                     parse_ticks = static_cast<UNumber>(clock());
