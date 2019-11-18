@@ -1,21 +1,23 @@
 from ctypes import c_wchar_p, CDLL, c_bool
 
-q_template = CDLL("./Build/QLib.so").qentem_render_template_w
-q_template.restype = c_wchar_p
-q_template.argtypes = [c_wchar_p, c_wchar_p, c_bool]
+q_render = CDLL("./Build/QLib.so").qentem_render_template_w
+# Use QLib.dll for Windows.
+q_render.restype = c_wchar_p
+q_render.argtypes = [c_wchar_p, c_wchar_p, c_bool]
 
-file_tempale = open("./Test/test.qtml", "r")
-tempale_text = file_tempale.read()
-file_tempale.close()
+json_text = '{"numbers":[1,2,3,4,5,6,7,8], "eq": "((1+2)^3)/2", "qen": "Qentem"}'
 
-file_json = open("./Test/test.json", "r")
-json_text = file_json.read()
-file_json.close()
+tempale = """
+<loop set="numbers" value="this_number">
+<if case="(this_number % 2) == 1">this_number is an odd number.</if></loop>
 
-enable_comments = False
+{v:eq} = {math: {v:eq}}
 
-# Randering
-rendered = q_template(c_wchar_p(tempale_text),
-                      c_wchar_p(json_text), enable_comments)
+(0.1 + 0.2) is {math:   0.1   +   0.2  }
 
-print(rendered)
+{iif case="{v:qen} = Qentem" true="{v:qen}"} Engine
+
+{iif case="{v:numbers[0]} = v:numbers[4]" false="it's not {v:numbers[4]}!"}"""
+
+print(q_render(tempale, json_text, False))
+# Note: "False" means JSON without comments.

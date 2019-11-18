@@ -170,13 +170,21 @@ static double Multiply(wchar_t const *content, Array<MatchBit> const &items) noe
                 break;
             case 4: // ^
                 if (number2 != 0.0) {
-                    UNumber const times = static_cast<UNumber>(number2);
-                    for (UNumber k = 1; k < times; k++) {
-                        number1 *= number1;
+                    bool neg = (number2 < 0);
+
+                    if (neg) {
+                        number2 *= -1;
                     }
 
-                    if (number2 < 0) {
-                        number1 = 1 / number1;
+                    UNumber      times = static_cast<UNumber>(number2);
+                    double const num   = number1;
+
+                    while (--times > 0) {
+                        number1 *= num;
+                    }
+
+                    if (neg) {
+                        number1 = (1 / number1);
                     }
 
                     break;
@@ -242,20 +250,16 @@ static double Equal(wchar_t const *content, Array<MatchBit> const &items) noexce
     MatchBit const *mb    = &(items[0]);
     UShort          op_id = mb->Expr->ID;
 
-    if (mb->NestMatch.Size == 0) {
-        wchar_t const c = content[mb->Offset];
-        if (((c < 58) && (c > 47)) || ((c == L'+') || (c == L'-'))) {
-            if (!String::ToNumber(number1, content, mb->Offset, mb->Length)) {
-                return 0.0;
-            }
-        } else if (items.Size == 2) { // String
-            if (String::Compare(content, mb->Offset, mb->Length, content, items[1].Offset, items[1].Length)) {
-                return 1.0;
-            }
-
+    wchar_t const c = content[mb->Offset];
+    if (((c < 58) && (c > 47)) || ((c == L'(') || (c == L'+') || (c == L'-'))) {
+        if (!Process(number1, mb->NestMatch, content, mb->Offset, mb->Length)) {
             return 0.0;
         }
-    } else if (!Process(number1, mb->NestMatch, content, mb->Offset, mb->Length)) {
+    } else if (items.Size == 2) { // String
+        if (String::Compare(content, mb->Offset, mb->Length, content, items[1].Offset, items[1].Length)) {
+            return 1.0;
+        }
+
         return 0.0;
     }
 

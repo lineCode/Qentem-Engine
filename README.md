@@ -1,4 +1,4 @@
-# Qentem Engine (v1.4.4)
+# Qentem Engine (v1.4.5)
 
 ## Introduction:
 Qentem Engine is an independent library that uses a fast algorithm for nest-matching. It can be used to match existing syntaxes or new ones, and with call-backs for post and per-parsing, It's posable to match almost any complex syntax. It is very efficient and has a small footprint on memory, and it's built using modern C++. It can be used to render complex templates that contains nested loop, nested if-else, inline if, math (+ * / - ^ %), logic (&& ||), and/or something simple: like replacing a text or splitting it. Also, it is capable of doing JSON, XML/HTML.
@@ -40,9 +40,6 @@ The library - at the moment - has String class (with number conversion), Array, 
 
 ## Requirements:
 C++ compiler (11 and above).
-
-## Template Demo:
-HTML, JavaScript and WebAssembly (requires web server to run; local or remote): [JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/releases/download/v1.4.3/JQen.zip)
 
 ## Example:
 ### Document and JSON:
@@ -90,6 +87,8 @@ std::wcout << L"JSON:\n" << JSON.Str << L"\n\n";
 ```
 
 ### Template:
+
+#### C++
 ```cpp
 #include <Extension/Template.hpp>
 using Qentem::String;
@@ -99,23 +98,42 @@ content += L"<loop set=\"strings2\" value=\"s_value\" key=\"s_key\">s_key: s_val
 String rendered = Template::Render(content, &doc);
 std::wcout << L"Template:\n" << rendered.Str << L'\n';
 ```
-#### Output:
-```txt
-a: A
-b: B
-c: C
-d: D
---
-0: E
-1: F
-2: G
-3: H
-4: I
-```
 
-### Note:
+##### Note:
 The complete example is located @ [Example/Example1.cpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Example/Example1.cpp). For more about template syntax, see [Test/test.qtml](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Test/test.qtml).
 
+#### Python
+```python
+from ctypes import c_wchar_p, CDLL, c_bool
+
+q_render = CDLL("./Build/QLib.so").qentem_render_template_w
+# Use QLib.dll for Windows.
+q_render.restype = c_wchar_p
+q_render.argtypes = [c_wchar_p, c_wchar_p, c_bool]
+
+json_text = '{"numbers":[1,2,3,4,5,6,7,8], "eq": "((1+2)^3)/2", "qen": "Qentem"}'
+
+tempale = """
+<loop set="numbers" value="this_number">
+<if case="(this_number % 2) == 1">this_number is an odd number.</if></loop>
+
+{v:eq} = {math: {v:eq}}
+
+(0.1 + 0.2) is {math:   0.1   +   0.2  }
+
+{iif case="{v:qen} = Qentem" true="{v:qen}"} Engine
+
+{iif case="{v:numbers[0]} = v:numbers[4]" false="it's not {v:numbers[4]}!"}"""
+
+print(q_render(tempale, json_text, False))
+# Note: "False" means JSON without comments.
+```
+
+#### HTML, JavaScript and WebAssembly
+[JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/releases/download/v1.4.3/JQen.zip)
+
+##### Note:
+JQen requires web server to run; local or remote.
 
 ## Compiling:
 

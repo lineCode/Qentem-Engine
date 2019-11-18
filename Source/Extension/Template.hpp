@@ -382,6 +382,7 @@ static Expressions const &getExpres() noexcept {
         // To not match anything inside inner if until it's needed.
         static Expression tag_empty_if_end;
         tag_empty_if_end.SetKeyword(L"</if>");
+        tag_empty_if_end.Flag = Flags::IGNORE;
 
         static Expression tag_empty_if;
         tag_empty_if.SetKeyword(L"<if");
@@ -393,11 +394,16 @@ static Expressions const &getExpres() noexcept {
 
         // <if case="{case}">html code</if>
         static Expression tag_if_end;
-        tag_if_end.SetKeyword(L"</if>");
+        // tag_if_end.SetKeyword(L"</if>");
+        tag_if_end.Keyword = tag_empty_if_end.Keyword;
+        tag_if_end.Length  = tag_empty_if_end.Length;
         tag_if_end.ParseCB = &(Template::RenderIF);
 
         static Expression tag_if;
-        tag_if.SetKeyword(L"<if");
+        // tag_if.SetKeyword(L"<if");
+        tag_if.Keyword = tag_empty_if.Keyword;
+        tag_if.Length  = tag_empty_if.Length;
+
         tag_if.Connected = &tag_if_end;
 
         tag_if_end.NestExpres.Add(&tag_empty_if).Add(&tag_else_if);

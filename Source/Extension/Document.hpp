@@ -193,7 +193,7 @@ struct Document {
         LastKeyLen = 0;
     }
 
-    static void Drop(Entry &entry, Document const &storage) noexcept {
+    static void Delete(Entry &entry, Document const &storage) noexcept {
         entry.Type = VType::UndefinedT;
 
         if (!storage.Ordered) {
@@ -215,12 +215,18 @@ struct Document {
         }
     }
 
-    void Drop(wchar_t const *key) noexcept {
+    void Delete(UNumber const id) noexcept {
+        if (id < Entries.Size) {
+            Delete(Entries[id], *this);
+        }
+    }
+
+    void Delete(wchar_t const *key) noexcept {
         Entry *         entry;
         Document const *storage = GetSource(&entry, key, 0, String::Count(key));
 
         if (storage != nullptr) {
-            Drop(*entry, *storage);
+            Delete(*entry, *storage);
         }
     }
 

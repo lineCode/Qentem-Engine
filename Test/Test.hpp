@@ -140,12 +140,12 @@ static Array<TestBit> GetALEBits() noexcept {
     bit.Expected.Add(L"0").Add(L"1").Add(L"20").Add(L"0").Add(L"1");
 
     ////
-    bit.Content.Add(L"2*1+1*2").Add(L"1+1*2");
-    bit.Expected.Add(L"4").Add(L"3");
+    bit.Content.Add(L"2*1+1*2").Add(L"1+1*2").Add(L"5^5");
+    bit.Expected.Add(L"4").Add(L"3").Add(L"3125");
 
     ////
-    bit.Content.Add(L"4^0").Add(L"4^2").Add(L"8^2").Add(L"8^1");
-    bit.Expected.Add(L"1").Add(L"16").Add(L"64").Add(L"8");
+    bit.Content.Add(L"4^0").Add(L"8^(-2)").Add(L"8^2").Add(L"8^1");
+    bit.Expected.Add(L"1").Add(L"0.016").Add(L"64").Add(L"8");
 
     ////
     bit.Content.Add(L"2=2").Add(L"2==2").Add(L"1=2").Add(L"2==1").Add(L"2==1+1").Add(L"2/2==1");
