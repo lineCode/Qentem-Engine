@@ -113,7 +113,8 @@ q_render.argtypes = [c_wchar_p, c_wchar_p, c_bool]
 
 json_text = '{"numbers":[1,2,3,4,5,6,7,8], "eq": "((1+2)^3)/2", "qen": "Qentem"}'
 
-tempale = """
+tempale =
+"""
 <loop set="numbers" value="this_number">
 <if case="(this_number % 2) == 1">this_number is an odd number.</if></loop>
 
@@ -123,14 +124,15 @@ tempale = """
 
 {iif case="{v:qen} = Qentem" true="{v:qen}"} Engine
 
-{iif case="{v:numbers[0]} = v:numbers[4]" false="it's not {v:numbers[4]}!"}"""
+{iif case="{v:numbers[0]} = v:numbers[4]" false="it's not {v:numbers[4]}!"}
+"""
 
 print(q_render(tempale, json_text, False))
 # Note: "False" means JSON without comments.
 ```
 
 #### HTML, JavaScript and WebAssembly
-[JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/releases/download/v1.4.3/JQen.zip)
+[JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/releases/download/v1.4.5/JQen.zip)
 
 ##### Note:
 JQen requires web server to run; local or remote.

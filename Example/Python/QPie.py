@@ -17,7 +17,8 @@ tempale = """
 
 {iif case="{v:qen} = Qentem" true="{v:qen}"} Engine
 
-{iif case="{v:numbers[0]} = v:numbers[4]" false="it's not {v:numbers[4]}!"}"""
+{iif case="{v:numbers[0]} = v:numbers[4]" false="it's not {v:numbers[4]}!"}
+"""
 
 print(q_render(tempale, json_text, False))
 # Note: "False" means JSON without comments.
