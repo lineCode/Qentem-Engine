@@ -16,51 +16,36 @@
 namespace Qentem {
 
 struct String {
-    UNumber  Length{0};
-    wchar_t *Str{nullptr}; // NULL terminated wchar_t
-    UNumber  Capacity{0};
+    UNumber Length{0};
+    char *  Str{nullptr}; // NULL terminated char
+    UNumber Capacity{0};
 
     explicit String() = default;
 
-    explicit String(UNumber const capacity) noexcept : Capacity(capacity) {
-        Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
+    explicit String(const UNumber capacity) noexcept : Capacity(capacity) {
+        Memory::Allocate<char>(&Str, (Capacity + 1));
     }
 
-    explicit String(wchar_t const *str, UNumber const capacity) noexcept : Capacity(capacity) {
-        Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
+    explicit String(const char *str, const UNumber capacity) noexcept : Capacity(capacity) {
+        Memory::Allocate<char>(&Str, (Capacity + 1));
 
         while (Length < Capacity) {
             Str[Length] = str[Length];
             ++Length;
         }
 
-        Str[Length] = L'\0';
+        Str[Length] = '\0';
     }
 
-    String(char const *str) noexcept {
-        while (str[Capacity] != '\0') {
-            ++Capacity;
-        };
-
-        Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
-
-        while (Length < Capacity) {
-            Str[Length] = static_cast<wchar_t>(str[Length]);
-            ++Length;
-        }
-
-        Str[Length] = L'\0';
-    }
-
-    String(wchar_t const *str) noexcept : Capacity(Count(str)) {
-        Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
+    String(const char *str) noexcept : Capacity(Count(str)) {
+        Memory::Allocate<char>(&Str, (Capacity + 1));
 
         while (Length < Capacity) {
             Str[Length] = str[Length];
             ++Length;
         }
 
-        Str[Length] = L'\0';
+        Str[Length] = '\0';
     }
 
     String(String &&src) noexcept : Length(src.Length), Str(src.Str), Capacity(src.Capacity) { // Move
@@ -69,26 +54,26 @@ struct String {
         src.Capacity = 0;
     }
 
-    explicit String(String const &src) noexcept : Capacity(src.Length) { // Copy
+    explicit String(const String &src) noexcept : Capacity(src.Length) { // Copy
         if (Capacity != 0) {
-            Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
+            Memory::Allocate<char>(&Str, (Capacity + 1));
 
             for (; Length < Capacity;) {
                 Str[Length] = src[Length];
                 ++Length;
             }
 
-            Str[Length] = L'\0';
+            Str[Length] = '\0';
         }
     }
 
     ~String() noexcept {
-        Memory::Deallocate<wchar_t>(&Str);
+        Memory::Deallocate<char>(&Str);
     }
 
-    static UNumber Count(wchar_t const *str) noexcept {
+    static UNumber Count(const char *str) noexcept {
         UNumber length = 0;
-        while (str[length] != L'\0') {
+        while (str[length] != '\0') {
             ++length;
         };
 
@@ -96,37 +81,37 @@ struct String {
     }
 
     void Reset() noexcept {
-        Memory::Deallocate<wchar_t>(&Str);
+        Memory::Deallocate<char>(&Str);
 
         Length   = 0;
         Capacity = 0;
     }
 
-    wchar_t *Eject() noexcept {
-        wchar_t *str = Str;
-        Str          = nullptr;
-        Length       = 0;
-        Capacity     = 0;
+    char *Eject() noexcept {
+        char *str = Str;
+        Str       = nullptr;
+        Length    = 0;
+        Capacity  = 0;
 
         return str;
     }
 
-    String &operator=(wchar_t const *str) noexcept { // Copy
+    String &operator=(const char *str) noexcept { // Copy
         if (Str != nullptr) {
-            Memory::Deallocate<wchar_t>(&Str);
+            Memory::Deallocate<char>(&Str);
             Length = 0;
         }
 
         Capacity = Count(str);
 
-        Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
+        Memory::Allocate<char>(&Str, (Capacity + 1));
 
         for (; Length < Capacity;) {
             Str[Length] = str[Length];
             ++Length;
         }
 
-        Str[Length] = L'\0';
+        Str[Length] = '\0';
 
         return *this;
     }
@@ -134,7 +119,7 @@ struct String {
     String &operator=(String &&src) noexcept { // Move
         if (this != &src) {
             if (Str != nullptr) {
-                Memory::Deallocate<wchar_t>(&Str);
+                Memory::Deallocate<char>(&Str);
             }
 
             Length       = src.Length;
@@ -148,29 +133,29 @@ struct String {
         return *this;
     }
 
-    String &operator=(String const &src) noexcept { // Copy
+    String &operator=(const String &src) noexcept { // Copy
         if (this != &src) {
             if (Str != nullptr) {
-                Memory::Deallocate<wchar_t>(&Str);
+                Memory::Deallocate<char>(&Str);
                 Length = 0;
             }
 
             Capacity = src.Length;
 
-            Memory::Allocate<wchar_t>(&Str, (Capacity + 1));
+            Memory::Allocate<char>(&Str, (Capacity + 1));
 
             for (; Length < Capacity;) {
                 Str[Length] = src[Length];
                 ++Length;
             }
 
-            Str[Length] = L'\0';
+            Str[Length] = '\0';
         }
 
         return *this;
     }
 
-    String &operator+=(wchar_t const *str) noexcept { // Appand a string
+    String &operator+=(const char *str) noexcept { // Appand a string
         Copy(*this, str, this->Length, Count(str));
 
         return *this;
@@ -180,7 +165,7 @@ struct String {
         if (src.Length != 0) {
             Copy(*this, src.Str, Length, src.Length);
 
-            Memory::Deallocate<wchar_t>(&src.Str);
+            Memory::Deallocate<char>(&src.Str);
 
             src.Length   = 0;
             src.Str      = nullptr;
@@ -190,7 +175,7 @@ struct String {
         return *this;
     }
 
-    String &operator+=(String const &src) noexcept { // Appand a string
+    String &operator+=(const String &src) noexcept { // Appand a string
         if (src.Length != 0) {
             Copy(*this, src.Str, Length, src.Length);
         }
@@ -198,8 +183,8 @@ struct String {
         return *this;
     }
 
-    String operator+(wchar_t const *str) const noexcept {
-        UNumber const length = Count(str);
+    String operator+(const char *str) const noexcept {
+        const UNumber length = Count(str);
 
         String ns(Length + length);
 
@@ -219,13 +204,13 @@ struct String {
             src.Length = 0;
         }
 
-        Memory::Deallocate<wchar_t>(&src.Str);
+        Memory::Deallocate<char>(&src.Str);
         src.Capacity = 0;
 
         return ns;
     }
 
-    String operator+(String const &src) const noexcept { // Appand a string and return a new one
+    String operator+(const String &src) const noexcept { // Appand a string and return a new one
         String ns(Length + src.Length);
 
         Copy(ns, Str, 0, Length);
@@ -237,8 +222,8 @@ struct String {
         return ns;
     }
 
-    bool operator==(wchar_t const *str) const noexcept { // Compare
-        UNumber const length = Count(str);
+    bool operator==(const char *str) const noexcept { // Compare
+        const UNumber length = Count(str);
 
         if (Length != length) {
             return false;
@@ -252,11 +237,11 @@ struct String {
         return (i == Length);
     }
 
-    inline bool operator!=(wchar_t const *string) const noexcept { // Compare
+    inline bool operator!=(const char *string) const noexcept { // Compare
         return (!(*this == string));
     }
 
-    bool operator==(String const &string) const noexcept { // Compare
+    bool operator==(const String &string) const noexcept { // Compare
         if (Length != string.Length) {
             return false;
         }
@@ -269,17 +254,17 @@ struct String {
         return (i == Length);
     }
 
-    inline bool operator!=(String const &string) const noexcept { // Compare
+    inline bool operator!=(const String &string) const noexcept { // Compare
         return (!(*this == string));
     }
 
-    inline wchar_t &operator[](UNumber const index) const noexcept {
+    inline char &operator[](const UNumber index) const noexcept {
         return Str[index];
     }
 
-    static bool Compare(wchar_t const *left, wchar_t const *right) noexcept { // Compare
-        UNumber const l_length = Count(left);
-        UNumber const r_length = Count(right);
+    static bool Compare(const char *left, const char *right) noexcept { // Compare
+        const UNumber l_length = Count(left);
+        const UNumber r_length = Count(right);
 
         if (r_length != l_length) {
             return false;
@@ -293,8 +278,8 @@ struct String {
         return (i == r_length);
     }
 
-    static bool Compare(wchar_t const *src_text, UNumber src_index, UNumber const src_length, wchar_t const *des_text, UNumber des_index,
-                        UNumber const des_length) noexcept {
+    static bool Compare(const char *src_text, UNumber src_index, const UNumber src_length, const char *des_text, UNumber des_index,
+                        const UNumber des_length) noexcept {
         if (src_length != des_length) {
             return false;
         }
@@ -307,7 +292,7 @@ struct String {
         return (i == src_length);
     }
 
-    bool Compare(String const &text, UNumber index, UNumber const length) const noexcept {
+    bool Compare(const String &text, UNumber index, const UNumber length) const noexcept {
         if (Length != length) {
             return false;
         }
@@ -321,24 +306,24 @@ struct String {
         return (i == Length);
     }
 
-    static void Copy(String &des, wchar_t const *src_p, UNumber start_at, UNumber const ln) noexcept {
+    static void Copy(String &des, const char *src_p, UNumber start_at, const UNumber ln) noexcept {
         UNumber i = 0;
 
-        UNumber const newlen = (ln + des.Length);
+        const UNumber newlen = (ln + des.Length);
 
         if ((des.Capacity < newlen) || (des.Capacity == 0)) {
             // Copy any existing characters
             des.Capacity = newlen;
 
-            wchar_t *tmp = des.Str;
-            Memory::Allocate<wchar_t>(&des.Str, (des.Capacity + 1));
+            char *tmp = des.Str;
+            Memory::Allocate<char>(&des.Str, (des.Capacity + 1));
 
             while (i < des.Length) {
                 des[i] = tmp[i];
                 ++i;
             }
 
-            Memory::Deallocate<wchar_t>(&tmp);
+            Memory::Deallocate<char>(&tmp);
         }
 
         // Add the new characters
@@ -346,36 +331,36 @@ struct String {
             des[start_at++] = src_p[i];
         }
 
-        des[start_at] = L'\0'; // Null ending.
+        des[start_at] = '\0'; // Null ending.
         des.Length    = newlen;
     }
 
-    void SetLength(UNumber const size) noexcept {
+    void SetLength(const UNumber size) noexcept {
         Capacity = size;
 
         if (Length != 0) {
             Length = 0;
-            Memory::Deallocate<wchar_t>(&Str);
+            Memory::Deallocate<char>(&Str);
         }
 
-        Memory::Allocate<wchar_t>(&Str, (size + 1));
+        Memory::Allocate<char>(&Str, (size + 1));
 
-        Str[0] = L'\0';
+        Str[0] = '\0';
     }
 
-    static String Part(wchar_t const *str, UNumber offset, UNumber const limit) noexcept {
+    static String Part(const char *str, UNumber offset, const UNumber limit) noexcept {
         String s_part(limit);
 
         while (s_part.Length != limit) {
             s_part[s_part.Length++] = str[offset++];
         }
 
-        s_part[s_part.Length] = L'\0'; // To mark the end of a string.
+        s_part[s_part.Length] = '\0'; // To mark the end of a string.
 
         return s_part;
     }
 
-    static UNumber Hash(wchar_t const *str, UNumber offset, UNumber limit) noexcept {
+    static UNumber Hash(const char *str, UNumber offset, UNumber limit) noexcept {
         UNumber hash = 0;
         UNumber base = 1;
 
@@ -388,21 +373,21 @@ struct String {
         return hash;
     }
 
-    static void SoftTrim(wchar_t const *str, UNumber &offset, UNumber &limit) noexcept {
+    static void SoftTrim(const char *str, UNumber &offset, UNumber &limit) noexcept {
         UNumber end = limit + offset;
 
-        while ((str[offset] == L' ') || (str[offset] == L'\n') || (str[offset] == L'\t') || (str[offset] == L'\r')) {
+        while ((str[offset] == ' ') || (str[offset] == '\n') || (str[offset] == '\t') || (str[offset] == '\r')) {
             ++offset;
         }
 
-        while ((--end > offset) && ((str[end] == L' ') || (str[end] == L'\n') || (str[end] == L'\t') || (str[end] == L'\r'))) {
+        while ((--end > offset) && ((str[end] == ' ') || (str[end] == '\n') || (str[end] == '\t') || (str[end] == '\r'))) {
         }
         ++end;
 
         limit = end - offset;
     }
 
-    static String Trim(String const &str) noexcept {
+    static String Trim(const String &str) noexcept {
         UNumber limit  = str.Length;
         UNumber offset = 0;
 
@@ -412,34 +397,34 @@ struct String {
     }
 
     static String FromNumber(unsigned long number, UShort min = 1) noexcept {
-        static UShort constexpr num_len = 20;
+        static constexpr UShort num_len = 20;
 
-        UShort  len = num_len;
-        wchar_t str[num_len];
+        UShort len = num_len;
+        char   str[num_len];
 
         while (number != 0) {
-            str[--len] = wchar_t((number % 10) + 48);
+            str[--len] = char((number % 10) + 48);
             number /= 10;
         }
 
         min = static_cast<UShort>(num_len - min);
 
         while (len > min) {
-            str[--len] = L'0';
+            str[--len] = '0';
         }
 
         return String(&(str[len]), static_cast<UNumber>(num_len - len));
     }
 
     static String FromNumber(double number, UShort min = 1, UShort r_min = 0, UShort r_max = 0) noexcept {
-        static UNumber constexpr num_len = 22;
+        static constexpr UNumber num_len = 22;
 
         UShort len    = num_len;
         UShort p1_len = 0;
 
-        wchar_t str[num_len];
+        char str[num_len];
 
-        bool const negative = (number < 0.0);
+        const bool negative = (number < 0.0);
 
         if (negative) {
             number *= -1;
@@ -488,25 +473,25 @@ struct String {
                     }
 
                     while (r_min > presision) {
-                        str[--len] = L'0';
+                        str[--len] = '0';
                         --r_min;
                     }
                     r_min = 0;
 
                     while (presision != 0) {
-                        str[--len] = wchar_t((right % 10) + 48);
+                        str[--len] = char((right % 10) + 48);
                         right /= 10;
                         --presision;
                     }
 
                     if (len != num_len) {
-                        str[--len] = L'.';
+                        str[--len] = '.';
                     }
                 }
             }
 
             while (left != 0) {
-                str[--len] = wchar_t((left % 10) + 48);
+                str[--len] = char((left % 10) + 48);
                 left /= 10;
                 ++p1_len;
             }
@@ -514,61 +499,61 @@ struct String {
 
         if (r_min != 0) {
             do {
-                str[--len] = L'0';
+                str[--len] = '0';
             } while (--r_min != 0);
 
-            str[--len] = L'.';
+            str[--len] = '.';
         }
 
         while (p1_len < min) {
-            str[--len] = L'0';
+            str[--len] = '0';
             ++p1_len;
         }
 
         if (negative) {
-            str[--len] = L'-';
+            str[--len] = '-';
         }
 
         return String(&(str[len]), (num_len - len));
     }
 
-    inline static String FromNumber(UShort number, UShort const min = 1) noexcept {
+    inline static String FromNumber(UShort number, const UShort min = 1) noexcept {
         return FromNumber(static_cast<unsigned long>(number), min);
     }
 
-    inline static String FromNumber(unsigned int number, UShort const min = 1) noexcept {
+    inline static String FromNumber(unsigned int number, const UShort min = 1) noexcept {
         return FromNumber(static_cast<unsigned long>(number), min);
     }
 
-    inline static String FromNumber(int number, UShort const min = 1) noexcept {
+    inline static String FromNumber(int number, const UShort min = 1) noexcept {
         return FromNumber(static_cast<double>(number), min, 0, 0);
     }
 
-    inline static String FromNumber(long number, UShort const min = 1) noexcept {
+    inline static String FromNumber(long number, const UShort min = 1) noexcept {
         return FromNumber(static_cast<double>(number), min, 0, 0);
     }
 
-    static bool ToNumber(UNumber &number, wchar_t const *str, UNumber const offset, UNumber limit) noexcept {
+    static bool ToNumber(UNumber &number, const char *str, const UNumber offset, UNumber limit) noexcept {
         limit += offset;
         number = 0;
 
         UNumber exp     = 0;
         UNumber postion = 1;
-        wchar_t c;
+        char    c;
 
         while (limit != offset) {
             c = str[--limit];
 
             if ((c <= 47) || (c >= 58)) {
                 switch (c) {
-                    case L'e':
-                    case L'E': {
+                    case 'e':
+                    case 'E': {
                         exp     = number;
                         number  = 0;
                         postion = 1;
                         break;
                     }
-                    case L'+':
+                    case '+':
                         break;
                     default:
                         number = 0.0;
@@ -588,35 +573,35 @@ struct String {
         return (postion > 1);
     }
 
-    static bool ToNumber(double &number, wchar_t const *str, UNumber const offset, UNumber limit) noexcept {
+    static bool ToNumber(double &number, const char *str, const UNumber offset, UNumber limit) noexcept {
         number = 0.0;
         limit += offset;
 
         bool    negative_exp = false;
         UNumber exp          = 0;
         double  postion      = 1.0;
-        wchar_t c;
+        char    c;
 
         while (limit != offset) {
             c = str[--limit];
 
             if ((c <= 47) || (c >= 58)) {
                 switch (c) {
-                    case L'.': {
+                    case '.': {
                         number /= postion;
                         postion = 1.0;
                         break;
                     }
-                    case L'e':
-                    case L'E': {
+                    case 'e':
+                    case 'E': {
                         exp     = static_cast<UNumber>(number);
                         number  = 0.0;
                         postion = 1.0;
                         break;
                     }
-                    case L'+':
+                    case '+':
                         break;
-                    case L'-': {
+                    case '-': {
                         if (limit != offset) {
                             negative_exp = true;
                         } else {

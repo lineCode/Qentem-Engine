@@ -18,25 +18,25 @@ namespace Qentem {
 
 struct StringStream {
     struct StringBit {
-        UNumber        Length;
-        wchar_t const *Str;
-        wchar_t *      Collect;
+        UNumber     Length;
+        const char *Str;
+        char *      Collect;
     };
 
     Array<StringBit> Bits;
     UNumber          Length = 0;
 
-    void Add(wchar_t const *str, UNumber const length) noexcept {
+    void Add(const char *str, const UNumber length) noexcept {
         Length += length;
         Bits += {length, str, nullptr};
     }
 
-    void Add(wchar_t *str, UNumber const length) noexcept {
+    void Add(char *str, const UNumber length) noexcept {
         Length += length;
         Bits += {length, str, str};
     }
 
-    void operator+=(wchar_t const *str) noexcept {
+    void operator+=(const char *str) noexcept {
         if (str != nullptr) {
             UNumber length = String::Count(str);
             Length += length;
@@ -52,14 +52,14 @@ struct StringStream {
         }
     }
 
-    void operator+=(String const &src) noexcept {
+    void operator+=(const String &src) noexcept {
         if (src.Length != 0) {
             Length += src.Length;
             Bits += {src.Length, src.Str, nullptr};
         }
     }
 
-    String Eject() noexcept {
+    String ToString() noexcept {
         String tmp(Length);
         Length = 0;
 
@@ -74,11 +74,11 @@ struct StringStream {
             }
 
             if (bit->Collect != nullptr) {
-                Memory::Deallocate<wchar_t>(&(bit->Collect));
+                Memory::Deallocate<char>(&(bit->Collect));
             }
         }
 
-        tmp[tmp.Length] = L'\0';
+        tmp[tmp.Length] = '\0';
 
         Bits.Reset();
 

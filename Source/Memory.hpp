@@ -17,7 +17,7 @@ namespace Qentem {
 namespace Memory {
 
 template <typename Type>
-static inline void Allocate(Type **pinter, UNumber const size) noexcept {
+static inline void Allocate(Type **pinter, const UNumber size) noexcept {
     *pinter = new Type[size];
 }
 

@@ -1,11 +1,9 @@
-from ctypes import c_wchar_p, CDLL, c_bool
+from ctypes import CDLL, c_char_p, c_bool
 
-q_render = CDLL("./Build/QLib.so").qentem_render_template_w
-# Use QLib.dll for Windows.
-q_render.restype = c_wchar_p
-q_render.argtypes = [c_wchar_p, c_wchar_p, c_bool]
-
-json_text = '{"numbers":[1,2,3,4,5,6,7,8], "eq": "((1+2)^3)/2", "qen": "Qentem"}'
+q_render = CDLL("./Build/QLib.so").qentem_render_template
+# Use QLib.dll on Windows.
+q_render.restype = c_char_p
+q_render.argtypes = [c_char_p, c_char_p, c_bool]
 
 tempale = """
 <loop set="numbers" value="this_number">
@@ -20,5 +18,8 @@ tempale = """
 {iif case="{v:numbers[0]} = v:numbers[4]" false="it's not {v:numbers[4]}!"}
 """
 
-print(q_render(tempale, json_text, False))
+json_text = '{"numbers":[1,2,3,4,5,6,7,8], "eq": "((1+2)^3)/2", "qen": "Qentem"}'
+
+print(q_render(tempale.encode('UTF-8'),
+               json_text.encode('UTF-8'), False).decode(encoding='UTF-8'))
 # Note: "False" means JSON without comments.

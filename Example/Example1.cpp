@@ -7,33 +7,33 @@ using Qentem::Document;
 using Qentem::String;
 
 int main() {
-    Document numbers = L"[null,1,2,3,4]"; // New document from JSON text
+    Document numbers = "[null,1,2,3,4]"; // New document from JSON text
 
-    numbers += Document::FromJSON(L"[5,6]");  // Extanding JSON
+    numbers += Document::FromJSON("[5,6]");   // Extanding JSON
     numbers += Array<double>().Add(7).Add(8); // Extanding win ordered array
 
-    Document doc;              // New document
-    doc[L"numbers"] = numbers; // assigning ordered numbers
-    doc[L"numbers"] += 9;      // Add
-    doc[L"numbers"][0] = 0;    // Override
+    Document doc;             // New document
+    doc["numbers"] = numbers; // assigning ordered numbers
+    doc["numbers"] += 9;      // Add
+    doc["numbers"][0] = 0;    // Override
 
-    doc += Document::FromJSON(L"{\"strings\": { }}"); // Expanding document with unordered array
+    doc += Document::FromJSON("{\"strings\": { }}"); // Expanding document with unordered array
 
-    doc[L"strings"][L"a"] = nullptr; // null
-    doc[L"strings"][L"a"] = L"A";    // Override
-    doc[L"strings"][L"b"] = true;    // Add & Set
-    doc[L"strings"][L"b"] = false;   // Override
-    doc[L"strings"][1]    = L"B";    // Override
+    doc["strings"]["a"] = nullptr; // null
+    doc["strings"]["a"] = "A";     // Override
+    doc["strings"]["b"] = true;    // Add & Set
+    doc["strings"]["b"] = false;   // Override
+    doc["strings"][1]   = "B";     // Override
 
     // Importing JSON with comments
-    doc[L"strings"] += Document::FromJSON(L"{\"c\": \"C\", \"d\": \"D\"  /* \"e\": \"E\" */}", true);
+    doc["strings"] += Document::FromJSON("{\"c\": \"C\", \"d\": \"D\"  /* \"e\": \"E\" */}", true);
 
-    doc += Document::FromJSON(L"{\"strings2\": [\"E\", \"F\"]}"); // Ordered strings
-    doc[L"strings2"] += L"G";
-    doc[L"strings2"] += Array<String>().Add(L"H").Add(L"I");
+    doc += Document::FromJSON("{\"strings2\": [\"E\", \"F\"]}"); // Ordered strings
+    doc["strings2"] += "G";
+    doc["strings2"] += Array<String>().Add("H").Add("I");
 
     String JSON = doc.ToJSON(); // Exporting document
-    std::wcout << L"JSON:\n" << JSON.Str << L"\n\n";
+    std::cout << "JSON:\n" << JSON.Str << "\n\n";
 
     // Output should be something like:
     // {
@@ -43,9 +43,9 @@ int main() {
     // }
 
     // Template
-    String content = L"<loop set=\"strings\" value=\"s_value\" key=\"s_key\">s_key: s_value\n</loop>--\n";
-    content += L"<loop set=\"strings2\" value=\"s_value\" key=\"s_key\">s_key: s_value\n</loop>";
+    String content = "<loop set=\"strings\" value=\"s_value\" key=\"s_key\">s_key: s_value\n</loop>--\n";
+    content += "<loop set=\"strings2\" value=\"s_value\" key=\"s_key\">s_key: s_value\n</loop>";
     String rendered = Qentem::Template::Render(content, &doc);
 
-    std::wcout << L"Template:\n" << rendered.Str << L'\n';
+    std::cout << "Template:\n" << rendered.Str << '\n';
 }

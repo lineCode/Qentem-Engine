@@ -39,16 +39,16 @@ struct Entry {
 };
 
 struct {
-    wchar_t const *fss1   = L"{";
-    wchar_t const *fss2   = L"}";
-    wchar_t const *fss3   = L",";
-    wchar_t const *fss4   = L"[";
-    wchar_t const *fss5   = L"]";
-    wchar_t const *fss6   = L"\"";
-    wchar_t const *fsc1   = L":";
-    wchar_t const *fNull  = L"null";
-    wchar_t const *fTrue  = L"true";
-    wchar_t const *fFalse = L"false";
+    const char *fss1   = "{";
+    const char *fss2   = "}";
+    const char *fss3   = ",";
+    const char *fss4   = "[";
+    const char *fss5   = "]";
+    const char *fss6   = "\"";
+    const char *fsc1   = ":";
+    const char *fNull  = "null";
+    const char *fTrue  = "true";
+    const char *fFalse = "false";
 } static JFX;
 
 struct Document {
@@ -63,17 +63,17 @@ struct Document {
     Array<String>   Strings;
     Array<Document> Documents;
 
-    UNumber        LastKeyLen{0};
-    wchar_t const *LastKey{nullptr};
+    UNumber     LastKeyLen{0};
+    const char *LastKey{nullptr};
 
-    static wchar_t constexpr const *char_list = L"{[]}\\\\\"";
+    static constexpr const char *char_list = "{[]}\\\\\"";
 
     Document()                    = default;
     virtual ~Document()           = default;
     Document(Document &&doc)      = default;
-    Document(Document const &doc) = default;
+    Document(const Document &doc) = default;
 
-    Document(Array<double> const &numbers) noexcept {
+    Document(const Array<double> &numbers) noexcept {
         Numbers = numbers;
         Entries.SetCapacity(numbers.Size);
 
@@ -84,7 +84,7 @@ struct Document {
         Ordered = true;
     }
 
-    Document(Array<String> const &strings) noexcept {
+    Document(const Array<String> &strings) noexcept {
         Strings = strings;
         Entries.SetCapacity(strings.Size);
 
@@ -95,7 +95,7 @@ struct Document {
         Ordered = true;
     }
 
-    Document(Array<Document> const &documents) noexcept {
+    Document(const Array<Document> &documents) noexcept {
         Documents = documents;
         Entries.SetCapacity(documents.Size);
 
@@ -139,9 +139,9 @@ struct Document {
         Ordered = true;
     }
 
-    Document(wchar_t const *value) noexcept {
+    Document(const char *value) noexcept {
         if (value != nullptr) {
-            Array<MatchBit> const items(Engine::Match(getJsonExpres(), value, 0, String::Count(value)));
+            const Array<MatchBit> items(Engine::Match(getJsonExpres(), value, 0, String::Count(value)));
 
             if (items.Size != 0) {
                 *this = makeList(items[0].NestMatch, value, items[0].Offset, items[0].Length);
@@ -157,8 +157,8 @@ struct Document {
         }
     }
 
-    Document(String const &value) noexcept {
-        Array<MatchBit> const items(Engine::Match(getJsonExpres(), value.Str, 0, value.Length));
+    Document(const String &value) noexcept {
+        const Array<MatchBit> items(Engine::Match(getJsonExpres(), value.Str, 0, value.Length));
 
         if (items.Size != 0) {
             *this = makeList(items[0].NestMatch, value.Str, items[0].Offset, items[0].Length);
@@ -170,7 +170,7 @@ struct Document {
     }
 
     Document(String &&value) noexcept {
-        Array<MatchBit> const items(Engine::Match(getJsonExpres(), value.Str, 0, value.Length));
+        const Array<MatchBit> items(Engine::Match(getJsonExpres(), value.Str, 0, value.Length));
 
         if (items.Size != 0) {
             *this = makeList(items[0].NestMatch, value.Str, items[0].Offset, items[0].Length);
@@ -193,7 +193,7 @@ struct Document {
         LastKeyLen = 0;
     }
 
-    static void Delete(Entry &entry, Document const &storage) noexcept {
+    static void Delete(Entry &entry, const Document &storage) noexcept {
         entry.Type = VType::UndefinedT;
 
         if (!storage.Ordered) {
@@ -215,23 +215,23 @@ struct Document {
         }
     }
 
-    void Delete(UNumber const id) noexcept {
+    void Delete(const UNumber id) noexcept {
         if (id < Entries.Size) {
             Delete(Entries[id], *this);
         }
     }
 
-    void Delete(wchar_t const *key) noexcept {
+    void Delete(const char *key) noexcept {
         Entry *         entry;
-        Document const *storage = GetSource(&entry, key, 0, String::Count(key));
+        const Document *storage = GetSource(&entry, key, 0, String::Count(key));
 
         if (storage != nullptr) {
             Delete(*entry, *storage);
         }
     }
 
-    static void InsertIndex(Index const &index, UNumber const hashBase, UNumber const level, Array<Index> &table) noexcept {
-        UNumber const id = ((index.Hash + level) % hashBase);
+    static void InsertIndex(const Index &index, const UNumber hashBase, const UNumber level, Array<Index> &table) noexcept {
+        const UNumber id = ((index.Hash + level) % hashBase);
 
         if (table.Capacity <= id) {
             table.Resize(id + 1);
@@ -246,8 +246,8 @@ struct Document {
         InsertIndex(index, hashBase, (level + id + 2), table[id].Table);
     }
 
-    Entry *Exist(UNumber hash, UNumber const level, Array<Index> const &table) const noexcept {
-        UNumber const id = ((hash + level) % HashBase);
+    Entry *Exist(UNumber hash, const UNumber level, const Array<Index> &table) const noexcept {
+        const UNumber id = ((hash + level) % HashBase);
 
         if ((table.Size > id) && (table[id].Hash != 0)) {
             if (table[id].Hash == hash) {
@@ -260,14 +260,14 @@ struct Document {
         return nullptr;
     }
 
-    void Rehash(UNumber const newBase, bool const children = false) noexcept {
+    void Rehash(const UNumber newBase, const bool children = false) noexcept {
         if (!Ordered) {
             Table.Reset();
             HashBase = newBase;
 
             Index         index;
-            String const *key;
-            Entry const * entry;
+            const String *key;
+            const Entry * entry;
 
             for (UNumber i = 0; i < Entries.Size; i++) {
                 entry = &(Entries[i]);
@@ -287,7 +287,7 @@ struct Document {
         }
     }
 
-    void Insert(UNumber entryID, VType const type, void *ptr, bool const move) noexcept {
+    void Insert(UNumber entryID, const VType type, void *ptr, const bool move) noexcept {
         if (entryID >= Entries.Size) {
             // Filling the gap with the same value.
 
@@ -377,15 +377,15 @@ struct Document {
         }
     }
 
-    void InsertHash(UNumber id, wchar_t const *key, UNumber const offset, UNumber const limit, VType const type) noexcept {
+    void InsertHash(UNumber id, const char *key, const UNumber offset, const UNumber limit, const VType type) noexcept {
         InsertIndex({String::Hash(key, offset, limit), Entries.Size}, HashBase, 0, Table);
         Entries += Entry({type, Keys.Size, id});
         Keys += String::Part(key, offset, limit);
     }
 
-    UNumber Insert(wchar_t const *key, UNumber const offset, UNumber const limit, VType const type, void *ptr, bool const move) noexcept {
+    UNumber Insert(const char *key, const UNumber offset, const UNumber limit, const VType type, void *ptr, const bool move) noexcept {
         UNumber       id    = 0;
-        UNumber const hash  = String::Hash(key, offset, limit);
+        const UNumber hash  = String::Hash(key, offset, limit);
         Entry *       entry = Exist(hash, 0, Table);
 
         if ((entry == nullptr) || (entry->Type != type)) {
@@ -475,7 +475,7 @@ struct Document {
         return id;
     }
 
-    static Document makeList(Array<MatchBit> &items, wchar_t const *content, UNumber const offset, UNumber const length) noexcept {
+    static Document makeList(Array<MatchBit> &items, const char *content, const UNumber offset, const UNumber length) noexcept {
         Document  document;
         MatchBit *item;
         UNumber   x;
@@ -483,37 +483,37 @@ struct Document {
         bool          done           = false;
         UNumber       item_id        = 0;
         UNumber       current_offset = (offset + 1);
-        UNumber const end            = (length + offset);
+        const UNumber end            = (length + offset);
 
-        if (content[offset] == L'{') {
+        if (content[offset] == '{') {
             while (item_id < items.Size) {
                 item = &(items[item_id++]);
                 x    = (item->Offset + item->Length);
 
                 for (; x < end; x++) {
-                    while (content[x] == L' ') {
+                    while (content[x] == ' ') {
                         ++x;
                     }
 
                     switch (content[x]) {
-                        case L',':
-                        case L'}': {
+                        case ',':
+                        case '}': {
                             // A true, false, null or number value.
                             UNumber limit = x - current_offset;
                             String::SoftTrim(content, current_offset, limit);
 
                             switch (content[current_offset]) {
-                                case L'f': {
+                                case 'f': {
                                     // False
                                     document.InsertHash(0, content, (item->Offset + 1), (item->Length - 2), VType::FalseT);
                                     break;
                                 }
-                                case L't': {
+                                case 't': {
                                     // True
                                     document.InsertHash(0, content, (item->Offset + 1), (item->Length - 2), VType::TrueT);
                                     break;
                                 }
-                                case L'n': {
+                                case 'n': {
                                     // Null
                                     document.InsertHash(0, content, (item->Offset + 1), (item->Length - 2), VType::NullT);
                                     break;
@@ -533,7 +533,7 @@ struct Document {
                             done = true;
                             break;
                         }
-                        case L'"': {
+                        case '"': {
                             document.InsertHash(document.Strings.Size, content, (item->Offset + 1), (item->Length - 2), VType::StringT);
 
                             if (items[item_id].NestMatch.Size == 0) {
@@ -547,12 +547,12 @@ struct Document {
                             done = true;
                             break;
                         }
-                        case L':': {
+                        case ':': {
                             current_offset = x + 1;
                             continue;
                         }
-                        case L'{':
-                        case L'[': {
+                        case '{':
+                        case '[': {
 
                             document.InsertHash(document.Documents.Size, content, (item->Offset + 1), (item->Length - 2), VType::DocumentT);
                             document.Documents += makeList(items[item_id].NestMatch, content, items[item_id].Offset, items[item_id].Length);
@@ -574,13 +574,13 @@ struct Document {
             document.Ordered = true;
 
             for (x = current_offset; x < end; x++) {
-                while (content[x] == L' ') {
+                while (content[x] == ' ') {
                     ++x;
                 }
 
                 switch (content[x]) {
-                    case L',':
-                    case L']': {
+                    case ',':
+                    case ']': {
                         if (!done) {
                             // A Number, true/false or null
                             UNumber limit = (x - current_offset);
@@ -588,17 +588,17 @@ struct Document {
 
                             switch (content[current_offset]) {
 
-                                case L'f': {
+                                case 'f': {
                                     // False
                                     document.Entries += Entry({VType::FalseT, 0, 0});
                                     break;
                                 }
-                                case L't': {
+                                case 't': {
                                     // True
                                     document.Entries += Entry({VType::TrueT, 0, 0});
                                     break;
                                 }
-                                case L'n': {
+                                case 'n': {
                                     // Null
                                     document.Entries += Entry({VType::NullT, 0, 0});
                                     break;
@@ -619,7 +619,7 @@ struct Document {
                         done           = false;
                         break;
                     }
-                    case L'"': {
+                    case '"': {
                         item = &(items[item_id++]);
 
                         document.Entries += Entry({VType::StringT, 0, document.Strings.Size});
@@ -634,8 +634,8 @@ struct Document {
                         done = true;
                         break;
                     }
-                    case L'{':
-                    case L'[': {
+                    case '{':
+                    case '[': {
                         item = &(items[item_id++]);
 
                         document.Entries += Entry({VType::DocumentT, 0, document.Documents.Size});
@@ -657,7 +657,7 @@ struct Document {
         return document;
     }
 
-    static Document FromJSON(wchar_t const *content, UNumber const offset, UNumber const limit, bool const comments = false) noexcept {
+    static Document FromJSON(const char *content, const UNumber offset, const UNumber limit, const bool comments = false) noexcept {
         if (content == nullptr) {
             return Document();
         }
@@ -674,19 +674,19 @@ struct Document {
             static Expressions comments_expres;
             if (comments_expres.Size == 0) {
                 static Expression comment1_end;
-                comment1_end.SetKeyword(L"*/");
-                comment1_end.SetReplace(L"\n");
+                comment1_end.SetKeyword("*/");
+                comment1_end.SetReplace("\n");
 
                 static Expression comment1;
-                comment1.SetKeyword(L"/*");
+                comment1.SetKeyword("/*");
                 comment1.Connected = &comment1_end;
 
                 static Expression comment2_end;
-                comment2_end.SetKeyword(L"\n");
-                comment2_end.SetReplace(L"\n");
+                comment2_end.SetKeyword("\n");
+                comment2_end.SetReplace("\n");
 
                 static Expression comment2;
-                comment2.SetKeyword(L"//");
+                comment2.SetKeyword("//");
                 comment2.Connected = &comment2_end;
 
                 comments_expres.Add(&comment1).Add(&comment2);
@@ -703,25 +703,25 @@ struct Document {
         return Document();
     }
 
-    static Document FromJSON(String const &content, bool const comments = false) noexcept {
+    static Document FromJSON(const String &content, const bool comments = false) noexcept {
         return FromJSON(content.Str, 0, content.Length, comments);
     }
 
     // Key can be: name/id, name/id[name/id], name/id[name/id][sub-name/id], name/id[name/id][sub-name/id][sub-sub-name/id]...
     // "name": a string that's stored in "Keys". "id" is the number of array index that starts with 0: Entries[id]
-    Document const *GetSource(Entry **entry, wchar_t const *key, UNumber const offset, UNumber limit) const noexcept {
+    const Document *GetSource(Entry **entry, const char *key, const UNumber offset, UNumber limit) const noexcept {
         if ((key == nullptr) || (limit == 0)) {
             return nullptr;
         }
 
-        Document const *doc = this;
+        const Document *doc = this;
 
         UNumber curent_offset = offset;
         UNumber end           = (offset + limit);
 
-        if (key[end - 1] == L']') {
+        if (key[end - 1] == ']') {
             // Starting with a string followed by [...]
-            while ((curent_offset < end) && (key[++curent_offset] != L'[')) {
+            while ((curent_offset < end) && (key[++curent_offset] != '[')) {
             }
 
             end = curent_offset;
@@ -730,7 +730,7 @@ struct Document {
 
         curent_offset = offset;
 
-        UNumber const end_offset = (offset + limit);
+        const UNumber end_offset = (offset + limit);
 
         while (true) {
             if (doc->Ordered) {
@@ -753,19 +753,19 @@ struct Document {
             }
 
             // Next part
-            while ((++curent_offset < end_offset) && (key[curent_offset] != L'[')) {
+            while ((++curent_offset < end_offset) && (key[curent_offset] != '[')) {
             }
 
             end = ++curent_offset;
 
-            while ((end < end_offset) && (key[++end] != L']')) {
+            while ((end < end_offset) && (key[++end] != ']')) {
             }
         }
 
         return nullptr;
     }
 
-    static bool GetString(String &value, Entry const &entry, Document const &parent) noexcept {
+    static bool GetString(String &value, const Entry &entry, const Document &parent) noexcept {
         switch (entry.Type) {
             case VType::NumberT: {
                 value = String::FromNumber(parent.Numbers[entry.ArrayID], 1, 0, 3);
@@ -776,15 +776,15 @@ struct Document {
                 return true;
             }
             case VType::FalseT: {
-                value = L"false";
+                value = "false";
                 return true;
             }
             case VType::TrueT: {
-                value = L"true";
+                value = "true";
                 return true;
             }
             case VType::NullT: {
-                value = L"null";
+                value = "null";
                 return true;
             }
             default: {
@@ -793,7 +793,7 @@ struct Document {
         }
     }
 
-    bool GetString(String &value, UNumber const entryID) const noexcept {
+    bool GetString(String &value, const UNumber entryID) const noexcept {
         value.Reset();
 
         if (entryID < Entries.Size) {
@@ -803,11 +803,11 @@ struct Document {
         return false;
     }
 
-    bool GetString(String &value, wchar_t const *key, UNumber const offset, UNumber const limit) const noexcept {
+    bool GetString(String &value, const char *key, const UNumber offset, const UNumber limit) const noexcept {
         value.Reset();
 
         Entry *         entry;
-        Document const *storage = GetSource(&entry, key, offset, limit);
+        const Document *storage = GetSource(&entry, key, offset, limit);
 
         if (storage != nullptr) {
             return GetString(value, *entry, *storage);
@@ -816,15 +816,15 @@ struct Document {
         return false;
     }
 
-    bool GetString(String &value, wchar_t const *key) noexcept {
+    bool GetString(String &value, const char *key) noexcept {
         return GetString(value, key, 0, String::Count(key));
     }
 
-    bool GetNumber(UNumber &value, wchar_t const *key, UNumber const offset, UNumber const limit) noexcept {
+    bool GetNumber(UNumber &value, const char *key, const UNumber offset, const UNumber limit) noexcept {
         value = 0;
 
         Entry *         entry;
-        Document const *storage = GetSource(&entry, key, offset, limit);
+        const Document *storage = GetSource(&entry, key, offset, limit);
 
         if (storage != nullptr) {
             switch (entry->Type) {
@@ -833,7 +833,7 @@ struct Document {
                     return true;
                 }
                 case VType::StringT: {
-                    String const &st = storage->Strings[entry->ArrayID];
+                    const String &st = storage->Strings[entry->ArrayID];
                     return String::ToNumber(value, st.Str, 0, st.Length);
                     return true;
                 }
@@ -855,11 +855,11 @@ struct Document {
         return false;
     }
 
-    bool GetNumber(double &value, wchar_t const *key, UNumber const offset, UNumber const limit) noexcept {
+    bool GetNumber(double &value, const char *key, const UNumber offset, const UNumber limit) noexcept {
         value = 0.0;
 
         Entry *         entry;
-        Document const *storage = GetSource(&entry, key, offset, limit);
+        const Document *storage = GetSource(&entry, key, offset, limit);
 
         if (storage != nullptr) {
             switch (entry->Type) {
@@ -868,7 +868,7 @@ struct Document {
                     return true;
                 }
                 case VType::StringT: {
-                    String const &st = storage->Strings[entry->ArrayID];
+                    const String &st = storage->Strings[entry->ArrayID];
                     return String::ToNumber(value, st.Str, 0, st.Length);
                     return true;
                 }
@@ -890,9 +890,9 @@ struct Document {
         return false;
     }
 
-    bool GetBool(bool &value, wchar_t const *key, UNumber const offset, UNumber const limit) noexcept {
+    bool GetBool(bool &value, const char *key, const UNumber offset, const UNumber limit) noexcept {
         Entry *         entry;
-        Document const *storage = GetSource(&entry, key, offset, limit);
+        const Document *storage = GetSource(&entry, key, offset, limit);
 
         if (storage != nullptr) {
             switch (entry->Type) {
@@ -901,7 +901,7 @@ struct Document {
                     return true;
                 }
                 case VType::StringT: {
-                    value = (storage->Strings[entry->ArrayID] == L"true");
+                    value = (storage->Strings[entry->ArrayID] == "true");
                     return true;
                 }
                 case VType::FalseT:
@@ -922,9 +922,9 @@ struct Document {
         return false;
     }
 
-    Document const *GetDocument(wchar_t const *key, UNumber const offset, UNumber const limit) noexcept {
+    const Document *GetDocument(const char *key, const UNumber offset, const UNumber limit) noexcept {
         Entry *         entry;
-        Document const *storage = GetSource(&entry, key, offset, limit);
+        const Document *storage = GetSource(&entry, key, offset, limit);
 
         if ((storage != nullptr) && (entry->Type == VType::DocumentT)) {
             return storage;
@@ -935,7 +935,7 @@ struct Document {
 
     String ToJSON() const noexcept {
         StringStream ss;
-        Entry const *entry;
+        const Entry *entry;
         UNumber      counter;
 
         if (Ordered) {
@@ -958,10 +958,10 @@ struct Document {
                     case VType::StringT: {
                         ss += JFX.fss6;
 
-                        String const &es = Strings[entry->ArrayID];
+                        const String &es = Strings[entry->ArrayID];
 
                         for (counter = 0; counter < es.Length; counter++) {
-                            if (es[counter] == L'\\' || es[counter] == L'"') {
+                            if (es[counter] == '\\' || es[counter] == '"') {
                                 counter = 0;
                                 break;
                             }
@@ -1027,10 +1027,10 @@ struct Document {
                         ss += JFX.fsc1;
                         ss += JFX.fss6;
 
-                        String const &es = Strings[entry->ArrayID];
+                        const String &es = Strings[entry->ArrayID];
 
                         for (counter = 0; counter < es.Length; counter++) {
-                            if (es[counter] == L'\\' || es[counter] == L'"') {
+                            if (es[counter] == '\\' || es[counter] == '"') {
                                 counter = 0;
                                 break;
                             }
@@ -1086,33 +1086,33 @@ struct Document {
             ss += JFX.fss2;
         }
 
-        return ss.Eject();
+        return ss.ToString();
     }
 
-    static Expressions const &getToJsonExpres() noexcept {
+    static const Expressions &getToJsonExpres() noexcept {
         static Expressions expres;
 
         if (expres.Size == 0) {
             static Expression esc;
-            // esc.SetKeyword(L"\\");
+            // esc.SetKeyword("\\");
             esc.Keyword = &(char_list[4]);
             esc.Length  = 1;
-            esc.MatchCB = ([](wchar_t const *content, UNumber &offset, UNumber const endOffset, MatchBit &item,
+            esc.MatchCB = ([](const char *content, UNumber &offset, const UNumber endOffset, MatchBit &item,
                               Array<MatchBit> &items) noexcept -> void {
-                if ((content[offset] == L'\\') || (content[offset] == L' ') || (offset == endOffset)) {
+                if ((content[offset] == '\\') || (content[offset] == ' ') || (offset == endOffset)) {
                     // If there is a space after \ or \ or it's at the end, then it's a match.
                     items += static_cast<MatchBit &&>(item);
                 }
             });
-            // esc.SetReplace(L"\\\\");
+            // esc.SetReplace("\\\\");
             esc.ReplaceWith = &(char_list[4]);
             esc.RLength     = 2;
 
             static Expression quot;
-            // quot.SetKeyword(L"\"");
+            // quot.SetKeyword("\"");
             quot.Keyword = &(char_list[6]);
             quot.Length  = 1;
-            // quot.SetReplace(L"\\\"");
+            // quot.SetReplace("\\\"");
             quot.ReplaceWith = &(char_list[5]);
             quot.RLength     = 2;
 
@@ -1122,58 +1122,58 @@ struct Document {
         return expres;
     }
 
-    static Expressions const &getJsonExpres() noexcept {
+    static const Expressions &getJsonExpres() noexcept {
         static Expressions expres;
 
         if (expres.Size == 0) {
 
             static Expression esc_esc;
-            // esc_esc.SetKeyword(L"\\\\");
+            // esc_esc.SetKeyword("\\\\");
             esc_esc.Keyword = &(char_list[4]);
             esc_esc.Length  = 2;
-            // esc_esc.SetReplace(L"\\");
+            // esc_esc.SetReplace("\\");
             esc_esc.ReplaceWith = &(char_list[4]);
             esc_esc.RLength     = 1;
 
             static Expression esc_quotation;
-            // esc_quotation.SetKeyword(L"\\\"");
+            // esc_quotation.SetKeyword("\\\"");
             esc_quotation.Keyword = &(char_list[5]);
             esc_quotation.Length  = 2;
-            // esc_quotation.SetReplace(L"\"");
+            // esc_quotation.SetReplace("\"");
             esc_quotation.ReplaceWith = &(char_list[6]);
             esc_quotation.RLength     = 1;
 
             static Expression quotation_end;
-            // quotation_end.SetKeyword(L"\"");
+            // quotation_end.SetKeyword("\"");
             quotation_end.Keyword = &(char_list[6]);
             quotation_end.Length  = 1;
             quotation_end.NestExpres += &esc_esc;
             quotation_end.NestExpres += &esc_quotation;
 
             static Expression quotation_start;
-            // quotation_start.SetKeyword(L"\"");
+            // quotation_start.SetKeyword("\"");
             quotation_start.Keyword   = &(char_list[6]);
             quotation_start.Length    = 1;
             quotation_start.Connected = &quotation_end;
 
             static Expression closed_curly_bracket;
-            // closed_curly_bracket.SetKeyword(L"}");
+            // closed_curly_bracket.SetKeyword("}");
             closed_curly_bracket.Keyword = &(char_list[3]);
             closed_curly_bracket.Length  = 1;
 
             static Expression opened_curly_bracket;
-            // opened_curly_bracket.SetKeyword(L"{");
+            // opened_curly_bracket.SetKeyword("{");
             opened_curly_bracket.Keyword   = &(char_list[0]);
             opened_curly_bracket.Length    = 1;
             opened_curly_bracket.Connected = &closed_curly_bracket;
 
             static Expression closed_square_bracket;
-            // closed_square_bracket.SetKeyword(L"]");
+            // closed_square_bracket.SetKeyword("]");
             closed_square_bracket.Keyword = &(char_list[2]);
             closed_square_bracket.Length  = 1;
 
             static Expression opened_square_bracket;
-            // opened_square_bracket.SetKeyword(L"[");
+            // opened_square_bracket.SetKeyword("[");
             opened_square_bracket.Keyword   = &(char_list[1]);
             opened_square_bracket.Length    = 1;
             opened_square_bracket.Connected = &closed_square_bracket;
@@ -1190,7 +1190,7 @@ struct Document {
         return expres;
     }
 
-    void operator+=(Document const &doc) noexcept {
+    void operator+=(const Document &doc) noexcept {
         if (Ordered != doc.Ordered) {
             if (Entries.Size != 0) {
                 // Not the same type!
@@ -1199,7 +1199,7 @@ struct Document {
             Ordered = doc.Ordered;
         }
 
-        Entry const *entry;
+        const Entry *entry;
 
         if (Ordered) {
             for (UNumber i = 0; i < doc.Entries.Size; i++) {
@@ -1271,7 +1271,7 @@ struct Document {
             Ordered = doc.Ordered;
         }
 
-        Entry const *entry;
+        const Entry *entry;
 
         if (Ordered) {
             for (UNumber i = 0; i < doc.Entries.Size; i++) {
@@ -1367,7 +1367,7 @@ struct Document {
         return *storage;
     }
 
-    Document &operator=(Document const &doc) noexcept {
+    Document &operator=(const Document &doc) noexcept {
         if (LastKeyLen == 0) {
             Ordered   = doc.Ordered;
             HashBase  = doc.HashBase;
@@ -1401,7 +1401,7 @@ struct Document {
         return *storage;
     }
 
-    Document &operator=(wchar_t const *str) noexcept {
+    Document &operator=(const char *str) noexcept {
         if (LastKeyLen == 0) {
             this->Reset();
             this->Ordered = true;
@@ -1463,7 +1463,7 @@ struct Document {
         return *this;
     }
 
-    Document &operator=(int const num) noexcept {
+    Document &operator=(const int num) noexcept {
         if (LastKeyLen != 0) {
             double number = static_cast<double>(num);
 
@@ -1485,7 +1485,7 @@ struct Document {
         return *this;
     }
 
-    Document &operator=(long const num) noexcept {
+    Document &operator=(const long num) noexcept {
         if (LastKeyLen != 0) {
             double number = static_cast<double>(num);
 
@@ -1507,7 +1507,7 @@ struct Document {
         return *this;
     }
 
-    Document &operator=(bool const value) noexcept {
+    Document &operator=(const bool value) noexcept {
         if (LastKeyLen != 0) {
             if (Ordered) {
                 Insert(--LastKeyLen, (value ? VType::TrueT : VType::FalseT), nullptr, false);
@@ -1527,7 +1527,7 @@ struct Document {
         return *this;
     }
 
-    void operator+=(bool const value) noexcept {
+    void operator+=(const bool value) noexcept {
         if (!Ordered) {
             if (Entries.Size != 0) {
                 return;
@@ -1539,7 +1539,7 @@ struct Document {
         Numbers += value ? 1.0 : 0.0;
     }
 
-    void operator+=(int const num) noexcept {
+    void operator+=(const int num) noexcept {
         if (!Ordered) {
             if (Entries.Size != 0) {
                 return;
@@ -1551,7 +1551,7 @@ struct Document {
         Numbers += static_cast<double>(num);
     }
 
-    void operator+=(long const num) noexcept {
+    void operator+=(const long num) noexcept {
         if (!Ordered) {
             if (Entries.Size != 0) {
                 return;
@@ -1563,7 +1563,7 @@ struct Document {
         Numbers += static_cast<double>(num);
     }
 
-    void operator+=(double const num) noexcept {
+    void operator+=(const double num) noexcept {
         if (!Ordered) {
             if (Entries.Size != 0) {
                 return;
@@ -1575,7 +1575,7 @@ struct Document {
         Numbers += num;
     }
 
-    void operator+=(wchar_t const *str) noexcept {
+    void operator+=(const char *str) noexcept {
         if (!Ordered) {
             if (Entries.Size != 0) {
                 return;
@@ -1591,7 +1591,7 @@ struct Document {
         }
     }
 
-    void operator+=(String const &string) noexcept {
+    void operator+=(const String &string) noexcept {
         if (!Ordered) {
             if (Entries.Size != 0) {
                 return;
@@ -1615,7 +1615,7 @@ struct Document {
         Strings += static_cast<String &&>(string);
     }
 
-    void operator+=(Array<double> const &numbers) noexcept {
+    void operator+=(const Array<double> &numbers) noexcept {
         if (!Ordered) {
             if (Entries.Size != 0) {
                 return;
@@ -1632,7 +1632,7 @@ struct Document {
         Numbers += numbers;
     }
 
-    void operator+=(Array<String> const &strings) noexcept {
+    void operator+=(const Array<String> &strings) noexcept {
         if (!Ordered) {
             if (Entries.Size != 0) {
                 return;
@@ -1649,7 +1649,7 @@ struct Document {
         Strings += strings;
     }
 
-    void operator+=(Array<Document> const &documents) noexcept {
+    void operator+=(const Array<Document> &documents) noexcept {
         if (!Ordered) {
             if (Entries.Size != 0) {
                 return;
@@ -1717,8 +1717,8 @@ struct Document {
         Documents += static_cast<Array<Document> &&>(documents);
     }
 
-    Document &operator[](wchar_t const *key) noexcept {
-        UNumber const str_len = String::Count(key);
+    Document &operator[](const char *key) noexcept {
+        const UNumber str_len = String::Count(key);
 
         if (Ordered) {
             UNumber id;
@@ -1730,7 +1730,7 @@ struct Document {
                 LastKeyLen = (id + 1);
             }
         } else {
-            Entry const *entry = Exist(String::Hash(key, 0, str_len), 0, Table);
+            const Entry *entry = Exist(String::Hash(key, 0, str_len), 0, Table);
 
             if ((entry != nullptr) && (entry->Type == VType::DocumentT)) {
                 return Documents[entry->ArrayID];
@@ -1743,7 +1743,7 @@ struct Document {
         return *this;
     }
 
-    Document &operator[](String const &key) noexcept {
+    Document &operator[](const String &key) noexcept {
         if (Ordered) {
             UNumber id;
             if (String::ToNumber(id, key.Str, 0, key.Length)) {
@@ -1754,7 +1754,7 @@ struct Document {
                 LastKeyLen = (id + 1);
             }
         } else {
-            Entry const *entry = Exist(String::Hash(key.Str, 0, key.Length), 0, Table);
+            const Entry *entry = Exist(String::Hash(key.Str, 0, key.Length), 0, Table);
 
             if ((entry != nullptr) && (entry->Type == VType::DocumentT)) {
                 return Documents[entry->ArrayID];
@@ -1767,9 +1767,9 @@ struct Document {
         return *this;
     }
 
-    Document &operator[](UNumber const id) noexcept {
+    Document &operator[](const UNumber id) noexcept {
         if (id < Entries.Size) {
-            Entry const &entry = Entries[id];
+            const Entry &entry = Entries[id];
 
             if (entry.Type == VType::DocumentT) {
                 return Documents[entry.ArrayID];
@@ -1792,11 +1792,11 @@ struct Document {
         return *this;
     }
 
-    Document &operator[](int const id) noexcept {
-        UNumber const ID = static_cast<UNumber>(id);
+    Document &operator[](const int id) noexcept {
+        const UNumber ID = static_cast<UNumber>(id);
 
         if (ID < Entries.Size) {
-            Entry const &entry = Entries[ID];
+            const Entry &entry = Entries[ID];
 
             if (entry.Type == VType::DocumentT) {
                 return Documents[entry.ArrayID];

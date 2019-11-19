@@ -34,7 +34,7 @@ struct Array {
         src.Capacity = 0;
     }
 
-    explicit Array(Array<Type> const &src) noexcept : Capacity(src.Size) {
+    explicit Array(const Array<Type> &src) noexcept : Capacity(src.Size) {
         if (src.Size != 0) {
             Memory::Allocate<Type>(&Storage, Capacity);
 
@@ -50,7 +50,7 @@ struct Array {
             Storage  = src.Storage;
             Capacity = src.Capacity;
         } else {
-            UNumber const nSize = (Size + src.Size);
+            const UNumber nSize = (Size + src.Size);
             if (nSize > Capacity) {
                 Resize(nSize);
             }
@@ -67,8 +67,8 @@ struct Array {
         return *this;
     }
 
-    Array<Type> &Add(Array<Type> const &src) noexcept {
-        UNumber const nSize = (Size + src.Size);
+    Array<Type> &Add(const Array<Type> &src) noexcept {
+        const UNumber nSize = (Size + src.Size);
 
         if (nSize > Capacity) {
             Resize(nSize);
@@ -91,7 +91,7 @@ struct Array {
         return *this;
     }
 
-    Array<Type> &Add(Type const &item) noexcept { // Copy
+    Array<Type> &Add(const Type &item) noexcept { // Copy
         if (Size == Capacity) {
             Resize(Capacity * 2);
         }
@@ -101,7 +101,7 @@ struct Array {
         return *this;
     }
 
-    void SetCapacity(UNumber const size) noexcept {
+    void SetCapacity(const UNumber size) noexcept {
         Memory::Deallocate<Type>(&Storage);
 
         Size     = 0;
@@ -110,7 +110,7 @@ struct Array {
         Memory::Allocate<Type>(&Storage, Capacity);
     }
 
-    void Resize(UNumber const size) noexcept {
+    void Resize(const UNumber size) noexcept {
         Capacity  = ((size == 0) ? 2 : size);
         Type *tmp = Storage;
         Memory::Allocate<Type>(&Storage, Capacity);
@@ -139,9 +139,9 @@ struct Array {
         return *this;
     }
 
-    Array<Type> &operator=(Array<Type> const &src) noexcept {
+    Array<Type> &operator=(const Array<Type> &src) noexcept {
         if (this != &src) {
-            UNumber const nSize = (Size + src.Size);
+            const UNumber nSize = (Size + src.Size);
 
             if (nSize > Capacity) {
                 Resize(nSize);
@@ -159,7 +159,7 @@ struct Array {
         Add(static_cast<Type &&>(item));
     }
 
-    inline void operator+=(Type const &item) noexcept {
+    inline void operator+=(const Type &item) noexcept {
         Add(item);
     }
 
@@ -167,7 +167,7 @@ struct Array {
         Add(static_cast<Array<Type> &&>(item));
     }
 
-    inline void operator+=(Array<Type> const &item) noexcept {
+    inline void operator+=(const Array<Type> &item) noexcept {
         Add(item);
     }
 
@@ -178,7 +178,7 @@ struct Array {
         Capacity = 0;
     }
 
-    inline Type &operator[](UNumber const offset) const noexcept {
+    inline Type &operator[](const UNumber offset) const noexcept {
         return Storage[offset];
     }
 

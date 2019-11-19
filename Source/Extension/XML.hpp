@@ -33,9 +33,9 @@ struct XTag {
     Array<XTag>      InnerNodes;
 };
 
-static void InfinitSpaceCallback(wchar_t const *content, UNumber &offset, UNumber const endOffset, MatchBit &item,
+static void InfinitSpaceCallback(const char *content, UNumber &offset, const UNumber endOffset, MatchBit &item,
                                  Array<MatchBit> &items) noexcept {
-    while (content[offset] == L' ') {
+    while (content[offset] == ' ') {
         ++offset;
         ++item.Length;
     }
@@ -43,15 +43,15 @@ static void InfinitSpaceCallback(wchar_t const *content, UNumber &offset, UNumbe
     items += static_cast<MatchBit &&>(item);
 }
 
-static Expressions const &getXMLExpres() noexcept {
+static const Expressions &getXMLExpres() noexcept {
     static Expressions expres(1);
 
     if (expres.Size == 0) {
         static Expression tag_end;
-        tag_end.SetKeyword(L">");
+        tag_end.SetKeyword(">");
 
         static Expression tag_start;
-        tag_start.SetKeyword(L"<");
+        tag_start.SetKeyword("<");
         tag_start.Connected = &tag_end;
 
         expres += &tag_start;
@@ -60,25 +60,25 @@ static Expressions const &getXMLExpres() noexcept {
     return expres;
 }
 
-static Expressions const &getPropertiesExpres() noexcept {
+static const Expressions &getPropertiesExpres() noexcept {
     static Expressions expres(3);
 
     if (expres.Size == 0) {
         static Expression equal;
-        equal.SetKeyword(L"=");
+        equal.SetKeyword("=");
         equal.Flag = Flags::SPLIT | Flags::DROPEMPTY;
 
         static Expression space;
-        space.SetKeyword(L" ");
+        space.SetKeyword(" ");
         space.Flag    = Flags::SPLIT | Flags::DROPEMPTY;
         space.MatchCB = &(InfinitSpaceCallback);
 
         static Expression quot_end;
-        quot_end.SetKeyword(L"\"");
+        quot_end.SetKeyword("\"");
         quot_end.Flag = Flags::IGNORE;
 
         static Expression quot;
-        quot.SetKeyword(L"\"");
+        quot.SetKeyword("\"");
         quot.Connected = &quot_end;
 
         expres.Add(&equal).Add(&quot).Add(&space);
@@ -87,9 +87,9 @@ static Expressions const &getPropertiesExpres() noexcept {
     return expres;
 }
 
-static Array<XTag> parseTags(String const &content, Array<MatchBit> const &items, UNumber id, UNumber const count) noexcept {
+static Array<XTag> parseTags(const String &content, const Array<MatchBit> &items, UNumber id, const UNumber count) noexcept {
 
-    static Expressions const &propertiesExpres = getPropertiesExpres();
+    static const Expressions &propertiesExpres = getPropertiesExpres();
 
     Array<XTag> tags;
     XTag        x_tag;
@@ -113,12 +113,12 @@ static Array<XTag> parseTags(String const &content, Array<MatchBit> const &items
         tagLen  = 0;
 
         // Finding the name of the tag
-        for (UNumber x = startAt; ((content[x] != L' ') && (content[x] != L'>')); ++x) {
+        for (UNumber x = startAt; ((content[x] != ' ') && (content[x] != '>')); ++x) {
             ++tagLen;
         }
 
         if (tagged) {
-            if (content[startAt] != L'/') {                         // If it's not a closing tag.
+            if (content[startAt] != '/') {                          // If it's not a closing tag.
                 if (x_tag.Name.Compare(content, startAt, tagLen)) { // If it's equal to the current one.
                     ++repeated;                                     // then it's a chiled tag.
                 }
@@ -145,7 +145,7 @@ static Array<XTag> parseTags(String const &content, Array<MatchBit> const &items
                     }
                 }
             }
-        } else if (content[startAt] != L'/') { // A new tag that is not a closing one.
+        } else if (content[startAt] != '/') { // A new tag that is not a closing one.
             x_tag.Name = String::Part(content.Str, startAt, tagLen);
             // TODO: Add inline HTML tag list
 
@@ -154,7 +154,7 @@ static Array<XTag> parseTags(String const &content, Array<MatchBit> const &items
 
             // Paraperties
             remlen = item->Length - tagLen - 2; // Remaining text.
-            tagged = (content[((item->Offset + item->Length) - 2)] != L'/');
+            tagged = (content[((item->Offset + item->Length) - 2)] != '/');
 
             if (!tagged) {
                 // Inline tag.
@@ -173,7 +173,7 @@ static Array<XTag> parseTags(String const &content, Array<MatchBit> const &items
                 ++p;
 
                 xpMatch = &x_properties[p];
-                if (content[xpMatch->Offset] == L'"') {
+                if (content[xpMatch->Offset] == '"') {
                     xp.Value = String::Part(content.Str, (xpMatch->Offset + 1), (xpMatch->Length - 2));
                 } else {
                     xp.Value = String::Part(content.Str, xpMatch->Offset, xpMatch->Length);
@@ -202,8 +202,8 @@ static Array<XTag> parseTags(String const &content, Array<MatchBit> const &items
     return tags;
 }
 
-static Array<XTag> Parse(String const &content) noexcept {
-    Array<MatchBit> const items = Qentem::Engine::Match(getXMLExpres(), content.Str, 0, content.Length);
+static Array<XTag> Parse(const String &content) noexcept {
+    const Array<MatchBit> items = Qentem::Engine::Match(getXMLExpres(), content.Str, 0, content.Length);
 
     return parseTags(content, items, 0, items.Size);
 }

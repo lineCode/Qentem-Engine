@@ -21,10 +21,10 @@ using Engine::Expressions;
 using Engine::Flags;
 using Engine::MatchBit;
 
-static bool   Process(double &number, Array<MatchBit> const &items, wchar_t const *content, UNumber offset, UNumber limit) noexcept;
-static double Evaluate(wchar_t const *content, UNumber offset, UNumber limit) noexcept;
+static bool   Process(double &number, const Array<MatchBit> &items, const char *content, UNumber offset, UNumber limit) noexcept;
+static double Evaluate(const char *content, UNumber offset, UNumber limit) noexcept;
 
-static Expressions const &getMathExpres() noexcept {
+static const Expressions &getMathExpres() noexcept {
     static constexpr UNumber flags_no_pop = Flags::SPLIT | Flags::TRIM;
     static constexpr UNumber flags_pop    = flags_no_pop | Flags::POP;
 
@@ -34,49 +34,49 @@ static Expressions const &getMathExpres() noexcept {
         static Expression i_paren;
         static Expression i_paren_end;
 
-        i_paren_end.SetKeyword(L")");
+        i_paren_end.SetKeyword(")");
         i_paren_end.Flag = Flags::IGNORE;
         i_paren_end.NestExpres.SetCapacity(1);
         i_paren_end.NestExpres.Add(&i_paren);
 
-        i_paren.SetKeyword(L"(");
+        i_paren.SetKeyword("(");
         i_paren.Connected = &i_paren_end;
         ///////////////////////////////////////////
         static Expression math_mul;
-        math_mul.SetKeyword(L"*");
+        math_mul.SetKeyword("*");
         math_mul.ID   = 2;
         math_mul.Flag = flags_no_pop;
 
         static Expression math_div;
-        math_div.SetKeyword(L"/");
+        math_div.SetKeyword("/");
         math_div.ID   = 3;
         math_div.Flag = flags_no_pop;
 
         static Expression math_exp;
-        math_exp.SetKeyword(L"^");
+        math_exp.SetKeyword("^");
         math_exp.ID   = 4;
         math_exp.Flag = flags_no_pop;
 
         static Expression math_rem;
-        math_rem.SetKeyword(L"%");
+        math_rem.SetKeyword("%");
         math_rem.ID   = 5;
         math_rem.Flag = flags_no_pop;
         ///////////////////////////////////////////
         static Expression math_add;
-        math_add.SetKeyword(L"+");
+        math_add.SetKeyword("+");
         math_add.ID   = 6;
         math_add.Flag = flags_pop;
         math_add.NestExpres.SetCapacity(5);
         math_add.NestExpres.Add(&math_mul).Add(&i_paren).Add(&math_div).Add(&math_rem).Add(&math_exp);
 
         static Expression math_sub;
-        math_sub.SetKeyword(L"-");
+        math_sub.SetKeyword("-");
         math_sub.ID         = 7;
         math_sub.Flag       = flags_no_pop;
         math_sub.NestExpres = math_add.NestExpres;
         ///////////////////////////////////////////
         static Expression equ2;
-        equ2.SetKeyword(L"==");
+        equ2.SetKeyword("==");
         equ2.ID   = 8;
         equ2.Flag = flags_pop;
         equ2.NestExpres.SetCapacity(3);
@@ -90,13 +90,13 @@ static Expressions const &getMathExpres() noexcept {
         equ.NestExpres = equ2.NestExpres;
 
         static Expression not_equ;
-        not_equ.SetKeyword(L"!=");
+        not_equ.SetKeyword("!=");
         not_equ.ID         = 10;
         not_equ.Flag       = flags_no_pop;
         not_equ.NestExpres = equ2.NestExpres;
 
         static Expression less_equ;
-        less_equ.SetKeyword(L"<=");
+        less_equ.SetKeyword("<=");
         less_equ.ID         = 11;
         less_equ.Flag       = flags_no_pop;
         less_equ.NestExpres = equ2.NestExpres;
@@ -109,7 +109,7 @@ static Expressions const &getMathExpres() noexcept {
         less.NestExpres = equ2.NestExpres;
 
         static Expression big_equ;
-        big_equ.SetKeyword(L">=");
+        big_equ.SetKeyword(">=");
         big_equ.ID         = 13;
         big_equ.Flag       = flags_no_pop;
         big_equ.NestExpres = equ2.NestExpres;
@@ -122,14 +122,14 @@ static Expressions const &getMathExpres() noexcept {
         big.NestExpres = equ2.NestExpres;
         ///////////////////////////////////////////
         static Expression logic_and;
-        logic_and.SetKeyword(L"&&");
+        logic_and.SetKeyword("&&");
         logic_and.ID   = 15;
         logic_and.Flag = flags_pop;
         logic_and.NestExpres.SetCapacity(8);
         logic_and.NestExpres.Add(&equ2).Add(&i_paren).Add(&equ).Add(&not_equ).Add(&less_equ).Add(&less).Add(&big_equ).Add(&big);
 
         static Expression logic_or;
-        logic_or.SetKeyword(L"||");
+        logic_or.SetKeyword("||");
         logic_or.ID         = 16;
         logic_or.Flag       = flags_no_pop;
         logic_or.NestExpres = logic_and.NestExpres;
@@ -140,8 +140,8 @@ static Expressions const &getMathExpres() noexcept {
     return expres;
 }
 
-static double Multiply(wchar_t const *content, Array<MatchBit> const &items) noexcept {
-    MatchBit const *mb    = &(items[0]);
+static double Multiply(const char *content, const Array<MatchBit> &items) noexcept {
+    const MatchBit *mb    = &(items[0]);
     UShort          op_id = mb->Expr->ID;
     double          number1;
     double          number2;
@@ -177,7 +177,7 @@ static double Multiply(wchar_t const *content, Array<MatchBit> const &items) noe
                     }
 
                     UNumber      times = static_cast<UNumber>(number2);
-                    double const num   = number1;
+                    const double num   = number1;
 
                     while (--times > 0) {
                         number1 *= num;
@@ -205,8 +205,8 @@ static double Multiply(wchar_t const *content, Array<MatchBit> const &items) noe
     return number1;
 }
 
-static double Add(wchar_t const *content, Array<MatchBit> const &items) noexcept {
-    MatchBit const *mb      = &(items[0]);
+static double Add(const char *content, const Array<MatchBit> &items) noexcept {
+    const MatchBit *mb      = &(items[0]);
     UShort          op_id   = mb->Expr->ID;
     double          number1 = 0.0;
     double          number2;
@@ -243,15 +243,16 @@ static double Add(wchar_t const *content, Array<MatchBit> const &items) noexcept
     return number1;
 }
 
-static double Equal(wchar_t const *content, Array<MatchBit> const &items) noexcept {
+static double Equal(const char *content, const Array<MatchBit> &items) noexcept {
     double number1 = 0.0;
     double number2;
 
-    MatchBit const *mb    = &(items[0]);
+    const MatchBit *mb    = &(items[0]);
     UShort          op_id = mb->Expr->ID;
 
-    wchar_t const c = content[mb->Offset];
-    if (((c < 58) && (c > 47)) || ((c == L'(') || (c == L'+') || (c == L'-'))) {
+    const char c = content[mb->Offset];
+
+    if (((c < 58) && (c > 47)) || ((c == '(') || (c == '+') || (c == '-'))) {
         if (!Process(number1, mb->NestMatch, content, mb->Offset, mb->Length)) {
             return 0.0;
         }
@@ -300,8 +301,8 @@ static double Equal(wchar_t const *content, Array<MatchBit> const &items) noexce
     return number1;
 }
 
-static double LogicAnd(wchar_t const *content, Array<MatchBit> const &items) noexcept {
-    MatchBit const *mb    = &(items[0]);
+static double LogicAnd(const char *content, const Array<MatchBit> &items) noexcept {
+    const MatchBit *mb    = &(items[0]);
     UShort          op_id = mb->Expr->ID;
     double          number1;
     double          number2;
@@ -334,10 +335,9 @@ static double LogicAnd(wchar_t const *content, Array<MatchBit> const &items) noe
     return number1;
 }
 
-static bool Process(double &number, Array<MatchBit> const &items, wchar_t const *content, UNumber const offset,
-                    UNumber const limit) noexcept {
+static bool Process(double &number, const Array<MatchBit> &items, const char *content, const UNumber offset, const UNumber limit) noexcept {
     if (items.Size == 0) {
-        if (content[offset] == L'(') {
+        if (content[offset] == '(') {
             if (limit < 3) {
                 return false;
             }
@@ -382,7 +382,7 @@ static bool Process(double &number, Array<MatchBit> const &items, wchar_t const 
     }
 }
 
-static double Evaluate(wchar_t const *content, UNumber offset, UNumber limit) noexcept {
+static double Evaluate(const char *content, UNumber offset, UNumber limit) noexcept {
     /**
      * e.g. ((2* (1 * 3)) + 1 - 4) + ((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1) - (1) - (-1) + 2 == 14
      * e.g. (6 + 1 - 4) + (5 - 6 + 4) * (8 / 4 + 1) - (1) - (-1) + 2 = 14

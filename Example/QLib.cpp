@@ -26,30 +26,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 #endif
 
 extern "C" {
-DllExport wchar_t *qentem_render_template_w(wchar_t const *temp, wchar_t const *json, bool comments) {
-    Document data = Document::FromJSON(json, 0, String::Count(json), comments);
-    return Qentem::Template::Render(temp, 0, String::Count(temp), &data).Eject();
-}
 
 #ifdef __EMSCRIPTEN__
 EMSCRIPTEN_KEEPALIVE
 #endif
 
-DllExport char *qentem_render_template(char const *temp, char const *json, bool comments) {
-    Document data     = Document::FromJSON(String(json), comments);
-    String   rendered = Qentem::Template::Render(temp, &data);
-    data.Reset();
-
-    if (rendered.Length == 0) {
-        return nullptr;
-    }
-
-    char *tmp = new char[rendered.Length + 1];
-    for (UNumber j = 0; j <= rendered.Length; j++) {
-        // It got it as a "char" type in the first place, so there won't be any above 255.
-        tmp[j] = static_cast<char>(rendered[j]);
-    }
-
-    return tmp;
+DllExport char *qentem_render_template(const char *temp, const char *json, bool comments) {
+    Document data = Document::FromJSON(json, 0, String::Count(json), comments);
+    return Qentem::Template::Render(temp, 0, String::Count(temp), &data).Eject();
 }
 }
