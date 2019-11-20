@@ -510,8 +510,8 @@ static bool JSONTest() noexcept {
         n_content        = Qentem::Test::Replace(n_content.Str, n_content.Length, "\": ", "\":");
         if (final != n_content) {
             std::cout << "\n Document() might be broken!\n";
+            std::cout << "\n Document.ToJSON():\n" << final.Str << "\n";
             std::cout << "\n File:\n" << n_content.Str << "\n";
-            std::cout << "\n Document():\n" << final.Str << "\n";
             return false;
         }
     }
@@ -549,11 +549,11 @@ static bool JSONTest() noexcept {
     }
 
     std::cout << "\n JSON is borken!\n\n";
+    std::cout << "\n-FromJSON().ToJSON():\n";
+    std::cout << final.Str;
+    std::cout << "\n-End-\n";
     std::cout << "\n-File:\n";
     std::cout << json_content.Str;
-    std::cout << "\n-End-\n";
-    std::cout << "\n-ToJSON:\n";
-    std::cout << final.Str;
     std::cout << "\n-End-\n";
 
     return false;
@@ -619,7 +619,7 @@ static String readFile(const char *path) noexcept {
         return content;
     }
 
-    std::cout << '\n' << path << " does not exist!\n";
+    std::cout << "Unable to load: " << path << '\n';
 
     return "";
 }

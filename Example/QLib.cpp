@@ -1,11 +1,11 @@
 #include <Extension/Template.hpp>
+
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 #endif
 
 using Qentem::Document;
 using Qentem::String;
-using Qentem::UNumber;
 
 #ifdef _WIN32
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {

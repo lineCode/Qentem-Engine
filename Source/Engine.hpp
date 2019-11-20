@@ -27,19 +27,19 @@ using Expressions = Array<Expression *>;
 /////////////////////////////////
 // Expressions flags
 struct Flags {
-    // Parse()
-    static const UShort BUBBLE = 1; // Parse nested matches.
+    // Match()
+    static const UShort SPLIT  = 1; // Split a match at with the specified keyword.
+    static const UShort ONCE   = 2; // Will stop searching after the first match.
+    static const UShort IGNORE = 4; // Igoring a match after finding it.
+    static const UShort POP    = 8; // Match again with NestExpres if there is no match.
 
     // Split()
-    static const UShort DROPEMPTY = 2; // Drop every splitted match that's empty.
-    static const UShort GROUPED   = 4; // Puts splitted matches into NestMatch, for one callback execution.
-    static const UShort TRIM      = 8; // Trim the splitted match before adding it (spaces and newlines).
+    static const UShort DROPEMPTY = 16; // Drop every splitted match that's empty.
+    static const UShort GROUPED   = 32; // Puts splitted matches into NestMatch, for one callback execution.
+    static const UShort TRIM      = 64; // Trim the splitted match before adding it (spaces and newlines).
 
-    // Match()
-    static const UShort SPLIT  = 16;  // Split a match at with the specified keyword.
-    static const UShort ONCE   = 32;  // Will stop searching after the first match.
-    static const UShort IGNORE = 64;  // Igoring a match after finding it.
-    static const UShort POP    = 128; // Match again with NestExpres if there is no match.
+    // Parse()
+    static const UShort BUBBLE = 128; // Parse nested matches.
 };
 /////////////////////////////////
 struct Expression {
@@ -226,7 +226,7 @@ static String Parse(const Array<MatchBit> &items, const char *content, UNumber o
         if (item->Expr->ParseCB == nullptr) {
             // Defaults to replace: it can be empty.
             if (item->Expr->RLength != 0) {
-                rendered.Add(item->Expr->ReplaceWith, item->Expr->RLength);
+                rendered.Add(item->Expr->RLength, item->Expr->ReplaceWith);
             }
         } else if ((Flags::BUBBLE & item->Expr->Flag) == 0) {
             rendered += item->Expr->ParseCB(content, *item, item->Length, other);

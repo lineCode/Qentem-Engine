@@ -1,6 +1,6 @@
-# Qentem Engine (v1.5.0)
+# Qentem Engine (v1.5.1)
 
-## Introduction:
+## Introduction
 Qentem Engine is an independent library that uses a fast algorithm for nest-matching. It can be used to match existing syntaxes or new ones, and with call-backs for post and per-parsing, It's posable to match almost any complex syntax. It is very efficient and has a small footprint on memory, and it's built using modern C++. It can be used to render complex templates that contains nested loop, nested if-else, inline if, math (+ * / - ^ %), logic (&& ||), and/or something simple: like replacing a text or splitting it. Also, it is capable of doing JSON, XML/HTML.
 
 ## Why Qentem?
@@ -33,16 +33,16 @@ However, the following is out of the question:
 </if>
 ```
 
-Qentem can generate a template with that, and it can run on the client side, after compiling it to WebAssembly.
+Qentem can generate a template with that, and it's usable with JavaScript (Node.js/Web browser), after compiling it to WebAssembly.
 
-## Built-in:
+## Built-in
 The library - at the moment - has String class (with number conversion), Array, String Stream, Document (Tree/Map/HashTable), Template generator (HTML friendly syntax), Arithmetic & Logic Evaluator, and JSON parser (with C style comments). Also, XML/HTML parser.
 
-## Requirements:
+## Requirements
 C++ compiler (11 and above).
 
-## Example:
-### Document and JSON:
+## Example
+### Document and JSON
 ```cpp
 #include <Extension/Document.hpp>
 using Qentem::Array;
@@ -77,7 +77,7 @@ doc["strings2"] += Array<String>().Add("H").Add("I");
 String JSON = doc.ToJSON(); // Exporting document
 std::cout << "JSON:\n" << JSON.Str << "\n\n";
 ```
-#### Output:
+the output is somthing close to:
 ```json
 {
     "numbers": [0,1,2,3,4,5,6,7,8,9],
@@ -86,7 +86,7 @@ std::cout << "JSON:\n" << JSON.Str << "\n\n";
 }
 ```
 
-### Template:
+### Template
 
 #### C++
 ```cpp
@@ -99,10 +99,10 @@ String rendered = Template::Render(content, &doc);
 std::cout << "Template:\n" << rendered.Str << '\n';
 ```
 
-##### Note:
-The complete example is located @ [Example/Example1.cpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Example/Example1.cpp). For more about template syntax, see [Test/test.qtml](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Test/test.qtml).
+##### Note
+The complete example is located @ [Example/Example1.cpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Example/Example1.cpp). For more about template syntax, check out [Test/test.qtml](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Test/test.qtml).
 
-#### Python:
+#### Python
 ```python
 from ctypes import CDLL, c_char_p, c_bool
 
@@ -131,31 +131,26 @@ print(q_render(tempale.encode('UTF-8'),
 # Note: "False" means JSON without comments.
 ```
 
-#### HTML, JavaScript and WebAssembly:
+#### HTML, JavaScript and WebAssembly
 [JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/releases/download/v1.5.0/JQen.zip)
 
-##### Note:
-JQen requires web server to run; local or remote.
+## Compiling
 
-## Compiling:
-
-### The example:
+### The example
 ```txt
 c++ -I ./Source ./Example/Example1.cpp -o ./Test/QExample1.bin
 ```
 
-### QLib (Template library):
+### QLib (Template library)
+#### Linux
 ```txt
 c++ -O3 -shared -fPIC -I ./Source ./Example/QLib.cpp -o ./Build/QLib.so
 ```
 
+#### Windows
+Run QDLL.vcxproj (Visual Studio file).
+
 ### QLib (WebAssembly using Emscripten):
 ```txt
 em++ -Os -I ./Source ./Example/QLib.cpp -s WASM=1 -s 'EXTRA_EXPORTED_RUNTIME_METHODS=['ccall', 'cwrap']' -o ./Example/JQen/JQen.js
-```
-
-## Test:
-This library includes over 370 tests; to insure that it's stable and functional. to compile the tests:
-```txt
-c++ -I ./Source ./Test/Test.cpp -o ./Test/QTest.bin
 ```
