@@ -1,5 +1,17 @@
 # Qentem Engine (v1.5.3)
 
+- [Introduction](#introduction)
+- [Why Qentem?](#why-qentem)
+- [Built-in](#built-in)
+- [Requirements](#requirements)
+- [Example](#example)
+  - [Document and JSON (C++)](#document-and-json-c)
+  - [Template](#template)
+    - [C++](#c)
+    - [Python](#python)
+    - [JavaScript & WebAssembly](#html-javascript--webassembly)
+- [Compiling](#compiling)
+
 ## Introduction
 Qentem Engine is an independent library that uses a fast algorithm for nest-matching. It can be used to match existing syntaxes or new ones, and with call-backs for post and per-parsing, It's posable to match almost any complex syntax. It is very efficient and has a small footprint on memory, and it's built using modern C++. It can be used to render complex templates that contains nested loop, nested if-else, inline if, math (+ * / - ^ %), logic (&& ||), and/or something simple: like replacing a text or splitting it. Also, it is capable of doing JSON, XML/HTML.
 
@@ -42,7 +54,7 @@ The library - at the moment - has String class (with number conversion), Array, 
 C++ compiler (11 and above).
 
 ## Example
-### Document and JSON:
+### Document and JSON (C++):
 ```cpp
 #include <Extension/Document.hpp>
 using Qentem::Array;
@@ -207,7 +219,7 @@ Students' list:
 ##### Note:
 For another example, check out [Example/QPie.py](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Example/QPie.py).
 
-#### HTML, JavaScript and WebAssembly:
+#### HTML, JavaScript & WebAssembly:
 [JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/releases/download/v1.5.3/JQen.zip)
 
 ## Compiling
