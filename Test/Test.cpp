@@ -33,12 +33,12 @@ static const bool StreasTest = false;
 static const bool BigJSON = false;
 
 static String   readFile(const char *path) noexcept;
-static Document getDocument() noexcept;
 static bool     runTest(const char *name, const Array<TestBit> &bits, bool break_on_err, Document *other = nullptr,
                         ParseType parse_type = ParseType::Engine) noexcept;
 static bool     NumbersConvTest() noexcept;
-static bool     JSONTest() noexcept;
 static bool     XMLTest() noexcept;
+static bool     JSONTest() noexcept;
+static Document getDocument() noexcept;
 
 struct NCTest {
     double      Number{0};

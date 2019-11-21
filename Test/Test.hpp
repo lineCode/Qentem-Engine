@@ -8,7 +8,6 @@
  * @license   https://opensource.org/licenses/MIT
  */
 
-#include <Extension/Document.hpp>
 #include <Extension/Template.hpp>
 
 #ifndef TESTENGINE_H
@@ -17,7 +16,10 @@
 namespace Qentem {
 namespace Test {
 
+using Qentem::Engine::Expression;
+using Qentem::Engine::Expressions;
 using Qentem::Engine::Flags;
+using Qentem::Engine::MatchBit;
 
 struct TestBit {
     UNumber             Line = 0;
@@ -41,7 +43,7 @@ static void CleanBits(Array<TestBit> &bits) noexcept {
 static String Replace(const char *content, UNumber length, const char *_find, const char *_replace) {
     static Expression find_key;
 
-    find_key.SetKeyword(_find);
+    find_key.SetHead(_find);
     find_key.SetReplace(_replace);
 
     return Engine::Parse(Engine::Match(Expressions().Add(&find_key), content, 0, length), content, 0, length);
@@ -61,10 +63,10 @@ static String ReplaceNewLine(const char *content, UNumber length, const char *_r
     find_key4.SetReplace(_replace);
 
     if (find_keys.Size == 0) { // Caching
-        find_key1.SetKeyword("\n");
-        find_key2.SetKeyword("\r");
-        find_key3.SetKeyword("\t");
-        find_key4.SetKeyword("    ");
+        find_key1.SetHead("\n");
+        find_key2.SetHead("\r");
+        find_key3.SetHead("\t");
+        find_key4.SetHead("    ");
         find_keys.Add(&find_key1).Add(&find_key2).Add(&find_key3).Add(&find_key4);
     }
 
@@ -366,9 +368,6 @@ static Array<TestBit> GetEngineBits() noexcept {
     Expression *x1;
     Expression *x2;
     Expression *x3;
-    Expression *y1;
-    Expression *y2;
-    Expression *y3;
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -376,7 +375,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("*").Add(" ** ").Add("* * * *");
 
     Memory::AllocateBit<Expression>(&x1);
-    x1->SetKeyword("-");
+    x1->SetHead("-");
     x1->SetReplace("*");
 
     bit.Expres.Add(x1);
@@ -389,12 +388,11 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("****");
 
     Memory::AllocateBit<Expression>(&x1);
-    x1->SetKeyword("-");
+    x1->SetHead("-");
+    x1->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String { return "*"; });
 
     Memory::AllocateBit<Expression>(&x2);
-    x2->SetKeyword("--");
-
-    x1->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String { return "*"; });
+    x2->SetHead("--");
 
     bit.Expres.Add(x1).Add(x2);
     bit.Collect.Add(x1).Add(x2);
@@ -406,25 +404,22 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add(" 1-1 ").Add(" 1-2 ").Add(" 1-6 ");
 
     Memory::AllocateBit<Expression>(&x1);
-    x1->SetKeyword("-");
+    x1->SetHead("-");
 
     Memory::AllocateBit<Expression>(&x2);
-    x2->SetKeyword("--");
+    x2->SetHead("--");
 
     Memory::AllocateBit<Expression>(&x3);
-    x3->SetKeyword("{{{");
+    x3->SetHead("{{{");
+    x3->SetTail("}}");
 
-    Memory::AllocateBit<Expression>(&y3);
-    y3->SetKeyword("}}");
-    x3->Connected = y3;
-
-    x1->ParseCB = x2->ParseCB = y3->ParseCB =
+    x1->ParseCB = x2->ParseCB = x3->ParseCB =
         ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
             return String::FromNumber(item.Offset) + "-" + String::FromNumber(item.Length);
         });
 
     bit.Expres.Add(x2).Add(x1).Add(x3);
-    bit.Collect.Add(x1).Add(x2).Add(x3).Add(y3);
+    bit.Collect.Add(x1).Add(x2).Add(x3);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -436,14 +431,12 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("<a").Add("a<aa").Add("- a").Add("a -").Add("a - a").Add("a  -  a");
 
     Memory::AllocateBit<Expression>(&x1);
-    Memory::AllocateBit<Expression>(&y1);
-    x1->SetKeyword("<");
-    y1->SetKeyword(">");
-    x1->Connected = y1;
-    y1->SetReplace("-");
+    x1->SetHead("<");
+    x1->SetTail(">");
+    x1->SetReplace("-");
 
     bit.Expres.Add(x1);
-    bit.Collect.Add(x1).Add(y1);
+    bit.Collect.Add(x1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -455,14 +448,12 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("<<a").Add("a<<aa").Add("- a").Add("a -").Add("a - a").Add("a  -  a");
 
     Memory::AllocateBit<Expression>(&x1);
-    Memory::AllocateBit<Expression>(&y1);
-    x1->SetKeyword("<<");
-    y1->SetKeyword(">");
-    x1->Connected = y1;
-    y1->SetReplace("-");
+    x1->SetHead("<<");
+    x1->SetTail(">");
+    x1->SetReplace("-");
 
     bit.Expres.Add(x1);
-    bit.Collect.Add(x1).Add(y1);
+    bit.Collect.Add(x1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -474,21 +465,17 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("<a").Add("a<aa").Add("- a").Add("a -").Add("a - a").Add("a {8} -  a");
 
     Memory::AllocateBit<Expression>(&x1);
-    Memory::AllocateBit<Expression>(&y1);
-    Memory::AllocateBit<Expression>(&x2);
-    Memory::AllocateBit<Expression>(&y2);
+    x1->SetHead("<");
+    x1->SetTail(">>");
+    x1->SetReplace("-");
 
-    x1->SetKeyword("<");
-    y1->SetKeyword(">>");
-    x1->Connected = y1;
-    x2->SetKeyword("{");
-    y2->SetKeyword("}");
-    y2->Flag      = Flags::IGNORE;
-    x2->Connected = y2;
-    y1->SetReplace("-");
+    Memory::AllocateBit<Expression>(&x2);
+    x2->SetHead("{");
+    x2->SetTail("}");
+    x2->Flag = Flags::IGNORE;
 
     bit.Expres.Add(x1).Add(x2);
-    bit.Collect.Add(x1).Add(x2).Add(y1).Add(y2);
+    bit.Collect.Add(x1).Add(x2);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -500,14 +487,12 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("<<a").Add("a<<aa").Add("- a").Add("a -").Add("a - a").Add("a  -  a");
 
     Memory::AllocateBit<Expression>(&x1);
-    Memory::AllocateBit<Expression>(&y1);
-    x1->SetKeyword("<<");
-    y1->SetKeyword(">>");
-    x1->Connected = y1;
-    y1->SetReplace("-");
+    x1->SetHead("<<");
+    x1->SetTail(">>");
+    x1->SetReplace("-");
 
     bit.Expres.Add(x1);
-    bit.Collect.Add(x1).Add(y1);
+    bit.Collect.Add(x1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -517,14 +502,12 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("<").Add("->-").Add("=").Add("=o>").Add("==o>").Add("===");
 
     Memory::AllocateBit<Expression>(&x1);
-    Memory::AllocateBit<Expression>(&y1);
-    x1->SetKeyword("<");
-    y1->SetKeyword(">");
-    x1->Connected = y1;
-    y1->SetReplace("=");
+    x1->SetHead("<");
+    x1->SetTail(">");
+    x1->SetReplace("=");
 
     bit.Expres.Add(x1);
-    bit.Collect.Add(x1).Add(y1);
+    bit.Collect.Add(x1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -534,15 +517,13 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("=").Add("=<>").Add("=<><>");
 
     Memory::AllocateBit<Expression>(&x1);
-    Memory::AllocateBit<Expression>(&y1);
-    x1->SetKeyword("<");
-    y1->SetKeyword(">");
-    x1->Connected = y1;
-    y1->Flag      = Flags::ONCE;
-    y1->SetReplace("=");
+    x1->SetHead("<");
+    x1->SetTail(">");
+    x1->SetReplace("=");
+    x1->Flag = Flags::ONCE;
 
     bit.Expres.Add(x1);
-    bit.Collect.Add(x1).Add(y1);
+    bit.Collect.Add(x1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -562,15 +543,13 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("==== ><");
 
     Memory::AllocateBit<Expression>(&x1);
-    Memory::AllocateBit<Expression>(&y1);
-    x1->SetKeyword("<");
-    y1->SetKeyword(">");
-    x1->Connected = y1;
-    y1->SetReplace("=");
-    y1->NestExpres.Add(x1);
+    x1->SetHead("<");
+    x1->SetTail(">");
+    x1->SetReplace("=");
+    x1->NestExpres.Add(x1);
 
     bit.Expres.Add(x1);
-    bit.Collect.Add(x1).Add(y1);
+    bit.Collect.Add(x1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -583,15 +562,13 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("W").Add("<0-W").Add("<0-W").Add("<0<W").Add("W").Add("WX>X>");
 
     Memory::AllocateBit<Expression>(&x1);
-    Memory::AllocateBit<Expression>(&y1);
-    x1->SetKeyword("<0");
-    y1->SetKeyword("X>");
-    x1->Connected = y1;
-    y1->SetReplace("W");
-    y1->NestExpres.Add(x1);
+    x1->SetHead("<0");
+    x1->SetTail("X>");
+    x1->SetReplace("W");
+    x1->NestExpres.Add(x1);
 
     bit.Expres.Add(x1);
-    bit.Collect.Add(x1).Add(y1);
+    bit.Collect.Add(x1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -600,15 +577,13 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("<0W ").Add("<0W ").Add("<0<W ").Add("W ").Add(" WX>X> ");
 
     Memory::AllocateBit<Expression>(&x1);
-    Memory::AllocateBit<Expression>(&y1);
-    x1->SetKeyword("<0");
-    y1->SetKeyword("X>");
-    x1->Connected = y1;
-    y1->SetReplace("W");
-    y1->NestExpres.Add(x1);
+    x1->SetHead("<0");
+    x1->SetTail("X>");
+    x1->SetReplace("W");
+    x1->NestExpres.Add(x1);
 
     bit.Expres.Add(x1);
-    bit.Collect.Add(x1).Add(y1);
+    bit.Collect.Add(x1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -622,15 +597,13 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("++++ ><<");
 
     Memory::AllocateBit<Expression>(&x1);
-    Memory::AllocateBit<Expression>(&y1);
-    x1->SetKeyword("<<");
-    y1->SetKeyword(">");
-    x1->Connected = y1;
-    y1->SetReplace("+");
-    y1->NestExpres.Add(x1);
+    x1->SetHead("<<");
+    x1->SetTail(">");
+    x1->SetReplace("+");
+    x1->NestExpres.Add(x1);
 
     bit.Expres.Add(x1);
-    bit.Collect.Add(x1).Add(y1);
+    bit.Collect.Add(x1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -642,15 +615,13 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("____ >><");
 
     Memory::AllocateBit<Expression>(&x1);
-    Memory::AllocateBit<Expression>(&y1);
-    x1->SetKeyword("<");
-    y1->SetKeyword(">>");
-    x1->Connected = y1;
-    y1->SetReplace("_");
-    y1->NestExpres.Add(x1);
+    x1->SetHead("<");
+    x1->SetTail(">>");
+    x1->SetReplace("_");
+    x1->NestExpres.Add(x1);
 
     bit.Expres.Add(x1);
-    bit.Collect.Add(x1).Add(y1);
+    bit.Collect.Add(x1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -662,15 +633,13 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("____ >><<");
 
     Memory::AllocateBit<Expression>(&x1);
-    Memory::AllocateBit<Expression>(&y1);
-    x1->SetKeyword("<<");
-    y1->SetKeyword(">>");
-    x1->Connected = y1;
-    y1->SetReplace("_");
-    y1->NestExpres.Add(x1);
+    x1->SetHead("<<");
+    x1->SetTail(">>");
+    x1->SetReplace("_");
+    x1->NestExpres.Add(x1);
 
     bit.Expres.Add(x1);
-    bit.Collect.Add(x1).Add(y1);
+    bit.Collect.Add(x1);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -682,23 +651,20 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("(0)(1)((2-0)((2-1-0)(2-1-1)((2-1-2-0)(2-1-2-1)(2-1-2-2)(2-1-2-3)))(2-2)(2-3))(3) ><");
 
     Memory::AllocateBit<Expression>(&x1);
-    Memory::AllocateBit<Expression>(&y1);
-    x1->SetKeyword("<");
-    y1->SetKeyword(">");
-    x1->Connected = y1;
-    y1->Flag      = Flags::BUBBLE;
-    y1->NestExpres.Add(x1);
-
-    bit.Expres.Add(x1);
-    bit.Collect.Add(x1).Add(y1);
-    bits += static_cast<TestBit &&>(bit);
-
-    y1->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
+    x1->SetHead("<");
+    x1->SetTail(">");
+    x1->Flag = Flags::BUBBLE;
+    x1->NestExpres.Add(x1);
+    x1->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
         String nc = "(";
         nc += String::Part(block, 1, (length - 2));
         nc += ")";
         return nc;
     });
+
+    bit.Expres.Add(x1);
+    bit.Collect.Add(x1);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -709,34 +675,22 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("=(6A+9)==(6A+9)=");
 
     Memory::AllocateBit<Expression>(&x1);
-    Memory::AllocateBit<Expression>(&y1);
-    x1->SetKeyword("(");
-    y1->SetKeyword(")");
-    x1->Connected = y1;
-    y1->Flag      = Flags::BUBBLE;
-
-    Memory::AllocateBit<Expression>(&x2);
-    Memory::AllocateBit<Expression>(&y2);
-    x2->SetKeyword("<");
-    y2->SetKeyword(">");
-    x2->Connected = y2;
-    y2->Flag      = Flags::BUBBLE;
-    y2->NestExpres.Add(x2); // Nest itself
-
-    y1->NestExpres.Add(x2); // Nested by x2
-
-    bit.Expres.Add(x1);
-    bit.Collect.Add(x1).Add(x2).Add(y1).Add(y2);
-    bits += static_cast<TestBit &&>(bit);
-
-    y1->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
+    x1->SetHead("(");
+    x1->SetTail(")");
+    x1->Flag    = Flags::BUBBLE;
+    x1->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
         String nc = "=";
         nc += block;
         nc += "=";
         return nc;
     });
 
-    y2->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
+    Memory::AllocateBit<Expression>(&x2);
+    x2->SetHead("<");
+    x2->SetTail(">");
+    x2->Flag = Flags::BUBBLE;
+    x2->NestExpres.Add(x2); // Nest itself
+    x2->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
         if (String::Compare(block, "<3-U>")) {
             return "A";
         }
@@ -751,6 +705,12 @@ static Array<TestBit> GetEngineBits() noexcept {
 
         return "err";
     });
+
+    x1->NestExpres.Add(x2); // Nested by x2
+
+    bit.Expres.Add(x1);
+    bit.Collect.Add(x1).Add(x2);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -759,43 +719,27 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("[(u)]").Add("(u)").Add("u");
 
     Memory::AllocateBit<Expression>(&x1);
-    Memory::AllocateBit<Expression>(&y1);
-    x1->SetKeyword("[");
-    y1->SetKeyword("]");
-    x1->Connected = y1;
-    x1->Flag      = Flags::POP;
-    y1->Flag      = Flags::BUBBLE;
-    y1->ParseCB   = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
-        //
-        return block;
-    });
+    x1->SetHead("[");
+    x1->SetTail("]");
+    x1->Flag    = Flags::POP | Flags::BUBBLE;
+    x1->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String { return block; });
 
     Memory::AllocateBit<Expression>(&x2);
-    Memory::AllocateBit<Expression>(&y2);
-    x2->SetKeyword("(");
-    y2->SetKeyword(")");
-    x2->Flag      = Flags::POP;
-    y2->Flag      = Flags::BUBBLE;
-    x2->Connected = y2;
-    y2->ParseCB   = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
-        //
-        return block;
-    });
+    x2->SetHead("(");
+    x2->SetTail(")");
+    x2->Flag    = Flags::POP | Flags::BUBBLE;
+    x2->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String { return block; });
 
     Memory::AllocateBit<Expression>(&x3);
-    Memory::AllocateBit<Expression>(&y3);
-    x3->SetKeyword("<");
-    y3->SetKeyword(">");
-    x3->Connected = y3;
-    y3->SetReplace("u");
+    x3->SetHead("<");
+    x3->SetTail(">");
+    x3->SetReplace("u");
 
     x1->NestExpres.Add(x2);
-    y1->NestExpres.Add(x2);
     x2->NestExpres.Add(x3);
-    y2->NestExpres.Add(x3);
 
     bit.Expres.Add(x1);
-    bit.Collect.Add(x1).Add(x2).Add(x3).Add(y1).Add(y2).Add(y3);
+    bit.Collect.Add(x1).Add(x2).Add(x3);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -805,17 +749,15 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("0<>2<>4<>").Add("3<>8").Add("4<>10<>16").Add("4<>10<>16<>22");
 
     Memory::AllocateBit<Expression>(&x1);
-    x1->SetKeyword("<>");
-    x1->Flag = Flags::SPLIT;
-
-    bit.Expres.Add(x1);
-    bit.Collect.Add(x1);
-
-    bits += static_cast<TestBit &&>(bit);
-
+    x1->SetHead("<>");
+    x1->Flag    = Flags::SPLIT;
     x1->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
         return String::FromNumber(item.Offset + item.Length);
     });
+
+    bit.Expres.Add(x1);
+    bit.Collect.Add(x1);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -826,22 +768,14 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("233").Add("133").Add("0").Add("1111").Add("3566");
 
     Memory::AllocateBit<Expression>(&x1);
-    x1->SetKeyword("+");
+    x1->SetHead("+");
     x1->Flag = Flags::SPLIT | Flags::TRIM;
 
-    Memory::AllocateBit<Expression>(&y1);
-    Memory::AllocateBit<Expression>(&y2);
-    y1->SetKeyword("(");
-    y2->SetKeyword(")");
-    y2->NestExpres.Add(x1);
-    y1->Connected = y2;
-
-    bit.Expres.Add(y1);
-    bit.Collect.Add(x1).Add(y1).Add(y2);
-
-    bits += static_cast<TestBit &&>(bit);
-
-    y2->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
+    Memory::AllocateBit<Expression>(&x2);
+    x2->SetHead("(");
+    x2->SetTail(")");
+    x2->NestExpres.Add(x1);
+    x2->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
         double number = 0.0;
 
         if (item.NestMatch.Size != 0) {
@@ -868,6 +802,10 @@ static Array<TestBit> GetEngineBits() noexcept {
 
         return "0";
     });
+
+    bit.Expres.Add(x2);
+    bit.Collect.Add(x1).Add(x2);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -876,18 +814,8 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("82").Add("26").Add("28").Add("3");
 
     Memory::AllocateBit<Expression>(&x1);
-    x1->SetKeyword("+");
-    x1->Flag = Flags::SPLIT | Flags::GROUPED;
-
-    Memory::AllocateBit<Expression>(&x2);
-    x2->SetKeyword("*");
-    x2->Flag = Flags::SPLIT | Flags::GROUPED;
-
-    x1->NestExpres.Add(x2);
-    bit.Expres.Add(x1);
-    bit.Collect.Add(x1).Add(x2);
-    bits += static_cast<TestBit &&>(bit);
-
+    x1->SetHead("+");
+    x1->Flag    = Flags::SPLIT | Flags::GROUPED;
     x1->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
         double number = 0.0;
         double temnum = 0.0;
@@ -912,6 +840,9 @@ static Array<TestBit> GetEngineBits() noexcept {
         return String::FromNumber(number);
     });
 
+    Memory::AllocateBit<Expression>(&x2);
+    x2->SetHead("*");
+    x2->Flag    = Flags::SPLIT | Flags::GROUPED;
     x2->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
         double number = 1.0;
         double temnum = 1.0;
@@ -927,6 +858,11 @@ static Array<TestBit> GetEngineBits() noexcept {
         }
         return String::FromNumber(number);
     });
+
+    x1->NestExpres.Add(x2);
+    bit.Expres.Add(x1);
+    bit.Collect.Add(x1).Add(x2);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -937,21 +873,14 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("233").Add("133").Add("0").Add("0").Add("3566");
 
     Memory::AllocateBit<Expression>(&x1);
-    x1->SetKeyword("++");
+    x1->SetHead("++");
     x1->Flag = Flags::SPLIT | Flags::TRIM;
 
-    Memory::AllocateBit<Expression>(&y1);
-    Memory::AllocateBit<Expression>(&y2);
-    y1->SetKeyword("(");
-    y2->SetKeyword(")");
-    y2->NestExpres.Add(x1);
-    y1->Connected = y2;
-
-    bit.Expres.Add(y1);
-    bit.Collect.Add(x1).Add(y1).Add(y2);
-    bits += static_cast<TestBit &&>(bit);
-
-    y2->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
+    Memory::AllocateBit<Expression>(&x2);
+    x2->SetHead("(");
+    x2->SetTail(")");
+    x2->NestExpres.Add(x1);
+    x2->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
         double number = 0.0;
         double temnum = 0.0;
 
@@ -966,6 +895,10 @@ static Array<TestBit> GetEngineBits() noexcept {
         }
         return String::FromNumber(number);
     });
+
+    bit.Expres.Add(x2);
+    bit.Collect.Add(x1).Add(x2);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -977,27 +910,8 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("120").Add("148601");
 
     Memory::AllocateBit<Expression>(&x1);
-    x1->SetKeyword("+");
-    x1->Flag = Flags::SPLIT | Flags::GROUPED;
-
-    Memory::AllocateBit<Expression>(&x2);
-    x2->SetKeyword("x");
-    x2->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
-        //
-        return "3";
-    });
-
-    Memory::AllocateBit<Expression>(&x3);
-    x3->SetKeyword("y");
-    x3->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
-        //
-        return "7";
-    });
-
-    bit.Expres.Add(x1).Add(x2).Add(x3);
-    bit.Collect.Add(x1).Add(x2).Add(x3);
-    bits += static_cast<TestBit &&>(bit);
-
+    x1->SetHead("+");
+    x1->Flag    = Flags::SPLIT | Flags::GROUPED;
     x1->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
         double number = 0.0;
         double temnum = 0.0;
@@ -1022,6 +936,18 @@ static Array<TestBit> GetEngineBits() noexcept {
         }
         return String::FromNumber(number);
     });
+
+    Memory::AllocateBit<Expression>(&x2);
+    x2->SetHead("x");
+    x2->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String { return "3"; });
+
+    Memory::AllocateBit<Expression>(&x3);
+    x3->SetHead("y");
+    x3->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String { return "7"; });
+
+    bit.Expres.Add(x1).Add(x2).Add(x3);
+    bit.Collect.Add(x1).Add(x2).Add(x3);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -1030,24 +956,9 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("AABBCC");
 
     Memory::AllocateBit<Expression>(&x1);
-    Memory::AllocateBit<Expression>(&y1);
-    x1->SetKeyword("{");
-    y1->SetKeyword("}");
-    x1->Connected = y1;
-
-    Memory::AllocateBit<Expression>(&x2);
-    Memory::AllocateBit<Expression>(&y2);
-    x2->SetKeyword("xx");
-    y2->SetKeyword("yyy");
-    y2->Flag      = Flags::SPLIT;
-    x2->Connected = y2;
-
-    y1->NestExpres.Add(x2);
-    bit.Expres.Add(x1);
-    bit.Collect.Add(x1).Add(x2).Add(y1).Add(y2);
-    bits += static_cast<TestBit &&>(bit);
-
-    y1->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
+    x1->SetHead("{");
+    x1->SetTail("}");
+    x1->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
         String nc = "";
 
         for (UNumber i = 0; i < item.NestMatch.Size; i++) {
@@ -1056,7 +967,17 @@ static Array<TestBit> GetEngineBits() noexcept {
 
         return nc;
     });
-    // ///////////////////////////////////////////
+
+    Memory::AllocateBit<Expression>(&x2);
+    x2->SetHead("xx");
+    x2->SetTail("yyy");
+    x2->Flag = Flags::SPLIT;
+    x1->NestExpres.Add(x2);
+
+    bit.Expres.Add(x1);
+    bit.Collect.Add(x1).Add(x2);
+    bits += static_cast<TestBit &&>(bit);
+    ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
 
@@ -1070,20 +991,17 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("[[[ox]c][b[ter][ox]d]w]");
 
     Memory::AllocateBit<Expression>(&x1);
-    Memory::AllocateBit<Expression>(&y1);
-    x1->SetKeyword("{-");
-    y1->SetKeyword("-}");
-    x1->Connected = y1;
+    x1->SetHead("{-");
+    x1->SetTail("-}");
+    x1->ParseCB = &(FlipSplit);
 
     Memory::AllocateBit<Expression>(&x2);
     x2->Flag = Flags::SPLIT;
-    x2->SetKeyword("#");
+    x2->SetHead("#");
+    x1->NestExpres.Add(x1).Add(x2);
 
-    y1->ParseCB = &(FlipSplit);
-
-    y1->NestExpres.Add(x1).Add(x2);
     bit.Expres.Add(x1);
-    bit.Collect.Add(x1).Add(x2).Add(y1);
+    bit.Collect.Add(x1).Add(x2);
     bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
@@ -1093,23 +1011,11 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("{}").Add("{  }").Add("x").Add("x").Add("").Add("abcd");
 
     Memory::AllocateBit<Expression>(&x1);
-    Memory::AllocateBit<Expression>(&y1);
-    Memory::AllocateBit<Expression>(&x2);
-
-    x1->SetKeyword("{");
-    y1->SetKeyword("}");
-    x1->Connected = y1;
-    y1->Flag      = Flags::BUBBLE | Flags::TRIM | Flags::DROPEMPTY;
-    y1->NestExpres.Add(x1);
-
-    x2->SetKeyword("&");
-    x2->Flag = Flags::SPLIT | Flags::GROUPED | Flags::TRIM | Flags::DROPEMPTY;
-
-    bit.Expres.Add(x1).Add(x2);
-    bit.Collect.Add(x1).Add(x2).Add(y1);
-    bits += static_cast<TestBit &&>(bit);
-
-    y1->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
+    x1->SetHead("{");
+    x1->SetTail("}");
+    x1->Flag = Flags::BUBBLE | Flags::TRIM | Flags::DROPEMPTY;
+    x1->NestExpres.Add(x1);
+    x1->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
         if (length > 2) {
             UNumber start = 1;
             UNumber limit = length - 2;
@@ -1123,6 +1029,9 @@ static Array<TestBit> GetEngineBits() noexcept {
         return block;
     });
 
+    Memory::AllocateBit<Expression>(&x2);
+    x2->SetHead("&");
+    x2->Flag    = Flags::SPLIT | Flags::GROUPED | Flags::TRIM | Flags::DROPEMPTY;
     x2->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
         String nc = "";
 
@@ -1132,6 +1041,10 @@ static Array<TestBit> GetEngineBits() noexcept {
 
         return nc;
     });
+
+    bit.Expres.Add(x1).Add(x2);
+    bit.Collect.Add(x1).Add(x2);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -1140,26 +1053,20 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("<div>ae(str0)</diva>");
 
     Memory::AllocateBit<Expression>(&x1);
-    Memory::AllocateBit<Expression>(&y1);
-
-    y1->Flag = Flags::BUBBLE;
-
-    x1->SetKeyword("<div>");
-    y1->SetKeyword("</div>");
-
-    x1->Connected = y1;
-    y1->NestExpres.Add(x1);
-
-    bit.Expres.Add(x1);
-    bit.Collect.Add(x1).Add(y1);
-    bits += static_cast<TestBit &&>(bit);
-
-    y1->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
+    x1->SetHead("<div>");
+    x1->SetTail("</div>");
+    x1->Flag = Flags::BUBBLE;
+    x1->NestExpres.Add(x1);
+    x1->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
         String nc = "(";
         nc += String::Part(block, 5, (length - 11));
         nc += ")";
         return nc;
     });
+
+    bit.Expres.Add(x1);
+    bit.Collect.Add(x1);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -1168,16 +1075,7 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("-0");
 
     Memory::AllocateBit<Expression>(&x1);
-    Memory::AllocateBit<Expression>(&x2);
-
-    x1->SetKeyword("}");
-    x2->SetKeyword("-");
-    x2->SetReplace("1");
-
-    bit.Expres.Add(x1).Add(x2);
-    bit.Collect.Add(x1).Add(x2);
-    bits += static_cast<TestBit &&>(bit);
-
+    x1->SetHead("}");
     x1->MatchCB =
         ([](const char *content, UNumber &offset, const UNumber endOffset, MatchBit &item, Array<MatchBit> &items) noexcept -> void {
             if (content[offset] == '-') {
@@ -1186,6 +1084,14 @@ static Array<TestBit> GetEngineBits() noexcept {
                 items += static_cast<MatchBit &&>(item);
             }
         });
+
+    Memory::AllocateBit<Expression>(&x2);
+    x2->SetHead("-");
+    x2->SetReplace("1");
+
+    bit.Expres.Add(x1).Add(x2);
+    bit.Collect.Add(x1).Add(x2);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -1194,14 +1100,8 @@ static Array<TestBit> GetEngineBits() noexcept {
     bit.Expected.Add("//").Add("////").Add("/r").Add("// r");
 
     Memory::AllocateBit<Expression>(&x1);
-
-    x1->SetKeyword("/");
+    x1->SetHead("/");
     x1->SetReplace("//");
-
-    bit.Expres.Add(x1);
-    bit.Collect.Add(x1);
-    bits += static_cast<TestBit &&>(bit);
-
     x1->MatchCB =
         ([](const char *content, UNumber &offset, const UNumber endOffset, MatchBit &item, Array<MatchBit> &items) noexcept -> void {
             if ((content[offset] == '/') || (content[offset] == ' ') || (offset == endOffset)) {
@@ -1209,6 +1109,10 @@ static Array<TestBit> GetEngineBits() noexcept {
                 items += static_cast<MatchBit &&>(item);
             }
         });
+
+    bit.Expres.Add(x1);
+    bit.Collect.Add(x1);
+    bits += static_cast<TestBit &&>(bit);
     ///////////////////////////////////////////
     bit      = TestBit();
     bit.Line = __LINE__;
@@ -1220,39 +1124,28 @@ static Array<TestBit> GetEngineBits() noexcept {
     Memory::AllocateBit<Expression>(&x2);
     Memory::AllocateBit<Expression>(&x3);
 
-    Memory::AllocateBit<Expression>(&y1);
-    Memory::AllocateBit<Expression>(&y2);
-    Memory::AllocateBit<Expression>(&y3);
+    x1->SetHead("{");
+    x1->SetTail("}");
+    x1->Flag = Flags::BUBBLE;
+    x1->NestExpres += x1;
+    x1->NestExpres += x2;
+    x1->NestExpres += x3;
+    x1->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String { return block; });
 
-    x1->SetKeyword("{");
-    y1->SetKeyword("}");
-    x1->Connected = y1;
-    y1->Flag      = Flags::BUBBLE;
-    y1->NestExpres += x1;
-    y1->NestExpres += x2;
-    y1->NestExpres += x3;
+    x2->SetHead("'");
+    x2->SetTail("'");
+    x2->SetReplace("X");
 
-    x2->SetKeyword("'");
-    y2->SetKeyword("'");
-    y2->SetReplace("X");
-    x2->Connected = y2;
-
-    x3->SetKeyword("[");
-    y3->SetKeyword("]");
-    y3->SetReplace("1");
-    x3->Connected = y3;
-    y3->NestExpres += x1;
-    y3->NestExpres += x2;
-    y3->NestExpres += x3;
+    x3->SetHead("[");
+    x3->SetTail("]");
+    x3->SetReplace("1");
+    x3->NestExpres += x1;
+    x3->NestExpres += x2;
+    x3->NestExpres += x3;
 
     bit.Expres.Add(x1);
-    bit.Collect.Add(x1).Add(x2).Add(x3).Add(y1).Add(y2).Add(y3);
+    bit.Collect.Add(x1).Add(x2).Add(x3);
     bits += static_cast<TestBit &&>(bit);
-
-    y1->ParseCB = ([](const char *block, const MatchBit &item, const UNumber length, void *ptr) noexcept -> String {
-        //
-        return block;
-    });
     ///////////////////////////////////////////
     return bits;
 }

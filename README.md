@@ -1,4 +1,4 @@
-# Qentem Engine (v1.5.1)
+# Qentem Engine (v1.5.2)
 
 ## Introduction
 Qentem Engine is an independent library that uses a fast algorithm for nest-matching. It can be used to match existing syntaxes or new ones, and with call-backs for post and per-parsing, It's posable to match almost any complex syntax. It is very efficient and has a small footprint on memory, and it's built using modern C++. It can be used to render complex templates that contains nested loop, nested if-else, inline if, math (+ * / - ^ %), logic (&& ||), and/or something simple: like replacing a text or splitting it. Also, it is capable of doing JSON, XML/HTML.
@@ -132,7 +132,7 @@ print(q_render(tempale.encode('UTF-8'),
 ```
 
 #### HTML, JavaScript and WebAssembly
-[JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/releases/download/v1.5.0/JQen.zip)
+[JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/releases/download/v1.5.2/JQen.zip)
 
 ## Compiling
 
@@ -148,7 +148,7 @@ c++ -O3 -shared -fPIC -I ./Source ./Example/QLib.cpp -o ./Build/QLib.so
 ```
 
 #### Windows
-Run QDLL.vcxproj (Visual Studio file).
+Use QDLL.vcxproj (Visual Studio file).
 
 ### QLib (WebAssembly using Emscripten):
 ```txt

@@ -47,14 +47,11 @@ static const Expressions &getXMLExpres() noexcept {
     static Expressions expres(1);
 
     if (expres.Size == 0) {
-        static Expression tag_end;
-        tag_end.SetKeyword(">");
+        static Expression tag;
+        tag.SetHead("<");
+        tag.SetTail(">");
 
-        static Expression tag_start;
-        tag_start.SetKeyword("<");
-        tag_start.Connected = &tag_end;
-
-        expres += &tag_start;
+        expres += &tag;
     }
 
     return expres;
@@ -65,21 +62,19 @@ static const Expressions &getPropertiesExpres() noexcept {
 
     if (expres.Size == 0) {
         static Expression equal;
-        equal.SetKeyword("=");
+        equal.SetHead("=");
         equal.Flag = Flags::SPLIT | Flags::DROPEMPTY;
 
         static Expression space;
-        space.SetKeyword(" ");
+        space.SetHead(" ");
         space.Flag    = Flags::SPLIT | Flags::DROPEMPTY;
         space.MatchCB = &(InfinitSpaceCallback);
 
-        static Expression quot_end;
-        quot_end.SetKeyword("\"");
-        quot_end.Flag = Flags::IGNORE;
-
         static Expression quot;
-        quot.SetKeyword("\"");
-        quot.Connected = &quot_end;
+        quot.SetHead("\"");
+        quot.Tail    = quot.Head;
+        quot.TLength = quot.HLength;
+        quot.Flag    = Flags::IGNORE;
 
         expres.Add(&equal).Add(&quot).Add(&space);
     }

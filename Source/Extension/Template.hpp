@@ -168,7 +168,7 @@ static String Repeat(const char *block, const UNumber offset, const UNumber limi
                      const MatchBit *set_, void *other) noexcept {
     Expressions loop_expres(2);
 
-    if (key_expr.Keyword != nullptr) {
+    if (key_expr.Head != nullptr) {
         loop_expres.Add(&key_expr);
     }
 
@@ -188,7 +188,7 @@ static String Repeat(const char *block, const UNumber offset, const UNumber limi
         for (UNumber i = 0; i < storage->Entries.Size; i++) {
             entry = &(storage->Entries[i]);
 
-            if (key_expr.Keyword != nullptr) {
+            if (key_expr.Head != nullptr) {
                 if (storage->Ordered) {
                     key                  = String::FromNumber(i);
                     key_expr.ReplaceWith = key.Str;
@@ -272,21 +272,21 @@ static String RenderLoop(const char *block, const MatchBit &item, const UNumber 
                     }
 
                     if (block[start_at] == 'e') { // valu[e]
-                        value_expr.Keyword = &(block[(m->Offset + 1)]);
-                        value_expr.Length  = (m->Length - 2);
+                        value_expr.Head    = &(block[(m->Offset + 1)]);
+                        value_expr.HLength = (m->Length - 2);
                         break;
                     }
 
                     if (block[start_at] == 'y') { // ke[y]
-                        key_expr.Keyword = &(block[(m->Offset + 1)]);
-                        key_expr.Length  = (m->Length - 2);
+                        key_expr.Head    = &(block[(m->Offset + 1)]);
+                        key_expr.HLength = (m->Length - 2);
                         break;
                     }
                 }
             }
         }
 
-        if ((value_expr.Keyword != nullptr) && (set_ != nullptr)) {
+        if ((value_expr.Head != nullptr) && (set_ != nullptr)) {
             String n_content(Repeat(block, (sm->Offset + sm->Length), (item.Length - (sm->Length + 7)), key_expr, value_expr, set_, other));
             return Render(n_content.Str, 0, n_content.Length, other);
         }
@@ -300,14 +300,11 @@ static const Expressions &getVarExpres() noexcept {
 
     if (expres.Size == 0) {
         // {v:var_name}
-        static Expression var_end;
-        var_end.SetKeyword("}");
-        var_end.Flag    = Flags::TRIM;
-        var_end.ParseCB = &(Template::RenderVar);
-
         static Expression var_;
-        var_.SetKeyword("{v:");
-        var_.Connected = &var_end;
+        var_.SetHead("{v:");
+        var_.SetTail("}");
+        var_.Flag    = Flags::TRIM;
+        var_.ParseCB = &(Template::RenderVar);
 
         expres.Add(&var_);
     }
@@ -319,12 +316,9 @@ static const Expressions &getQuotesExpres() noexcept {
     static Expressions expres(1);
 
     if (expres.Size == 0) {
-        static Expression quote_end;
-        quote_end.SetKeyword("\"");
-
         static Expression quote;
-        quote.SetKeyword("\"");
-        quote.Connected = &quote_end;
+        quote.SetHead("\"");
+        quote.SetTail("\"");
 
         expres.Add(&quote);
     }
@@ -336,15 +330,12 @@ static const Expressions &getHeadExpres() noexcept {
     static Expressions expres(1);
 
     if (expres.Size == 0) {
-        static Expression tag_head_end;
-        tag_head_end.SetKeyword(">");
-        tag_head_end.Flag = Flags::ONCE;
-        // Nest to prevent matching ">" bigger sign inside if statement.
-        tag_head_end.NestExpres = getQuotesExpres();
-
         static Expression tag_head;
-        tag_head.SetKeyword("<");
-        tag_head.Connected = &tag_head_end;
+        tag_head.SetHead("<");
+        tag_head.SetTail(">");
+        tag_head.Flag = Flags::ONCE;
+        // Nest to prevent matching ">" bigger sign inside if statement.
+        tag_head.NestExpres = getQuotesExpres();
         expres.Add(&tag_head);
     }
 
@@ -356,86 +347,64 @@ static const Expressions &getExpres() noexcept {
 
     if (expres.Size == 0) {
         //{iif case="3 == 3" true="Yes" false="No"}
-        static Expression tag_iif_end;
-        tag_iif_end.SetKeyword("}");
-        tag_iif_end.Flag    = Flags::BUBBLE;
-        tag_iif_end.ParseCB = &(Template::RenderIIF);
-        tag_iif_end.NestExpres.SetCapacity(1);
-        tag_iif_end.NestExpres.Add(getVarExpres());
-
         static Expression tag_iif;
-        tag_iif.SetKeyword("{iif");
-        tag_iif.Connected = &tag_iif_end;
+        tag_iif.SetHead("{iif");
+        tag_iif.SetTail("}");
+        tag_iif.Flag    = Flags::BUBBLE;
+        tag_iif.ParseCB = &(Template::RenderIIF);
+        tag_iif.NestExpres.SetCapacity(1);
+        tag_iif.NestExpres.Add(getVarExpres());
         /////////////////////////////////
 
         // <else />
-        static Expression tag_else_if_end;
-        tag_else_if_end.SetKeyword("/>");
-        tag_else_if_end.Flag = Flags::SPLIT;
-
         static Expression tag_else_if;
-        tag_else_if.SetKeyword("<else");
-        tag_else_if.Connected = &tag_else_if_end;
+        tag_else_if.SetHead("<else");
+        tag_else_if.SetTail("/>");
+        tag_else_if.Flag = Flags::SPLIT;
         /////////////////////////////////
 
         // Shallow IF
         // To not match anything inside inner if until it's needed.
-        static Expression tag_empty_if_end;
-        tag_empty_if_end.SetKeyword("</if>");
-        tag_empty_if_end.Flag = Flags::IGNORE;
-
         static Expression tag_empty_if;
-        tag_empty_if.SetKeyword("<if");
-        tag_empty_if.Connected = &tag_empty_if_end;
-
-        tag_empty_if_end.NestExpres.SetCapacity(1);
-        tag_empty_if_end.NestExpres.Add(&tag_empty_if);
+        tag_empty_if.SetHead("<if");
+        tag_empty_if.SetTail("</if>");
+        tag_empty_if.Flag = Flags::IGNORE;
+        tag_empty_if.NestExpres.SetCapacity(1);
+        tag_empty_if.NestExpres.Add(&tag_empty_if);
         /////////////////////////////////
 
         // <if case="{case}">html code</if>
-        static Expression tag_if_end;
-        // tag_if_end.SetKeyword("</if>");
-        tag_if_end.Keyword = tag_empty_if_end.Keyword;
-        tag_if_end.Length  = tag_empty_if_end.Length;
-        tag_if_end.ParseCB = &(Template::RenderIF);
-
         static Expression tag_if;
-        // tag_if.SetKeyword("<if");
-        tag_if.Keyword = tag_empty_if.Keyword;
-        tag_if.Length  = tag_empty_if.Length;
-
-        tag_if.Connected = &tag_if_end;
-
-        tag_if_end.NestExpres.Add(&tag_empty_if).Add(&tag_else_if);
+        // tag_if.SetHead("<if");
+        tag_if.Head    = tag_empty_if.Head;
+        tag_if.HLength = tag_empty_if.HLength;
+        // tag_if.SetTail("</if>");
+        tag_if.Tail    = tag_empty_if.Tail;
+        tag_if.TLength = tag_empty_if.TLength;
+        tag_if.ParseCB = &(Template::RenderIF);
+        tag_if.NestExpres.Add(&tag_empty_if).Add(&tag_else_if);
         /////////////////////////////////
 
         // <loop set="abc2" var="loopId">
         //     <span>loopId): -{v:abc2[loopId]}</span>
         // </loop>
-        static Expression tag_loop_end;
-        tag_loop_end.ParseCB = &(Template::RenderLoop);
-        tag_loop_end.SetKeyword("</loop>");
-
         static Expression tag_loop;
-        tag_loop.SetKeyword("<loop");
-        tag_loop.Connected = &tag_loop_end;
-
-        tag_loop_end.NestExpres.SetCapacity(1);
-        tag_loop_end.NestExpres.Add(&tag_loop); // Nested by itself
+        tag_loop.SetHead("<loop");
+        tag_loop.SetTail("</loop>");
+        tag_loop.ParseCB = &(Template::RenderLoop);
+        tag_loop.NestExpres.SetCapacity(1);
+        tag_loop.NestExpres.Add(&tag_loop); // Nested by itself
         /////////////////////////////////
 
         // Math Tag.
         // {math:5+6*8*(8+3)}
-        static Expression tag_math_end;
-        tag_math_end.SetKeyword("}");
-        tag_math_end.Flag    = Flags::TRIM | Flags::BUBBLE;
-        tag_math_end.ParseCB = &(Template::RenderMath);
-        tag_math_end.NestExpres.SetCapacity(1);
-        tag_math_end.NestExpres.Add(getVarExpres());
-
         static Expression tag_math;
-        tag_math.SetKeyword("{math:");
-        tag_math.Connected = &tag_math_end;
+        tag_math.SetHead("{math:");
+        tag_math.SetTail("}");
+        tag_math.Flag    = Flags::TRIM | Flags::BUBBLE;
+        tag_math.ParseCB = &(Template::RenderMath);
+        tag_math.NestExpres.SetCapacity(1);
+        tag_math.NestExpres.Add(getVarExpres());
         /////////////////////////////////
 
         expres.Add(getVarExpres()).Add(&tag_math).Add(&tag_iif).Add(&tag_if).Add(&tag_loop);

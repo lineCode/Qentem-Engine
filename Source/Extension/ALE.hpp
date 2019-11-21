@@ -32,104 +32,101 @@ static const Expressions &getMathExpres() noexcept {
 
     if (expres.Size == 0) {
         static Expression i_paren;
-        static Expression i_paren_end;
 
-        i_paren_end.SetKeyword(")");
-        i_paren_end.Flag = Flags::IGNORE;
-        i_paren_end.NestExpres.SetCapacity(1);
-        i_paren_end.NestExpres.Add(&i_paren);
-
-        i_paren.SetKeyword("(");
-        i_paren.Connected = &i_paren_end;
+        i_paren.SetHead("(");
+        i_paren.SetTail(")");
+        i_paren.Flag = Flags::IGNORE;
+        i_paren.NestExpres.SetCapacity(1);
+        i_paren.NestExpres.Add(&i_paren);
         ///////////////////////////////////////////
         static Expression math_mul;
-        math_mul.SetKeyword("*");
+        math_mul.SetHead("*");
         math_mul.ID   = 2;
         math_mul.Flag = flags_no_pop;
 
         static Expression math_div;
-        math_div.SetKeyword("/");
+        math_div.SetHead("/");
         math_div.ID   = 3;
         math_div.Flag = flags_no_pop;
 
         static Expression math_exp;
-        math_exp.SetKeyword("^");
+        math_exp.SetHead("^");
         math_exp.ID   = 4;
         math_exp.Flag = flags_no_pop;
 
         static Expression math_rem;
-        math_rem.SetKeyword("%");
+        math_rem.SetHead("%");
         math_rem.ID   = 5;
         math_rem.Flag = flags_no_pop;
         ///////////////////////////////////////////
         static Expression math_add;
-        math_add.SetKeyword("+");
+        math_add.SetHead("+");
         math_add.ID   = 6;
         math_add.Flag = flags_pop;
         math_add.NestExpres.SetCapacity(5);
         math_add.NestExpres.Add(&math_mul).Add(&i_paren).Add(&math_div).Add(&math_rem).Add(&math_exp);
 
         static Expression math_sub;
-        math_sub.SetKeyword("-");
+        math_sub.SetHead("-");
         math_sub.ID         = 7;
         math_sub.Flag       = flags_no_pop;
         math_sub.NestExpres = math_add.NestExpres;
         ///////////////////////////////////////////
         static Expression equ2;
-        equ2.SetKeyword("==");
+        equ2.SetHead("==");
         equ2.ID   = 8;
         equ2.Flag = flags_pop;
         equ2.NestExpres.SetCapacity(3);
         equ2.NestExpres.Add(&math_add).Add(&i_paren).Add(&math_sub);
 
         static Expression equ;
-        equ.Keyword    = equ2.Keyword;
-        equ.Length     = 1;
+        equ.Head       = equ2.Head;
+        equ.HLength    = 1;
         equ.ID         = 9;
         equ.Flag       = flags_pop;
         equ.NestExpres = equ2.NestExpres;
 
         static Expression not_equ;
-        not_equ.SetKeyword("!=");
+        not_equ.SetHead("!=");
         not_equ.ID         = 10;
         not_equ.Flag       = flags_no_pop;
         not_equ.NestExpres = equ2.NestExpres;
 
         static Expression less_equ;
-        less_equ.SetKeyword("<=");
+        less_equ.SetHead("<=");
         less_equ.ID         = 11;
         less_equ.Flag       = flags_no_pop;
         less_equ.NestExpres = equ2.NestExpres;
 
         static Expression less;
-        less.Keyword    = less_equ.Keyword;
-        less.Length     = 1;
+        less.Head       = less_equ.Head;
+        less.HLength    = 1;
         less.ID         = 12;
         less.Flag       = flags_no_pop;
         less.NestExpres = equ2.NestExpres;
 
         static Expression big_equ;
-        big_equ.SetKeyword(">=");
+        big_equ.SetHead(">=");
         big_equ.ID         = 13;
         big_equ.Flag       = flags_no_pop;
         big_equ.NestExpres = equ2.NestExpres;
 
         static Expression big;
-        big.Keyword    = big_equ.Keyword;
-        big.Length     = 1;
+        big.Head       = big_equ.Head;
+        big.HLength    = 1;
         big.ID         = 14;
         big.Flag       = flags_no_pop;
         big.NestExpres = equ2.NestExpres;
         ///////////////////////////////////////////
         static Expression logic_and;
-        logic_and.SetKeyword("&&");
+        logic_and.SetHead("&&");
         logic_and.ID   = 15;
         logic_and.Flag = flags_pop;
         logic_and.NestExpres.SetCapacity(8);
         logic_and.NestExpres.Add(&equ2).Add(&i_paren).Add(&equ).Add(&not_equ).Add(&less_equ).Add(&less).Add(&big_equ).Add(&big);
 
         static Expression logic_or;
-        logic_or.SetKeyword("||");
+        logic_or.SetHead("||");
         logic_or.ID         = 16;
         logic_or.Flag       = flags_no_pop;
         logic_or.NestExpres = logic_and.NestExpres;

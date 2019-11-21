@@ -28,7 +28,7 @@ using Expressions = Array<Expression *>;
 // Expressions flags
 struct Flags {
     // Match()
-    static const UShort SPLIT  = 1; // Split a match at with the specified keyword.
+    static const UShort SPLIT  = 1; // Split a the match.
     static const UShort ONCE   = 2; // Will stop searching after the first match.
     static const UShort IGNORE = 4; // Igoring a match after finding it.
     static const UShort POP    = 8; // Match again with NestExpres if there is no match.
@@ -43,23 +43,30 @@ struct Flags {
 };
 /////////////////////////////////
 struct Expression {
-    UNumber           Length{0};          // Keyword length.
-    const char *      Keyword{nullptr};   // What to search for.
-    const Expression *Connected{nullptr}; // The next part of the match (the next keyword).
+    UNumber     HLength{0};    // Head length.
+    const char *Head{nullptr}; // The start of the match.
+
+    const char *Tail{nullptr}; // The end of the match.
+    UNumber     TLength{0};    // Tail length.
 
     Expressions NestExpres;       // Expressions for nesting Match().
     UShort      Flag{0};          // Flags for the expression.
     MatchCB_ *  MatchCB{nullptr}; // A callback function for a custom action on a match.
 
-    // for after match
+    // After match
     UShort      ID{0};                // Expression ID.
     ParseCB_ *  ParseCB{nullptr};     // A callback function for custom rendering.
+    UNumber     RLength{0};           // Replace length.
     const char *ReplaceWith{nullptr}; // A text to replace a match.
-    UNumber     RLength{0};           // Keyword length.
 
-    void SetKeyword(const char *string) {
-        Keyword = string;
-        Length  = String::Count(string);
+    void SetTail(const char *string) {
+        Tail    = string;
+        TLength = String::Count(string);
+    }
+
+    void SetHead(const char *string) {
+        Head    = string;
+        HLength = String::Count(string);
     }
 
     void SetReplace(const char *string) {
@@ -91,12 +98,12 @@ static UNumber match(Array<MatchBit> &items, const Expressions &expres, const ch
         expr           = expres[expr_id];
         keyword_offset = 0;
 
-        while ((keyword_offset < expr->Length) && (expr->Keyword[keyword_offset] == content[current_offset])) {
+        while ((keyword_offset < expr->HLength) && (expr->Head[keyword_offset] == content[current_offset])) {
             ++current_offset;
             ++keyword_offset;
         }
 
-        if ((keyword_offset == 0) || (keyword_offset != expr->Length)) {
+        if ((keyword_offset == 0) || (keyword_offset != expr->HLength)) {
             if (expres.Size == (++expr_id)) {
                 expr_id = 0;
                 ++offset;
@@ -104,19 +111,16 @@ static UNumber match(Array<MatchBit> &items, const Expressions &expres, const ch
             continue;
         }
 
-        if (expr->Connected != nullptr) {
+        if (expr->TLength != 0) {
             UShort split_nest = 0;
-
-            const UShort left_keyword_len = keyword_offset;
 
             UNumber sub_offset = current_offset;
             keyword_offset     = 0;
-            expr               = expr->Connected;
 
             while (current_offset != maxOffset) {
-                if (expr->Keyword[keyword_offset++] != content[current_offset++]) {
+                if (expr->Tail[keyword_offset++] != content[current_offset++]) {
                     keyword_offset = 0;
-                } else if (expr->Length == keyword_offset) {
+                } else if (expr->TLength == keyword_offset) {
                     if ((expr->NestExpres.Size != 0) && ((sub_offset + keyword_offset) != current_offset)) {
                         sub_offset = match(item.NestMatch, expr->NestExpres, content, sub_offset, current_offset, maxOffset, split_nest);
                     }
@@ -130,22 +134,23 @@ static UNumber match(Array<MatchBit> &items, const Expressions &expres, const ch
                 }
             }
 
-            if (split_nest != 0) {
-                split(item.NestMatch, content, (offset + left_keyword_len), (current_offset - expr->Length), split_nest);
-            }
-
             if (keyword_offset == 0) {
                 if (item.NestMatch.Size != 0) {
                     MatchBit *sub_match = &(item.NestMatch[(item.NestMatch.Size - 1)]);
                     items += static_cast<Array<MatchBit> &&>(item.NestMatch);
-                    expr_id = 0;
-                    offset  = (sub_match->Offset + sub_match->Length);
+                    expr_id     = 0;
+                    offset      = (sub_match->Offset + sub_match->Length);
+                    split_count = split_nest;
                 } else if (expres.Size == (++expr_id)) {
                     expr_id = 0;
                     ++offset;
                 }
 
                 continue;
+            }
+
+            if (split_nest != 0) {
+                split(item.NestMatch, content, (offset + expr->HLength), (current_offset - expr->TLength), split_nest);
             }
         }
 
