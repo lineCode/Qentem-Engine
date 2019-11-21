@@ -521,7 +521,7 @@ static bool JSONTest() noexcept {
         took = static_cast<UNumber>(clock());
         for (UNumber y = 1; y <= times; y++) {
             data = Document::FromJSON(json_content);
-            // Qentem::Engine::Match(json_content.Str, Document::getJsonExpres(), 0, json_content.Length);
+            // Qentem::Engine::Match(Document::getJsonExpres(), json_content.Str, 0, json_content.Length);
         }
         took = (static_cast<UNumber>(clock()) - took);
         std::cout << String::FromNumber((static_cast<double>(took) / CLOCKS_PER_SEC), 2, 3, 3).Str << " ";

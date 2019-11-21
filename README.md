@@ -1,4 +1,4 @@
-# Qentem Engine (v1.5.2)
+# Qentem Engine (v1.5.3)
 
 ## Introduction
 Qentem Engine is an independent library that uses a fast algorithm for nest-matching. It can be used to match existing syntaxes or new ones, and with call-backs for post and per-parsing, It's posable to match almost any complex syntax. It is very efficient and has a small footprint on memory, and it's built using modern C++. It can be used to render complex templates that contains nested loop, nested if-else, inline if, math (+ * / - ^ %), logic (&& ||), and/or something simple: like replacing a text or splitting it. Also, it is capable of doing JSON, XML/HTML.
@@ -42,7 +42,7 @@ The library - at the moment - has String class (with number conversion), Array, 
 C++ compiler (11 and above).
 
 ## Example
-### Document and JSON
+### Document and JSON:
 ```cpp
 #include <Extension/Document.hpp>
 using Qentem::Array;
@@ -77,16 +77,38 @@ doc["strings2"] += Array<String>().Add("H").Add("I");
 String JSON = doc.ToJSON(); // Exporting document
 std::cout << "JSON:\n" << JSON.Str << "\n\n";
 ```
-the output is somthing close to:
+##### Output (Formatted):
 ```json
 {
-    "numbers": [0,1,2,3,4,5,6,7,8,9],
-    "strings": {"a": "A","b": "B","c": "C","d": "D"},
-    "strings2": ["E","F","G","H","I"]
+    "numbers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+    ],
+    "strings": {
+        "a": "A",
+        "b": "B",
+        "c": "C",
+        "d": "D"
+    },
+    "strings2": [
+        "E",
+        "F",
+        "G",
+        "H",
+        "I"
+    ]
 }
 ```
 
-### Template
+### Template:
 
 #### C++
 ```cpp
@@ -99,12 +121,13 @@ String rendered = Template::Render(content, &doc);
 std::cout << "Template:\n" << rendered.Str << '\n';
 ```
 
-##### Note
+##### Note:
 The complete example is located @ [Example/Example1.cpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Example/Example1.cpp). For more about template syntax, check out [Test/test.qtml](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Test/test.qtml).
 
 #### Python
 ```python
 from ctypes import CDLL, c_char_p, c_bool
+import json
 
 q_render = CDLL("./Build/QLib.so").qentem_render_template
 # Use QLib.dll on Windows.
@@ -112,45 +135,98 @@ q_render.restype = c_char_p
 q_render.argtypes = [c_char_p, c_char_p, c_bool]
 
 tempale = """
-<loop set="numbers" value="this_number">
-<if case="(this_number % 2) == 1">this_number is an odd number.</if></loop>
-
-{v:eq} = {math: {v:eq}}
-
-(0.1 + 0.2) is {math:   0.1   +   0.2  }
-
-{iif case="{v:qen} = Qentem" true="{v:qen}"} Engine
-
-{iif case="{v:numbers[0]} = v:numbers[4]" false="it's not {v:numbers[4]}!"}
+Students' list:
+<loop set="departments" key="d_name">
+    Department: d_name
+        <loop set="departments[d_name]" key="_i_">
+        Student's Name: {v:departments[d_name][_i_][Name]}
+        GPA: {v:departments[d_name][_i_][GPA]}
+        <if case="{v:departments[d_name][_i_][GPA]} < 2.5"> Inform adviser!
+        <elseif case="{v:departments[d_name][_i_][GPA]} >= 3.5" /> President's List!
+        <elseif case="{v:departments[d_name][_i_][GPA]} >= 3.0" /> Dean's List!
+        </if>
+        </loop>
+</loop>
 """
 
-json_text = '{"numbers":[1,2,3,4,5,6,7,8], "eq": "((1+2)^3)/2", "qen": "Qentem"}'
+data = {
+    "departments": {
+        "CS": [
+            {"Name": "Oliver", "GPA": "3.2"},
+            {"Name": "Jonah", "GPA": "3.8"},
+            {"Name": "Ava", "GPA": "2.8"}
+        ],
+        "Math": [
+            {"Name": "Maxim", "GPA": "3.0"},
+            {"Name": "Cole", "GPA": "2.5"},
+            {"Name": "Claire", "GPA": "2.4"}
+        ]
+    }
+}
 
 print(q_render(tempale.encode('UTF-8'),
-               json_text.encode('UTF-8'), False).decode(encoding='UTF-8'))
+               json.dumps(data).encode('UTF-8'), False).decode(encoding='UTF-8'))
 # Note: "False" means JSON without comments.
 ```
+##### Output:
+```txt
+Students' list:
 
-#### HTML, JavaScript and WebAssembly
-[JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/releases/download/v1.5.2/JQen.zip)
+    Department: CS
+
+        Student's Name: Oliver
+        GPA: 3.2
+         Dean's List!
+
+
+        Student's Name: Jonah
+        GPA: 3.8
+         President's List!
+
+
+        Student's Name: Ava
+        GPA: 2.8
+
+
+
+    Department: Math
+
+        Student's Name: Maxim
+        GPA: 3.0
+         Dean's List!
+
+        Student's Name: Cole
+        GPA: 2.5
+
+
+        Student's Name: Claire
+        GPA: 2.4
+         Inform adviser!
+```
+
+##### Note:
+For another example, check out [Example/QPie.py](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Example/QPie.py).
+
+#### HTML, JavaScript and WebAssembly:
+[JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/releases/download/v1.5.3/JQen.zip)
 
 ## Compiling
 
-### The example
+### The example:
 ```txt
 c++ -I ./Source ./Example/Example1.cpp -o ./Test/QExample1.bin
 ```
-
-### QLib (Template library)
-#### Linux
-```txt
-c++ -O3 -shared -fPIC -I ./Source ./Example/QLib.cpp -o ./Build/QLib.so
-```
-
-#### Windows
-Use QDLL.vcxproj (Visual Studio file).
 
 ### QLib (WebAssembly using Emscripten):
 ```txt
 em++ -Os -I ./Source ./Example/QLib.cpp -s WASM=1 -s 'EXTRA_EXPORTED_RUNTIME_METHODS=['ccall', 'cwrap']' -o ./Example/JQen/JQen.js
 ```
+
+### QLib (Template library):
+#### Linux:
+```txt
+c++ -O3 -shared -fPIC -I ./Source ./Example/QLib.cpp -o ./Build/QLib.so
+```
+
+#### Windows:
+Use QDLL.vcxproj (Visual Studio file).

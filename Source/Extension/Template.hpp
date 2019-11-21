@@ -200,36 +200,38 @@ static String Repeat(const char *block, const UNumber offset, const UNumber limi
                 }
             }
 
-            switch (entry->Type) {
-                case VType::NumberT: {
-                    value                  = String::FromNumber(storage->Numbers[entry->ArrayID], 1, 0, 3);
-                    value_expr.ReplaceWith = value.Str;
-                    value_expr.RLength     = value.Length;
-                    break;
-                }
-                case VType::StringT: {
-                    str_ptr                = &(storage->Strings[entry->ArrayID]);
-                    value_expr.ReplaceWith = str_ptr->Str;
-                    value_expr.RLength     = str_ptr->Length;
-                    break;
-                }
-                case VType::FalseT: {
-                    value_expr.ReplaceWith = "false";
-                    value_expr.RLength     = 5;
-                    break;
-                }
-                case VType::TrueT: {
-                    value_expr.ReplaceWith = "true";
-                    value_expr.RLength     = 4;
-                    break;
-                }
-                case VType::NullT: {
-                    value_expr.ReplaceWith = "null";
-                    value_expr.RLength     = 4;
-                    break;
-                }
-                default: {
-                    continue;
+            if (value_expr.Head != nullptr) {
+                switch (entry->Type) {
+                    case VType::NumberT: {
+                        value                  = String::FromNumber(storage->Numbers[entry->ArrayID], 1, 0, 3);
+                        value_expr.ReplaceWith = value.Str;
+                        value_expr.RLength     = value.Length;
+                        break;
+                    }
+                    case VType::StringT: {
+                        str_ptr                = &(storage->Strings[entry->ArrayID]);
+                        value_expr.ReplaceWith = str_ptr->Str;
+                        value_expr.RLength     = str_ptr->Length;
+                        break;
+                    }
+                    case VType::FalseT: {
+                        value_expr.ReplaceWith = "false";
+                        value_expr.RLength     = 5;
+                        break;
+                    }
+                    case VType::TrueT: {
+                        value_expr.ReplaceWith = "true";
+                        value_expr.RLength     = 4;
+                        break;
+                    }
+                    case VType::NullT: {
+                        value_expr.ReplaceWith = "null";
+                        value_expr.RLength     = 4;
+                        break;
+                    }
+                    default: {
+                        break;
+                    }
                 }
             }
 
@@ -286,7 +288,7 @@ static String RenderLoop(const char *block, const MatchBit &item, const UNumber 
             }
         }
 
-        if ((value_expr.Head != nullptr) && (set_ != nullptr)) {
+        if (((value_expr.Head != nullptr) || (key_expr.Head != nullptr)) && (set_ != nullptr)) {
             String n_content(Repeat(block, (sm->Offset + sm->Length), (item.Length - (sm->Length + 7)), key_expr, value_expr, set_, other));
             return Render(n_content.Str, 0, n_content.Length, other);
         }
