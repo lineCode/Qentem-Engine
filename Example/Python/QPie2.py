@@ -10,14 +10,14 @@ tempale = """
 Students' list:
 <loop set="major" key="_m_">
     Major: _m_
-        <loop set="major[_m_]" key="_i_">
+    <loop set="major[_m_]" key="_i_">
         Student's Name: {v:major[_m_][_i_][Name]}
         GPA: {v:major[_m_][_i_][GPA]}
         <if case="{v:major[_m_][_i_][GPA]} < 2.5"> Inform adviser!
         <elseif case="{v:major[_m_][_i_][GPA]} >= 3.5" /> President's List!
         <elseif case="{v:major[_m_][_i_][GPA]} >= 3.0" /> Dean's List!
         </if>
-        </loop>
+    </loop>
 </loop>
 """
 

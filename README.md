@@ -5,11 +5,11 @@
 - [Built-in](#built-in)
 - [Requirements](#requirements)
 - [Example](#example)
-  - [Document and JSON (C++)](#document-and-json)
+  - [Document and JSON (C++)](#document-and-json-c)
   - [Template](#template)
     - [C++](#c)
     - [Python](#python)
-    - [JavaScript & WebAssembly](#html-javascript-&-webassembly)
+    - [JavaScript & WebAssembly](#html-javascript--webassembly)
 - [Compiling](#compiling)
 
 ## Introduction
@@ -122,7 +122,7 @@ std::cout << "JSON:\n" << JSON.Str << "\n\n";
 
 ### Template:
 
-#### C++
+#### C++:
 ```cpp
 #include <Extension/Template.hpp>
 using Qentem::String;
@@ -136,7 +136,7 @@ std::cout << "Template:\n" << rendered.Str << '\n';
 ##### Note:
 The complete example is located @ [Example/Example1.cpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Example/Example1.cpp). For more about template syntax, check out [Test/test.qtml](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Test/test.qtml).
 
-#### Python
+#### Python"
 ```python
 from ctypes import CDLL, c_char_p, c_bool
 import json
@@ -150,14 +150,14 @@ tempale = """
 Students' list:
 <loop set="major" key="_m_">
     Major: _m_
-        <loop set="major[_m_]" key="_i_">
+    <loop set="major[_m_]" key="_i_">
         Student's Name: {v:major[_m_][_i_][Name]}
         GPA: {v:major[_m_][_i_][GPA]}
         <if case="{v:major[_m_][_i_][GPA]} < 2.5"> Inform adviser!
         <elseif case="{v:major[_m_][_i_][GPA]} >= 3.5" /> President's List!
         <elseif case="{v:major[_m_][_i_][GPA]} >= 3.0" /> Dean's List!
         </if>
-        </loop>
+    </loop>
 </loop>
 """
 
@@ -220,7 +220,63 @@ Students' list:
 For another example, check out [Example/Python/QPie1.py](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Example/Python/QPie1.py).
 
 #### HTML, JavaScript & WebAssembly:
-[JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/releases/download/v1.5.3/JQen.zip)
+```html
+<!DOCTYPE html>
+<html>
+
+<body>
+    <div id="maindiv"></div>
+    <script>
+        var Module = {
+            onRuntimeInitialized: function () {
+                var data, template = `
+                    <h2>Students' list:</h2>
+                    <loop set="major" key="_m_">
+                        <h3>Major: _m_</h3>
+                        <ul>
+                            <loop set="major[_m_]" key="_i_">
+                            <li>
+                                Name: {v:major[_m_][_i_][Name]}
+                                GPA: {v:major[_m_][_i_][GPA]}
+                                <if case="{v:major[_m_][_i_][GPA]} < 2.5"> (Inform adviser!)
+                                <elseif case="{v:major[_m_][_i_][GPA]} >= 3.5" /> (President's List!)
+                                <elseif case="{v:major[_m_][_i_][GPA]} >= 3.0" /> (Dean's List!)
+                                </if>
+                            </li>
+                            </loop>
+                        </ul>
+                    </loop>`;
+
+                data = {
+                    'major': {
+                        'Computer Science': [
+                            { 'Name': 'Oliver', 'GPA': '3.2' },
+                            { 'Name': 'Jonah', 'GPA': '3.8' },
+                            { 'Name': 'Ava', 'GPA': '2.8' }
+                        ],
+                        'Math': [
+                            { 'Name': 'Maxim', 'GPA': '3.0' },
+                            { 'Name': 'Cole', 'GPA': '2.5' },
+                            { 'Name': 'Claire', 'GPA': '2.4' }
+                        ]
+                    }
+                };
+
+                document.getElementById("maindiv").innerHTML = Module.ccall(
+                    'qentem_render_template',
+                    'string',
+                    ['string', 'string', 'bool'],
+                    [template, JSON.stringify(data), false]
+                );
+            }
+        };
+    </script>
+    <script src="JQen.js"></script>
+</body>
+
+</html>
+```
+Download JQen to run the example: [JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/releases/download/v1.5.3/JQen.zip) or compile it using Emscripten (See QLib).
 
 ## Compiling
 
@@ -235,6 +291,7 @@ em++ -Os -I ./Source ./Example/QLib.cpp -s WASM=1 -s 'EXTRA_EXPORTED_RUNTIME_MET
 ```
 
 ### QLib (Template library):
+
 #### Linux:
 ```txt
 c++ -O3 -shared -fPIC -I ./Source ./Example/QLib.cpp -o ./Build/QLib.so

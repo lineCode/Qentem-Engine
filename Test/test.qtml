@@ -21,7 +21,7 @@
 <div>{iif case="14 == 14" true="eq 14" false="14 != 14"}</div>
 
 <!---
-Note: inline if can have either true="..." or false="..."; both of them is not required.
+Note: an inline if can have either true="..." or false="..."; both of them is not required.
 -->
 
 <!--- If conditions -->
@@ -85,5 +85,5 @@ Note: inline if can have either true="..." or false="..."; both of them is not r
 </div>
 
 <!---
-Note: loops key="..." is optional.
+Note: a loop can have either key="..." or value="..."; both of them is not required.
 -->
