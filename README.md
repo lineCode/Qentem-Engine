@@ -5,11 +5,11 @@
 - [Built-in](#built-in)
 - [Requirements](#requirements)
 - [Example](#example)
-  - [Document and JSON (C++)](#document-and-json-c)
+  - [Document and JSON (C++)](#document-and-json)
   - [Template](#template)
     - [C++](#c)
     - [Python](#python)
-    - [JavaScript & WebAssembly](#html-javascript--webassembly)
+    - [JavaScript & WebAssembly](#html-javascript-&-webassembly)
 - [Compiling](#compiling)
 
 ## Introduction
@@ -148,30 +148,30 @@ q_render.argtypes = [c_char_p, c_char_p, c_bool]
 
 tempale = """
 Students' list:
-<loop set="departments" key="d_name">
-    Department: d_name
-        <loop set="departments[d_name]" key="_i_">
-        Student's Name: {v:departments[d_name][_i_][Name]}
-        GPA: {v:departments[d_name][_i_][GPA]}
-        <if case="{v:departments[d_name][_i_][GPA]} < 2.5"> Inform adviser!
-        <elseif case="{v:departments[d_name][_i_][GPA]} >= 3.5" /> President's List!
-        <elseif case="{v:departments[d_name][_i_][GPA]} >= 3.0" /> Dean's List!
+<loop set="major" key="_m_">
+    Major: _m_
+        <loop set="major[_m_]" key="_i_">
+        Student's Name: {v:major[_m_][_i_][Name]}
+        GPA: {v:major[_m_][_i_][GPA]}
+        <if case="{v:major[_m_][_i_][GPA]} < 2.5"> Inform adviser!
+        <elseif case="{v:major[_m_][_i_][GPA]} >= 3.5" /> President's List!
+        <elseif case="{v:major[_m_][_i_][GPA]} >= 3.0" /> Dean's List!
         </if>
         </loop>
 </loop>
 """
 
 data = {
-    "departments": {
-        "CS": [
-            {"Name": "Oliver", "GPA": "3.2"},
-            {"Name": "Jonah", "GPA": "3.8"},
-            {"Name": "Ava", "GPA": "2.8"}
+    'major': {
+        'Computer Science': [
+            {'Name': 'Oliver', 'GPA': '3.2'},
+            {'Name': 'Jonah', 'GPA': '3.8'},
+            {'Name': 'Ava', 'GPA': '2.8'}
         ],
-        "Math": [
-            {"Name": "Maxim", "GPA": "3.0"},
-            {"Name": "Cole", "GPA": "2.5"},
-            {"Name": "Claire", "GPA": "2.4"}
+        'Math': [
+            {'Name': 'Maxim', 'GPA': '3.0'},
+            {'Name': 'Cole', 'GPA': '2.5'},
+            {'Name': 'Claire', 'GPA': '2.4'}
         ]
     }
 }
@@ -184,7 +184,7 @@ print(q_render(tempale.encode('UTF-8'),
 ```txt
 Students' list:
 
-    Department: CS
+    Major: Computer Science
 
         Student's Name: Oliver
         GPA: 3.2
@@ -200,12 +200,12 @@ Students' list:
         GPA: 2.8
 
 
-
-    Department: Math
+    Major: Math
 
         Student's Name: Maxim
         GPA: 3.0
          Dean's List!
+
 
         Student's Name: Cole
         GPA: 2.5
@@ -217,7 +217,7 @@ Students' list:
 ```
 
 ##### Note:
-For another example, check out [Example/QPie.py](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Example/QPie.py).
+For another example, check out [Example/Python/QPie1.py](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Example/Python/QPie1.py).
 
 #### HTML, JavaScript & WebAssembly:
 [JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/releases/download/v1.5.3/JQen.zip)
