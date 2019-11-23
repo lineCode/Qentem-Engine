@@ -66,7 +66,7 @@ struct Document {
     UNumber     LastKeyLen{0};
     const char *LastKey{nullptr};
 
-    static constexpr const char *char_list = "{[]}\\\\\"";
+    static constexpr const char *char_list = R"({[]}\\")";
 
     Document()                    = default;
     virtual ~Document()           = default;

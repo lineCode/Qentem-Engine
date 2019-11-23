@@ -211,7 +211,7 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
     n2["the_rest"] = Array<double>().Add(2);
     data["lvl2"]["numbers"] += n2["the_rest"]; // Coping
 
-    Document strings = "{\"strings\": [\"N1\"]}";
+    Document strings = R"({"strings": ["N1"]})";
     Document n3      = Array<String>().Add("N2").Add("N3");
 
     data["lvl2"] += strings;
@@ -246,110 +246,110 @@ static Array<TestBit> GetTemplateBits(Document &data) noexcept {
     bit.Expected.Add("63");
     ////
 
-    bit.Content.Add("{iif case=\"987\" true =\"5\"}");
+    bit.Content.Add(R"({iif case="987" true ="5"})");
     bit.Expected.Add("5");
 
-    bit.Content.Add("{iif case=\"1\" false=\"10\"}");
+    bit.Content.Add(R"({iif case="1" false="10"})");
     bit.Expected.Add("");
 
-    bit.Content.Add("{iif case = \"1\" true = \"1\" false = \"0\"}");
+    bit.Content.Add(R"({iif case = "1" true = "1" false = "0"})");
     bit.Expected.Add("1");
 
-    bit.Content.Add("{iif case=\"0\" true=\"1\" false=\"0\"}");
+    bit.Content.Add(R"({iif case="0" true="1" false="0"})");
     bit.Expected.Add("0");
 
     bit.Content.Add(
-        "{iif case=\"((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) + (1) + 2\" true =\"14\"}");
+        R"({iif case="((2* (1 * 3)) + 1 - 4) + (((10 - 5) - 6 + ((1 + 1) + (1 + 1))) * (8 / 4 + 1)) - (1) + (1) + 2" true ="14"})");
     bit.Expected.Add("14");
 
-    bit.Content.Add("{iif case=\"0\" true=\"1\"}");
+    bit.Content.Add(R"({iif case="0" true="1"})");
     bit.Expected.Add("");
 
-    bit.Content.Add("{iif case=\"{v:lvl2[numbers][1]} = 2\" true=\"it's true! \" false =\"it's false\"}");
+    bit.Content.Add(R"({iif case="{v:lvl2[numbers][1]} = 2" true="it's true! " false ="it's false"})");
     bit.Expected.Add("it's true! ");
 
-    bit.Content.Add("{iif case=\"      0    \" true=\"5\"}");
+    bit.Content.Add(R"({iif case="      0    " true="5"})");
     bit.Expected.Add("");
 
-    bit.Content.Add("{iif case=\"      1    \" false=\"35.5\"}");
+    bit.Content.Add(R"({iif case="      1    " false="35.5"})");
     bit.Expected.Add("");
 
-    bit.Content.Add("{iif case = \"5<1\" true = \"1\" false = \"0\"}");
+    bit.Content.Add(R"({iif case = "5<1" true = "1" false = "0"})");
     bit.Expected.Add("0");
 
-    bit.Content.Add("{iif case=\"1<2\" false=\"No\"}");
+    bit.Content.Add(R"({iif case="1<2" false="No"})");
     bit.Expected.Add("");
 
-    bit.Content.Add("{iif case=\"5<10\" true=\"1\" false=\"0\"}");
+    bit.Content.Add(R"({iif case="5<10" true="1" false="0"})");
     bit.Expected.Add("1");
 
-    bit.Content.Add("{iif case=\"0&&3\" true=\"1\" false=\"0\"}");
+    bit.Content.Add(R"({iif case="0&&3" true="1" false="0"})");
     bit.Expected.Add("0");
 
-    bit.Content.Add("{iif case=\"5&&10\" true=\"1\" false=\"0\"}");
+    bit.Content.Add(R"({iif case="5&&10" true="1" false="0"})");
     bit.Expected.Add("1");
 
-    bit.Content.Add("{iif case=\"7&&0\" true=\"1\" false=\"0\"}");
+    bit.Content.Add(R"({iif case="7 && 0" true="1" false="0"})");
     bit.Expected.Add("0");
 
-    bit.Content.Add("{iif case=\"0||10\" true=\"1\" false=\"0\"}");
+    bit.Content.Add(R"({iif case="0||10" true="1" false="0"})");
     bit.Expected.Add("1");
 
-    bit.Content.Add("{iif case=\"10||0\" true=\"1\" false=\"0\"}");
+    bit.Content.Add(R"({iif case="10  || 0" true="1" false="0"})");
     bit.Expected.Add("1");
 
-    bit.Content.Add("{iif case=\"0||0\" true=\"1\" false=\"0\"}");
+    bit.Content.Add(R"({iif case="0||0" true="1" false="0"})");
     bit.Expected.Add("0");
 
     // Text compareing
-    bit.Content.Add("{iif case=\"  {v:foo} == FOO  \" true =\"It's {v:foo}.\" false=\"Not {v:foo}!\"}");
+    bit.Content.Add(R"({iif case="  {v:foo} == FOO  " true ="It's {v:foo}." false="Not {v:foo}!"})");
     bit.Expected.Add("It's FOO.");
 
     ////
-    bit.Content.Add("<loop set=\"abc1\" value=\"v\">v</loop>");
+    bit.Content.Add(R"(<loop set="abc1" value="v">v</loop>)");
     bit.Expected.Add("abc");
 
-    bit.Content.Add("<loop set =\"lvl2[numbers]\" value =\"val\" key=\"id\">l-id): {v:lvl2[numbers][id]}\n </loop>");
-    bit.Expected.Add("l-0): 1\n l-1): 2\n ");
+    bit.Content.Add(R"(<loop set ="lvl2[numbers]" value ="val" key="id">l-id): {v:lvl2[numbers][id]}# </loop>)");
+    bit.Expected.Add("l-0): 1# l-1): 2# ");
 
     bit.Content.Add(
-        "<loop set=\"lvl2[numbers]\" value =\"val\" key=\"id\"><loop set =\"lvl2[numbers]\" value =\"val2\" key  =\"id2\">l-id-id2):val2\n </loop></loop>");
-    bit.Expected.Add("l-0-0):1\n l-0-1):2\n l-1-0):1\n l-1-1):2\n ");
+        R"(<loop set="lvl2[numbers]" value ="val" key="id"><loop set ="lvl2[numbers]" value ="val2" key  ="id2">l-id-id2):val2# </loop></loop>)");
+    bit.Expected.Add("l-0-0):1# l-0-1):2# l-1-0):1# l-1-1):2# ");
 
-    bit.Content.Add("<loop set=\"lvl2[strings]\" value=\"val\" key=\"id\">l-id): val\n</loop>");
-    bit.Expected.Add("l-0): N1\nl-1): N2\nl-2): N3\n");
+    bit.Content.Add(R"(<loop set="lvl2[strings]" value="val" key="id">l-id): val#</loop>)");
+    bit.Expected.Add("l-0): N1#l-1): N2#l-2): N3#");
 
     bit.Content.Add(
-        "Space <loop set=\"lvl2[strings]\" value=\"val\" key=\"id\">l-id): val\n</loop><loop set =\"lvl2[numbers]\" value=\"val2\" key=\"id2\">l-id2): val2\n </loop>");
-    bit.Expected.Add("Space l-0): N1\nl-1): N2\nl-2): N3\nl-0): 1\n l-1): 2\n ");
+        R"(Space <loop set="lvl2[strings]" value="val" key="id">l-id): val#</loop><loop set ="lvl2[numbers]" value="val2" key="id2">l-id2): val2# </loop>)");
+    bit.Expected.Add("Space l-0): N1#l-1): N2#l-2): N3#l-0): 1# l-1): 2# ");
 
     ////
 
-    bit.Content.Add(" <if case=\"1\"> 5 </if> ")
-        .Add("<if case=\"0\">5</if> ")
-        .Add(" <if case=\"100\"><if case=\"1\">6</if></if>")
-        .Add("<if case=\"8\"><if case=\"88\"><if case=\"888\">7</if></if></if>")
-        .Add("<if case=\"1\"><if case=\"1\"><if case=\"1\"><if case=\"1\">8</if></if></if></if>");
+    bit.Content.Add(R"( <if case="1"> 5 </if> )")
+        .Add(R"(<if case="0">5</if> )")
+        .Add(R"( <if case="100"><if case="1">6</if></if>)")
+        .Add(R"(<if case="8"><if case="88"><if case="888">7</if></if></if>)")
+        .Add(R"(<if case="1"><if case="1"><if case="1"><if case="1">8</if></if></if></if>)");
     bit.Expected.Add("  5  ").Add(" ").Add(" 6").Add("7").Add("8");
 
-    bit.Content.Add("<if case=\"1\">4<else /> 6 </if>")
-        .Add("<if case=\"0\"> 4 <else />6</if>")
-        .Add("<if case=\"0\"><span> 1 <else /><if case=\"0\"> <span> 2 <else /><if case=\"0\"> <span> 3 <else />7</if></if></if>");
+    bit.Content.Add(R"(<if case="1">4<else /> 6 </if>)")
+        .Add(R"(<if case="0"> 4 <else />6</if>)")
+        .Add(R"(<if case="0"><span> 1 <else /><if case="0"> <span> 2 <else /><if case="0"> <span> 3 <else />7</if></if></if>)");
     bit.Expected.Add("4").Add("6").Add("7");
 
-    bit.Content.Add("<if case=\"0\"><else />91</if>");
+    bit.Content.Add(R"(<if case="0"><else />91</if>)");
     bit.Expected.Add("91");
 
-    bit.Content.Add("<if case=\"0\">4<elseif case=\"{v:lvl2[numbers][0]} = 1\" /> 6 </if>");
+    bit.Content.Add(R"(<if case="0">4<elseif case="{v:lvl2[numbers][0]} = 1" /> 6 </if>)");
     bit.Expected.Add(" 6 ");
 
-    bit.Content.Add("<if case=\"1\">4<elseif case=\"{v:lvl2[numbers][0]} = 1\" /> 6 </if>");
+    bit.Content.Add(R"(<if case="1">4<elseif case="{v:lvl2[numbers][0]} = 1" /> 6 </if>)");
     bit.Expected.Add("4");
 
-    bit.Content.Add("<if case=\"0\"><span> 4<elseif case=\"0\" /><span> 6 <elseif case=\"1\" />9</if>");
+    bit.Content.Add(R"(<if case="0"><span> 4<elseif case="0" /><span> 6 <elseif case="1" />9</if>)");
     bit.Expected.Add("9");
 
-    bit.Content.Add("<if case=\"0\">4<elseif case=\"0\" /> 6 <else />91</if>");
+    bit.Content.Add(R"(<if case="0">4<elseif case="0" /> 6 <else />91</if>)");
     bit.Expected.Add("91");
 
     ////
