@@ -199,59 +199,7 @@ static Array<MatchBit> Match(const Expressions &expres, const char *content, con
     return items;
 }
 /////////////////////////////////
-static String Parse(const Array<MatchBit> &items, const char *content, UNumber offset, UNumber limit, void *other = nullptr) noexcept {
-    StringStream    rendered; // Final content
-    UNumber         tmp_limit;
-    const MatchBit *item;
-
-    for (UNumber id = 0; id < items.Size; id++) {
-        // Current match
-        item = &(items[id]);
-
-        if (item->Offset < offset) {
-            continue;
-        }
-
-        // Adding any content that comes before...
-        if (offset < item->Offset) {
-            tmp_limit = (item->Offset - offset);
-
-            if (tmp_limit >= limit) {
-                // If it's equal, then String::Part outside the for() will handel it.
-                break;
-            }
-
-            limit -= tmp_limit;
-            rendered += String::Part(content, offset, tmp_limit);
-        }
-
-        offset = item->Offset + item->Length;
-        limit -= item->Length;
-
-        if (item->Expr->ParseCB == nullptr) {
-            // Defaults to replace: it can be empty.
-            rendered.Add(item->Expr->RLength, item->Expr->ReplaceWith);
-        } else if ((Flags::BUBBLE & item->Expr->Flag) == 0) {
-            rendered += item->Expr->ParseCB(content, *item, item->Length, other);
-        } else if (item->NestMatch.Size != 0) {
-            String tmp_string(Parse(item->NestMatch, content, item->Offset, item->Length, other));
-            rendered += item->Expr->ParseCB(tmp_string.Str, *item, tmp_string.Length, other);
-        } else {
-            rendered += item->Expr->ParseCB(String::Part(content, item->Offset, item->Length).Str, *item, item->Length, other);
-        }
-    }
-
-    if (limit != 0) {
-        rendered += String::Part(content, offset, limit);
-    }
-
-    return rendered.ToString();
-}
-
-} // namespace Engine
-/////////////////////////////////
-static void Engine::split(Array<MatchBit> &items, const char *content, UNumber offset, const UNumber endOffset,
-                          const UNumber count) noexcept {
+static void split(Array<MatchBit> &items, const char *content, UNumber offset, const UNumber endOffset, const UNumber count) noexcept {
     const UNumber started  = offset;
     MatchBit *    item_ptr = nullptr;
 
@@ -304,7 +252,57 @@ static void Engine::split(Array<MatchBit> &items, const char *content, UNumber o
         item_ptr->Expr      = item.Expr;
     }
 }
+/////////////////////////////////
+static String Parse(const Array<MatchBit> &items, const char *content, UNumber offset, UNumber limit, void *other = nullptr) noexcept {
+    StringStream    rendered; // Final content
+    UNumber         tmp_limit;
+    const MatchBit *item;
 
+    for (UNumber id = 0; id < items.Size; id++) {
+        // Current match
+        item = &(items[id]);
+
+        if (item->Offset < offset) {
+            continue;
+        }
+
+        // Adding any content that comes before...
+        if (offset < item->Offset) {
+            tmp_limit = (item->Offset - offset);
+
+            if (tmp_limit >= limit) {
+                // If it's equal, then String::Part outside this loop will handel it.
+                break;
+            }
+
+            limit -= tmp_limit;
+            rendered += String::Part(content, offset, tmp_limit);
+        }
+
+        offset = item->Offset + item->Length;
+        limit -= item->Length;
+
+        if (item->Expr->ParseCB == nullptr) {
+            // Defaults to replace: it can be empty.
+            rendered.Add(item->Expr->RLength, item->Expr->ReplaceWith);
+        } else if ((Flags::BUBBLE & item->Expr->Flag) == 0) {
+            rendered += item->Expr->ParseCB(content, *item, item->Length, other);
+        } else if (item->NestMatch.Size != 0) {
+            String tmp_string(Parse(item->NestMatch, content, item->Offset, item->Length, other));
+            rendered += item->Expr->ParseCB(tmp_string.Str, *item, tmp_string.Length, other);
+        } else {
+            rendered += item->Expr->ParseCB(String::Part(content, item->Offset, item->Length).Str, *item, item->Length, other);
+        }
+    }
+
+    if (limit != 0) {
+        rendered += String::Part(content, offset, limit);
+    }
+
+    return rendered.ToString();
+}
+
+} // namespace Engine
 } // namespace Qentem
 
 #endif
