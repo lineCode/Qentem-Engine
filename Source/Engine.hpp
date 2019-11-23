@@ -230,9 +230,7 @@ static String Parse(const Array<MatchBit> &items, const char *content, UNumber o
 
         if (item->Expr->ParseCB == nullptr) {
             // Defaults to replace: it can be empty.
-            if (item->Expr->RLength != 0) {
-                rendered.Add(item->Expr->RLength, item->Expr->ReplaceWith);
-            }
+            rendered.Add(item->Expr->RLength, item->Expr->ReplaceWith);
         } else if ((Flags::BUBBLE & item->Expr->Flag) == 0) {
             rendered += item->Expr->ParseCB(content, *item, item->Length, other);
         } else if (item->NestMatch.Size != 0) {

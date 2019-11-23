@@ -33,10 +33,11 @@ struct StringStream {
         }
     }
 
-    void AddnC(const UNumber length, char *str) noexcept {
+    void AddnC(const UNumber length, char **str) noexcept { // Move
         if (length != 0) {
             Length += length;
-            Bits += {length, str, str};
+            Bits += {length, *str, *str};
+            *str = nullptr;
         }
     }
 
@@ -47,8 +48,7 @@ struct StringStream {
     }
 
     inline void operator+=(String &&src) noexcept {
-        AddnC(src.Length, src.Str);
-        src.Str = nullptr;
+        AddnC(src.Length, &src.Str);
     }
 
     inline void operator+=(const String &src) noexcept {

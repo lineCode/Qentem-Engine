@@ -1,4 +1,4 @@
-# Qentem Engine (v1.5.3)
+# Qentem Engine (v1.5.4)
 
 - [Introduction](#introduction)
 - [Why Qentem?](#why-qentem)
@@ -276,7 +276,7 @@ For another example, check out [Example/Python/QPie1.py](https://github.com/Hani
 
 </html>
 ```
-Download JQen to run the example: [JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/releases/download/v1.5.3/JQen.zip) or compile it using Emscripten (See QLib).
+Download JQen to run the example: [JQen.zip](https://github.com/HaniAmmar/Qentem-Engine/releases/download/v1.5.4/JQen.zip) or compile it using Emscripten (See QLib).
 
 ## Compiling
 
