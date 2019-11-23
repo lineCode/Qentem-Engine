@@ -136,7 +136,7 @@ std::cout << "Template:\n" << rendered.Str << '\n';
 ##### Note:
 The complete example is located @ [Example/Example1.cpp](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Example/Example1.cpp). For more about template syntax, check out [Test/test.qtml](https://github.com/HaniAmmar/Qentem-Engine/blob/master/Test/test.qtml).
 
-#### Python"
+#### Python:
 ```python
 from ctypes import CDLL, c_char_p, c_bool
 import json
@@ -234,16 +234,18 @@ For another example, check out [Example/Python/QPie1.py](https://github.com/Hani
                     <loop set="major" key="_m_">
                         <h3>Major: _m_</h3>
                         <ul>
-                            <loop set="major[_m_]" key="_i_">
+                        <loop set="major[_m_]" key="_i_">
                             <li>
-                                Name: {v:major[_m_][_i_][Name]}
-                                GPA: {v:major[_m_][_i_][GPA]}
-                                <if case="{v:major[_m_][_i_][GPA]} < 2.5"> (Inform adviser!)
-                                <elseif case="{v:major[_m_][_i_][GPA]} >= 3.5" /> (President's List!)
-                                <elseif case="{v:major[_m_][_i_][GPA]} >= 3.0" /> (Dean's List!)
-                                </if>
+                                <span>Name: {v:major[_m_][_i_][Name]}</span>
+                                <span>
+                                    GPA: {v:major[_m_][_i_][GPA]}
+                                    <if case="{v:major[_m_][_i_][GPA]} < 2.5"> (Inform adviser!)
+                                    <elseif case="{v:major[_m_][_i_][GPA]} >= 3.5" /> (President's List!)
+                                    <elseif case="{v:major[_m_][_i_][GPA]} >= 3.0" /> (Dean's List!)
+                                    </if>
+                                </span>
                             </li>
-                            </loop>
+                        </loop>
                         </ul>
                     </loop>`;
 

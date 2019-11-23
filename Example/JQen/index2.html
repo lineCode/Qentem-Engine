@@ -11,16 +11,18 @@
                     <loop set="major" key="_m_">
                         <h3>Major: _m_</h3>
                         <ul>
-                            <loop set="major[_m_]" key="_i_">
+                        <loop set="major[_m_]" key="_i_">
                             <li>
-                                Name: {v:major[_m_][_i_][Name]}
-                                GPA: {v:major[_m_][_i_][GPA]}
-                                <if case="{v:major[_m_][_i_][GPA]} < 2.5"> (Inform adviser!)
-                                <elseif case="{v:major[_m_][_i_][GPA]} >= 3.5" /> (President's List!)
-                                <elseif case="{v:major[_m_][_i_][GPA]} >= 3.0" /> (Dean's List!)
-                                </if>
+                                <span>Name: {v:major[_m_][_i_][Name]}</span>
+                                <span>
+                                    GPA: {v:major[_m_][_i_][GPA]}
+                                    <if case="{v:major[_m_][_i_][GPA]} < 2.5"> (Inform adviser!)
+                                    <elseif case="{v:major[_m_][_i_][GPA]} >= 3.5" /> (President's List!)
+                                    <elseif case="{v:major[_m_][_i_][GPA]} >= 3.0" /> (Dean's List!)
+                                    </if>
+                                </span>
                             </li>
-                            </loop>
+                        </loop>
                         </ul>
                     </loop>`;
 
