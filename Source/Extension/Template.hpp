@@ -168,7 +168,7 @@ static String Repeat(const char *block, const UNumber offset, const UNumber limi
                      const MatchBit *set_, void *other) noexcept {
     Expressions loop_expres(2);
 
-    if (key_expr.Head != nullptr) {
+    if (key_expr.HLength != 0) {
         loop_expres.Add(&key_expr);
     }
 
@@ -182,13 +182,19 @@ static String Repeat(const char *block, const UNumber offset, const UNumber limi
     String        key;
 
     const Entry *   entry;
-    const Document *storage = (static_cast<Document *>(other))->GetDocument(block, (set_->Offset + 1), (set_->Length - 2));
+    const Document *storage;
+
+    if (set_ != nullptr) {
+        storage = (static_cast<Document *>(other))->GetDocument(block, (set_->Offset + 1), (set_->Length - 2));
+    } else {
+        storage = static_cast<Document *>(other);
+    }
 
     if (storage != nullptr) {
         for (UNumber i = 0; i < storage->Entries.Size; i++) {
             entry = &(storage->Entries[i]);
 
-            if (key_expr.Head != nullptr) {
+            if (key_expr.HLength != 0) {
                 if (storage->Ordered) {
                     key                  = String::FromNumber(i);
                     key_expr.ReplaceWith = key.Str;
@@ -200,7 +206,7 @@ static String Repeat(const char *block, const UNumber offset, const UNumber limi
                 }
             }
 
-            if (value_expr.Head != nullptr) {
+            if (value_expr.HLength != 0) {
                 switch (entry->Type) {
                     case VType::NumberT: {
                         value                  = String::FromNumber(storage->Numbers[entry->ArrayID], 1, 0, 3);
@@ -288,7 +294,7 @@ static String RenderLoop(const char *block, const MatchBit &item, const UNumber 
             }
         }
 
-        if (((value_expr.Head != nullptr) || (key_expr.Head != nullptr)) && (set_ != nullptr)) {
+        if ((value_expr.Head != nullptr) || (key_expr.Head != nullptr)) {
             String n_content(Repeat(block, (sm->Offset + sm->Length), (item.Length - (sm->Length + 7)), key_expr, value_expr, set_, other));
             return Render(n_content.Str, 0, n_content.Length, other);
         }
@@ -338,6 +344,7 @@ static const Expressions &getHeadExpres() noexcept {
         tag_head.Flag = Flags::ONCE;
         // Nest to prevent matching ">" bigger sign inside if statement.
         tag_head.NestExpres = getQuotesExpres();
+
         expres.Add(&tag_head);
     }
 

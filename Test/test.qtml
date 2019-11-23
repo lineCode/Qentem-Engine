@@ -86,4 +86,5 @@ Note: an inline if can have either true="..." or false="..."; both of them is no
 
 <!---
 Note: a loop can have either key="..." or value="..."; both of them is not required.
+If "set" is not included, the root of the tree will be the set.
 -->

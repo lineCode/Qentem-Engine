@@ -48,13 +48,13 @@ struct String {
         Str[Length] = '\0';
     }
 
-    String(String &&src) noexcept : Length(src.Length), Str(src.Str), Capacity(src.Capacity) { // Move
+    String(String &&src) noexcept : Length(src.Length), Str(src.Str), Capacity(src.Capacity) {
         src.Length   = 0;
         src.Str      = nullptr;
         src.Capacity = 0;
     }
 
-    explicit String(const String &src) noexcept : Capacity(src.Length) { // Copy
+    explicit String(const String &src) noexcept : Capacity(src.Length) {
         if (Capacity != 0) {
             Memory::Allocate<char>(&Str, (Capacity + 1));
 
@@ -96,17 +96,17 @@ struct String {
         return str;
     }
 
-    String &operator=(const char *str) noexcept { // Copy
-        if (Str != nullptr) {
+    String &operator=(const char *str) noexcept {
+        const UNumber length = Count(str);
+
+        if ((Capacity == 0) || (Capacity < length)) {
             Memory::Deallocate<char>(&Str);
-            Length = 0;
+            Length   = 0;
+            Capacity = length;
+            Memory::Allocate<char>(&Str, (Capacity + 1));
         }
 
-        Capacity = Count(str);
-
-        Memory::Allocate<char>(&Str, (Capacity + 1));
-
-        for (; Length < Capacity;) {
+        while (Length < Capacity) {
             Str[Length] = str[Length];
             ++Length;
         }
@@ -116,7 +116,27 @@ struct String {
         return *this;
     }
 
-    String &operator=(String &&src) noexcept { // Move
+    String &operator=(const String &src) noexcept {
+        if (this != &src) {
+            if ((Capacity == 0) || (Capacity < src.Length)) {
+                Memory::Deallocate<char>(&Str);
+                Length   = 0;
+                Capacity = src.Length;
+                Memory::Allocate<char>(&Str, (Capacity + 1));
+            }
+
+            while (Length < Capacity) {
+                Str[Length] = src[Length];
+                ++Length;
+            }
+
+            Str[Length] = '\0';
+        }
+
+        return *this;
+    }
+
+    String &operator=(String &&src) noexcept {
         if (this != &src) {
             if (Str != nullptr) {
                 Memory::Deallocate<char>(&Str);
@@ -133,37 +153,15 @@ struct String {
         return *this;
     }
 
-    String &operator=(const String &src) noexcept { // Copy
-        if (this != &src) {
-            if (Str != nullptr) {
-                Memory::Deallocate<char>(&Str);
-                Length = 0;
-            }
-
-            Capacity = src.Length;
-
-            Memory::Allocate<char>(&Str, (Capacity + 1));
-
-            for (; Length < Capacity;) {
-                Str[Length] = src[Length];
-                ++Length;
-            }
-
-            Str[Length] = '\0';
-        }
+    String &operator+=(const char *str) noexcept {
+        Appand(*this, str, Length, Count(str));
 
         return *this;
     }
 
-    String &operator+=(const char *str) noexcept { // Appand a string
-        Copy(*this, str, this->Length, Count(str));
-
-        return *this;
-    }
-
-    String &operator+=(String &&src) noexcept { // Move
+    String &operator+=(String &&src) noexcept {
         if (src.Length != 0) {
-            Copy(*this, src.Str, Length, src.Length);
+            Appand(*this, src.Str, Length, src.Length);
 
             Memory::Deallocate<char>(&src.Str);
 
@@ -175,9 +173,9 @@ struct String {
         return *this;
     }
 
-    String &operator+=(const String &src) noexcept { // Appand a string
+    String &operator+=(const String &src) noexcept {
         if (src.Length != 0) {
-            Copy(*this, src.Str, Length, src.Length);
+            Appand(*this, src.Str, Length, src.Length);
         }
 
         return *this;
@@ -186,23 +184,39 @@ struct String {
     String operator+(const char *str) const noexcept {
         const UNumber length = Count(str);
 
-        String ns(Length + length);
+        String  ns(Length + length);
+        UNumber i = 0;
 
-        Copy(ns, Str, 0, Length);
-        Copy(ns, str, ns.Length, length);
+        for (; i < Length; i++) {
+            ns[i] = Str[i];
+        }
+        ns.Length = Length;
+
+        for (i = 0; i < length; i++) {
+            ns[ns.Length] = str[i];
+            ++ns.Length;
+        }
+
+        ns[ns.Length] = '\0';
 
         return ns;
     }
 
-    // Appand a string by moving another into it
     String operator+(String &&src) const noexcept {
-        String ns(Length + src.Length);
-        Copy(ns, Str, 0, Length);
+        String  ns(Length + src.Length);
+        UNumber i = 0;
 
-        if (src.Length != 0) {
-            Copy(ns, src.Str, ns.Length, src.Length);
-            src.Length = 0;
+        for (; i < Length; i++) {
+            ns[i] = Str[i];
         }
+        ns.Length = Length;
+
+        for (i = 0; i < src.Length; i++) {
+            ns[ns.Length] = src.Str[i];
+            ++ns.Length;
+        }
+
+        ns[ns.Length] = '\0';
 
         Memory::Deallocate<char>(&src.Str);
         src.Capacity = 0;
@@ -210,19 +224,26 @@ struct String {
         return ns;
     }
 
-    String operator+(const String &src) const noexcept { // Appand a string and return a new one
-        String ns(Length + src.Length);
+    String operator+(const String &src) const noexcept {
+        String  ns(Length + src.Length);
+        UNumber i = 0;
 
-        Copy(ns, Str, 0, Length);
-
-        if (src.Length != 0) {
-            Copy(ns, src.Str, ns.Length, src.Length);
+        for (; i < Length; i++) {
+            ns[i] = Str[i];
         }
+        ns.Length = Length;
+
+        for (i = 0; i < src.Length; i++) {
+            ns[ns.Length] = src.Str[i];
+            ++ns.Length;
+        }
+
+        ns[ns.Length] = '\0';
 
         return ns;
     }
 
-    bool operator==(const char *str) const noexcept { // Compare
+    bool operator==(const char *str) const noexcept {
         const UNumber length = Count(str);
 
         if (Length != length) {
@@ -237,11 +258,11 @@ struct String {
         return (i == Length);
     }
 
-    inline bool operator!=(const char *string) const noexcept { // Compare
+    inline bool operator!=(const char *string) const noexcept {
         return (!(*this == string));
     }
 
-    bool operator==(const String &string) const noexcept { // Compare
+    bool operator==(const String &string) const noexcept {
         if (Length != string.Length) {
             return false;
         }
@@ -254,7 +275,7 @@ struct String {
         return (i == Length);
     }
 
-    inline bool operator!=(const String &string) const noexcept { // Compare
+    inline bool operator!=(const String &string) const noexcept {
         return (!(*this == string));
     }
 
@@ -262,7 +283,7 @@ struct String {
         return Str[index];
     }
 
-    static bool Compare(const char *left, const char *right) noexcept { // Compare
+    static bool Compare(const char *left, const char *right) noexcept {
         const UNumber l_length = Count(left);
         const UNumber r_length = Count(right);
 
@@ -306,7 +327,7 @@ struct String {
         return (i == Length);
     }
 
-    static void Copy(String &des, const char *src_p, UNumber start_at, const UNumber ln) noexcept {
+    static void Appand(String &des, const char *src_p, UNumber start_at, const UNumber ln) noexcept {
         UNumber i = 0;
 
         const UNumber newlen = (ln + des.Length);
@@ -326,7 +347,7 @@ struct String {
             Memory::Deallocate<char>(&tmp);
         }
 
-        // Add the new characters
+        // Add characters
         for (i = 0; i < ln; i++) {
             des[start_at++] = src_p[i];
         }

@@ -33,26 +33,22 @@ struct StringStream {
         }
     }
 
-    void AddnC(const UNumber length, char **str) noexcept { // Move
-        Length += length;
-        Bits += {length, *str, *str};
-        *str = nullptr;
-    }
-
     inline void operator+=(const char *str) noexcept {
         if (str != nullptr) {
             Add(String::Count(str), str);
         }
     }
 
-    inline void operator+=(String &&src) noexcept {
-        if (src.Length != 0) {
-            AddnC(src.Length, &src.Str);
-        }
-    }
-
     inline void operator+=(const String &src) noexcept {
         Add(src.Length, src.Str);
+    }
+
+    inline void operator+=(String &&src) noexcept {
+        if (src.Length != 0) {
+            Length += src.Length;
+            Bits += {src.Length, src.Str, src.Str};
+            src.Str = nullptr;
+        }
     }
 
     String ToString() noexcept {
