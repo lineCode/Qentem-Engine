@@ -57,6 +57,7 @@ int main() {
         <loop set="strings2" value="s_value" key="s_key">
         s_key: s_value
         </loop>
+
         {v:bool[2]}
     )";
 
