@@ -40,7 +40,7 @@ static void CleanBits(Array<TestBit> &bits) noexcept {
     }
 }
 
-static String Replace(const char *content, UNumber length, const char *_find, const char *_replace) {
+static String Replace(const char *content, UNumber length, const char *_find, const char *_replace) noexcept {
     static Expression find_key;
 
     find_key.SetHead(_find);
@@ -49,7 +49,7 @@ static String Replace(const char *content, UNumber length, const char *_find, co
     return Engine::Parse(Engine::Match(Expressions().Add(&find_key), content, 0, length), content, 0, length);
 }
 
-static String ReplaceNewLine(const char *content, UNumber length, const char *_replace) {
+static String ReplaceNewLine(const char *content, UNumber length, const char *_replace) noexcept {
 
     static Expressions find_keys;
     static Expression  find_key1;

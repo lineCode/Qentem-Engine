@@ -46,10 +46,10 @@ struct Expression {
     UNumber     HLength{0};    // Head length.
     const char *Head{nullptr}; // The start of the match.
 
-    const char *Tail{nullptr}; // The end of the match.
     UNumber     TLength{0};    // Tail length.
+    const char *Tail{nullptr}; // The end of the match.
 
-    Expressions NestExpres;       // Expressions for nesting Match().
+    Expressions NestExpres{};     // Expressions for nesting Match().
     UShort      Flag{0};          // Flags for the expression.
     MatchCB_ *  MatchCB{nullptr}; // A callback function for a custom action on a match.
 
@@ -76,20 +76,20 @@ struct Expression {
 };
 /////////////////////////////////
 struct MatchBit {
-    UNumber           Offset{0}; // The start of the match.
-    UNumber           Length{0}; // The length of the entire match.
-    Array<MatchBit>   NestMatch; // To hold sub matches inside a match.
+    UNumber           Offset{0};   // The start of the match.
+    UNumber           Length{0};   // The length of the entire match.
+    Array<MatchBit>   NestMatch{}; // To hold sub matches inside a match.
     const Expression *Expr{nullptr};
 };
 /////////////////////////////////
 static UNumber match(Array<MatchBit> &items, const Expressions &expres, const char *content, UNumber offset, const UNumber endOffset,
                      const UNumber maxOffset, UNumber &split_count) noexcept {
-    MatchBit      item;
-    UNumber       split_nest = 0;
     const UNumber started    = offset;
+    UNumber       split_nest = 0;
+    MatchBit      item;
 
-    UShort            keyword_offset;
     const Expression *expr;
+    UShort            keyword_offset;
     UShort            expr_id        = 0;
     UNumber           current_offset = 0;
 
@@ -246,10 +246,14 @@ static void split(Array<MatchBit> &items, const char *content, UNumber offset, c
 
         item_ptr = &(items[0]);
 
-        item_ptr->Offset    = started;
-        item_ptr->Length    = (endOffset - started);
-        item_ptr->NestMatch = static_cast<Array<MatchBit> &&>(splitted);
-        item_ptr->Expr      = item.Expr;
+        item_ptr->Offset = started;
+        item_ptr->Length = (endOffset - started);
+        // item_ptr->NestMatch          = static_cast<Array<MatchBit> &&>(splitted);
+        item_ptr->NestMatch.Size     = splitted.Size;
+        item_ptr->NestMatch.Storage  = splitted.Storage;
+        item_ptr->NestMatch.Capacity = splitted.Capacity;
+        splitted.Storage             = nullptr;
+        item_ptr->Expr               = item.Expr;
     }
 }
 /////////////////////////////////

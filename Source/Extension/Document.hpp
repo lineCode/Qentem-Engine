@@ -24,11 +24,11 @@ enum VType { UndefinedT = 0, NumberT = 1, StringT = 2, DocumentT = 3, FalseT = 4
 struct Index {
     UNumber      Hash{0};
     UNumber      EntryID{0};
-    Array<Index> Table;
+    Array<Index> Table{};
 
     Index() = default;
 
-    Index(UNumber hash, UNumber e_id) : Hash(hash), EntryID(e_id) {
+    Index(UNumber hash, UNumber e_id) noexcept : Hash(hash), EntryID(e_id) {
     }
 };
 
@@ -78,7 +78,7 @@ struct Document {
         Entries.SetCapacity(numbers.Size);
 
         for (UNumber i = 0; i < numbers.Size; i++) {
-            Entries += Entry({VType::NumberT, 0, i});
+            Entries += {VType::NumberT, 0, i};
         }
 
         Ordered = true;
@@ -89,7 +89,7 @@ struct Document {
         Entries.SetCapacity(strings.Size);
 
         for (UNumber i = 0; i < strings.Size; i++) {
-            Entries += Entry({VType::StringT, 0, i});
+            Entries += {VType::StringT, 0, i};
         }
 
         Ordered = true;
@@ -100,7 +100,7 @@ struct Document {
         Entries.SetCapacity(documents.Size);
 
         for (UNumber i = 0; i < documents.Size; i++) {
-            Entries += Entry({VType::DocumentT, 0, i});
+            Entries += {VType::DocumentT, 0, i};
         }
 
         Ordered = true;
@@ -111,7 +111,7 @@ struct Document {
         Entries.SetCapacity(numbers.Size);
 
         for (UNumber i = 0; i < numbers.Size; i++) {
-            Entries += Entry({VType::NumberT, 0, i});
+            Entries += {VType::NumberT, 0, i};
         }
 
         Ordered = true;
@@ -122,7 +122,7 @@ struct Document {
         Entries.SetCapacity(strings.Size);
 
         for (UNumber i = 0; i < strings.Size; i++) {
-            Entries += Entry({VType::StringT, 0, i});
+            Entries += {VType::StringT, 0, i};
         }
 
         Ordered = true;
@@ -133,7 +133,7 @@ struct Document {
         Entries.SetCapacity(documents.Size);
 
         for (UNumber i = 0; i < documents.Size; i++) {
-            Entries += Entry({VType::DocumentT, 0, i});
+            Entries += {VType::DocumentT, 0, i};
         }
 
         Ordered = true;
@@ -149,11 +149,11 @@ struct Document {
                 // Just a string.
                 Ordered = true;
                 Strings += value;
-                Entries += Entry({VType::StringT, 0, 0});
+                Entries += {VType::StringT, 0, 0};
             }
         } else {
             Ordered = true;
-            Entries += Entry({VType::NullT, 0, 0});
+            Entries += {VType::NullT, 0, 0};
         }
     }
 
@@ -165,7 +165,7 @@ struct Document {
         } else {
             Ordered = true;
             Strings += value;
-            Entries += Entry({VType::StringT, 0, 0});
+            Entries += {VType::StringT, 0, 0};
         }
     }
 
@@ -177,7 +177,7 @@ struct Document {
         } else {
             Ordered = true;
             Strings += static_cast<String &&>(value);
-            Entries += Entry({VType::StringT, 0, 0});
+            Entries += {VType::StringT, 0, 0};
         }
     }
 
@@ -236,14 +236,12 @@ struct Document {
         if (table.Capacity <= id) {
             table.Resize(id + 1);
             table.Size = table.Capacity;
-        }
-
-        if (table[id].Hash == 0) {
+            table[id]  = index;
+        } else if (table[id].Hash == 0) {
             table[id] = index;
-            return;
+        } else {
+            InsertIndex(index, hashBase, (level + 1), table[id].Table);
         }
-
-        InsertIndex(index, hashBase, (level + id + 2), table[id].Table);
     }
 
     Entry *Exist(UNumber hash, const UNumber level, const Array<Index> &table) const noexcept {
@@ -254,7 +252,7 @@ struct Document {
                 return &(Entries[table[id].EntryID]);
             }
 
-            return Exist(hash, (level + id + 2), table[id].Table);
+            return Exist(hash, (level + 1), table[id].Table);
         }
 
         return nullptr;
@@ -379,7 +377,7 @@ struct Document {
 
     void InsertHash(UNumber id, const char *key, const UNumber offset, const UNumber limit, const VType type) noexcept {
         InsertIndex({String::Hash(key, offset, limit), Entries.Size}, HashBase, 0, Table);
-        Entries += Entry({type, Keys.Size, id});
+        Entries += {type, Keys.Size, id};
         Keys += String::Part(key, offset, limit);
     }
 
@@ -469,7 +467,7 @@ struct Document {
         }
 
         InsertIndex({hash, Entries.Size}, HashBase, 0, Table);
-        Entries += Entry({type, Keys.Size, id});
+        Entries += {type, Keys.Size, id};
         Keys += String::Part(key, offset, limit);
 
         return id;
@@ -590,24 +588,24 @@ struct Document {
 
                                 case 'f': {
                                     // False
-                                    document.Entries += Entry({VType::FalseT, 0, 0});
+                                    document.Entries += {VType::FalseT, 0, 0};
                                     break;
                                 }
                                 case 't': {
                                     // True
-                                    document.Entries += Entry({VType::TrueT, 0, 0});
+                                    document.Entries += {VType::TrueT, 0, 0};
                                     break;
                                 }
                                 case 'n': {
                                     // Null
-                                    document.Entries += Entry({VType::NullT, 0, 0});
+                                    document.Entries += {VType::NullT, 0, 0};
                                     break;
                                 }
                                 default: {
                                     // A number
                                     double number;
                                     if (String::ToNumber(number, content, current_offset, limit)) {
-                                        document.Entries += Entry({VType::NumberT, 0, document.Numbers.Size});
+                                        document.Entries += {VType::NumberT, 0, document.Numbers.Size};
                                         document.Numbers += number;
                                     }
                                     break;
@@ -622,7 +620,7 @@ struct Document {
                     case '"': {
                         item = &(items[item_id++]);
 
-                        document.Entries += Entry({VType::StringT, 0, document.Strings.Size});
+                        document.Entries += {VType::StringT, 0, document.Strings.Size};
 
                         if (item->NestMatch.Size == 0) {
                             document.Strings += String::Part(content, (item->Offset + 1), (item->Length - 2));
@@ -638,7 +636,7 @@ struct Document {
                     case '[': {
                         item = &(items[item_id++]);
 
-                        document.Entries += Entry({VType::DocumentT, 0, document.Documents.Size});
+                        document.Entries += {VType::DocumentT, 0, document.Documents.Size};
 
                         document.Documents += makeList(item->NestMatch, content, item->Offset, item->Length);
 
@@ -1195,22 +1193,22 @@ struct Document {
                         break;
                     }
                     case VType::NumberT: {
-                        Entries += Entry({entry->Type, 0, Numbers.Size});
+                        Entries += {entry->Type, 0, Numbers.Size};
                         Numbers += doc.Numbers[entry->ArrayID];
                         break;
                     }
                     case VType::StringT: {
-                        Entries += Entry({entry->Type, 0, Strings.Size});
+                        Entries += {entry->Type, 0, Strings.Size};
                         Strings += doc.Strings[entry->ArrayID];
                         break;
                     }
                     case VType::DocumentT: {
-                        Entries += Entry({entry->Type, 0, Documents.Size});
+                        Entries += {entry->Type, 0, Documents.Size};
                         Documents += doc.Documents[entry->ArrayID];
                         break;
                     }
                     default: {
-                        Entries += Entry({entry->Type, 0, 0});
+                        Entries += {entry->Type, 0, 0};
                         break;
                     }
                 }
@@ -1267,22 +1265,22 @@ struct Document {
                         break;
                     }
                     case VType::NumberT: {
-                        Entries += Entry({entry->Type, 0, Numbers.Size});
+                        Entries += {entry->Type, 0, Numbers.Size};
                         Numbers += doc.Numbers[entry->ArrayID];
                         break;
                     }
                     case VType::StringT: {
-                        Entries += Entry({entry->Type, 0, Strings.Size});
+                        Entries += {entry->Type, 0, Strings.Size};
                         Strings += static_cast<String &&>(doc.Strings[entry->ArrayID]);
                         break;
                     }
                     case VType::DocumentT: {
-                        Entries += Entry({entry->Type, 0, Documents.Size});
+                        Entries += {entry->Type, 0, Documents.Size};
                         Documents += static_cast<Document &&>(doc.Documents[entry->ArrayID]);
                         break;
                     }
                     default: {
-                        Entries += Entry({entry->Type, 0, 0});
+                        Entries += {entry->Type, 0, 0};
                         break;
                     }
                 }
@@ -1520,7 +1518,7 @@ struct Document {
             Ordered = true;
         }
 
-        Entries += Entry({(value ? VType::TrueT : VType::FalseT), 0, 0});
+        Entries += {(value ? VType::TrueT : VType::FalseT), 0, 0};
         Numbers += value ? 1.0 : 0.0;
     }
 
@@ -1532,7 +1530,7 @@ struct Document {
             Ordered = true;
         }
 
-        Entries += Entry({VType::NumberT, 0, Numbers.Size});
+        Entries += {VType::NumberT, 0, Numbers.Size};
         Numbers += static_cast<double>(num);
     }
 
@@ -1544,7 +1542,7 @@ struct Document {
             Ordered = true;
         }
 
-        Entries += Entry({VType::NumberT, 0, Numbers.Size});
+        Entries += {VType::NumberT, 0, Numbers.Size};
         Numbers += static_cast<double>(num);
     }
 
@@ -1556,7 +1554,7 @@ struct Document {
             Ordered = true;
         }
 
-        Entries += Entry({VType::NumberT, 0, Numbers.Size});
+        Entries += {VType::NumberT, 0, Numbers.Size};
         Numbers += num;
     }
 
@@ -1569,10 +1567,10 @@ struct Document {
         }
 
         if (str != nullptr) {
-            Entries += Entry({VType::StringT, 0, Strings.Size});
+            Entries += {VType::StringT, 0, Strings.Size};
             Strings += str;
         } else {
-            Entries += Entry({VType::NullT, 0, 0});
+            Entries += {VType::NullT, 0, 0};
         }
     }
 
@@ -1584,7 +1582,7 @@ struct Document {
             Ordered = true;
         }
 
-        Entries += Entry({VType::StringT, 0, Strings.Size});
+        Entries += {VType::StringT, 0, Strings.Size};
         Strings += string;
     }
 
@@ -1596,7 +1594,7 @@ struct Document {
             Ordered = true;
         }
 
-        Entries += Entry({VType::StringT, 0, Strings.Size});
+        Entries += {VType::StringT, 0, Strings.Size};
         Strings += static_cast<String &&>(string);
     }
 
@@ -1611,7 +1609,7 @@ struct Document {
         UNumber id = Numbers.Size;
 
         for (UNumber i = 0; i < numbers.Size; i++) {
-            Entries += Entry({VType::NumberT, 0, id++});
+            Entries += {VType::NumberT, 0, id++};
         }
 
         Numbers += numbers;
@@ -1628,7 +1626,7 @@ struct Document {
         UNumber id = Strings.Size;
 
         for (UNumber i = 0; i < strings.Size; i++) {
-            Entries += Entry({VType::StringT, 0, id++});
+            Entries += {VType::StringT, 0, id++};
         }
 
         Strings += strings;
@@ -1645,7 +1643,7 @@ struct Document {
         UNumber id = Documents.Size;
 
         for (UNumber i = 0; i < documents.Size; i++) {
-            Entries += Entry({VType::DocumentT, 0, id++});
+            Entries += {VType::DocumentT, 0, id++};
         }
 
         Documents += documents;
@@ -1662,7 +1660,7 @@ struct Document {
         UNumber id = Numbers.Size;
 
         for (UNumber i = 0; i < numbers.Size; i++) {
-            Entries += Entry({VType::NumberT, 0, id++});
+            Entries += {VType::NumberT, 0, id++};
         }
 
         Numbers += numbers;
@@ -1679,7 +1677,7 @@ struct Document {
         UNumber id = Strings.Size;
 
         for (UNumber i = 0; i < strings.Size; i++) {
-            Entries += Entry({VType::StringT, 0, id++});
+            Entries += {VType::StringT, 0, id++};
         }
 
         Strings += static_cast<Array<String> &&>(strings);
@@ -1696,7 +1694,7 @@ struct Document {
         UNumber id = Documents.Size;
 
         for (UNumber i = 0; i < documents.Size; i++) {
-            Entries += Entry({VType::DocumentT, 0, id++});
+            Entries += {VType::DocumentT, 0, id++};
         }
 
         Documents += static_cast<Array<Document> &&>(documents);

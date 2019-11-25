@@ -24,7 +24,7 @@ struct StringStream {
     };
 
     Array<StringBit> Bits;
-    UNumber          Length = 0;
+    UNumber          Length{0};
 
     void Add(const UNumber length, const char *str) noexcept {
         if (length != 0) {

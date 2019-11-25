@@ -47,10 +47,10 @@ struct NCTest {
 
     NCTest() = default;
 
-    NCTest(double n, const char *e) : Number(n), Expected(e) {
+    NCTest(double n, const char *e) noexcept : Number(n), Expected(e) {
     }
 
-    NCTest(double n, const char *e, UShort rma) : Number(n), Expected(e), Max(rma) {
+    NCTest(double n, const char *e, UShort rma) noexcept : Number(n), Expected(e), Max(rma) {
     }
 };
 

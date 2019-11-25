@@ -22,15 +22,15 @@ using Qentem::Engine::Flags;
 using Qentem::Engine::MatchBit;
 
 struct XProperty {
-    String Name;
-    String Value;
+    String Name{};
+    String Value{};
 };
 
 struct XTag {
-    String           Name;
-    Array<XProperty> Properties;
-    String           InnerText;
-    Array<XTag>      InnerNodes;
+    String           Name{};
+    Array<XProperty> Properties{};
+    String           InnerText{};
+    Array<XTag>      InnerNodes{};
 };
 
 static void InfinitSpaceCallback(const char *content, UNumber &offset, const UNumber endOffset, MatchBit &item,

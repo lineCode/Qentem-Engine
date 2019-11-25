@@ -29,9 +29,9 @@ struct Array {
     }
 
     Array(Array<Type> &&src) noexcept : Size(src.Size), Storage(src.Storage), Capacity(src.Capacity) {
-        src.Size     = 0;
-        src.Storage  = nullptr;
-        src.Capacity = 0;
+        // src.Size     = 0;
+        src.Storage = nullptr;
+        // src.Capacity = 0;
     }
 
     explicit Array(const Array<Type> &src) noexcept : Capacity(src.Size) {
@@ -129,10 +129,10 @@ struct Array {
             }
 
             Size         = src.Size;
-            src.Size     = 0;
             Storage      = src.Storage;
-            src.Storage  = nullptr;
             Capacity     = src.Capacity;
+            src.Size     = 0;
+            src.Storage  = nullptr;
             src.Capacity = 0;
         }
 

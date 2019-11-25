@@ -1,4 +1,4 @@
-# Qentem Engine (v1.5.5)
+# Qentem Engine (v1.5.6)
 
 - [Introduction](#introduction)
 - [Why Qentem?](#why-qentem)
